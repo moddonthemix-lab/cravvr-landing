@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cravvr - Find Your Perfect Food Truck Match</title>
+    <meta name="description" content="Swipe, discover, and connect with amazing food trucks near you. Join the waitlist for early access!">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #FF8C42 0%, #8B5CF6 50%, #EC4899 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 2rem;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="white" opacity="0.1"/></svg>');
+            animation: float 20s linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100px); }
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-emoji {
+            font-size: 8rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            color: white;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.2);
+        }
+
+        .hero-tagline {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.95);
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .hero-description {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* User Type Selection */
+        .user-type-selector {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .user-type-btn {
+            padding: 1rem 2rem;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-type-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .user-type-btn.active {
+            background: white;
+            color: #FF8C42;
+            border-color: white;
+        }
+
+        /* Email Form */
+        .waitlist-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        .waitlist-form h3 {
+            color: #FF8C42;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .form-subtitle {
+            color: #666;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #FF8C42;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #FF8C42 0%, #8B5CF6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .waitlist-count {
+            color: rgba(255,255,255,0.9);
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        .success-message {
+            display: none;
+            background: #10b981;
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        .error-message {
+            display: none;
+            background: #ef4444;
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            background: #f9fafb;
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3rem;
+            color: #FF8C42;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.3rem;
+            color: #666;
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        /* For Truck Owners Section */
+        .for-owners {
+            padding: 6rem 2rem;
+            background: linear-gradient(135deg, #FF8C42 0%, #8B5CF6 100%);
+            color: white;
+        }
+
+        .owners-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .owners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .owner-benefit {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .owner-benefit h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 6rem 2rem;
+            background: white;
+        }
+
+        .steps-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .step:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #FF8C42 0%, #8B5CF6 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content h3 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .step-content p {
+            font-size: 1.2rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Final CTA Section */
+        .final-cta {
+            background: linear-gradient(135deg, #FF8C42 0%, #8B5CF6 100%);
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+
+        .cta-content h2 {
+            color: white;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+
+        .cta-content p {
+            color: rgba(255,255,255,0.95);
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+
+        .cta-button {
+            padding: 1.5rem 3rem;
+            background: white;
+            color: #FF8C42;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }
+
+        .cta-button:active {
+            transform: translateY(-2px);
+        }
+
+        .cta-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1f2937;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .footer p {
+            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-tagline {
+                font-size: 1.2rem;
+            }
+
+            .hero-description {
+                font-size: 1rem;
+            }
+
+            .hero-emoji {
+                font-size: 5rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .section-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .user-type-selector {
+                flex-direction: column;
+            }
+
+            .user-type-btn {
+                width: 100%;
+            }
+
+            .step {
+                flex-direction: column !important;
+                text-align: center;
+            }
+
+            .step-number {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem;
+            }
+
+            .step-content h3 {
+                font-size: 1.5rem;
+            }
+
+            .platform-icons {
+                gap: 1.5rem;
+            }
+
+            .platform-icon {
+                font-size: 3rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content fade-in-up">
+            <div class="hero-emoji">🚚</div>
+            <h1>Cravvr</h1>
+            <p class="hero-tagline">Find Your Perfect Food Truck Match</p>
+            <p class="hero-description">
+                Swipe, discover, and connect with amazing food trucks near you. 
+                Get real-time locations, exclusive events, and rewards for your adventures!
+            </p>
+
+            <!-- User Type Selection -->
+            <div class="user-type-selector">
+                <button class="user-type-btn active" onclick="selectUserType('customer')" id="customerBtn">
+                    🍔 I'm a Customer
+                </button>
+                <button class="user-type-btn" onclick="selectUserType('owner')" id="ownerBtn">
+                    🚚 I'm a Truck Owner
+                </button>
+            </div>
+
+            <!-- Waitlist Form -->
+            <div class="waitlist-form">
+                <h3 id="formTitle">🎉 Join the Waitlist</h3>
+                <p class="form-subtitle" id="formSubtitle">Be the first to know when we launch!</p>
+                
+                <form id="waitlistForm">
+                    <input type="hidden" id="userType" name="userType" value="customer">
+                    
+                    <div class="form-group">
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name"
+                            placeholder="Your Name" 
+                            required
+                        >
+                    </div>
+                    <div class="form-group">
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email"
+                            placeholder="your@email.com" 
+                            required
+                        >
+                    </div>
+                    <div class="form-group" id="businessNameGroup" style="display: none;">
+                        <input 
+                            type="text" 
+                            id="businessName" 
+                            name="businessName"
+                            placeholder="Food Truck Name (optional)"
+                        >
+                    </div>
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        Get Early Access 🚀
+                    </button>
+                </form>
+                
+                <div id="successMessage" class="success-message">
+                    🎉 Awesome! You're on the list! Check your email for next steps.
+                </div>
+                <div id="errorMessage" class="error-message">
+                    ⚠️ Oops! Something went wrong. Please try again.
+                </div>
+            </div>
+
+            <p class="waitlist-count">
+                Join many other food lovers and owners already on the waitlist!
+            </p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="features-container">
+            <h2 class="section-title">Why You'll Love Cravvr</h2>
+            <p class="section-subtitle">
+                We're making it easier than ever to discover and enjoy amazing food trucks
+            </p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">💜</div>
+                    <h3>Swipe to Discover</h3>
+                    <p>
+                        Tinder-style swiping makes finding your next favorite food truck fun and addictive. 
+                        Right for love, left for later!
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <h3>Real-Time Locations</h3>
+                    <p>
+                        Never lose track of your favorites. Get live updates on where trucks are parked 
+                        and how long the wait is.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎪</div>
+                    <h3>Exclusive Events</h3>
+                    <p>
+                        Discover food truck festivals, rallies, and meetups happening near you. 
+                        RSVP and see who's attending!
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⭐</div>
+                    <h3>Rewards Program</h3>
+                    <p>
+                        Earn points for check-ins and reviews. Unlock exclusive deals and 
+                        become part of the community!
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Smart Filters</h3>
+                    <p>
+                        Find exactly what you're craving. Filter by cuisine, dietary needs, 
+                        distance, and more!
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Bolt Feature</h3>
+                    <p>
+                        Feeling spontaneous? Hit Bolt to generate a random route of nearby trucks. 
+                        Your food adventure awaits!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- For Truck Owners Section -->
+    <section class="for-owners">
+        <div class="owners-content">
+            <h2 class="section-title" style="color: white;">For Food Truck Owners</h2>
+            <p class="section-subtitle" style="color: rgba(255,255,255,0.9);">
+                Grow your business and connect with hungry customers
+            </p>
+
+            <div class="owners-grid">
+                <div class="owner-benefit">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
+                    <h3>Get Discovered</h3>
+                    <p>Thousands of hungry customers looking for you right now</p>
+                </div>
+
+                <div class="owner-benefit">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
+                    <h3>Share Your Location</h3>
+                    <p>Update your location in real-time so customers always find you</p>
+                </div>
+
+                <div class="owner-benefit">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                    <h3>Analytics & Insights</h3>
+                    <p>See who's finding you, what they love, and grow your business</p>
+                </div>
+
+                <div class="owner-benefit">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎉</div>
+                    <h3>Promote Events</h3>
+                    <p>Create events, reach more customers, and boost sales</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="steps-container">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">
+                Three simple steps to your next amazing meal
+            </p>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Set Your Taste</h3>
+                    <p>
+                        Create your profile and tell us what you love. 
+                        Boba? Vegan? Gluten-free? Chicken? Coffee? We've got you covered!
+                    </p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Discover</h3>
+                    <p>
+                        Browse food trucks near you with our fun swipe interface. 
+                        Right for your favorites, explore menus.
+                    </p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Check In & Earn</h3>
+                    <p>
+                        Visit a truck, check in through the app, and earn rewards!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="final-cta">
+        <div class="cta-content">
+            <p>Join hundreds of food lovers and truck owners waiting for launch!</p>
+            <button onclick="scrollToSignup()" class="cta-button">
+                Join the Waitlist Now 🚀
+            </button>
+            <p class="cta-subtitle">Launching soon on Web, iOS, & Android</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 Cravvr. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // User type selection
+        let currentUserType = 'customer';
+
+        function selectUserType(type) {
+            currentUserType = type;
+            document.getElementById('userType').value = type;
+            
+            // Update button styles
+            document.getElementById('customerBtn').classList.toggle('active', type === 'customer');
+            document.getElementById('ownerBtn').classList.toggle('active', type === 'owner');
+            
+            // Update form text
+            if (type === 'owner') {
+                document.getElementById('formTitle').textContent = '🚚 Join as a Truck Owner';
+                document.getElementById('formSubtitle').textContent = 'Get early access to grow your business!';
+                document.getElementById('businessNameGroup').style.display = 'block';
+                document.getElementById('submitBtn').textContent = 'Join as Owner 🚀';
+            } else {
+                document.getElementById('formTitle').textContent = '🎉 Join the Waitlist';
+                document.getElementById('formSubtitle').textContent = 'Be the first to know when we launch!';
+                document.getElementById('businessNameGroup').style.display = 'none';
+                document.getElementById('submitBtn').textContent = 'Get Early Access 🚀';
+            }
+        }
+
+        // Form submission
+        document.getElementById('waitlistForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                userType: document.getElementById('userType').value,
+                businessName: document.getElementById('businessName').value || '',
+                timestamp: new Date().toISOString(),
+                source: 'Landing Page'
+            };
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            try {
+                // REPLACE THIS URL WITH YOUR GOOGLE APPS SCRIPT URL
+                const response = await fetch('YOUR_GOOGLE_APPS_SCRIPT_URL_HERE', {
+                    method: 'POST',
+                    mode: 'no-cors', // Important for Google Apps Script
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                // Show success message
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+                
+                // Reset form
+                this.reset();
+                selectUserType('customer'); // Reset to customer
+                
+                // Hide success message after 5 seconds
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+            } finally {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = currentUserType === 'owner' ? 'Join as Owner 🚀' : 'Get Early Access 🚀';
+            }
+        });
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Add animation to all cards and steps
+        document.querySelectorAll('.feature-card, .step, .owner-benefit').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            observer.observe(el);
+        });
+
+        // Smooth scroll to signup form
+        function scrollToSignup() {
+            const heroSection = document.querySelector('.hero');
+            heroSection.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+            
+            // Optional: Flash the form to draw attention
+            const form = document.querySelector('.waitlist-form');
+            form.style.animation = 'pulse 0.5s ease-in-out';
+            setTimeout(() => {
+                form.style.animation = '';
+            }, 500);
+        }
+
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.02); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+</body>
+</html>
