@@ -1,0 +1,3042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CravvR - Complete Food Truck Discovery</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+        }
+        .max-w-md {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+
+const { useState } = React;
+
+/* ============================================================
+   CRAVVR - FOOD TRUCK DISCOVERY PLATFORM
+   ============================================================
+   
+   This file is organized into the following sections:
+   
+   1. ICONS - SVG icon components
+   2. MOCK DATA - Food trucks and events data
+   3. MAIN APP - State management and core logic
+   4. NAVIGATION - Bottom navigation bar
+   5. MODALS - Filter and rating modals
+   6. AUTH VIEWS - Login and signup screens
+   7. OWNER VIEWS - Owner dashboard and management
+   8. CUSTOMER VIEWS - Home, Discover, Bolt, Profile
+   9. TRUCK & EVENT VIEWS - Details and listings
+   10. RENDER - Main app render logic
+   
+   Use Ctrl+F to jump to sections (e.g., search "// === ICONS ===")
+   ============================================================ */
+
+// === ICONS ===
+// SVG icon components used throughout the app
+const MapPin = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+    </svg>
+);
+
+const Heart = ({ size = 24, className = "", fill = "none" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" className={className}>
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+    </svg>
+);
+
+const Filter = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+    </svg>
+);
+
+const Clock = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+    </svg>
+);
+
+const X = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+);
+
+const ChevronLeft = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+);
+
+const Calendar = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+);
+
+const Search = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+);
+
+const Moon = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+);
+
+const Sun = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+);
+
+const EyeOff = ({ size = 24, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+    </svg>
+);
+
+
+// === MAIN APP COMPONENT ===
+// Core application with all state management
+
+const CravvR = () => {
+  const [view, setView] = useState('home'); // home, discover, truck-detail, events, event-detail, event-create, bolt, login-select, customer-login, owner-login, owner-dashboard, customer-profile
+  const [userRole, setUserRole] = useState('guest'); // guest, customer, or owner
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [ownerPlan, setOwnerPlan] = useState('free'); // free or pro
+  const [eventsPostedThisMonth, setEventsPostedThisMonth] = useState(0); // Track events posted
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedTruck, setSelectedTruck] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [generateRadius, setGenerateRadius] = useState(5); // miles for Bolt feature
+  const [filters, setFilters] = useState({
+    // Dietary filters
+    vegan: false,
+    glutenFree: false,
+    dairyFree: false,
+    open24: false,
+    // Cuisine filters
+    halal: false,
+    snacks: false,
+    boba: false,
+    coffee: false,
+    mexican: false,
+    chinese: false,
+    american: false,
+    italian: false,
+    thai: false,
+    pizza: false,
+    seafood: false
+  });
+  const [cuisineFilters, setCuisineFilters] = useState({
+    snacks: false,
+    boba: false,
+    coffee: false,
+    mexican: false,
+    chinese: false,
+    american: false,
+    italian: false,
+    thai: false,
+    pizza: false,
+    seafood: false
+  });
+  const [favorites, setFavorites] = useState([]);
+  const [discoverIndex, setDiscoverIndex] = useState(0);
+  const [reviews, setReviews] = useState({}); // Format: { truckId: { rating: 4, comment: "Great!", hasReviewed: true, hidden: false } }
+  const [customerPoints, setCustomerPoints] = useState(0);
+  const [checkedInTrucks, setCheckedInTrucks] = useState({});
+  // Format: { truckId: timestamp } - tracks when user checked in at each truck
+  const [eventAttendance, setEventAttendance] = useState({
+    // Format: { eventId: { trucks: [truckIds], customers: [customerIds], customerInterested: [customerIds] } }
+    1: { trucks: [1, 2], customers: [], customerInterested: [] },
+    2: { trucks: [1, 2, 3, 4, 5], customers: [], customerInterested: [] },
+    3: { trucks: [2, 3, 4], customers: [], customerInterested: [] }
+  });
+  const [ownerSubscription, setOwnerSubscription] = useState('free'); // 'free' or 'pro'
+  const [eventsCreatedThisMonth, setEventsCreatedThisMonth] = useState(0); // Track how many events owner created
+  const [hiddenReviews, setHiddenReviews] = useState({}); // Format: { truckId: [reviewIds] } - tracks which reviews are hidden by owners
+  const [darkMode, setDarkMode] = useState(false); // Dark mode toggle
+  const [menuItemRatings, setMenuItemRatings] = useState({
+    // Sample ratings for demo - Format: { "truckId-menuItemId": { ratings: [5, 4, 5, 3], userRating: null } }
+    "1-1": { ratings: [5, 5, 4, 5, 4, 5, 3, 5, 4, 5], userRating: null }, // Fish Tacos
+    "1-2": { ratings: [4, 5, 5, 4, 5, 3, 5, 4], userRating: null }, // Shrimp Ceviche
+    "1-3": { ratings: [5, 5, 5, 5, 4, 5], userRating: null }, // Lobster Roll
+    "2-1": { ratings: [5, 4, 5, 5, 3, 5, 4, 5, 5], userRating: null }, // Burrito Bowl
+    "2-2": { ratings: [5, 5, 4, 5, 5, 4, 5], userRating: null }, // Street Tacos
+    "2-3": { ratings: [4, 5, 5, 4, 5], userRating: null }, // Quesadilla
+    "3-1": { ratings: [5, 5, 5, 4, 5, 5, 5], userRating: null }, // Pad Thai
+    "3-2": { ratings: [4, 5, 5, 5, 4, 5], userRating: null }, // Green Curry
+    "3-3": { ratings: [5, 4, 5, 5, 5], userRating: null }, // Mango Sticky Rice
+  });
+  const [showMenuRatingModal, setShowMenuRatingModal] = useState(false);
+  const [selectedMenuItem, setSelectedMenuItem] = useState(null);
+
+  
+  // === MOCK DATA ===
+  // Sample food trucks and events data
+  
+  // Mock data for trucks
+  const mockTrucks = [
+    {
+      id: 1,
+      name: "Taco Paradise",
+      image: "🌮",
+      description: "Authentic Mexican street tacos",
+      cuisine: "Mexican",
+      location: "Downtown Portland",
+      distance: "0.5 mi",
+      rating: 4.8,
+      reviewCount: 128,
+      isOpen: true,
+      hours: "11am - 10pm",
+      priceRange: "$$",
+      features: ["Vegan Options", "Gluten Free", "Halal"],
+      tags: ["mexican", "vegan", "glutenFree", "halal"],
+      featured: true,
+      coordinates: { lat: 45.5231, lng: -122.6765 },
+      menuItems: [
+        { id: 1, name: "Fish Tacos", price: "$12", emoji: "🐟", description: "Fresh caught fish with cilantro lime slaw" },
+        { id: 2, name: "Shrimp Ceviche", price: "$14", emoji: "🦐", description: "Lime-marinated shrimp with avocado" },
+        { id: 3, name: "Lobster Roll", price: "$18", emoji: "🦞", description: "Maine lobster on a toasted bun" }
+      ]
+    },
+    {
+      id: 2,
+      name: "Burger Bros",
+      image: "🍔",
+      description: "Gourmet burgers and fries",
+      cuisine: "American",
+      location: "Pearl District",
+      distance: "1.2 mi",
+      rating: 4.6,
+      reviewCount: 95,
+      isOpen: true,
+      hours: "10am - 9pm",
+      priceRange: "$$$",
+      features: ["Outdoor Seating", "Open 24/7"],
+      tags: ["american", "open24"],
+      featured: false,
+      coordinates: { lat: 45.5295, lng: -122.6819 },
+      menuItems: [
+        { id: 1, name: "Burrito Bowl", price: "$11", emoji: "🥗", description: "Rice, beans, protein, and toppings" },
+        { id: 2, name: "Street Tacos", price: "$9", emoji: "🌮", description: "Three authentic street tacos" },
+        { id: 3, name: "Quesadilla", price: "$10", emoji: "🧀", description: "Melted cheese and your choice of protein" }
+      ]
+    },
+    {
+      id: 3,
+      name: "Thai Street Food",
+      image: "🍜",
+      description: "Authentic Thai cuisine",
+      cuisine: "Thai",
+      location: "Southeast Portland",
+      distance: "2.1 mi",
+      rating: 4.9,
+      reviewCount: 156,
+      isOpen: false,
+      hours: "12pm - 8pm",
+      priceRange: "$$",
+      features: ["Vegan Options", "Dairy Free"],
+      tags: ["thai", "vegan", "dairyFree"],
+      featured: true,
+      coordinates: { lat: 45.5089, lng: -122.6359 },
+      menuItems: [
+        { id: 1, name: "Pad Thai", price: "$13", emoji: "🍝", description: "Classic Thai rice noodles" },
+        { id: 2, name: "Green Curry", price: "$14", emoji: "🍛", description: "Coconut curry with vegetables" },
+        { id: 3, name: "Mango Sticky Rice", price: "$8", emoji: "🥭", description: "Sweet coconut rice with fresh mango" }
+      ]
+    },
+    {
+      id: 4,
+      name: "Pizza on Wheels",
+      image: "🍕",
+      description: "Wood-fired artisan pizza",
+      cuisine: "Italian",
+      location: "Northwest Portland",
+      distance: "1.8 mi",
+      rating: 4.7,
+      reviewCount: 112,
+      isOpen: true,
+      hours: "11am - 11pm",
+      priceRange: "$$",
+      features: ["Vegan Options", "Gluten Free"],
+      tags: ["pizza", "italian", "vegan", "glutenFree"],
+      featured: true,
+      coordinates: { lat: 45.5370, lng: -122.7042 },
+      menuItems: [
+        { id: 1, name: "Margherita Pizza", price: "$16", emoji: "🍕", description: "Fresh mozzarella, basil, tomato" },
+        { id: 2, name: "Pepperoni Pizza", price: "$18", emoji: "🍕", description: "Classic pepperoni with cheese" },
+        { id: 3, name: "Vegan Pizza", price: "$17", emoji: "🥬", description: "Plant-based cheese and veggies" }
+      ]
+    },
+    {
+      id: 5,
+      name: "Coffee Cart",
+      image: "☕",
+      description: "Specialty coffee and pastries",
+      cuisine: "Coffee",
+      location: "Downtown Portland",
+      distance: "0.3 mi",
+      rating: 4.5,
+      reviewCount: 87,
+      isOpen: true,
+      hours: "6am - 2pm",
+      priceRange: "$",
+      features: ["Vegan Options", "Dairy Free"],
+      tags: ["coffee", "snacks", "vegan", "dairyFree"],
+      featured: false,
+      coordinates: { lat: 45.5202, lng: -122.6742 },
+      menuItems: [
+        { id: 1, name: "Latte", price: "$5", emoji: "☕", description: "Espresso with steamed milk" },
+        { id: 2, name: "Croissant", price: "$4", emoji: "🥐", description: "Buttery, flaky pastry" },
+        { id: 3, name: "Avocado Toast", price: "$8", emoji: "🥑", description: "Smashed avocado on sourdough" }
+      ]
+    },
+    {
+      id: 6,
+      name: "Boba Bliss",
+      image: "🧋",
+      description: "Bubble tea and Asian snacks",
+      cuisine: "Boba",
+      location: "Pearl District",
+      distance: "1.5 mi",
+      rating: 4.4,
+      reviewCount: 73,
+      isOpen: true,
+      hours: "11am - 9pm",
+      priceRange: "$",
+      features: ["Dairy Free Options"],
+      tags: ["boba", "snacks", "dairyFree"],
+      featured: false,
+      coordinates: { lat: 45.5285, lng: -122.6805 },
+      menuItems: [
+        { id: 1, name: "Classic Milk Tea", price: "$6", emoji: "🧋", description: "Black tea with milk and tapioca" },
+        { id: 2, name: "Taro Smoothie", price: "$7", emoji: "💜", description: "Creamy taro with boba" },
+        { id: 3, name: "Fruit Tea", price: "$6", emoji: "🍓", description: "Refreshing fruit-infused tea" }
+      ]
+    },
+    {
+      id: 7,
+      name: "Dim Sum Delight",
+      image: "🥟",
+      description: "Traditional Chinese dumplings",
+      cuisine: "Chinese",
+      location: "Chinatown",
+      distance: "2.5 mi",
+      rating: 4.8,
+      reviewCount: 134,
+      isOpen: true,
+      hours: "10am - 8pm",
+      priceRange: "$$",
+      features: ["Halal"],
+      tags: ["chinese", "halal"],
+      featured: false,
+      coordinates: { lat: 45.5247, lng: -122.6713 },
+      menuItems: [
+        { id: 1, name: "Pork Dumplings", price: "$10", emoji: "🥟", description: "Steamed pork-filled dumplings" },
+        { id: 2, name: "Spring Rolls", price: "$8", emoji: "🥢", description: "Crispy vegetable rolls" },
+        { id: 3, name: "Fried Rice", price: "$9", emoji: "🍚", description: "Wok-fried rice with vegetables" }
+      ]
+    },
+    {
+      id: 8,
+      name: "Sea Shack",
+      image: "🦞",
+      description: "Fresh seafood dishes",
+      cuisine: "Seafood",
+      location: "Waterfront",
+      distance: "3.2 mi",
+      rating: 4.9,
+      reviewCount: 167,
+      isOpen: false,
+      hours: "12pm - 9pm",
+      priceRange: "$$$",
+      features: ["Gluten Free Options"],
+      tags: ["seafood", "glutenFree"],
+      featured: true,
+      coordinates: { lat: 45.5155, lng: -122.6719 },
+      menuItems: [
+        { id: 1, name: "Fish & Chips", price: "$15", emoji: "🐟", description: "Beer-battered cod with fries" },
+        { id: 2, name: "Clam Chowder", price: "$12", emoji: "🥣", description: "Creamy New England style" },
+        { id: 3, name: "Lobster Roll", price: "$22", emoji: "🦞", description: "Maine lobster on a toasted bun" }
+      ]
+    }
+  ];
+
+  // Mock events data
+  const mockEvents = [
+    {
+      id: 1,
+      name: "Food Truck Friday",
+      date: "Nov 15, 2024",
+      time: "5:00 PM - 9:00 PM",
+      location: "Pioneer Square",
+      description: "Weekly gathering of the best food trucks in Portland",
+      attendees: 45,
+      image: "🎉",
+      featured: true
+    },
+    {
+      id: 2,
+      name: "Taste of Portland",
+      date: "Nov 22, 2024",
+      time: "12:00 PM - 8:00 PM",
+      location: "Waterfront Park",
+      description: "Annual food truck festival featuring local favorites",
+      attendees: 230,
+      image: "🍴",
+      featured: true
+    },
+    {
+      id: 3,
+      name: "Late Night Bites",
+      date: "Nov 18, 2024",
+      time: "8:00 PM - 12:00 AM",
+      location: "Downtown Food Pod",
+      description: "After-hours food truck meetup",
+      attendees: 67,
+      image: "🌙",
+      featured: false
+    }
+  ];
+
+  // Filter trucks based on active filters
+  const getFilteredTrucks = () => {
+    return mockTrucks.filter(truck => {
+      // If no filters active, show all trucks
+      const activeFilters = Object.entries(filters).filter(([_, value]) => value);
+      if (activeFilters.length === 0) return true;
+
+      // Check if truck matches all active filters
+      return activeFilters.every(([filterKey, _]) => {
+        return truck.tags && truck.tags.includes(filterKey);
+      });
+    });
+  };
+
+  const filteredTrucks = getFilteredTrucks();
+
+  // Calculate active filter count
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+  const toggleFavorite = (truckId) => {
+    setFavorites(prev => 
+      prev.includes(truckId) 
+        ? prev.filter(id => id !== truckId)
+        : [...prev, truckId]
+    );
+  };
+
+  const handleSwipe = (direction) => {
+    if (direction === 'right') {
+      toggleFavorite(filteredTrucks[discoverIndex].id);
+    }
+    
+    if (discoverIndex < filteredTrucks.length - 1) {
+      setDiscoverIndex(discoverIndex + 1);
+    } else {
+      setDiscoverIndex(0);
+    }
+  };
+
+  const handleCheckIn = (truckId) => {
+    setCheckedInTrucks(prev => ({
+      ...prev,
+      [truckId]: Date.now()
+    }));
+    setCustomerPoints(prev => prev + 10);
+  };
+
+  const handleReview = (truckId, rating, comment) => {
+    setReviews(prev => ({
+      ...prev,
+      [truckId]: { rating, comment, hasReviewed: true, hidden: false }
+    }));
+    setCustomerPoints(prev => prev + 5);
+  };
+
+  const handleEventAttendance = (eventId, action) => {
+    setEventAttendance(prev => {
+      const event = prev[eventId] || { trucks: [], customers: [], customerInterested: [] };
+      
+      if (action === 'going') {
+        return {
+          ...prev,
+          [eventId]: {
+            ...event,
+            customers: [...event.customers, 'currentUser'],
+            customerInterested: event.customerInterested.filter(c => c !== 'currentUser')
+          }
+        };
+      } else if (action === 'interested') {
+        return {
+          ...prev,
+          [eventId]: {
+            ...event,
+            customerInterested: [...event.customerInterested, 'currentUser'],
+            customers: event.customers.filter(c => c !== 'currentUser')
+          }
+        };
+      } else if (action === 'cancel') {
+        return {
+          ...prev,
+          [eventId]: {
+            ...event,
+            customers: event.customers.filter(c => c !== 'currentUser'),
+            customerInterested: event.customerInterested.filter(c => c !== 'currentUser')
+          }
+        };
+      }
+      
+      return prev;
+    });
+  };
+
+  
+  // === NAVIGATION COMPONENT ===
+  // Bottom navigation bar for app navigation
+  
+  const NavBar = () => (
+    <div className={`fixed bottom-0 left-0 right-0 border-t ${
+      darkMode 
+        ? 'bg-gray-900 border-gray-800' 
+        : 'bg-white border-gray-200'
+    } safe-area-inset-bottom z-50`}>
+      <div className="flex justify-around items-center h-16 max-w-7xl mx-auto px-4">
+        <button
+          onClick={() => setView('home')}
+          className={`flex flex-col items-center justify-center flex-1 transition-colors ${
+            view === 'home' 
+              ? (darkMode ? 'text-purple-400' : 'text-purple-500')
+              : (darkMode ? 'text-gray-400' : 'text-gray-600')
+          }`}
+        >
+          <MapPin size={24} />
+          <span className="text-xs mt-1">Explore</span>
+        </button>
+        
+        <button
+          onClick={() => setView('discover')}
+          className={`flex flex-col items-center justify-center flex-1 transition-colors ${
+            view === 'discover' 
+              ? (darkMode ? 'text-purple-400' : 'text-purple-500')
+              : (darkMode ? 'text-gray-400' : 'text-gray-600')
+          }`}
+        >
+          <Heart size={24} />
+          <span className="text-xs mt-1">Discover</span>
+        </button>
+        
+        <button
+          onClick={() => setView('bolt')}
+          className={`flex flex-col items-center justify-center flex-1 transition-colors ${
+            view === 'bolt' 
+              ? (darkMode ? 'text-purple-400' : 'text-purple-500')
+              : (darkMode ? 'text-gray-400' : 'text-gray-600')
+          }`}
+        >
+          <span className="text-2xl">⚡</span>
+          <span className="text-xs mt-1">Bolt</span>
+        </button>
+        
+        <button
+          onClick={() => setView('events')}
+          className={`flex flex-col items-center justify-center flex-1 transition-colors ${
+            view === 'events' 
+              ? (darkMode ? 'text-purple-400' : 'text-purple-500')
+              : (darkMode ? 'text-gray-400' : 'text-gray-600')
+          }`}
+        >
+          <Calendar size={24} />
+          <span className="text-xs mt-1">Events</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (userRole === 'customer') {
+              setView('customer-profile');
+            } else {
+              setView('login-select');
+            }
+          }}
+          className={`flex flex-col items-center justify-center flex-1 transition-colors ${
+            view === 'customer-profile' || view === 'login-select'
+              ? (darkMode ? 'text-purple-400' : 'text-purple-500')
+              : (darkMode ? 'text-gray-400' : 'text-gray-600')
+          }`}
+        >
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+            darkMode ? 'bg-purple-400' : 'bg-purple-500'
+          }`}>
+            <span className="text-white text-xs font-bold">
+              {userRole === 'customer' ? customerName.charAt(0).toUpperCase() : '?'}
+            </span>
+          </div>
+          <span className="text-xs mt-1">
+            {userRole === 'customer' ? 'Profile' : 'Login'}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
+  
+  // === MODAL COMPONENTS ===
+  // Pop-up modals for filters and ratings
+  
+  const FilterModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className={`rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto ${
+        darkMode ? 'bg-gray-800' : 'bg-white'
+      }`}>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className={`text-2xl font-bold ${
+            darkMode ? 'text-white' : 'text-gray-900'
+          }`}>Filters</h2>
+          <button
+            onClick={() => setShowFilters(false)}
+            className={`p-2 rounded-full ${
+              darkMode 
+                ? 'hover:bg-gray-700 text-gray-400' 
+                : 'hover:bg-gray-100 text-gray-600'
+            }`}
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Dietary Restrictions */}
+        <div className="mb-6">
+          <h3 className={`font-semibold mb-3 ${
+            darkMode ? 'text-purple-400' : 'text-purple-600'
+          }`}>Dietary</h3>
+          <div className="space-y-2">
+            {['vegan', 'glutenFree', 'dairyFree', 'halal', 'open24'].map(filter => (
+              <label key={filter} className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters[filter]}
+                  onChange={(e) => setFilters(prev => ({ ...prev, [filter]: e.target.checked }))}
+                  className="w-5 h-5 rounded accent-purple-500"
+                />
+                <span className={`${
+                  darkMode ? 'text-gray-200' : 'text-gray-700'
+                }`}>
+                  {filter === 'vegan' && 'Vegan'}
+                  {filter === 'glutenFree' && 'Gluten Free'}
+                  {filter === 'dairyFree' && 'Dairy Free'}
+                  {filter === 'halal' && 'Halal'}
+                  {filter === 'open24' && 'Open 24/7'}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Cuisine Types */}
+        <div className="mb-6">
+          <h3 className={`font-semibold mb-3 ${
+            darkMode ? 'text-purple-400' : 'text-purple-600'
+          }`}>Cuisine</h3>
+          <div className="space-y-2">
+            {['mexican', 'chinese', 'american', 'italian', 'thai', 'pizza', 'seafood', 'coffee', 'boba', 'snacks'].map(cuisine => (
+              <label key={cuisine} className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters[cuisine]}
+                  onChange={(e) => setFilters(prev => ({ ...prev, [cuisine]: e.target.checked }))}
+                  className="w-5 h-5 rounded accent-purple-500"
+                />
+                <span className={`capitalize ${
+                  darkMode ? 'text-gray-200' : 'text-gray-700'
+                }`}>{cuisine}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              setFilters({
+                vegan: false,
+                glutenFree: false,
+                dairyFree: false,
+                open24: false,
+                halal: false,
+                snacks: false,
+                boba: false,
+                coffee: false,
+                mexican: false,
+                chinese: false,
+                american: false,
+                italian: false,
+                thai: false,
+                pizza: false,
+                seafood: false
+              });
+            }}
+            className={`flex-1 py-3 px-4 rounded-xl font-semibold ${
+              darkMode
+                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Clear All
+          </button>
+          <button
+            onClick={() => setShowFilters(false)}
+            className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600"
+          >
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const MenuRatingModal = () => {
+    if (!selectedMenuItem) return null;
+    
+    const ratingKey = `${selectedMenuItem.truckId}-${selectedMenuItem.id}`;
+    const itemRatings = menuItemRatings[ratingKey] || { ratings: [], userRating: null };
+    const avgRating = itemRatings.ratings.length > 0 
+      ? (itemRatings.ratings.reduce((a, b) => a + b, 0) / itemRatings.ratings.length).toFixed(1)
+      : 'N/A';
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className={`rounded-2xl p-6 max-w-md w-full ${
+          darkMode ? 'bg-gray-800' : 'bg-white'
+        }`}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`text-xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Rate Menu Item</h3>
+            <button
+              onClick={() => {
+                setShowMenuRatingModal(false);
+                setSelectedMenuItem(null);
+              }}
+              className={`p-2 rounded-full ${
+                darkMode 
+                  ? 'hover:bg-gray-700 text-gray-400' 
+                  : 'hover:bg-gray-100 text-gray-600'
+              }`}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="text-center mb-6">
+            <div className="text-5xl mb-3">{selectedMenuItem.emoji}</div>
+            <h4 className={`text-lg font-semibold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>{selectedMenuItem.name}</h4>
+            <p className={`text-sm ${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>{selectedMenuItem.description}</p>
+          </div>
+
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className={`text-sm ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>Average Rating</span>
+              <span className={`font-semibold ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                ⭐ {avgRating} ({itemRatings.ratings.length} reviews)
+              </span>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className={`text-sm mb-3 font-semibold ${
+              darkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>Your Rating:</p>
+            <div className="flex gap-2 justify-center">
+              {[1, 2, 3, 4, 5].map(star => (
+                <button
+                  key={star}
+                  onClick={() => {
+                    setMenuItemRatings(prev => ({
+                      ...prev,
+                      [ratingKey]: {
+                        ...prev[ratingKey],
+                        userRating: star,
+                        ratings: [...(prev[ratingKey]?.ratings || []), star]
+                      }
+                    }));
+                  }}
+                  className="text-4xl hover:scale-110 transition-transform"
+                >
+                  {star <= (itemRatings.userRating || 0) ? '⭐' : '☆'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              if (itemRatings.userRating) {
+                setCustomerPoints(prev => prev + 5);
+              }
+              setShowMenuRatingModal(false);
+              setSelectedMenuItem(null);
+            }}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600"
+          >
+            Submit Rating
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  
+  // === AUTHENTICATION VIEWS ===
+  // Login and signup screens for customers and owners
+  
+  // Login Selection View
+  const LoginSelectView = () => (
+    <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${
+      darkMode 
+        ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+        : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+    }`}>
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className={`text-5xl mb-2 ${
+            darkMode ? 'text-purple-400' : 'text-purple-600'
+          }`}>🚚</h1>
+          <h2 className={`text-3xl font-bold mb-2 ${
+            darkMode ? 'text-white' : 'text-gray-900'
+          }`}>Welcome to CravvR</h2>
+          <p className={`${
+            darkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>Choose how you'd like to continue</p>
+        </div>
+
+        <div className="space-y-4">
+          <button
+            onClick={() => setView('customer-login')}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg"
+          >
+            Continue as Customer
+          </button>
+
+          <button
+            onClick={() => setView('owner-login')}
+            className={`w-full py-4 px-6 rounded-xl font-semibold transition-all border-2 ${
+              darkMode
+                ? 'border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white'
+                : 'border-purple-500 text-purple-600 hover:bg-purple-50'
+            }`}
+          >
+            I'm a Truck Owner
+          </button>
+
+          <button
+            onClick={() => {
+              setUserRole('guest');
+              setView('home');
+            }}
+            className={`w-full py-4 px-6 rounded-xl font-semibold transition-all ${
+              darkMode
+                ? 'text-gray-400 hover:bg-gray-800'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Continue as Guest
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Customer Login View
+  const CustomerLoginView = () => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+
+    return (
+      <div className={`min-h-screen flex flex-col p-6 ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        <button
+          onClick={() => setView('login-select')}
+          className={`self-start mb-6 p-2 rounded-full ${
+            darkMode 
+              ? 'hover:bg-gray-800 text-gray-400' 
+              : 'hover:bg-white/50 text-gray-600'
+          }`}
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+          <div className="text-center mb-8">
+            <h1 className={`text-4xl font-bold mb-2 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Create Account</h1>
+            <p className={`${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>Join CravvR to discover amazing food trucks</p>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <input
+              type="text"
+              placeholder="Your Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                darkMode
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                  : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+              }`}
+            />
+
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                darkMode
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                  : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+              }`}
+            />
+          </div>
+
+          <button
+            onClick={() => {
+              if (name && email) {
+                setCustomerName(name);
+                setUserRole('customer');
+                setIsLoggedIn(true);
+                setView('home');
+              }
+            }}
+            disabled={!name || !email}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Owner Login View
+  const OwnerLoginView = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    return (
+      <div className={`min-h-screen flex flex-col p-6 ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        <button
+          onClick={() => setView('login-select')}
+          className={`self-start mb-6 p-2 rounded-full ${
+            darkMode 
+              ? 'hover:bg-gray-800 text-gray-400' 
+              : 'hover:bg-white/50 text-gray-600'
+          }`}
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+          <div className="text-center mb-8">
+            <h1 className={`text-4xl font-bold mb-2 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Owner Login</h1>
+            <p className={`${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>Manage your food truck business</p>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                darkMode
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                  : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+              }`}
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                darkMode
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                  : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+              }`}
+            />
+          </div>
+
+          <button
+            onClick={() => {
+              if (email && password) {
+                setUserRole('owner');
+                setIsLoggedIn(true);
+                setView('owner-dashboard');
+              }
+            }}
+            disabled={!email || !password}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  
+  // === OWNER VIEWS ===
+  // Dashboard and management screens for food truck owners
+  
+  // Owner Dashboard View
+  const OwnerDashboardView = () => {
+    const handleUpgrade = () => {
+      setOwnerSubscription('pro');
+    };
+
+    const handleCreateEvent = () => {
+      if (ownerSubscription === 'free' && eventsCreatedThisMonth >= 1) {
+        alert('Upgrade to Pro to create unlimited events!');
+        return;
+      }
+      setView('event-create');
+    };
+
+    return (
+      <div className={`min-h-screen pb-20 ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        {/* Header */}
+        <div className={`sticky top-0 z-40 border-b ${
+          darkMode 
+            ? 'bg-gray-900/95 backdrop-blur border-gray-800' 
+            : 'bg-white/95 backdrop-blur border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
+            <h1 className={`text-2xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Owner Dashboard</h1>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-full ${
+                darkMode 
+                  ? 'hover:bg-gray-800 text-gray-400' 
+                  : 'hover:bg-gray-100 text-gray-600'
+              }`}
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Subscription Status */}
+        <div className="p-4 max-w-7xl mx-auto">
+          {ownerSubscription === 'free' ? (
+            <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl p-6 text-white mb-6 shadow-lg">
+              <h3 className="font-bold text-xl mb-2">Upgrade to Pro</h3>
+              <p className="mb-4 text-sm">Get premium benefits for your food truck!</p>
+              <ul className="mb-4 space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <span className="text-lg">✓</span>
+                  <span>Unlimited event postings</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-lg">⭐</span>
+                  <span><strong>Featured badge</strong> on your truck</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-lg">📊</span>
+                  <span>Advanced analytics</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-lg">📍</span>
+                  <span>Priority map placement</span>
+                </li>
+              </ul>
+              <button
+                onClick={handleUpgrade}
+                className="bg-white text-orange-500 py-2 px-6 rounded-lg font-semibold hover:bg-gray-100 transition-all"
+              >
+                Upgrade Now - $29/mo
+              </button>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-purple-400 to-pink-500 rounded-2xl p-6 text-white mb-6 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-bold text-xl">Pro Account Active</h3>
+                <span className="text-2xl">✨</span>
+              </div>
+              <p className="text-sm mb-3">You have unlimited access to all premium features</p>
+              <div className="bg-white/20 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full p-2">
+                    <span className="text-lg">⭐</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">Featured Badge Active</p>
+                    <p className="text-xs text-white/80">Your truck stands out on the map!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Stats */}
+        <div className="p-4 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className={`rounded-xl p-5 shadow ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <div className="text-3xl mb-2">📅</div>
+              <div className={`text-2xl font-bold ${
+                darkMode ? 'text-purple-400' : 'text-purple-500'
+              }`}>{eventsCreatedThisMonth}</div>
+              <div className={`text-sm ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                Events This Month
+                {ownerSubscription === 'free' && (
+                  <span className="block text-xs mt-1 text-amber-500">
+                    (1 of 1 free events used)
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className={`rounded-xl p-5 shadow ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <div className="text-3xl mb-2">⭐</div>
+              <div className={`text-2xl font-bold ${
+                darkMode ? 'text-blue-400' : 'text-blue-500'
+              }`}>4.7</div>
+              <div className={`text-sm ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>Average Rating</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="p-4 max-w-7xl mx-auto">
+          <button
+            onClick={handleCreateEvent}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg mb-4"
+          >
+            Create New Event
+          </button>
+
+          <button
+            onClick={() => {
+              setUserRole('guest');
+              setIsLoggedIn(false);
+              setView('home');
+            }}
+            className={`w-full py-3 px-6 rounded-xl font-semibold ${
+              darkMode
+                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Logout
+          </button>
+        </div>
+
+        {/* Reviews Management */}
+        <div className="p-4 max-w-7xl mx-auto">
+          <h2 className={`text-xl font-bold mb-4 ${
+            darkMode ? 'text-white' : 'text-gray-900'
+          }`}>Recent Reviews</h2>
+          <div className="space-y-3">
+            {Object.entries(reviews).map(([truckId, review]) => {
+              const truck = mockTrucks.find(t => t.id === parseInt(truckId));
+              if (!truck || review.hidden) return null;
+
+              return (
+                <div key={truckId} className={`rounded-xl p-4 shadow ${
+                  darkMode ? 'bg-gray-800' : 'bg-white'
+                }`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className={`font-semibold ${
+                        darkMode ? 'text-white' : 'text-gray-900'
+                      }`}>{truck.name}</div>
+                      <div className="flex items-center gap-1 mt-1">
+                        {[...Array(5)].map((_, i) => (
+                          <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'}>
+                            ⭐
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setHiddenReviews(prev => ({
+                          ...prev,
+                          [truckId]: [...(prev[truckId] || []), 'review1']
+                        }));
+                        setReviews(prev => ({
+                          ...prev,
+                          [truckId]: { ...review, hidden: true }
+                        }));
+                      }}
+                      className={`p-2 rounded-lg ${
+                        darkMode
+                          ? 'hover:bg-gray-700 text-gray-400'
+                          : 'hover:bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      <EyeOff size={20} />
+                    </button>
+                  </div>
+                  <p className={`text-sm ${
+                    darkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>{review.comment}</p>
+                </div>
+              );
+            })}
+            {Object.entries(reviews).filter(([_, review]) => !review.hidden).length === 0 && (
+              <div className={`text-center py-8 ${
+                darkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                <p>No reviews yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Event Creation View
+  const EventCreationView = () => {
+    const [eventName, setEventName] = useState('');
+    const [eventDate, setEventDate] = useState('');
+    const [eventTime, setEventTime] = useState('');
+    const [eventLocation, setEventLocation] = useState('');
+    const [eventDescription, setEventDescription] = useState('');
+
+    const handleSubmit = () => {
+      if (ownerSubscription === 'free' && eventsCreatedThisMonth >= 1) {
+        alert('Free plan allows only 1 event per month. Upgrade to Pro for unlimited events!');
+        return;
+      }
+
+      if (eventName && eventDate && eventTime && eventLocation) {
+        setEventsCreatedThisMonth(prev => prev + 1);
+        setView('owner-dashboard');
+        alert('Event created successfully!');
+      }
+    };
+
+    return (
+      <div className={`min-h-screen ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        {/* Header */}
+        <div className={`sticky top-0 z-40 border-b ${
+          darkMode 
+            ? 'bg-gray-900/95 backdrop-blur border-gray-800' 
+            : 'bg-white/95 backdrop-blur border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
+            <button
+              onClick={() => setView('owner-dashboard')}
+              className={`p-2 rounded-full ${
+                darkMode 
+                  ? 'hover:bg-gray-800 text-gray-400' 
+                  : 'hover:bg-gray-100 text-gray-600'
+              }`}
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <h1 className={`text-xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Create Event</h1>
+            <div className="w-10"></div>
+          </div>
+        </div>
+
+        <div className="p-4 max-w-2xl mx-auto">
+          <div className="space-y-4">
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>Event Name</label>
+              <input
+                type="text"
+                value={eventName}
+                onChange={(e) => setEventName(e.target.value)}
+                placeholder="Food Truck Friday"
+                className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                  darkMode
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>Date</label>
+              <input
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                  darkMode
+                    ? 'bg-gray-800 border-gray-700 text-white'
+                    : 'bg-white border-gray-200 text-gray-900'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>Time</label>
+              <input
+                type="time"
+                value={eventTime}
+                onChange={(e) => setEventTime(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                  darkMode
+                    ? 'bg-gray-800 border-gray-700 text-white'
+                    : 'bg-white border-gray-200 text-gray-900'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>Location</label>
+              <input
+                type="text"
+                value={eventLocation}
+                onChange={(e) => setEventLocation(e.target.value)}
+                placeholder="Pioneer Square"
+                className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                  darkMode
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>Description</label>
+              <textarea
+                value={eventDescription}
+                onChange={(e) => setEventDescription(e.target.value)}
+                placeholder="Tell people about your event..."
+                rows="4"
+                className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                  darkMode
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+                }`}
+              />
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={!eventName || !eventDate || !eventTime || !eventLocation}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-6 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+            >
+              Create Event
+            </button>
+
+            {ownerSubscription === 'free' && eventsCreatedThisMonth >= 1 && (
+              <div className="bg-amber-100 border-2 border-amber-400 rounded-xl p-4 text-amber-800">
+                <p className="font-semibold mb-1">Event Limit Reached</p>
+                <p className="text-sm">Upgrade to Pro to create unlimited events!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  
+  // === CUSTOMER VIEWS ===
+  // Main app views for customer experience
+  
+  // Home View
+  const HomeView = () => {
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
+    
+    return (
+    <div className={`min-h-screen pb-20 ${
+      darkMode 
+        ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+        : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+    }`}>
+      {/* Header */}
+      <div className={`sticky top-0 z-40 border-b ${
+        darkMode 
+          ? 'bg-gray-900/95 backdrop-blur border-gray-800' 
+          : 'bg-white/95 backdrop-blur border-gray-200'
+      }`}>
+        <div className="p-4 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className={`text-3xl font-bold ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>Discover</h1>
+              <p className={`text-sm ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>Find your next favorite food truck</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Map/List Toggle */}
+              <div className={`flex rounded-lg p-1 ${
+                darkMode ? 'bg-gray-800' : 'bg-white'
+              } shadow`}>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-all ${
+                    viewMode === 'list'
+                      ? (darkMode 
+                          ? 'bg-purple-500 text-white' 
+                          : 'bg-purple-500 text-white')
+                      : (darkMode ? 'text-gray-400' : 'text-gray-600')
+                  }`}
+                >
+                  List
+                </button>
+                <button
+                  onClick={() => setViewMode('map')}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-all ${
+                    viewMode === 'map'
+                      ? (darkMode 
+                          ? 'bg-purple-500 text-white' 
+                          : 'bg-purple-500 text-white')
+                      : (darkMode ? 'text-gray-400' : 'text-gray-600')
+                  }`}
+                >
+                  Map
+                </button>
+              </div>
+              
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-3 rounded-full ${
+                  darkMode 
+                    ? 'hover:bg-gray-800 text-gray-400' 
+                    : 'hover:bg-white text-gray-600'
+                }`}
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button
+                onClick={() => setShowFilters(true)}
+                className={`relative p-3 rounded-full ${
+                  darkMode 
+                    ? 'bg-gray-800 text-white' 
+                    : 'bg-white text-gray-900'
+                } shadow`}
+              >
+                <Filter size={20} />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${
+              darkMode ? 'text-gray-400' : 'text-gray-400'
+            }`} size={20} />
+            <input
+              type="text"
+              placeholder="Search food trucks..."
+              className={`w-full pl-12 pr-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 ${
+                darkMode
+                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                  : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+              }`}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Map View */}
+      {viewMode === 'map' && (
+        <div className="p-4 max-w-7xl mx-auto">
+          <div className={`rounded-2xl overflow-hidden shadow-lg ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`} style={{ height: '600px' }}>
+            {/* Map Container */}
+            <div className="relative w-full h-full" style={{ 
+              background: darkMode 
+                ? 'linear-gradient(135deg, #1f2937 0%, #374151 100%)' 
+                : 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)'
+            }}>
+              {/* Map Grid Background */}
+              <div className="absolute inset-0" style={{
+                backgroundImage: darkMode
+                  ? 'linear-gradient(rgba(107, 114, 128, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(107, 114, 128, 0.1) 1px, transparent 1px)'
+                  : 'linear-gradient(rgba(168, 85, 247, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(168, 85, 247, 0.05) 1px, transparent 1px)',
+                backgroundSize: '50px 50px'
+              }} />
+              
+              {/* Truck Markers */}
+              {filteredTrucks.map(truck => (
+                <div
+                  key={truck.id}
+                  onClick={() => {
+                    setSelectedTruck(truck);
+                    setView('truck-detail');
+                  }}
+                  className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 group"
+                  style={{
+                    left: `${20 + (truck.id * 12)}%`,
+                    top: `${25 + (truck.id * 8)}%`
+                  }}
+                >
+                  {/* Marker Pin */}
+                  <div className="relative">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-all group-hover:scale-110 ${
+                      truck.featured 
+                        ? 'bg-gradient-to-br from-yellow-400 to-amber-500 ring-4 ring-yellow-300/50' 
+                        : (darkMode ? 'bg-purple-600' : 'bg-purple-500')
+                    }`}>
+                      <span className="text-2xl">{truck.image}</span>
+                    </div>
+                    {truck.featured && (
+                      <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-md">
+                        <span className="text-xs">⭐</span>
+                      </div>
+                    )}
+                    {/* Pin Point */}
+                    <div className={`absolute left-1/2 -translate-x-1/2 w-1 h-4 ${
+                      truck.featured ? 'bg-amber-600' : (darkMode ? 'bg-purple-700' : 'bg-purple-600')
+                    }`} style={{ bottom: '-16px' }} />
+                    <div className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full ${
+                      truck.featured ? 'bg-amber-700' : (darkMode ? 'bg-purple-800' : 'bg-purple-700')
+                    }`} style={{ bottom: '-20px' }} />
+                  </div>
+                  
+                  {/* Info Card on Hover */}
+                  <div className={`absolute left-1/2 -translate-x-1/2 mt-2 w-64 rounded-xl p-4 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 ${
+                    darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'
+                  }`} style={{ top: '100%' }}>
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="text-3xl">{truck.image}</div>
+                      <div className="flex-1">
+                        <h3 className={`font-bold ${
+                          darkMode ? 'text-white' : 'text-gray-900'
+                        }`}>{truck.name}</h3>
+                        <p className={`text-xs ${
+                          darkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`}>{truck.cuisine}</p>
+                      </div>
+                      {truck.featured && (
+                        <span className="text-yellow-400 text-sm">⭐</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-yellow-400">⭐ {truck.rating}</span>
+                      <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>•</span>
+                      <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{truck.distance}</span>
+                      <span className={darkMode ? 'text-gray-500' : 'text-gray-400'}>•</span>
+                      <span className={truck.isOpen ? 'text-green-500' : 'text-red-500'}>
+                        {truck.isOpen ? 'Open' : 'Closed'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Map Legend */}
+              <div className={`absolute bottom-4 left-4 rounded-xl p-4 shadow-lg ${
+                darkMode ? 'bg-gray-900/95 backdrop-blur' : 'bg-white/95 backdrop-blur'
+              }`}>
+                <h4 className={`font-bold text-sm mb-2 ${
+                  darkMode ? 'text-white' : 'text-gray-900'
+                }`}>Map Legend</h4>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+                      ⭐
+                    </div>
+                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Featured (Pro)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full ${
+                      darkMode ? 'bg-purple-600' : 'bg-purple-500'
+                    }`} />
+                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Regular Truck</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Map Info */}
+              <div className={`absolute top-4 left-4 rounded-xl px-4 py-2 shadow-lg ${
+                darkMode ? 'bg-gray-900/95 backdrop-blur' : 'bg-white/95 backdrop-blur'
+              }`}>
+                <p className={`text-sm font-semibold ${
+                  darkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  {filteredTrucks.length} trucks nearby
+                </p>
+                <p className={`text-xs ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  Hover over markers for details
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trucks Grid */}
+      {viewMode === 'list' && (
+      <div className="p-4 max-w-7xl mx-auto">
+        <h2 className={`text-xl font-bold mb-4 ${
+          darkMode ? 'text-white' : 'text-gray-900'
+        }`}>
+          {activeFilterCount > 0 ? 'Filtered Results' : 'Nearby Trucks'}
+        </h2>
+        
+        {filteredTrucks.length === 0 ? (
+          <div className={`text-center py-12 ${
+            darkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            <Filter size={48} className={`mx-auto mb-3 ${
+              darkMode ? 'text-gray-700' : 'text-gray-300'
+            }`} />
+            <p className="font-semibold mb-2">No trucks match your filters</p>
+            <p className="text-sm">Try adjusting your filters to see more options</p>
+            <button
+              onClick={() => setShowFilters(true)}
+              className="mt-4 px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            >
+              Adjust Filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredTrucks.map(truck => (
+              <div
+                key={truck.id}
+                onClick={() => {
+                  setSelectedTruck(truck);
+                  setView('truck-detail');
+                }}
+                className={`rounded-2xl p-5 shadow-lg cursor-pointer transition-all hover:scale-[1.02] ${
+                  darkMode 
+                    ? 'bg-gray-800 hover:bg-gray-750' 
+                    : 'bg-white hover:shadow-xl'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="relative">
+                    <div className="text-5xl">{truck.image}</div>
+                    {truck.featured && (
+                      <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full p-1.5 shadow-lg">
+                        <span className="text-xs font-bold text-white">⭐</span>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(truck.id);
+                    }}
+                    className="p-2 hover:bg-pink-50 rounded-full transition-colors"
+                  >
+                    <Heart
+                      size={20}
+                      className={favorites.includes(truck.id) ? 'text-pink-500' : (darkMode ? 'text-gray-600' : 'text-gray-400')}
+                      fill={favorites.includes(truck.id) ? 'currentColor' : 'none'}
+                    />
+                  </button>
+                </div>
+                
+                <h3 className={`font-bold text-lg mb-1 ${
+                  darkMode ? 'text-white' : 'text-gray-900'
+                }`}>{truck.name}</h3>
+                <p className={`text-sm mb-2 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>{truck.description}</p>
+                
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-yellow-400">⭐</span>
+                    <span className={`text-sm font-semibold ${
+                      darkMode ? 'text-white' : 'text-gray-900'
+                    }`}>{truck.rating}</span>
+                    <span className={`text-xs ${
+                      darkMode ? 'text-gray-500' : 'text-gray-400'
+                    }`}>({truck.reviewCount})</span>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    darkMode 
+                      ? 'bg-gray-700 text-gray-300' 
+                      : 'bg-gray-100 text-gray-600'
+                  }`}>{truck.priceRange}</span>
+                </div>
+
+                <div className="flex items-center gap-4 mb-3">
+                  <div className={`flex items-center gap-1 text-sm ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    <MapPin size={14} />
+                    <span>{truck.distance}</span>
+                  </div>
+                  <div className={`flex items-center gap-1 text-sm ${
+                    truck.isOpen 
+                      ? (darkMode ? 'text-green-400' : 'text-green-600')
+                      : (darkMode ? 'text-red-400' : 'text-red-500')
+                  }`}>
+                    <Clock size={14} />
+                    <span>{truck.isOpen ? 'Open' : 'Closed'}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {truck.features.slice(0, 2).map((feature, idx) => (
+                    <span
+                      key={idx}
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        darkMode
+                          ? 'bg-purple-900 text-purple-300'
+                          : 'bg-purple-100 text-purple-600'
+                      }`}
+                    >
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      )}
+    </div>
+  );
+  };
+
+  // Bolt View - Generate random meal and event
+  const BoltView = () => {
+    const [generated, setGenerated] = useState(null);
+
+    const handleGenerate = () => {
+      // Filter trucks within radius (for demo, just use filtered trucks)
+      const availableTrucks = filteredTrucks.length > 0 ? filteredTrucks : mockTrucks;
+      
+      if (availableTrucks.length === 0) {
+        alert('No food trucks available!');
+        return;
+      }
+
+      // Pick a random truck
+      const randomTruck = availableTrucks[Math.floor(Math.random() * availableTrucks.length)];
+      
+      // Pick 2 random menu items from that truck
+      const shuffledItems = [...randomTruck.menuItems].sort(() => Math.random() - 0.5);
+      const selectedItems = shuffledItems.slice(0, 2);
+      
+      // Pick a random event
+      const randomEvent = mockEvents[Math.floor(Math.random() * mockEvents.length)];
+
+      setGenerated({
+        truck: randomTruck,
+        items: selectedItems,
+        event: randomEvent
+      });
+    };
+
+    return (
+      <div className={`min-h-screen pb-20 ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        {/* Header */}
+        <div className={`sticky top-0 z-40 border-b ${
+          darkMode 
+            ? 'bg-gray-900/95 backdrop-blur border-gray-800' 
+            : 'bg-white/95 backdrop-blur border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
+            <h1 className={`text-xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Bolt Generator</h1>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-full ${
+                darkMode 
+                  ? 'hover:bg-gray-800 text-gray-400' 
+                  : 'hover:bg-gray-100 text-gray-600'
+              }`}
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="text-7xl mb-4">⚡</div>
+            <h2 className={`text-3xl font-bold mb-3 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>AI-Powered Random Generator</h2>
+            <p className={`${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>Get instant meal recommendations and discover events</p>
+          </div>
+
+          <div className={`rounded-2xl p-6 mb-6 shadow-lg ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <label className={`block text-sm font-semibold mb-3 ${
+              darkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              Search Radius
+            </label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={generateRadius}
+                onChange={(e) => setGenerateRadius(parseInt(e.target.value))}
+                className="flex-1 accent-purple-500"
+              />
+              <span className={`font-bold text-lg ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>{generateRadius} mi</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleGenerate}
+            className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:from-yellow-500 hover:to-amber-600 transition-all shadow-lg mb-6"
+          >
+            Generate Now ⚡
+          </button>
+
+          {generated && (
+            <div className="space-y-4">
+              {/* Food Truck Card */}
+              <div className={`rounded-2xl p-6 shadow-lg ${
+                darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h3 className={`font-bold text-xl mb-4 ${
+                  darkMode ? 'text-yellow-400' : 'text-yellow-600'
+                }`}>Your Random Food Truck</h3>
+                <div 
+                  onClick={() => {
+                    setSelectedTruck(generated.truck);
+                    setView('truck-detail');
+                  }}
+                  className="cursor-pointer"
+                >
+                  <div className="text-center mb-4">
+                    <div className="text-6xl mb-3">{generated.truck.image}</div>
+                    <h4 className={`text-2xl font-bold mb-2 ${
+                      darkMode ? 'text-white' : 'text-gray-900'
+                    }`}>{generated.truck.name}</h4>
+                    <p className={`text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>{generated.truck.description}</p>
+                    <div className={`flex items-center justify-center gap-2 mt-3 ${
+                      darkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      <MapPin size={16} />
+                      <span className="text-sm">{generated.truck.location} • {generated.truck.distance}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h5 className={`font-semibold ${
+                      darkMode ? 'text-purple-400' : 'text-purple-600'
+                    }`}>Try These Items:</h5>
+                    {generated.items.map(item => (
+                      <div
+                        key={item.id}
+                        className={`flex items-center justify-between p-4 rounded-xl ${
+                          darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="text-3xl">{item.emoji}</div>
+                          <div className="flex-1">
+                            <div className={`font-semibold ${
+                              darkMode ? 'text-white' : 'text-gray-900'
+                            }`}>{item.name}</div>
+                            <div className={`text-sm ${
+                              darkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>{item.description}</div>
+                          </div>
+                        </div>
+                        <div className={`font-bold ${
+                          darkMode ? 'text-purple-400' : 'text-purple-600'
+                        }`}>{item.price}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Event Card */}
+              <div className={`rounded-2xl p-6 shadow-lg ${
+                darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
+                <h3 className={`font-bold text-xl mb-4 ${
+                  darkMode ? 'text-yellow-400' : 'text-yellow-600'
+                }`}>Recommended Event</h3>
+                <div
+                  onClick={() => {
+                    setSelectedEvent(generated.event);
+                    setView('event-detail');
+                  }}
+                  className="cursor-pointer"
+                >
+                  <div className="text-center mb-4">
+                    <div className="text-6xl mb-3">{generated.event.image}</div>
+                    <h4 className={`text-2xl font-bold mb-2 ${
+                      darkMode ? 'text-white' : 'text-gray-900'
+                    }`}>{generated.event.name}</h4>
+                    <p className={`text-sm mb-3 ${
+                      darkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>{generated.event.description}</p>
+                  </div>
+                  <div className={`flex flex-col gap-2 text-sm ${
+                    darkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <div className="flex items-center justify-center gap-2">
+                      <Calendar size={18} />
+                      <span>{generated.event.date}</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <Clock size={18} />
+                      <span>{generated.event.time}</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <MapPin size={18} />
+                      <span>{generated.event.location}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleGenerate}
+                className={`w-full py-3 px-6 rounded-xl font-semibold ${
+                  darkMode
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Generate Again
+              </button>
+            </div>
+          )}
+
+          {!generated && (
+            <div className={`rounded-2xl p-6 ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            } shadow-lg`}>
+              <h3 className={`font-bold mb-4 ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>How it works:</h3>
+              <ol className={`space-y-3 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                <li className="flex gap-3">
+                  <span className="font-bold text-purple-500">1.</span>
+                  <span>Set your preferred radius</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="font-bold text-purple-500">2.</span>
+                  <span>AI randomly selects a food truck near you</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="font-bold text-purple-500">3.</span>
+                  <span>Get 2 random menu items to try</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="font-bold text-purple-500">4.</span>
+                  <span>Discover a random event happening nearby</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="font-bold text-purple-500">5.</span>
+                  <span>Visit the truck and enjoy your adventure!</span>
+                </li>
+              </ol>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Discover View
+  const DiscoverView = () => {
+    if (filteredTrucks.length === 0) {
+      return (
+        <div className={`min-h-screen flex items-center justify-center pb-20 ${
+          darkMode 
+            ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+            : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+        }`}>
+          <div className={`text-center p-6 ${
+            darkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            <Heart size={64} className={`mx-auto mb-4 ${
+              darkMode ? 'text-gray-700' : 'text-gray-300'
+            }`} />
+            <p className="font-semibold mb-2">No trucks to swipe</p>
+            <p className="text-sm">Adjust your filters to see more options</p>
+          </div>
+        </div>
+      );
+    }
+
+    const currentTruck = filteredTrucks[discoverIndex];
+
+    return (
+      <div className={`min-h-screen pb-20 flex flex-col items-center justify-center ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        <div className="w-full max-w-md p-4">
+          <div className={`rounded-3xl shadow-2xl overflow-hidden ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            {/* Truck Card */}
+            <div className="p-8">
+              <div className="relative inline-block mx-auto">
+                <div className="text-8xl text-center mb-6">{currentTruck.image}</div>
+                {currentTruck.featured && (
+                  <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full p-2 shadow-lg">
+                    <span className="text-2xl">⭐</span>
+                  </div>
+                )}
+              </div>
+              
+              <h2 className={`text-3xl font-bold text-center mb-2 ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                {currentTruck.name}
+                {currentTruck.featured && (
+                  <span className="ml-2 text-lg align-middle px-2 py-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-full text-xs font-bold">
+                    FEATURED
+                  </span>
+                )}
+              </h2>
+              <p className={`text-center mb-4 ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>{currentTruck.description}</p>
+
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <div className="flex items-center gap-1">
+                  <span className="text-yellow-400 text-xl">⭐</span>
+                  <span className={`font-semibold ${
+                    darkMode ? 'text-white' : 'text-gray-900'
+                  }`}>{currentTruck.rating}</span>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-sm ${
+                  darkMode 
+                    ? 'bg-gray-700 text-gray-300' 
+                    : 'bg-gray-100 text-gray-600'
+                }`}>{currentTruck.priceRange}</span>
+              </div>
+
+              <div className={`flex items-center justify-center gap-2 mb-6 text-sm ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                <MapPin size={16} />
+                <span>{currentTruck.location} • {currentTruck.distance}</span>
+              </div>
+
+              <div className="flex flex-wrap gap-2 justify-center">
+                {currentTruck.features.map((feature, idx) => (
+                  <span
+                    key={idx}
+                    className={`text-sm px-3 py-1 rounded-full ${
+                      darkMode
+                        ? 'bg-purple-900 text-purple-300'
+                        : 'bg-purple-100 text-purple-600'
+                    }`}
+                  >
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Discover Actions */}
+            <div className="flex gap-4 p-6 bg-gradient-to-r from-purple-500 to-pink-500">
+              <button
+                onClick={() => handleSwipe('left')}
+                className="flex-1 bg-white bg-opacity-20 hover:bg-opacity-30 text-white py-4 rounded-2xl font-bold text-lg transition-all"
+              >
+                ✕ Pass
+              </button>
+              <button
+                onClick={() => handleSwipe('right')}
+                className="flex-1 bg-white hover:bg-opacity-90 bg-opacity-100 text-pink-500 py-4 rounded-2xl font-bold text-lg transition-all"
+              >
+                ♥ Like
+              </button>
+            </div>
+          </div>
+
+          <p className={`text-center mt-4 text-sm ${
+            darkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            {discoverIndex + 1} of {filteredTrucks.length}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  
+  // === TRUCK & EVENT VIEWS ===
+  // Detailed views for trucks and events
+  
+  // Truck Detail View
+  const TruckDetailView = () => {
+    if (!selectedTruck) return null;
+
+    const hasCheckedIn = checkedInTrucks[selectedTruck.id];
+    const userReview = reviews[selectedTruck.id];
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+
+    return (
+      <div className={`min-h-screen pb-20 ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        {/* Header */}
+        <div className={`sticky top-0 z-40 border-b ${
+          darkMode 
+            ? 'bg-gray-900/95 backdrop-blur border-gray-800' 
+            : 'bg-white/95 backdrop-blur border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
+            <button
+              onClick={() => setView('home')}
+              className={`p-2 rounded-full ${
+                darkMode 
+                  ? 'hover:bg-gray-800 text-gray-400' 
+                  : 'hover:bg-white text-gray-600'
+              }`}
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <h1 className={`text-xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>{selectedTruck.name}</h1>
+            <button
+              onClick={() => toggleFavorite(selectedTruck.id)}
+              className={`p-2 rounded-full ${
+                darkMode 
+                  ? 'hover:bg-gray-800' 
+                  : 'hover:bg-white'
+              }`}
+            >
+              <Heart
+                size={24}
+                className={favorites.includes(selectedTruck.id) ? 'text-pink-500' : (darkMode ? 'text-gray-600' : 'text-gray-400')}
+                fill={favorites.includes(selectedTruck.id) ? 'currentColor' : 'none'}
+              />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 max-w-7xl mx-auto">
+          {/* Hero Section */}
+          <div className={`rounded-2xl p-8 mb-6 shadow-lg text-center ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className="text-8xl mb-4">{selectedTruck.image}</div>
+            <h2 className={`text-3xl font-bold mb-2 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>{selectedTruck.name}</h2>
+            <p className={`mb-4 ${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>{selectedTruck.description}</p>
+            
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="flex items-center gap-1">
+                <span className="text-yellow-400 text-2xl">⭐</span>
+                <span className={`text-xl font-bold ${
+                  darkMode ? 'text-white' : 'text-gray-900'
+                }`}>{selectedTruck.rating}</span>
+                <span className={`text-sm ${
+                  darkMode ? 'text-gray-500' : 'text-gray-400'
+                }`}>({selectedTruck.reviewCount} reviews)</span>
+              </div>
+              <span className={`px-3 py-1 rounded-full ${
+                darkMode 
+                  ? 'bg-gray-700 text-gray-300' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}>{selectedTruck.priceRange}</span>
+            </div>
+
+            <div className={`flex items-center justify-center gap-2 mb-6 ${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              <MapPin size={18} />
+              <span>{selectedTruck.location} • {selectedTruck.distance}</span>
+            </div>
+
+            <div className={`flex items-center justify-center gap-2 mb-6 text-sm ${
+              selectedTruck.isOpen 
+                ? (darkMode ? 'text-green-400' : 'text-green-600')
+                : (darkMode ? 'text-red-400' : 'text-red-500')
+            }`}>
+              <Clock size={18} />
+              <span className="font-semibold">{selectedTruck.isOpen ? 'Open Now' : 'Closed'}</span>
+              <span>• {selectedTruck.hours}</span>
+            </div>
+
+            {userRole === 'customer' && !hasCheckedIn && (
+              <button
+                onClick={() => handleCheckIn(selectedTruck.id)}
+                className="bg-gradient-to-r from-green-400 to-emerald-500 text-white py-3 px-8 rounded-xl font-semibold hover:from-green-500 hover:to-emerald-600 transition-all shadow-lg"
+              >
+                Check In (+10 points)
+              </button>
+            )}
+
+            {hasCheckedIn && (
+              <div className={`inline-block px-6 py-3 rounded-xl font-semibold ${
+                darkMode 
+                  ? 'bg-green-900 text-green-300' 
+                  : 'bg-green-100 text-green-700'
+              }`}>
+                ✓ Checked In
+              </div>
+            )}
+          </div>
+
+          {/* Features */}
+          <div className={`rounded-2xl p-6 mb-6 shadow-lg ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <h3 className={`font-bold text-lg mb-4 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Features</h3>
+            <div className="flex flex-wrap gap-2">
+              {selectedTruck.features.map((feature, idx) => (
+                <span
+                  key={idx}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                    darkMode
+                      ? 'bg-purple-900 text-purple-300'
+                      : 'bg-purple-100 text-purple-600'
+                  }`}
+                >
+                  {feature}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Menu */}
+          <div className={`rounded-2xl p-6 mb-6 shadow-lg ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <h3 className={`font-bold text-lg mb-4 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Menu</h3>
+            <div className="space-y-3">
+              {selectedTruck.menuItems.map(item => {
+                const ratingKey = `${selectedTruck.id}-${item.id}`;
+                const itemRatings = menuItemRatings[ratingKey] || { ratings: [], userRating: null };
+                const avgRating = itemRatings.ratings.length > 0 
+                  ? (itemRatings.ratings.reduce((a, b) => a + b, 0) / itemRatings.ratings.length).toFixed(1)
+                  : 'N/A';
+
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      if (userRole === 'customer') {
+                        setSelectedMenuItem({ ...item, truckId: selectedTruck.id });
+                        setShowMenuRatingModal(true);
+                      }
+                    }}
+                    className={`flex items-center justify-between p-4 rounded-xl ${
+                      userRole === 'customer' 
+                        ? (darkMode 
+                            ? 'bg-gray-700 hover:bg-gray-600 cursor-pointer' 
+                            : 'bg-gray-50 hover:bg-gray-100 cursor-pointer')
+                        : (darkMode ? 'bg-gray-700' : 'bg-gray-50')
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="text-3xl">{item.emoji}</div>
+                      <div className="flex-1">
+                        <div className={`font-semibold ${
+                          darkMode ? 'text-white' : 'text-gray-900'
+                        }`}>{item.name}</div>
+                        <div className={`text-sm ${
+                          darkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`}>{item.description}</div>
+                        {userRole === 'customer' && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="text-yellow-400 text-sm">⭐</span>
+                            <span className={`text-sm ${
+                              darkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              {avgRating} ({itemRatings.ratings.length})
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className={`font-bold ${
+                      darkMode ? 'text-purple-400' : 'text-purple-600'
+                    }`}>{item.price}</div>
+                  </div>
+                );
+              })}
+            </div>
+            {userRole === 'customer' && (
+              <p className={`text-xs text-center mt-4 ${
+                darkMode ? 'text-gray-500' : 'text-gray-400'
+              }`}>
+                Tap any item to rate it
+              </p>
+            )}
+          </div>
+
+          {/* Reviews Section */}
+          {userRole === 'customer' && !userReview?.hasReviewed && hasCheckedIn && (
+            <div className={`rounded-2xl p-6 mb-6 shadow-lg ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <h3 className={`font-bold text-lg mb-4 ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>Leave a Review</h3>
+              <div className="mb-4">
+                <p className={`text-sm mb-2 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>Rating:</p>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      onClick={() => setRating(star)}
+                      className="text-3xl hover:scale-110 transition-transform"
+                    >
+                      {star <= rating ? '⭐' : '☆'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Share your experience..."
+                rows="3"
+                className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:border-purple-500 mb-4 ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500'
+                    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+                }`}
+              />
+              <button
+                onClick={() => {
+                  if (rating > 0 && comment) {
+                    handleReview(selectedTruck.id, rating, comment);
+                    setRating(0);
+                    setComment('');
+                  }
+                }}
+                disabled={rating === 0 || !comment}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Submit Review (+5 points)
+              </button>
+            </div>
+          )}
+
+          {userReview?.hasReviewed && (
+            <div className={`rounded-2xl p-6 shadow-lg ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <h3 className={`font-bold text-lg mb-4 ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>Your Review</h3>
+              <div className="flex items-center gap-1 mb-2">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className={i < userReview.rating ? 'text-yellow-400 text-xl' : 'text-gray-300 text-xl'}>
+                    ⭐
+                  </span>
+                ))}
+              </div>
+              <p className={`${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>{userReview.comment}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Events View
+  const EventsView = () => (
+    <div className={`min-h-screen pb-20 ${
+      darkMode 
+        ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+        : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+    }`}>
+      {/* Header */}
+      <div className={`sticky top-0 z-40 border-b ${
+        darkMode 
+          ? 'bg-gray-900/95 backdrop-blur border-gray-800' 
+          : 'bg-white/95 backdrop-blur border-gray-200'
+      }`}>
+        <div className="p-4 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
+            <h1 className={`text-2xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Events</h1>
+            {userRole === 'owner' && (
+              <button
+                onClick={() => setView('event-create')}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 px-4 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
+              >
+                Create Event
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 max-w-7xl mx-auto">
+        {/* Featured Events */}
+        <div className="mb-6">
+          <h2 className={`text-xl font-bold mb-4 ${
+            darkMode ? 'text-white' : 'text-gray-900'
+          }`}>Featured Events</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {mockEvents.filter(e => e.featured).map(event => {
+              const attendance = eventAttendance[event.id] || { trucks: [], customers: [], customerInterested: [] };
+              const isGoing = attendance.customers.includes('currentUser');
+              const isInterested = attendance.customerInterested.includes('currentUser');
+
+              return (
+                <div
+                  key={event.id}
+                  onClick={() => {
+                    setSelectedEvent(event);
+                    setView('event-detail');
+                  }}
+                  className={`rounded-2xl p-6 shadow-lg cursor-pointer transition-all hover:scale-[1.02] ${
+                    darkMode 
+                      ? 'bg-gradient-to-br from-purple-900 to-pink-900' 
+                      : 'bg-gradient-to-br from-purple-100 to-pink-100'
+                  }`}
+                >
+                  <div className="text-5xl mb-3">{event.image}</div>
+                  <h3 className={`font-bold text-xl mb-2 ${
+                    darkMode ? 'text-white' : 'text-gray-900'
+                  }`}>{event.name}</h3>
+                  <p className={`text-sm mb-3 ${
+                    darkMode ? 'text-purple-200' : 'text-gray-700'
+                  }`}>{event.description}</p>
+                  <div className={`flex items-center gap-4 mb-3 text-sm ${
+                    darkMode ? 'text-purple-300' : 'text-gray-600'
+                  }`}>
+                    <div className="flex items-center gap-1">
+                      <Calendar size={16} />
+                      <span>{event.date}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock size={16} />
+                      <span>{event.time}</span>
+                    </div>
+                  </div>
+                  <div className={`flex items-center gap-1 text-sm mb-3 ${
+                    darkMode ? 'text-purple-300' : 'text-gray-600'
+                  }`}>
+                    <MapPin size={16} />
+                    <span>{event.location}</span>
+                  </div>
+                  <div className={`text-sm font-semibold ${
+                    darkMode ? 'text-purple-300' : 'text-purple-600'
+                  }`}>
+                    {event.attendees} attending • {attendance.trucks.length} trucks
+                  </div>
+                  {(isGoing || isInterested) && (
+                    <div className={`mt-3 inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                      isGoing 
+                        ? (darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700')
+                        : (darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700')
+                    }`}>
+                      {isGoing ? '✓ Going' : '★ Interested'}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* All Events */}
+        <div>
+          <h2 className={`text-xl font-bold mb-4 ${
+            darkMode ? 'text-white' : 'text-gray-900'
+          }`}>All Events</h2>
+          <div className="space-y-3">
+            {mockEvents.map(event => {
+              const attendance = eventAttendance[event.id] || { trucks: [], customers: [], customerInterested: [] };
+              const isGoing = attendance.customers.includes('currentUser');
+              const isInterested = attendance.customerInterested.includes('currentUser');
+
+              return (
+                <div
+                  key={event.id}
+                  onClick={() => {
+                    setSelectedEvent(event);
+                    setView('event-detail');
+                  }}
+                  className={`rounded-xl p-5 shadow cursor-pointer transition-all hover:shadow-lg ${
+                    darkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">{event.image}</div>
+                    <div className="flex-1">
+                      <h3 className={`font-bold text-lg mb-1 ${
+                        darkMode ? 'text-white' : 'text-gray-900'
+                      }`}>{event.name}</h3>
+                      <p className={`text-sm mb-2 ${
+                        darkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>{event.description}</p>
+                      <div className={`flex items-center gap-3 text-sm ${
+                        darkMode ? 'text-gray-500' : 'text-gray-500'
+                      }`}>
+                        <span>{event.date}</span>
+                        <span>•</span>
+                        <span>{event.attendees} attending</span>
+                      </div>
+                      {(isGoing || isInterested) && (
+                        <div className={`mt-2 inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                          isGoing 
+                            ? (darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700')
+                            : (darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700')
+                        }`}>
+                          {isGoing ? '✓ Going' : '★ Interested'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Event Detail View
+  const EventDetailView = () => {
+    if (!selectedEvent) return null;
+
+    const attendance = eventAttendance[selectedEvent.id] || { trucks: [], customers: [], customerInterested: [] };
+    const isGoing = attendance.customers.includes('currentUser');
+    const isInterested = attendance.customerInterested.includes('currentUser');
+
+    return (
+      <div className={`min-h-screen pb-20 ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        {/* Header */}
+        <div className={`sticky top-0 z-40 border-b ${
+          darkMode 
+            ? 'bg-gray-900/95 backdrop-blur border-gray-800' 
+            : 'bg-white/95 backdrop-blur border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
+            <button
+              onClick={() => setView('events')}
+              className={`p-2 rounded-full ${
+                darkMode 
+                  ? 'hover:bg-gray-800 text-gray-400' 
+                  : 'hover:bg-white text-gray-600'
+              }`}
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <h1 className={`text-xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Event Details</h1>
+            <div className="w-10"></div>
+          </div>
+        </div>
+
+        <div className="p-4 max-w-7xl mx-auto">
+          {/* Event Hero */}
+          <div className={`rounded-2xl p-8 mb-6 shadow-lg text-center ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className="text-8xl mb-4">{selectedEvent.image}</div>
+            <h2 className={`text-3xl font-bold mb-3 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>{selectedEvent.name}</h2>
+            <p className={`mb-6 ${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>{selectedEvent.description}</p>
+
+            <div className={`flex flex-col gap-3 mb-6 ${
+              darkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              <div className="flex items-center justify-center gap-2">
+                <Calendar size={20} className={darkMode ? 'text-purple-400' : 'text-purple-500'} />
+                <span className="font-semibold">{selectedEvent.date}</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Clock size={20} className={darkMode ? 'text-purple-400' : 'text-purple-500'} />
+                <span className="font-semibold">{selectedEvent.time}</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <MapPin size={20} className={darkMode ? 'text-purple-400' : 'text-purple-500'} />
+                <span className="font-semibold">{selectedEvent.location}</span>
+              </div>
+            </div>
+
+            <div className={`text-lg font-semibold mb-6 ${
+              darkMode ? 'text-purple-400' : 'text-purple-600'
+            }`}>
+              {selectedEvent.attendees + attendance.customers.length} people interested
+            </div>
+
+            {/* Attendance Buttons */}
+            {userRole === 'customer' && (
+              <div className="flex gap-3">
+                {isGoing ? (
+                  <button
+                    onClick={() => handleEventAttendance(selectedEvent.id, 'cancel')}
+                    className={`flex-1 py-3 px-6 rounded-xl font-semibold ${
+                      darkMode
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleEventAttendance(selectedEvent.id, 'going')}
+                    className="flex-1 bg-gradient-to-r from-green-400 to-emerald-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-500 hover:to-emerald-600 transition-all shadow-lg"
+                  >
+                    I'm Going
+                  </button>
+                )}
+                
+                {!isGoing && (
+                  <button
+                    onClick={() => handleEventAttendance(selectedEvent.id, isInterested ? 'cancel' : 'interested')}
+                    className={`flex-1 py-3 px-6 rounded-xl font-semibold border-2 ${
+                      isInterested
+                        ? (darkMode 
+                            ? 'border-blue-500 bg-blue-900 text-blue-300' 
+                            : 'border-blue-500 bg-blue-100 text-blue-700')
+                        : (darkMode
+                            ? 'border-purple-500 text-purple-400 hover:bg-purple-900'
+                            : 'border-purple-500 text-purple-600 hover:bg-purple-50')
+                    }`}
+                  >
+                    {isInterested ? 'Interested ★' : 'Interested?'}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Participating Trucks */}
+          <div className={`rounded-2xl p-6 shadow-lg ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <h3 className={`font-bold text-lg mb-4 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>
+              Food Trucks ({attendance.trucks.length})
+            </h3>
+            <div className="space-y-3">
+              {attendance.trucks.map(truckId => {
+                const truck = mockTrucks.find(t => t.id === truckId);
+                if (!truck) return null;
+
+                return (
+                  <div
+                    key={truck.id}
+                    onClick={() => {
+                      setSelectedTruck(truck);
+                      setView('truck-detail');
+                    }}
+                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+                      darkMode 
+                        ? 'bg-gray-700 hover:bg-gray-600' 
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="text-4xl">{truck.image}</div>
+                    <div className="flex-1">
+                      <div className={`font-semibold ${
+                        darkMode ? 'text-white' : 'text-gray-900'
+                      }`}>{truck.name}</div>
+                      <div className={`text-sm ${
+                        darkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>{truck.cuisine}</div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-yellow-400">⭐</span>
+                      <span className={`font-semibold ${
+                        darkMode ? 'text-white' : 'text-gray-900'
+                      }`}>{truck.rating}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Customer Profile View
+  const CustomerProfileView = () => {
+    return (
+      <div className={`min-h-screen pb-20 ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+          : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+      }`}>
+        {/* Header */}
+        <div className={`sticky top-0 z-40 border-b ${
+          darkMode 
+            ? 'bg-gray-900/95 backdrop-blur border-gray-800' 
+            : 'bg-white/95 backdrop-blur border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
+            <h1 className={`text-2xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>Profile</h1>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-full ${
+                darkMode 
+                  ? 'hover:bg-gray-800 text-gray-400' 
+                  : 'hover:bg-gray-100 text-gray-600'
+              }`}
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Profile Header */}
+        <div className="p-4 max-w-7xl mx-auto">
+          <div className={`rounded-2xl p-6 mb-6 shadow-lg text-center ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className={`w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl font-bold ${
+              darkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-500 text-white'
+            }`}>
+              {customerName.charAt(0).toUpperCase()}
+            </div>
+            <h2 className={`text-2xl font-bold mb-1 ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>{customerName}</h2>
+            <p className={`text-sm ${
+              darkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>CravvR Member</p>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="p-4 max-w-7xl mx-auto">
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className={`rounded-lg p-4 text-center shadow ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <div className="text-3xl mb-2">🎯</div>
+              <div className={`text-xl font-bold ${
+                darkMode ? 'text-green-400' : 'text-green-500'
+              }`}>{customerPoints}</div>
+              <div className={`text-xs mt-1 ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>Points</div>
+            </div>
+            <div className={`rounded-lg p-4 text-center shadow ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <div className="text-3xl mb-2">❤️</div>
+              <div className={`text-xl font-bold ${
+                darkMode ? 'text-purple-400' : 'text-purple-500'
+              }`}>{favorites.length}</div>
+              <div className={`text-xs mt-1 ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>Favorites</div>
+            </div>
+            <div className={`rounded-lg p-4 text-center shadow ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <div className="text-3xl mb-2">✓</div>
+              <div className={`text-xl font-bold ${
+                darkMode ? 'text-blue-400' : 'text-blue-500'
+              }`}>{Object.keys(checkedInTrucks).length}</div>
+              <div className={`text-xs mt-1 ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>Check-ins</div>
+            </div>
+          </div>
+
+          {/* Rewards Info */}
+          <div className="p-4">
+            <div className="bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg p-6 text-white shadow-lg">
+              <h3 className="font-bold text-xl mb-2">Reward Points</h3>
+              <p className="text-sm mb-4 text-white/90">Earn points with every check-in and review!</p>
+              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span>Next Reward:</span>
+                  <span className="font-bold">50 points</span>
+                </div>
+                <div className="w-full bg-white bg-opacity-30 rounded-full h-2">
+                  <div 
+                    className="bg-white h-2 rounded-full transition-all"
+                    style={{ width: `${(customerPoints / 50) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs mt-2">{50 - customerPoints} points until your next reward!</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Favorite Trucks */}
+          <div className="p-4">
+            <div className={`rounded-lg p-5 shadow ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <h3 className={`font-bold text-lg mb-4 ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>Favorite Trucks</h3>
+              {favorites.length > 0 ? (
+                <div className="space-y-3">
+                  {mockTrucks.filter(truck => favorites.includes(truck.id)).map(truck => (
+                    <div
+                      key={truck.id}
+                      onClick={() => {
+                        setSelectedTruck(truck);
+                        setView('truck-detail');
+                      }}
+                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer ${
+                        darkMode 
+                          ? 'bg-gray-700 hover:bg-gray-600' 
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="text-3xl">{truck.image}</div>
+                      <div className="flex-1">
+                        <div className={`font-semibold ${
+                          darkMode ? 'text-white' : 'text-gray-900'
+                        }`}>{truck.name}</div>
+                        <div className={`text-sm ${
+                          darkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`}>{truck.cuisine}</div>
+                      </div>
+                      <Heart size={20} className="text-pink-500" fill="currentColor" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={`text-center py-8 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  <Heart size={48} className={`mx-auto mb-3 ${
+                    darkMode ? 'text-gray-700' : 'text-gray-300'
+                  }`} />
+                  <p>No favorites yet</p>
+                  <p className="text-sm mt-2">Start exploring and save your favorites!</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="p-4 pb-8">
+            <div className={`rounded-lg p-5 shadow ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <h3 className={`font-bold text-lg mb-4 ${
+                darkMode ? 'text-white' : 'text-gray-900'
+              }`}>Recent Activity</h3>
+              <div className="space-y-3">
+                {Object.keys(checkedInTrucks).length > 0 ? (
+                  Object.keys(checkedInTrucks).slice(0, 3).map((truckId) => {
+                    const truck = mockTrucks.find(t => t.id === parseInt(truckId));
+                    if (!truck) return null;
+                    return (
+                      <div key={truckId} className={`flex items-center gap-3 p-3 rounded-lg ${
+                        darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                      }`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          darkMode ? 'bg-green-900' : 'bg-green-100'
+                        }`}>
+                          ✓
+                        </div>
+                        <div className="flex-1">
+                          <div className={`font-semibold text-sm ${
+                            darkMode ? 'text-white' : 'text-gray-900'
+                          }`}>Checked in at {truck.name}</div>
+                          <div className={`text-xs ${
+                            darkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>+10 points earned</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className={`text-center py-8 ${
+                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    <p className="text-sm">No recent activity</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  
+  // === MAIN RENDER ===
+  // Conditional rendering based on current view
+  
+  return (
+    <div className={`min-h-screen relative transition-colors duration-200 ${
+      darkMode 
+        ? 'bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950' 
+        : 'bg-gradient-to-b from-purple-50 via-pink-50 to-purple-50'
+    }`}>
+      {view === 'login-select' && <LoginSelectView />}
+      {view === 'customer-login' && <CustomerLoginView />}
+      {view === 'owner-login' && <OwnerLoginView />}
+      {view === 'owner-dashboard' && <OwnerDashboardView />}
+      {view === 'customer-profile' && <CustomerProfileView />}
+      {view === 'home' && <HomeView />}
+      {view === 'discover' && <DiscoverView />}
+      {view === 'bolt' && <BoltView />}
+      {view === 'truck-detail' && <TruckDetailView />}
+      {view === 'events' && <EventsView />}
+      {view === 'event-detail' && <EventDetailView />}
+      {view === 'event-create' && <EventCreationView />}
+      
+      {showFilters && <FilterModal />}
+      {showMenuRatingModal && <MenuRatingModal />}
+      {(userRole === 'customer' || userRole === 'guest') && 
+       view !== 'login-select' && 
+       view !== 'customer-login' && 
+       view !== 'owner-login' && 
+       view !== 'owner-dashboard' && 
+       view !== 'event-create' &&
+       <NavBar />}
+    </div>
+  );
+};
+
+
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<CravvR />);
+    </script>
+</body>
+</html>
