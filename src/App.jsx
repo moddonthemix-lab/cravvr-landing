@@ -67,6 +67,11 @@ const Icons = {
       <polyline points="6 9 12 15 18 9"></polyline>
     </svg>
   ),
+  chevronLeft: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  ),
   menu: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -158,10 +163,234 @@ const Icons = {
       <line x1="5" y1="12" x2="19" y2="12"></line>
       <polyline points="12 5 19 12 12 19"></polyline>
     </svg>
+  ),
+  calendar: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+  ),
+  bolt: (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+    </svg>
+  ),
+  compass: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+    </svg>
+  ),
+  home: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+  ),
+  search: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+  ),
+  filter: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+    </svg>
+  ),
+  grid: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7"></rect>
+      <rect x="14" y="3" width="7" height="7"></rect>
+      <rect x="14" y="14" width="7" height="7"></rect>
+      <rect x="3" y="14" width="7" height="7"></rect>
+    </svg>
   )
 };
 
-// Data
+// Mock Data
+const mockTrucks = [
+  {
+    id: 1,
+    name: "Taco Paradise",
+    image: "🌮",
+    description: "Authentic Mexican street tacos with fresh ingredients",
+    cuisine: "Mexican",
+    location: "Downtown Portland",
+    distance: "0.5 mi",
+    rating: 4.8,
+    reviewCount: 128,
+    isOpen: true,
+    hours: "11am - 10pm",
+    priceRange: "$$",
+    features: ["Vegan Options", "Gluten Free", "Halal"],
+    tags: ["mexican", "vegan", "glutenFree", "halal"],
+    featured: true,
+    coordinates: { lat: 45.5231, lng: -122.6765 },
+    menuItems: [
+      { id: 1, name: "Fish Tacos", price: "$12", emoji: "🐟", description: "Fresh caught fish with cilantro lime slaw" },
+      { id: 2, name: "Shrimp Ceviche", price: "$14", emoji: "🦐", description: "Lime-marinated shrimp with avocado" },
+      { id: 3, name: "Lobster Roll", price: "$18", emoji: "🦞", description: "Maine lobster on a toasted bun" }
+    ]
+  },
+  {
+    id: 2,
+    name: "Burger Bros",
+    image: "🍔",
+    description: "Gourmet burgers and hand-cut fries",
+    cuisine: "American",
+    location: "Pearl District",
+    distance: "1.2 mi",
+    rating: 4.6,
+    reviewCount: 95,
+    isOpen: true,
+    hours: "10am - 9pm",
+    priceRange: "$$$",
+    features: ["Outdoor Seating", "Late Night"],
+    tags: ["american", "burgers"],
+    featured: false,
+    coordinates: { lat: 45.5295, lng: -122.6819 },
+    menuItems: [
+      { id: 1, name: "Classic Burger", price: "$14", emoji: "🍔", description: "Angus beef with all the fixings" },
+      { id: 2, name: "Truffle Fries", price: "$8", emoji: "🍟", description: "Hand-cut with truffle oil" },
+      { id: 3, name: "Milkshake", price: "$6", emoji: "🥤", description: "House-made vanilla shake" }
+    ]
+  },
+  {
+    id: 3,
+    name: "Thai Street Food",
+    image: "🍜",
+    description: "Authentic Thai cuisine from Bangkok",
+    cuisine: "Thai",
+    location: "Southeast Portland",
+    distance: "2.1 mi",
+    rating: 4.9,
+    reviewCount: 156,
+    isOpen: false,
+    hours: "12pm - 8pm",
+    priceRange: "$$",
+    features: ["Vegan Options", "Dairy Free"],
+    tags: ["thai", "vegan", "dairyFree"],
+    featured: true,
+    coordinates: { lat: 45.5089, lng: -122.6359 },
+    menuItems: [
+      { id: 1, name: "Pad Thai", price: "$13", emoji: "🍝", description: "Classic Thai rice noodles" },
+      { id: 2, name: "Green Curry", price: "$14", emoji: "🍛", description: "Coconut curry with vegetables" },
+      { id: 3, name: "Mango Sticky Rice", price: "$8", emoji: "🥭", description: "Sweet coconut rice with fresh mango" }
+    ]
+  },
+  {
+    id: 4,
+    name: "Pizza on Wheels",
+    image: "🍕",
+    description: "Wood-fired artisan pizza",
+    cuisine: "Italian",
+    location: "Northwest Portland",
+    distance: "1.8 mi",
+    rating: 4.7,
+    reviewCount: 112,
+    isOpen: true,
+    hours: "11am - 11pm",
+    priceRange: "$$",
+    features: ["Vegan Options", "Gluten Free"],
+    tags: ["pizza", "italian", "vegan", "glutenFree"],
+    featured: true,
+    coordinates: { lat: 45.5370, lng: -122.7042 },
+    menuItems: [
+      { id: 1, name: "Margherita", price: "$16", emoji: "🍕", description: "Fresh mozzarella, basil, tomato" },
+      { id: 2, name: "Pepperoni", price: "$18", emoji: "🍕", description: "Classic pepperoni with cheese" },
+      { id: 3, name: "Vegan Supreme", price: "$17", emoji: "🥬", description: "Plant-based cheese and veggies" }
+    ]
+  },
+  {
+    id: 5,
+    name: "Coffee Cart",
+    image: "☕",
+    description: "Specialty coffee and fresh pastries",
+    cuisine: "Coffee",
+    location: "Downtown Portland",
+    distance: "0.3 mi",
+    rating: 4.5,
+    reviewCount: 87,
+    isOpen: true,
+    hours: "6am - 2pm",
+    priceRange: "$",
+    features: ["Vegan Options", "Dairy Free"],
+    tags: ["coffee", "snacks", "vegan", "dairyFree"],
+    featured: false,
+    coordinates: { lat: 45.5202, lng: -122.6742 },
+    menuItems: [
+      { id: 1, name: "Latte", price: "$5", emoji: "☕", description: "Espresso with steamed milk" },
+      { id: 2, name: "Croissant", price: "$4", emoji: "🥐", description: "Buttery, flaky pastry" },
+      { id: 3, name: "Avocado Toast", price: "$8", emoji: "🥑", description: "Smashed avocado on sourdough" }
+    ]
+  },
+  {
+    id: 6,
+    name: "Sea Shack",
+    image: "🦞",
+    description: "Fresh seafood dishes daily",
+    cuisine: "Seafood",
+    location: "Waterfront",
+    distance: "3.2 mi",
+    rating: 4.9,
+    reviewCount: 167,
+    isOpen: false,
+    hours: "12pm - 9pm",
+    priceRange: "$$$",
+    features: ["Gluten Free Options"],
+    tags: ["seafood", "glutenFree"],
+    featured: true,
+    coordinates: { lat: 45.5155, lng: -122.6719 },
+    menuItems: [
+      { id: 1, name: "Fish & Chips", price: "$15", emoji: "🐟", description: "Beer-battered cod with fries" },
+      { id: 2, name: "Clam Chowder", price: "$12", emoji: "🥣", description: "Creamy New England style" },
+      { id: 3, name: "Lobster Roll", price: "$22", emoji: "🦞", description: "Maine lobster on a toasted bun" }
+    ]
+  }
+];
+
+const mockEvents = [
+  {
+    id: 1,
+    name: "Food Truck Friday",
+    date: "Jan 17, 2025",
+    time: "5:00 PM - 9:00 PM",
+    location: "Pioneer Square",
+    description: "Weekly gathering of Portland's best food trucks",
+    attendees: 145,
+    image: "🎉",
+    featured: true,
+    trucks: [1, 2, 4]
+  },
+  {
+    id: 2,
+    name: "Taste of Portland",
+    date: "Jan 22, 2025",
+    time: "12:00 PM - 8:00 PM",
+    location: "Waterfront Park",
+    description: "Annual food truck festival featuring local favorites",
+    attendees: 430,
+    image: "🍴",
+    featured: true,
+    trucks: [1, 2, 3, 4, 5, 6]
+  },
+  {
+    id: 3,
+    name: "Late Night Bites",
+    date: "Jan 18, 2025",
+    time: "8:00 PM - 12:00 AM",
+    location: "Downtown Food Pod",
+    description: "After-hours food truck meetup",
+    attendees: 67,
+    image: "🌙",
+    featured: false,
+    trucks: [2, 4]
+  }
+];
+
 const categories = [
   { label: 'Pizza', icon: '🍕' },
   { label: 'Burgers', icon: '🍔' },
@@ -249,7 +478,7 @@ const testimonials = [
   }
 ];
 
-// Intersection Observer Hook for animations
+// Intersection Observer Hook
 const useInView = (options = {}) => {
   const ref = useRef(null);
   const [isInView, setIsInView] = useState(false);
@@ -269,12 +498,15 @@ const useInView = (options = {}) => {
   return [ref, isInView];
 };
 
-// Components
-const Header = ({ mobileMenuOpen, setMobileMenuOpen }) => (
+// ============================================
+// SHARED COMPONENTS
+// ============================================
+
+const Header = ({ mobileMenuOpen, setMobileMenuOpen, currentView, setCurrentView }) => (
   <header className="site-header">
     <a href="#main" className="skip-link">Skip to main content</a>
     <div className="header-container">
-      <a href="/" className="logo">
+      <a href="/" className="logo" onClick={(e) => { e.preventDefault(); setCurrentView('landing'); }}>
         <span className="logo-icon">{Icons.truck}</span>
         <span className="logo-text">Cravrr</span>
       </a>
@@ -284,6 +516,7 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen }) => (
         <a href="#how-it-works">How it Works</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
+        <button onClick={() => setCurrentView('app')} className="nav-app-link">Try Demo</button>
       </nav>
 
       <div className="header-actions">
@@ -309,6 +542,7 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen }) => (
         <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
         <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
         <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
+        <button onClick={() => { setCurrentView('app'); setMobileMenuOpen(false); }} className="nav-app-link">Try Demo</button>
       </nav>
       <a href="#waitlist" className="btn-primary mobile-cta" onClick={() => setMobileMenuOpen(false)}>
         Join Waitlist
@@ -316,6 +550,695 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen }) => (
     </div>
   </header>
 );
+
+const AppHeader = ({ title, onBack, rightAction }) => (
+  <header className="app-header">
+    <div className="app-header-container">
+      {onBack && (
+        <button className="app-back-btn" onClick={onBack}>
+          <span className="icon-sm">{Icons.chevronLeft}</span>
+        </button>
+      )}
+      <h1 className="app-header-title">{title}</h1>
+      {rightAction && <div className="app-header-right">{rightAction}</div>}
+    </div>
+  </header>
+);
+
+const BottomNav = ({ activeTab, setActiveTab }) => (
+  <nav className="bottom-nav">
+    <button className={`bottom-nav-item ${activeTab === 'explore' ? 'active' : ''}`} onClick={() => setActiveTab('explore')}>
+      <span className="bottom-nav-icon">{Icons.compass}</span>
+      <span>Explore</span>
+    </button>
+    <button className={`bottom-nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}>
+      <span className="bottom-nav-icon">{Icons.map}</span>
+      <span>Map</span>
+    </button>
+    <button className={`bottom-nav-item bolt ${activeTab === 'bolt' ? 'active' : ''}`} onClick={() => setActiveTab('bolt')}>
+      <span className="bottom-nav-icon bolt-icon">{Icons.bolt}</span>
+    </button>
+    <button className={`bottom-nav-item ${activeTab === 'discover' ? 'active' : ''}`} onClick={() => setActiveTab('discover')}>
+      <span className="bottom-nav-icon">{Icons.heart}</span>
+      <span>Discover</span>
+    </button>
+    <button className={`bottom-nav-item ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>
+      <span className="bottom-nav-icon">{Icons.calendar}</span>
+      <span>Events</span>
+    </button>
+  </nav>
+);
+
+// ============================================
+// APP VIEWS
+// ============================================
+
+const ExploreView = ({ trucks, onTruckClick }) => {
+  const [viewMode, setViewMode] = useState('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredTrucks = trucks.filter(truck =>
+    truck.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    truck.cuisine.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="app-view">
+      <div className="explore-header">
+        <h1 className="explore-title">Explore Trucks</h1>
+        <div className="explore-actions">
+          <button
+            className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            onClick={() => setViewMode('grid')}
+          >
+            {Icons.grid}
+          </button>
+          <button
+            className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            {Icons.menu}
+          </button>
+        </div>
+      </div>
+
+      <div className="explore-search">
+        <span className="search-icon">{Icons.search}</span>
+        <input
+          type="text"
+          placeholder="Search food trucks..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      <div className="explore-stats">
+        <span className="explore-count">{filteredTrucks.length} trucks nearby</span>
+        <span className="explore-featured">{filteredTrucks.filter(t => t.featured).length} featured</span>
+      </div>
+
+      <div className={`truck-grid ${viewMode}`}>
+        {filteredTrucks.map(truck => (
+          <div key={truck.id} className="truck-card" onClick={() => onTruckClick(truck)}>
+            <div className="truck-card-header">
+              <div className="truck-emoji">{truck.image}</div>
+              {truck.featured && (
+                <span className="featured-badge">
+                  <span className="star-icon">{Icons.star}</span>
+                  Featured
+                </span>
+              )}
+            </div>
+            <div className="truck-card-body">
+              <h3 className="truck-name">{truck.name}</h3>
+              <p className="truck-cuisine">{truck.cuisine}</p>
+              <div className="truck-meta">
+                <span className="truck-rating">
+                  <span className="rating-star">{Icons.star}</span>
+                  {truck.rating}
+                </span>
+                <span className="truck-distance">
+                  <span className="icon-xs">{Icons.mapPin}</span>
+                  {truck.distance}
+                </span>
+                <span className={`truck-status ${truck.isOpen ? 'open' : 'closed'}`}>
+                  {truck.isOpen ? 'Open' : 'Closed'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const MapView = ({ trucks, onTruckClick }) => {
+  const [hoveredTruck, setHoveredTruck] = useState(null);
+
+  return (
+    <div className="app-view map-view">
+      <div className="map-container">
+        <div className="map-background">
+          <div className="map-grid"></div>
+
+          {trucks.map((truck, index) => (
+            <div
+              key={truck.id}
+              className={`map-marker ${truck.featured ? 'featured' : ''}`}
+              style={{
+                left: `${15 + (index * 14)}%`,
+                top: `${20 + (index * 12)}%`
+              }}
+              onMouseEnter={() => setHoveredTruck(truck)}
+              onMouseLeave={() => setHoveredTruck(null)}
+              onClick={() => onTruckClick(truck)}
+            >
+              <div className="marker-pin">
+                <span className="marker-emoji">{truck.image}</span>
+                {truck.featured && <span className="marker-star">★</span>}
+              </div>
+              <div className="marker-point"></div>
+
+              {hoveredTruck?.id === truck.id && (
+                <div className="marker-popup">
+                  <div className="popup-header">
+                    <span className="popup-emoji">{truck.image}</span>
+                    <div className="popup-info">
+                      <h4>{truck.name}</h4>
+                      <p>{truck.cuisine}</p>
+                    </div>
+                  </div>
+                  <div className="popup-meta">
+                    <span className="popup-rating">★ {truck.rating}</span>
+                    <span className="popup-distance">{truck.distance}</span>
+                    <span className={`popup-status ${truck.isOpen ? 'open' : 'closed'}`}>
+                      {truck.isOpen ? 'Open' : 'Closed'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="map-legend">
+          <h4>Legend</h4>
+          <div className="legend-item">
+            <div className="legend-marker featured"></div>
+            <span>Featured (Pro)</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-marker regular"></div>
+            <span>Regular Truck</span>
+          </div>
+        </div>
+
+        <div className="map-info">
+          <p className="map-count">{trucks.length} trucks nearby</p>
+          <p className="map-hint">Hover for details, click to view</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const BoltView = ({ trucks, events, onTruckClick, onEventClick }) => {
+  const [radius, setRadius] = useState(5);
+  const [generated, setGenerated] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerate = () => {
+    setIsGenerating(true);
+
+    setTimeout(() => {
+      const randomTruck = trucks[Math.floor(Math.random() * trucks.length)];
+      const shuffledItems = [...randomTruck.menuItems].sort(() => Math.random() - 0.5);
+      const selectedItems = shuffledItems.slice(0, 2);
+      const randomEvent = events[Math.floor(Math.random() * events.length)];
+
+      setGenerated({
+        truck: randomTruck,
+        items: selectedItems,
+        event: randomEvent
+      });
+      setIsGenerating(false);
+    }, 800);
+  };
+
+  return (
+    <div className="app-view bolt-view">
+      <div className="bolt-hero">
+        <div className="bolt-icon-large">⚡</div>
+        <h1>Bolt Generator</h1>
+        <p>Get instant food truck recommendations powered by AI</p>
+      </div>
+
+      <div className="bolt-controls">
+        <div className="radius-control">
+          <label>Search Radius</label>
+          <div className="radius-slider">
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={radius}
+              onChange={(e) => setRadius(parseInt(e.target.value))}
+            />
+            <span className="radius-value">{radius} mi</span>
+          </div>
+        </div>
+
+        <button
+          className={`bolt-generate-btn ${isGenerating ? 'generating' : ''}`}
+          onClick={handleGenerate}
+          disabled={isGenerating}
+        >
+          {isGenerating ? 'Generating...' : 'Generate Now ⚡'}
+        </button>
+      </div>
+
+      {generated && (
+        <div className="bolt-results">
+          <div className="bolt-result-card truck" onClick={() => onTruckClick(generated.truck)}>
+            <div className="result-label">Your Random Truck</div>
+            <div className="result-truck-header">
+              <span className="result-emoji">{generated.truck.image}</span>
+              <div className="result-truck-info">
+                <h3>{generated.truck.name}</h3>
+                <p>{generated.truck.description}</p>
+                <div className="result-truck-meta">
+                  <span><span className="icon-xs">{Icons.mapPin}</span> {generated.truck.location}</span>
+                  <span>{generated.truck.distance}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="result-menu">
+              <div className="menu-label">Try These Items:</div>
+              {generated.items.map(item => (
+                <div key={item.id} className="menu-item">
+                  <span className="item-emoji">{item.emoji}</span>
+                  <div className="item-info">
+                    <span className="item-name">{item.name}</span>
+                    <span className="item-desc">{item.description}</span>
+                  </div>
+                  <span className="item-price">{item.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bolt-result-card event" onClick={() => onEventClick(generated.event)}>
+            <div className="result-label">Recommended Event</div>
+            <div className="result-event">
+              <span className="result-emoji">{generated.event.image}</span>
+              <h3>{generated.event.name}</h3>
+              <p>{generated.event.description}</p>
+              <div className="event-details">
+                <span><span className="icon-xs">{Icons.calendar}</span> {generated.event.date}</span>
+                <span><span className="icon-xs">{Icons.clock}</span> {generated.event.time}</span>
+                <span><span className="icon-xs">{Icons.mapPin}</span> {generated.event.location}</span>
+              </div>
+            </div>
+          </div>
+
+          <button className="bolt-again-btn" onClick={handleGenerate}>
+            Generate Again
+          </button>
+        </div>
+      )}
+
+      {!generated && (
+        <div className="bolt-instructions">
+          <h3>How it works:</h3>
+          <ol>
+            <li><span>1.</span> Set your preferred search radius</li>
+            <li><span>2.</span> AI randomly selects a food truck near you</li>
+            <li><span>3.</span> Get 2 random menu items to try</li>
+            <li><span>4.</span> Discover a random event happening nearby</li>
+            <li><span>5.</span> Visit the truck and enjoy your adventure!</li>
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DiscoverView = ({ trucks, favorites, toggleFavorite }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState(null);
+
+  const currentTruck = trucks[currentIndex];
+
+  const handleSwipe = (direction) => {
+    setSwipeDirection(direction);
+
+    setTimeout(() => {
+      if (direction === 'right') {
+        toggleFavorite(currentTruck.id);
+      }
+      setSwipeDirection(null);
+      setCurrentIndex((prev) => (prev + 1) % trucks.length);
+    }, 300);
+  };
+
+  if (!currentTruck) return null;
+
+  return (
+    <div className="app-view discover-view">
+      <div className={`discover-card ${swipeDirection || ''}`}>
+        <div className="discover-card-content">
+          <div className="discover-emoji-container">
+            <span className="discover-emoji">{currentTruck.image}</span>
+            {currentTruck.featured && (
+              <span className="discover-featured-badge">
+                <span className="star-icon">{Icons.star}</span>
+                Featured
+              </span>
+            )}
+          </div>
+
+          <h2 className="discover-name">{currentTruck.name}</h2>
+          <p className="discover-desc">{currentTruck.description}</p>
+
+          <div className="discover-stats">
+            <span className="discover-rating">
+              <span className="rating-star">{Icons.star}</span>
+              {currentTruck.rating}
+            </span>
+            <span className="discover-price">{currentTruck.priceRange}</span>
+          </div>
+
+          <div className="discover-location">
+            <span className="icon-sm">{Icons.mapPin}</span>
+            <span>{currentTruck.location} • {currentTruck.distance}</span>
+          </div>
+
+          <div className="discover-tags">
+            {currentTruck.features.map((feature, idx) => (
+              <span key={idx} className="discover-tag">{feature}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="discover-actions">
+          <button className="discover-btn pass" onClick={() => handleSwipe('left')}>
+            <span className="discover-btn-icon">{Icons.x}</span>
+            Pass
+          </button>
+          <button className="discover-btn like" onClick={() => handleSwipe('right')}>
+            <span className="discover-btn-icon">{Icons.heartFilled}</span>
+            Like
+          </button>
+        </div>
+      </div>
+
+      <p className="discover-progress">
+        {currentIndex + 1} of {trucks.length}
+      </p>
+    </div>
+  );
+};
+
+const EventsView = ({ events, trucks, onEventClick }) => {
+  const featuredEvents = events.filter(e => e.featured);
+
+  return (
+    <div className="app-view events-view">
+      <h1 className="events-title">Events</h1>
+
+      <div className="events-section">
+        <h2>Featured Events</h2>
+        <div className="events-featured-grid">
+          {featuredEvents.map(event => (
+            <div key={event.id} className="event-card featured" onClick={() => onEventClick(event)}>
+              <span className="event-emoji">{event.image}</span>
+              <h3>{event.name}</h3>
+              <p>{event.description}</p>
+              <div className="event-meta">
+                <span><span className="icon-xs">{Icons.calendar}</span> {event.date}</span>
+                <span><span className="icon-xs">{Icons.clock}</span> {event.time}</span>
+              </div>
+              <div className="event-location">
+                <span className="icon-xs">{Icons.mapPin}</span> {event.location}
+              </div>
+              <div className="event-stats">
+                <span>{event.attendees} attending</span>
+                <span>{event.trucks.length} trucks</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="events-section">
+        <h2>All Events</h2>
+        <div className="events-list">
+          {events.map(event => (
+            <div key={event.id} className="event-list-item" onClick={() => onEventClick(event)}>
+              <span className="event-emoji-sm">{event.image}</span>
+              <div className="event-list-info">
+                <h4>{event.name}</h4>
+                <p>{event.date} • {event.location}</p>
+              </div>
+              <span className="event-attendees">{event.attendees}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TruckDetailView = ({ truck, onBack, isFavorite, toggleFavorite }) => {
+  if (!truck) return null;
+
+  return (
+    <div className="app-view truck-detail-view">
+      <AppHeader
+        title={truck.name}
+        onBack={onBack}
+        rightAction={
+          <button
+            className={`favorite-btn ${isFavorite ? 'active' : ''}`}
+            onClick={() => toggleFavorite(truck.id)}
+          >
+            {isFavorite ? Icons.heartFilled : Icons.heart}
+          </button>
+        }
+      />
+
+      <div className="truck-detail-content">
+        <div className="truck-detail-hero">
+          <span className="truck-detail-emoji">{truck.image}</span>
+          {truck.featured && (
+            <span className="truck-detail-badge">
+              <span className="star-icon">{Icons.star}</span>
+              Featured
+            </span>
+          )}
+        </div>
+
+        <div className="truck-detail-info">
+          <div className="truck-detail-rating">
+            <span className="rating-star">{Icons.star}</span>
+            <span className="rating-value">{truck.rating}</span>
+            <span className="rating-count">({truck.reviewCount} reviews)</span>
+          </div>
+
+          <p className="truck-detail-desc">{truck.description}</p>
+
+          <div className="truck-detail-meta">
+            <div className="meta-item">
+              <span className="icon-sm">{Icons.mapPin}</span>
+              <span>{truck.location} • {truck.distance}</span>
+            </div>
+            <div className="meta-item">
+              <span className="icon-sm">{Icons.clock}</span>
+              <span>{truck.hours}</span>
+            </div>
+            <div className={`meta-status ${truck.isOpen ? 'open' : 'closed'}`}>
+              {truck.isOpen ? 'Open Now' : 'Closed'}
+            </div>
+          </div>
+
+          <div className="truck-detail-tags">
+            {truck.features.map((feature, idx) => (
+              <span key={idx} className="detail-tag">{feature}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="truck-detail-menu">
+          <h3>Menu</h3>
+          <div className="menu-list">
+            {truck.menuItems.map(item => (
+              <div key={item.id} className="menu-card">
+                <span className="menu-emoji">{item.emoji}</span>
+                <div className="menu-info">
+                  <h4>{item.name}</h4>
+                  <p>{item.description}</p>
+                </div>
+                <span className="menu-price">{item.price}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EventDetailView = ({ event, trucks, onBack }) => {
+  if (!event) return null;
+
+  const eventTrucks = trucks.filter(t => event.trucks.includes(t.id));
+
+  return (
+    <div className="app-view event-detail-view">
+      <AppHeader title={event.name} onBack={onBack} />
+
+      <div className="event-detail-content">
+        <div className="event-detail-hero">
+          <span className="event-detail-emoji">{event.image}</span>
+          {event.featured && <span className="event-detail-badge">Featured Event</span>}
+        </div>
+
+        <h2 className="event-detail-title">{event.name}</h2>
+        <p className="event-detail-desc">{event.description}</p>
+
+        <div className="event-detail-info">
+          <div className="info-item">
+            <span className="icon-sm">{Icons.calendar}</span>
+            <span>{event.date}</span>
+          </div>
+          <div className="info-item">
+            <span className="icon-sm">{Icons.clock}</span>
+            <span>{event.time}</span>
+          </div>
+          <div className="info-item">
+            <span className="icon-sm">{Icons.mapPin}</span>
+            <span>{event.location}</span>
+          </div>
+          <div className="info-item">
+            <span className="icon-sm">{Icons.users}</span>
+            <span>{event.attendees} attending</span>
+          </div>
+        </div>
+
+        <div className="event-actions">
+          <button className="event-btn going">Going</button>
+          <button className="event-btn interested">Interested</button>
+        </div>
+
+        <div className="event-trucks">
+          <h3>Participating Trucks ({eventTrucks.length})</h3>
+          <div className="event-trucks-list">
+            {eventTrucks.map(truck => (
+              <div key={truck.id} className="event-truck-item">
+                <span className="truck-emoji-sm">{truck.image}</span>
+                <div className="truck-info">
+                  <h4>{truck.name}</h4>
+                  <p>{truck.cuisine}</p>
+                </div>
+                <span className="truck-rating-sm">★ {truck.rating}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// APP DEMO WRAPPER
+// ============================================
+
+const AppDemo = ({ onBack }) => {
+  const [activeTab, setActiveTab] = useState('explore');
+  const [selectedTruck, setSelectedTruck] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [favorites, setFavorites] = useState([1, 3]); // Pre-selected favorites
+
+  const toggleFavorite = (id) => {
+    setFavorites(prev =>
+      prev.includes(id) ? prev.filter(fav => fav !== id) : [...prev, id]
+    );
+  };
+
+  const handleTruckClick = (truck) => {
+    setSelectedTruck(truck);
+  };
+
+  const handleEventClick = (event) => {
+    setSelectedEvent(event);
+  };
+
+  const handleBackFromTruck = () => {
+    setSelectedTruck(null);
+  };
+
+  const handleBackFromEvent = () => {
+    setSelectedEvent(null);
+  };
+
+  // Render truck detail if selected
+  if (selectedTruck) {
+    return (
+      <div className="app-demo">
+        <TruckDetailView
+          truck={selectedTruck}
+          onBack={handleBackFromTruck}
+          isFavorite={favorites.includes(selectedTruck.id)}
+          toggleFavorite={toggleFavorite}
+        />
+      </div>
+    );
+  }
+
+  // Render event detail if selected
+  if (selectedEvent) {
+    return (
+      <div className="app-demo">
+        <EventDetailView
+          event={selectedEvent}
+          trucks={mockTrucks}
+          onBack={handleBackFromEvent}
+        />
+      </div>
+    );
+  }
+
+  // Render main app view
+  return (
+    <div className="app-demo">
+      <div className="app-demo-header">
+        <button className="back-to-landing" onClick={onBack}>
+          <span className="icon-sm">{Icons.chevronLeft}</span>
+          Back to Landing
+        </button>
+        <span className="demo-badge">Demo Mode</span>
+      </div>
+
+      {activeTab === 'explore' && (
+        <ExploreView trucks={mockTrucks} onTruckClick={handleTruckClick} />
+      )}
+      {activeTab === 'map' && (
+        <MapView trucks={mockTrucks} onTruckClick={handleTruckClick} />
+      )}
+      {activeTab === 'bolt' && (
+        <BoltView
+          trucks={mockTrucks}
+          events={mockEvents}
+          onTruckClick={handleTruckClick}
+          onEventClick={handleEventClick}
+        />
+      )}
+      {activeTab === 'discover' && (
+        <DiscoverView
+          trucks={mockTrucks}
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
+        />
+      )}
+      {activeTab === 'events' && (
+        <EventsView
+          events={mockEvents}
+          trucks={mockTrucks}
+          onEventClick={handleEventClick}
+        />
+      )}
+
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+    </div>
+  );
+};
+
+// ============================================
+// LANDING PAGE COMPONENTS
+// ============================================
 
 const PhoneMockup = () => (
   <div className="phone-mockup">
@@ -499,7 +1422,11 @@ const Footer = () => (
   </footer>
 );
 
-const App = () => {
+// ============================================
+// LANDING PAGE
+// ============================================
+
+const LandingPage = ({ setCurrentView }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [waitlistType, setWaitlistType] = useState('lover');
   const [openFaq, setOpenFaq] = useState(0);
@@ -544,7 +1471,11 @@ const App = () => {
 
   return (
     <div className="page">
-      <Header mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Header
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+        setCurrentView={setCurrentView}
+      />
 
       <main id="main">
         {/* Hero Section */}
@@ -568,7 +1499,9 @@ const App = () => {
                   Join the Waitlist
                   <span className="btn-icon">{Icons.arrowRight}</span>
                 </a>
-                <a href="#features" className="btn-ghost btn-lg">Learn More</a>
+                <button onClick={() => setCurrentView('app')} className="btn-ghost btn-lg">
+                  Try Demo
+                </button>
               </div>
               <div className="hero-social-proof">
                 <div className="avatar-stack">
@@ -859,6 +1792,20 @@ const App = () => {
       <Footer />
     </div>
   );
+};
+
+// ============================================
+// MAIN APP
+// ============================================
+
+const App = () => {
+  const [currentView, setCurrentView] = useState('landing');
+
+  if (currentView === 'app') {
+    return <AppDemo onBack={() => setCurrentView('landing')} />;
+  }
+
+  return <LandingPage setCurrentView={setCurrentView} />;
 };
 
 export default App;
