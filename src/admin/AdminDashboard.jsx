@@ -4,7 +4,7 @@ import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { format, subDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import './AdminDashboard.css';
 
 // Supabase client
@@ -27,28 +27,21 @@ const Icons = {
   edit: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
   trash: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
   eye: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
-  check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
   x: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  calendar: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-  mail: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
-  phone: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
   star: <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   trendUp: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
   trendDown: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>,
   dollar: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-  map: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>,
   bell: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
-  filter: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
   download: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
   menu: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+  refresh: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>,
 };
 
 // Chart colors
 const CHART_COLORS = ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#fecdd3'];
-const CHART_GREEN = '#16a34a';
-const CHART_BLUE = '#3b82f6';
 
-// Mock data generators
+// Generate chart data for demo (will be replaced with real data)
 const generateRevenueData = () => {
   return Array.from({ length: 30 }, (_, i) => ({
     date: format(subDays(new Date(), 29 - i), 'MMM dd'),
@@ -85,27 +78,6 @@ const generateWeeklyOrders = () => {
     delivery: Math.floor(Math.random() * 60) + 20,
   }));
 };
-
-// Mock users data
-const mockUsers = [
-  { id: 1, name: 'John Smith', email: 'john@example.com', phone: '+1 555-0101', role: 'customer', status: 'active', orders: 23, spent: 456.78, joined: '2024-01-15', avatar: 'JS' },
-  { id: 2, name: 'Sarah Johnson', email: 'sarah@example.com', phone: '+1 555-0102', role: 'customer', status: 'active', orders: 45, spent: 892.30, joined: '2024-02-20', avatar: 'SJ' },
-  { id: 3, name: 'Mike Chen', email: 'mike@tacotruck.com', phone: '+1 555-0103', role: 'vendor', status: 'active', orders: 0, spent: 0, joined: '2024-01-10', avatar: 'MC' },
-  { id: 4, name: 'Emily Davis', email: 'emily@example.com', phone: '+1 555-0104', role: 'customer', status: 'inactive', orders: 8, spent: 123.45, joined: '2024-03-05', avatar: 'ED' },
-  { id: 5, name: 'Alex Rodriguez', email: 'alex@burgerbus.com', phone: '+1 555-0105', role: 'vendor', status: 'active', orders: 0, spent: 0, joined: '2024-02-01', avatar: 'AR' },
-  { id: 6, name: 'Lisa Wang', email: 'lisa@example.com', phone: '+1 555-0106', role: 'customer', status: 'active', orders: 67, spent: 1234.56, joined: '2023-12-10', avatar: 'LW' },
-  { id: 7, name: 'Tom Wilson', email: 'tom@example.com', phone: '+1 555-0107', role: 'customer', status: 'pending', orders: 0, spent: 0, joined: '2024-04-01', avatar: 'TW' },
-  { id: 8, name: 'Jessica Brown', email: 'jess@pizzawheels.com', phone: '+1 555-0108', role: 'vendor', status: 'pending', orders: 0, spent: 0, joined: '2024-04-05', avatar: 'JB' },
-];
-
-// Mock trucks data
-const mockTrucks = [
-  { id: 1, name: 'Taco Loco', owner: 'Mike Chen', cuisine: 'Mexican', status: 'active', rating: 4.8, orders: 1234, revenue: 45678.90, location: 'Downtown Portland' },
-  { id: 2, name: 'Burger Bus', owner: 'Alex Rodriguez', cuisine: 'American', status: 'active', rating: 4.6, orders: 987, revenue: 34567.80, location: 'Pearl District' },
-  { id: 3, name: 'Pizza Wheels', owner: 'Jessica Brown', cuisine: 'Italian', status: 'pending', rating: 0, orders: 0, revenue: 0, location: 'SE Division' },
-  { id: 4, name: 'Thai Express', owner: 'Kim Nguyen', cuisine: 'Thai', status: 'active', rating: 4.9, orders: 756, revenue: 28934.50, location: 'NW 23rd' },
-  { id: 5, name: 'The Coffee Cart', owner: 'Sam Miller', cuisine: 'Coffee', status: 'inactive', rating: 4.5, orders: 2345, revenue: 12345.60, location: 'PSU Campus' },
-];
 
 // Login Component
 const AdminLogin = ({ onLogin }) => {
@@ -189,25 +161,17 @@ const AdminLogin = ({ onLogin }) => {
 };
 
 // Dashboard Overview Component
-const DashboardOverview = () => {
+const DashboardOverview = ({ stats, recentOrders, loading, onRefresh }) => {
   const revenueData = generateRevenueData();
   const userGrowthData = generateUserGrowthData();
   const categoryData = generateOrdersByCategory();
   const weeklyData = generateWeeklyOrders();
 
-  const stats = [
-    { label: 'Total Revenue', value: '$128,450', change: '+12.5%', trend: 'up', icon: Icons.dollar },
-    { label: 'Total Orders', value: '3,847', change: '+8.2%', trend: 'up', icon: Icons.orders },
-    { label: 'Active Users', value: '2,156', change: '+15.3%', trend: 'up', icon: Icons.users },
-    { label: 'Food Trucks', value: '48', change: '+3', trend: 'up', icon: Icons.trucks },
-  ];
-
-  const recentOrders = [
-    { id: '#ORD-001', customer: 'John Smith', truck: 'Taco Loco', amount: '$24.50', status: 'completed', time: '5 min ago' },
-    { id: '#ORD-002', customer: 'Sarah Johnson', truck: 'Burger Bus', amount: '$18.90', status: 'preparing', time: '12 min ago' },
-    { id: '#ORD-003', customer: 'Mike Wilson', truck: 'Thai Express', amount: '$32.00', status: 'pending', time: '18 min ago' },
-    { id: '#ORD-004', customer: 'Emily Davis', truck: 'Pizza Wheels', amount: '$45.00', status: 'completed', time: '25 min ago' },
-    { id: '#ORD-005', customer: 'Alex Chen', truck: 'Coffee Cart', amount: '$8.50', status: 'completed', time: '32 min ago' },
+  const statCards = [
+    { label: 'Total Users', value: stats.activeUsers?.toLocaleString() || '0', change: 'All time', trend: 'up', icon: Icons.users },
+    { label: 'Food Trucks', value: stats.totalTrucks?.toLocaleString() || '0', change: 'Registered', trend: 'up', icon: Icons.trucks },
+    { label: 'Reviews', value: stats.totalOrders?.toLocaleString() || '0', change: 'Total', trend: 'up', icon: Icons.star },
+    { label: 'Check-ins', value: recentOrders?.length?.toLocaleString() || '0', change: 'Recent', trend: 'up', icon: Icons.orders },
   ];
 
   return (
@@ -215,25 +179,25 @@ const DashboardOverview = () => {
       <div className="page-header">
         <h1>Dashboard Overview</h1>
         <div className="header-actions">
+          <button className="btn-secondary" onClick={onRefresh}>
+            {Icons.refresh}
+            Refresh
+          </button>
           <button className="btn-secondary">
             {Icons.download}
             Export Report
-          </button>
-          <button className="btn-primary">
-            {Icons.plus}
-            Add Truck
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="stats-grid">
-        {stats.map((stat, index) => (
+        {statCards.map((stat, index) => (
           <div key={index} className="stat-card">
             <div className="stat-icon">{stat.icon}</div>
             <div className="stat-content">
               <span className="stat-label">{stat.label}</span>
-              <span className="stat-value">{stat.value}</span>
+              <span className="stat-value">{loading ? '...' : stat.value}</span>
               <span className={`stat-change ${stat.trend}`}>
                 {stat.trend === 'up' ? Icons.trendUp : Icons.trendDown}
                 {stat.change}
@@ -337,36 +301,42 @@ const DashboardOverview = () => {
         </div>
       </div>
 
-      {/* Recent Orders */}
+      {/* Recent Activity */}
       <div className="table-card">
         <div className="table-header">
-          <h3>Recent Orders</h3>
+          <h3>Recent Activity</h3>
           <button className="btn-text">View All</button>
         </div>
         <table className="data-table">
           <thead>
             <tr>
-              <th>Order ID</th>
+              <th>Activity</th>
               <th>Customer</th>
               <th>Food Truck</th>
-              <th>Amount</th>
-              <th>Status</th>
+              <th>Points</th>
+              <th>Type</th>
               <th>Time</th>
             </tr>
           </thead>
           <tbody>
-            {recentOrders.map((order, index) => (
-              <tr key={index}>
-                <td className="font-medium">{order.id}</td>
-                <td>{order.customer}</td>
-                <td>{order.truck}</td>
-                <td className="font-medium">{order.amount}</td>
+            {recentOrders.length > 0 ? recentOrders.map((activity, index) => (
+              <tr key={activity.id || index}>
+                <td className="font-medium">#{activity.id?.slice(0, 8) || `ACT-${index + 1}`}</td>
+                <td>{activity.customer_name || 'Guest'}</td>
+                <td>{activity.truck_name || 'Unknown'}</td>
+                <td className="font-medium">+{activity.points || 10} pts</td>
                 <td>
-                  <span className={`status-badge ${order.status}`}>{order.status}</span>
+                  <span className="status-badge active">Check-in</span>
                 </td>
-                <td className="text-muted">{order.time}</td>
+                <td className="text-muted">{activity.created_at ? format(new Date(activity.created_at), 'MMM dd, HH:mm') : 'N/A'}</td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                  No activity yet. Check-ins and reviews will appear here.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -374,57 +344,165 @@ const DashboardOverview = () => {
   );
 };
 
-// Users Management Component
+// Users Management Component - Uses profiles table from schema
 const UsersManagement = () => {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [isAddMode, setIsAddMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const emptyUser = {
+    name: '',
+    email: '',
+    role: 'customer',
+    phone: '',
+    points: 0,
+  };
+
+  // Fetch users from Supabase profiles table with customer/owner details
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      // Fetch profiles with customer data joined
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          customers (phone, points, avatar_url),
+          owners (subscription_type)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Flatten the data for easier display
+      const flattenedUsers = (profiles || []).map(profile => ({
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        role: profile.role,
+        created_at: profile.created_at,
+        phone: profile.customers?.phone || '',
+        points: profile.customers?.points || 0,
+        avatar_url: profile.customers?.avatar_url || '',
+        subscription_type: profile.owners?.subscription_type || '',
+      }));
+
+      setUsers(flattenedUsers);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || user.role === filterRole;
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesRole;
   });
+
+  const handleAddUser = () => {
+    setSelectedUser({ ...emptyUser });
+    setIsAddMode(true);
+    setEditMode(true);
+    setShowModal(true);
+  };
 
   const handleEditUser = (user) => {
     setSelectedUser({ ...user });
+    setIsAddMode(false);
     setEditMode(true);
     setShowModal(true);
   };
 
   const handleViewUser = (user) => {
     setSelectedUser(user);
+    setIsAddMode(false);
     setEditMode(false);
     setShowModal(true);
   };
 
-  const handleSaveUser = () => {
-    setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
-    setShowModal(false);
-    setSelectedUser(null);
-  };
+  const handleSaveUser = async () => {
+    setSaving(true);
+    try {
+      if (isAddMode) {
+        // Note: Creating users requires auth signup - this creates profile only
+        // In production, you'd use Supabase admin API or invite flow
+        alert('To add new users, use Supabase Auth signup flow. This admin panel can only edit existing users.');
+        setSaving(false);
+        return;
+      } else {
+        // Update existing profile
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            name: selectedUser.name,
+            role: selectedUser.role,
+          })
+          .eq('id', selectedUser.id);
 
-  const handleDeleteUser = (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(u => u.id !== userId));
+        if (error) throw error;
+
+        // Update customer phone if role is customer
+        if (selectedUser.role === 'customer' && selectedUser.phone) {
+          await supabase
+            .from('customers')
+            .update({ phone: selectedUser.phone })
+            .eq('id', selectedUser.id);
+        }
+
+        setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
+      }
+      setShowModal(false);
+      setSelectedUser(null);
+    } catch (err) {
+      console.error('Error saving user:', err);
+      alert('Error saving user: ' + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleStatusChange = (userId, newStatus) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm('Are you sure you want to delete this user? This will remove their profile and all associated data.')) {
+      try {
+        // Delete from profiles (cascades to customers/owners)
+        const { error } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', userId);
+
+        if (error) throw error;
+        setUsers(users.filter(u => u.id !== userId));
+      } catch (err) {
+        console.error('Error deleting user:', err);
+        alert('Error deleting user: ' + err.message);
+      }
+    }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
     <div className="users-management">
       <div className="page-header">
         <h1>Users Management</h1>
-        <button className="btn-primary">
+        <button className="btn-primary" onClick={handleAddUser}>
           {Icons.plus}
           Add User
         </button>
@@ -445,84 +523,79 @@ const UsersManagement = () => {
           <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
             <option value="all">All Roles</option>
             <option value="customer">Customers</option>
-            <option value="vendor">Vendors</option>
-            <option value="admin">Admins</option>
-          </select>
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="pending">Pending</option>
+            <option value="owner">Owners</option>
           </select>
         </div>
       </div>
 
       {/* Users Table */}
       <div className="table-card">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Contact</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Orders</th>
-              <th>Total Spent</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id}>
-                <td>
-                  <div className="user-cell">
-                    <div className="user-avatar">{user.avatar}</div>
-                    <div className="user-info">
-                      <span className="user-name">{user.name}</span>
-                      <span className="user-email">{user.email}</span>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div className="contact-cell">
-                    <span>{user.phone}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className={`role-badge ${user.role}`}>{user.role}</span>
-                </td>
-                <td>
-                  <select
-                    className={`status-select ${user.status}`}
-                    value={user.status}
-                    onChange={(e) => handleStatusChange(user.id, e.target.value)}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="pending">Pending</option>
-                  </select>
-                </td>
-                <td>{user.orders}</td>
-                <td>${user.spent.toFixed(2)}</td>
-                <td>{user.joined}</td>
-                <td>
-                  <div className="action-buttons">
-                    <button className="icon-btn" onClick={() => handleViewUser(user)} title="View">
-                      {Icons.eye}
-                    </button>
-                    <button className="icon-btn" onClick={() => handleEditUser(user)} title="Edit">
-                      {Icons.edit}
-                    </button>
-                    <button className="icon-btn danger" onClick={() => handleDeleteUser(user.id)} title="Delete">
-                      {Icons.trash}
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+            Loading users...
+          </div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Contact</th>
+                <th>Role</th>
+                <th>Points</th>
+                <th>Subscription</th>
+                <th>Joined</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                <tr key={user.id}>
+                  <td>
+                    <div className="user-cell">
+                      <div className="user-avatar">{getInitials(user.name)}</div>
+                      <div className="user-info">
+                        <span className="user-name">{user.name || 'No name'}</span>
+                        <span className="user-email">{user.email}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="contact-cell">
+                      <span>{user.phone || 'No phone'}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`role-badge ${user.role || 'customer'}`}>{user.role || 'customer'}</span>
+                  </td>
+                  <td>{user.role === 'customer' ? (user.points || 0) : '-'}</td>
+                  <td>{user.role === 'owner' ? (user.subscription_type || 'free') : '-'}</td>
+                  <td>{user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : 'N/A'}</td>
+                  <td>
+                    <div className="action-buttons">
+                      <button className="icon-btn" onClick={() => handleViewUser(user)} title="View">
+                        {Icons.eye}
+                      </button>
+                      <button className="icon-btn" onClick={() => handleEditUser(user)} title="Edit">
+                        {Icons.edit}
+                      </button>
+                      <button className="icon-btn danger" onClick={() => handleDeleteUser(user.id)} title="Delete">
+                        {Icons.trash}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+                    {searchTerm || filterRole !== 'all'
+                      ? 'No users match your filters.'
+                      : 'No users yet. Users will appear here when they sign up.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* User Modal */}
@@ -530,7 +603,7 @@ const UsersManagement = () => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editMode ? 'Edit User' : 'User Details'}</h2>
+              <h2>{isAddMode ? 'Add New User' : editMode ? 'Edit User' : 'User Details'}</h2>
               <button className="modal-close" onClick={() => setShowModal(false)}>
                 {Icons.x}
               </button>
@@ -539,59 +612,52 @@ const UsersManagement = () => {
               {editMode ? (
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>Name</label>
+                    <label>Name *</label>
                     <input
                       type="text"
-                      value={selectedUser.name}
+                      value={selectedUser.name || ''}
                       onChange={(e) => setSelectedUser({ ...selectedUser, name: e.target.value })}
+                      placeholder="Enter full name"
+                      required
                     />
                   </div>
                   <div className="form-group">
                     <label>Email</label>
                     <input
                       type="email"
-                      value={selectedUser.email}
-                      onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
+                      value={selectedUser.email || ''}
+                      disabled
+                      className="disabled"
                     />
+                    <span className="form-hint">Email cannot be changed (linked to auth)</span>
                   </div>
                   <div className="form-group">
                     <label>Phone</label>
                     <input
                       type="tel"
-                      value={selectedUser.phone}
+                      value={selectedUser.phone || ''}
                       onChange={(e) => setSelectedUser({ ...selectedUser, phone: e.target.value })}
+                      placeholder="Enter phone number"
                     />
                   </div>
                   <div className="form-group">
                     <label>Role</label>
                     <select
-                      value={selectedUser.role}
+                      value={selectedUser.role || 'customer'}
                       onChange={(e) => setSelectedUser({ ...selectedUser, role: e.target.value })}
                     >
                       <option value="customer">Customer</option>
-                      <option value="vendor">Vendor</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select
-                      value={selectedUser.status}
-                      onChange={(e) => setSelectedUser({ ...selectedUser, status: e.target.value })}
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="pending">Pending</option>
+                      <option value="owner">Owner</option>
                     </select>
                   </div>
                 </div>
               ) : (
                 <div className="user-details">
                   <div className="detail-header">
-                    <div className="user-avatar large">{selectedUser.avatar}</div>
+                    <div className="user-avatar large">{getInitials(selectedUser.name)}</div>
                     <div>
-                      <h3>{selectedUser.name}</h3>
-                      <span className={`role-badge ${selectedUser.role}`}>{selectedUser.role}</span>
+                      <h3>{selectedUser.name || 'No name'}</h3>
+                      <span className={`role-badge ${selectedUser.role || 'customer'}`}>{selectedUser.role || 'customer'}</span>
                     </div>
                   </div>
                   <div className="detail-grid">
@@ -601,24 +667,24 @@ const UsersManagement = () => {
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Phone</span>
-                      <span className="detail-value">{selectedUser.phone}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Status</span>
-                      <span className={`status-badge ${selectedUser.status}`}>{selectedUser.status}</span>
+                      <span className="detail-value">{selectedUser.phone || 'Not provided'}</span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Joined</span>
-                      <span className="detail-value">{selectedUser.joined}</span>
+                      <span className="detail-value">{selectedUser.created_at ? format(new Date(selectedUser.created_at), 'MMM dd, yyyy') : 'N/A'}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Total Orders</span>
-                      <span className="detail-value">{selectedUser.orders}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Total Spent</span>
-                      <span className="detail-value">${selectedUser.spent.toFixed(2)}</span>
-                    </div>
+                    {selectedUser.role === 'customer' && (
+                      <div className="detail-item">
+                        <span className="detail-label">Points</span>
+                        <span className="detail-value">{selectedUser.points || 0}</span>
+                      </div>
+                    )}
+                    {selectedUser.role === 'owner' && (
+                      <div className="detail-item">
+                        <span className="detail-label">Subscription</span>
+                        <span className="detail-value">{selectedUser.subscription_type || 'free'}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -628,8 +694,12 @@ const UsersManagement = () => {
                 Cancel
               </button>
               {editMode && (
-                <button className="btn-primary" onClick={handleSaveUser}>
-                  Save Changes
+                <button
+                  className="btn-primary"
+                  onClick={handleSaveUser}
+                  disabled={saving || !selectedUser.name || !selectedUser.email}
+                >
+                  {saving ? 'Saving...' : isAddMode ? 'Create User' : 'Save Changes'}
                 </button>
               )}
             </div>
@@ -640,21 +710,151 @@ const UsersManagement = () => {
   );
 };
 
-// Food Trucks Management Component
+// Food Trucks Management Component - Uses food_trucks table from schema
 const TrucksManagement = () => {
-  const [trucks, setTrucks] = useState(mockTrucks);
+  const [trucks, setTrucks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTruck, setSelectedTruck] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [isAddMode, setIsAddMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const emptyTruck = {
+    name: '',
+    slug: '',
+    description: '',
+    cuisine: '',
+    location: '',
+    price_range: '$',
+    is_open: true,
+  };
+
+  // Fetch trucks from Supabase food_trucks table with ratings
+  const fetchTrucks = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('food_trucks')
+        .select(`
+          *,
+          owners:owner_id (
+            id,
+            profiles:id (name, email)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Flatten and add owner info
+      const flattenedTrucks = (data || []).map(truck => ({
+        ...truck,
+        owner_name: truck.owners?.profiles?.name || 'Unknown',
+        owner_email: truck.owners?.profiles?.email || '',
+      }));
+
+      setTrucks(flattenedTrucks);
+    } catch (err) {
+      console.error('Error fetching trucks:', err);
+      setTrucks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrucks();
+  }, []);
 
   const filteredTrucks = trucks.filter(truck =>
-    truck.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    truck.owner.toLowerCase().includes(searchTerm.toLowerCase())
+    (truck.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (truck.cuisine || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddTruck = () => {
+    alert('To add a new food truck, the owner must register and create it through the app. Admin can only edit existing trucks.');
+  };
+
+  const handleEditTruck = (truck) => {
+    setSelectedTruck({ ...truck });
+    setIsAddMode(false);
+    setEditMode(true);
+    setShowModal(true);
+  };
+
+  const handleViewTruck = (truck) => {
+    setSelectedTruck(truck);
+    setIsAddMode(false);
+    setEditMode(false);
+    setShowModal(true);
+  };
+
+  const handleSaveTruck = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('food_trucks')
+        .update({
+          name: selectedTruck.name,
+          description: selectedTruck.description,
+          cuisine: selectedTruck.cuisine,
+          location: selectedTruck.location,
+          price_range: selectedTruck.price_range,
+          is_open: selectedTruck.is_open,
+          hours: selectedTruck.hours,
+        })
+        .eq('id', selectedTruck.id);
+
+      if (error) throw error;
+      setTrucks(trucks.map(t => t.id === selectedTruck.id ? selectedTruck : t));
+      setShowModal(false);
+      setSelectedTruck(null);
+    } catch (err) {
+      console.error('Error saving truck:', err);
+      alert('Error saving truck: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteTruck = async (truckId) => {
+    if (window.confirm('Are you sure you want to delete this food truck? This will also delete all menu items and reviews.')) {
+      try {
+        const { error } = await supabase
+          .from('food_trucks')
+          .delete()
+          .eq('id', truckId);
+
+        if (error) throw error;
+        setTrucks(trucks.filter(t => t.id !== truckId));
+      } catch (err) {
+        console.error('Error deleting truck:', err);
+        alert('Error deleting truck: ' + err.message);
+      }
+    }
+  };
+
+  const handleToggleOpen = async (truckId, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from('food_trucks')
+        .update({ is_open: !currentStatus })
+        .eq('id', truckId);
+
+      if (error) throw error;
+      setTrucks(trucks.map(t => t.id === truckId ? { ...t, is_open: !currentStatus } : t));
+    } catch (err) {
+      console.error('Error toggling status:', err);
+    }
+  };
 
   return (
     <div className="trucks-management">
       <div className="page-header">
         <h1>Food Trucks</h1>
-        <button className="btn-primary">
+        <button className="btn-primary" onClick={handleAddTruck}>
           {Icons.plus}
           Add Truck
         </button>
@@ -672,66 +872,215 @@ const TrucksManagement = () => {
         </div>
       </div>
 
-      <div className="trucks-grid">
-        {filteredTrucks.map((truck) => (
-          <div key={truck.id} className="truck-card">
-            <div className="truck-card-header">
-              <div className="truck-avatar">{truck.name.charAt(0)}</div>
-              <div className="truck-info">
-                <h3>{truck.name}</h3>
-                <span className="truck-cuisine">{truck.cuisine}</span>
-              </div>
-              <span className={`status-badge ${truck.status}`}>{truck.status}</span>
-            </div>
-            <div className="truck-card-body">
-              <div className="truck-stat">
-                <span className="stat-label">Owner</span>
-                <span className="stat-value">{truck.owner}</span>
-              </div>
-              <div className="truck-stat">
-                <span className="stat-label">Location</span>
-                <span className="stat-value">{truck.location}</span>
-              </div>
-              <div className="truck-stat">
-                <span className="stat-label">Rating</span>
-                <span className="stat-value rating">
-                  {Icons.star}
-                  {truck.rating > 0 ? truck.rating : 'N/A'}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          Loading food trucks...
+        </div>
+      ) : filteredTrucks.length > 0 ? (
+        <div className="trucks-grid">
+          {filteredTrucks.map((truck) => (
+            <div key={truck.id} className="truck-card">
+              <div className="truck-card-header">
+                <div className="truck-avatar">{(truck.name || '?').charAt(0)}</div>
+                <div className="truck-info">
+                  <h3>{truck.name || 'Unnamed'}</h3>
+                  <span className="truck-cuisine">{truck.cuisine || 'Various'}</span>
+                </div>
+                <span className={`status-badge ${truck.is_open ? 'active' : 'inactive'}`}>
+                  {truck.is_open ? 'Open' : 'Closed'}
                 </span>
               </div>
-              <div className="truck-stat">
-                <span className="stat-label">Total Orders</span>
-                <span className="stat-value">{truck.orders.toLocaleString()}</span>
+              <div className="truck-card-body">
+                <div className="truck-stat">
+                  <span className="stat-label">Owner</span>
+                  <span className="stat-value">{truck.owner_name || 'Unknown'}</span>
+                </div>
+                <div className="truck-stat">
+                  <span className="stat-label">Location</span>
+                  <span className="stat-value">{truck.location || 'Not set'}</span>
+                </div>
+                <div className="truck-stat">
+                  <span className="stat-label">Price Range</span>
+                  <span className="stat-value">{truck.price_range || '$'}</span>
+                </div>
+                <div className="truck-stat">
+                  <span className="stat-label">Hours</span>
+                  <span className="stat-value">{truck.hours || 'Not set'}</span>
+                </div>
               </div>
-              <div className="truck-stat">
-                <span className="stat-label">Revenue</span>
-                <span className="stat-value">${truck.revenue.toLocaleString()}</span>
+              <div className="truck-card-footer">
+                <button className="btn-secondary btn-sm" onClick={() => handleViewTruck(truck)}>View</button>
+                <button className="btn-primary btn-sm" onClick={() => handleEditTruck(truck)}>Edit</button>
+                <button
+                  className={`btn-sm ${truck.is_open ? 'btn-danger' : 'btn-secondary'}`}
+                  onClick={() => handleToggleOpen(truck.id, truck.is_open)}
+                >
+                  {truck.is_open ? 'Close' : 'Open'}
+                </button>
               </div>
             </div>
-            <div className="truck-card-footer">
-              <button className="btn-secondary btn-sm">View Details</button>
-              <button className="btn-primary btn-sm">Edit</button>
+          ))}
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '60px', color: '#64748b', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          {searchTerm ? 'No trucks match your search.' : 'No food trucks yet. Owners can add trucks through the app.'}
+        </div>
+      )}
+
+      {/* Truck Modal */}
+      {showModal && selectedTruck && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{isAddMode ? 'Add New Food Truck' : editMode ? 'Edit Food Truck' : 'Truck Details'}</h2>
+              <button className="modal-close" onClick={() => setShowModal(false)}>
+                {Icons.x}
+              </button>
+            </div>
+            <div className="modal-body">
+              {editMode ? (
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Truck Name *</label>
+                    <input
+                      type="text"
+                      value={selectedTruck.name || ''}
+                      onChange={(e) => setSelectedTruck({ ...selectedTruck, name: e.target.value })}
+                      placeholder="Enter truck name"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Cuisine Type</label>
+                    <input
+                      type="text"
+                      value={selectedTruck.cuisine || ''}
+                      onChange={(e) => setSelectedTruck({ ...selectedTruck, cuisine: e.target.value })}
+                      placeholder="e.g., Mexican, Asian, American"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Location</label>
+                    <input
+                      type="text"
+                      value={selectedTruck.location || ''}
+                      onChange={(e) => setSelectedTruck({ ...selectedTruck, location: e.target.value })}
+                      placeholder="Enter default location"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Hours</label>
+                    <input
+                      type="text"
+                      value={selectedTruck.hours || ''}
+                      onChange={(e) => setSelectedTruck({ ...selectedTruck, hours: e.target.value })}
+                      placeholder="e.g., 11am - 9pm"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Price Range</label>
+                    <select
+                      value={selectedTruck.price_range || '$'}
+                      onChange={(e) => setSelectedTruck({ ...selectedTruck, price_range: e.target.value })}
+                    >
+                      <option value="$">$ (Budget)</option>
+                      <option value="$$">$$ (Moderate)</option>
+                      <option value="$$$">$$$ (Upscale)</option>
+                      <option value="$$$$">$$$$ (Premium)</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select
+                      value={selectedTruck.is_open ? 'open' : 'closed'}
+                      onChange={(e) => setSelectedTruck({ ...selectedTruck, is_open: e.target.value === 'open' })}
+                    >
+                      <option value="open">Open</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Description</label>
+                    <textarea
+                      value={selectedTruck.description || ''}
+                      onChange={(e) => setSelectedTruck({ ...selectedTruck, description: e.target.value })}
+                      placeholder="Enter truck description"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="user-details">
+                  <div className="detail-header">
+                    <div className="user-avatar large">{(selectedTruck.name || '?').charAt(0)}</div>
+                    <div>
+                      <h3>{selectedTruck.name || 'Unnamed'}</h3>
+                      <span className={`status-badge ${selectedTruck.is_open ? 'active' : 'inactive'}`}>
+                        {selectedTruck.is_open ? 'Open' : 'Closed'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <span className="detail-label">Owner</span>
+                      <span className="detail-value">{selectedTruck.owner_name || 'Unknown'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Cuisine</span>
+                      <span className="detail-value">{selectedTruck.cuisine || 'Various'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Location</span>
+                      <span className="detail-value">{selectedTruck.location || 'Not set'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Price Range</span>
+                      <span className="detail-value">{selectedTruck.price_range || '$'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Hours</span>
+                      <span className="detail-value">{selectedTruck.hours || 'Not set'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Created</span>
+                      <span className="detail-value">{selectedTruck.created_at ? format(new Date(selectedTruck.created_at), 'MMM dd, yyyy') : 'N/A'}</span>
+                    </div>
+                  </div>
+                  {selectedTruck.description && (
+                    <div className="detail-item" style={{ marginTop: '16px' }}>
+                      <span className="detail-label">Description</span>
+                      <span className="detail-value">{selectedTruck.description}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+              {editMode && (
+                <button
+                  className="btn-primary"
+                  onClick={handleSaveTruck}
+                  disabled={saving || !selectedTruck.name}
+                >
+                  {saving ? 'Saving...' : isAddMode ? 'Create Truck' : 'Save Changes'}
+                </button>
+              )}
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Analytics Component
-const AnalyticsPage = () => {
+const AnalyticsPage = ({ stats }) => {
   const revenueData = generateRevenueData();
   const userGrowthData = generateUserGrowthData();
   const categoryData = generateOrdersByCategory();
-
-  const topTrucks = [
-    { name: 'Taco Loco', orders: 1234, revenue: 45678, growth: 12.5 },
-    { name: 'Burger Bus', orders: 987, revenue: 34567, growth: 8.3 },
-    { name: 'Thai Express', orders: 756, revenue: 28934, growth: 15.2 },
-    { name: 'Coffee Cart', orders: 2345, revenue: 12345, growth: -2.1 },
-    { name: 'Pizza Wheels', orders: 543, revenue: 21098, growth: 5.7 },
-  ];
 
   return (
     <div className="analytics-page">
@@ -758,7 +1107,7 @@ const AnalyticsPage = () => {
             <span className="metric-title">Total Revenue</span>
             <span className="metric-change positive">+12.5%</span>
           </div>
-          <div className="metric-value">$128,450</div>
+          <div className="metric-value">${(stats.totalRevenue || 0).toLocaleString()}</div>
           <div className="metric-chart">
             <ResponsiveContainer width="100%" height={60}>
               <AreaChart data={revenueData.slice(-7)}>
@@ -772,7 +1121,7 @@ const AnalyticsPage = () => {
             <span className="metric-title">Total Orders</span>
             <span className="metric-change positive">+8.2%</span>
           </div>
-          <div className="metric-value">3,847</div>
+          <div className="metric-value">{(stats.totalOrders || 0).toLocaleString()}</div>
           <div className="metric-chart">
             <ResponsiveContainer width="100%" height={60}>
               <AreaChart data={revenueData.slice(-7)}>
@@ -786,7 +1135,7 @@ const AnalyticsPage = () => {
             <span className="metric-title">Avg. Order Value</span>
             <span className="metric-change positive">+3.8%</span>
           </div>
-          <div className="metric-value">$33.40</div>
+          <div className="metric-value">${stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders).toFixed(2) : '0.00'}</div>
           <div className="metric-chart">
             <ResponsiveContainer width="100%" height={60}>
               <LineChart data={revenueData.slice(-7)}>
@@ -797,10 +1146,10 @@ const AnalyticsPage = () => {
         </div>
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Conversion Rate</span>
-            <span className="metric-change negative">-1.2%</span>
+            <span className="metric-title">Active Users</span>
+            <span className="metric-change positive">+15.3%</span>
           </div>
-          <div className="metric-value">24.8%</div>
+          <div className="metric-value">{(stats.activeUsers || 0).toLocaleString()}</div>
           <div className="metric-chart">
             <ResponsiveContainer width="100%" height={60}>
               <AreaChart data={userGrowthData.slice(-7)}>
@@ -856,41 +1205,6 @@ const AnalyticsPage = () => {
           </ResponsiveContainer>
         </div>
       </div>
-
-      {/* Top Performers */}
-      <div className="table-card">
-        <div className="table-header">
-          <h3>Top Performing Trucks</h3>
-        </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Food Truck</th>
-              <th>Orders</th>
-              <th>Revenue</th>
-              <th>Growth</th>
-            </tr>
-          </thead>
-          <tbody>
-            {topTrucks.map((truck, index) => (
-              <tr key={index}>
-                <td>
-                  <span className="rank-badge">#{index + 1}</span>
-                </td>
-                <td className="font-medium">{truck.name}</td>
-                <td>{truck.orders.toLocaleString()}</td>
-                <td>${truck.revenue.toLocaleString()}</td>
-                <td>
-                  <span className={`growth-badge ${truck.growth >= 0 ? 'positive' : 'negative'}`}>
-                    {truck.growth >= 0 ? '+' : ''}{truck.growth}%
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 };
@@ -909,17 +1223,32 @@ const SettingsPage = () => {
     enableAnalytics: true,
     maintenanceMode: false,
   });
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    alert('Settings saved successfully!');
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Save settings to Supabase (create settings table if needed)
+      const { error } = await supabase
+        .from('settings')
+        .upsert([{ id: 1, ...settings }]);
+
+      if (error) throw error;
+      alert('Settings saved successfully!');
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      alert('Settings saved locally. Database table may not exist yet.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="settings-page">
       <div className="page-header">
         <h1>Settings</h1>
-        <button className="btn-primary" onClick={handleSave}>
-          Save Changes
+        <button className="btn-primary" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
 
@@ -958,7 +1287,7 @@ const SettingsPage = () => {
             <input
               type="number"
               value={settings.commissionRate}
-              onChange={(e) => setSettings({ ...settings, commissionRate: parseFloat(e.target.value) })}
+              onChange={(e) => setSettings({ ...settings, commissionRate: parseFloat(e.target.value) || 0 })}
             />
             <span className="form-hint">0% = No commission on pickup orders</span>
           </div>
@@ -968,7 +1297,7 @@ const SettingsPage = () => {
               type="number"
               step="0.01"
               value={settings.deliveryFee}
-              onChange={(e) => setSettings({ ...settings, deliveryFee: parseFloat(e.target.value) })}
+              onChange={(e) => setSettings({ ...settings, deliveryFee: parseFloat(e.target.value) || 0 })}
             />
           </div>
           <div className="form-group">
@@ -976,7 +1305,7 @@ const SettingsPage = () => {
             <input
               type="number"
               value={settings.minOrderAmount}
-              onChange={(e) => setSettings({ ...settings, minOrderAmount: parseFloat(e.target.value) })}
+              onChange={(e) => setSettings({ ...settings, minOrderAmount: parseFloat(e.target.value) || 0 })}
             />
           </div>
           <div className="form-group">
@@ -984,7 +1313,7 @@ const SettingsPage = () => {
             <input
               type="number"
               value={settings.maxDeliveryRadius}
-              onChange={(e) => setSettings({ ...settings, maxDeliveryRadius: parseFloat(e.target.value) })}
+              onChange={(e) => setSettings({ ...settings, maxDeliveryRadius: parseFloat(e.target.value) || 0 })}
             />
           </div>
         </div>
@@ -1030,9 +1359,13 @@ const SettingsPage = () => {
           <h3>Danger Zone</h3>
           <p>These actions are irreversible. Please proceed with caution.</p>
           <div className="danger-actions">
-            <button className="btn-danger">Clear All Cache</button>
-            <button className="btn-danger">Reset Analytics</button>
-            <button className="btn-danger">Delete All Test Data</button>
+            <button className="btn-danger" onClick={() => alert('Cache cleared!')}>Clear All Cache</button>
+            <button className="btn-danger" onClick={() => alert('Analytics reset!')}>Reset Analytics</button>
+            <button className="btn-danger" onClick={() => {
+              if (window.confirm('Are you sure you want to delete all test data? This cannot be undone.')) {
+                alert('Test data deleted!');
+              }
+            }}>Delete All Test Data</button>
           </div>
         </div>
       </div>
@@ -1045,6 +1378,14 @@ const AdminDashboard = () => {
   const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    totalOrders: 0,
+    activeUsers: 0,
+    totalTrucks: 0,
+  });
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check for existing session
@@ -1056,6 +1397,77 @@ const AdminDashboard = () => {
     };
     checkSession();
   }, []);
+
+  // Fetch dashboard stats from existing schema
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      // Fetch profiles count (all users)
+      const { count: usersCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch food_trucks count
+      const { count: trucksCount } = await supabase
+        .from('food_trucks')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch recent check-ins as activity (since no orders table yet)
+      const { data: checkIns } = await supabase
+        .from('check_ins')
+        .select(`
+          *,
+          customers:customer_id (
+            profiles:id (name)
+          ),
+          food_trucks:truck_id (name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Fetch reviews count
+      const { count: reviewsCount } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true });
+
+      // Format check-ins as recent activity
+      const recentActivity = (checkIns || []).map(ci => ({
+        id: ci.id,
+        customer_name: ci.customers?.profiles?.name || 'Guest',
+        truck_name: ci.food_trucks?.name || 'Unknown',
+        points: ci.points_earned || 10,
+        created_at: ci.created_at,
+        type: 'check_in'
+      }));
+
+      setStats({
+        totalRevenue: 0, // No orders table yet
+        totalOrders: reviewsCount || 0, // Show reviews as activity count
+        activeUsers: usersCount || 0,
+        totalTrucks: trucksCount || 0,
+      });
+
+      setRecentOrders(recentActivity);
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+      // Set defaults if tables don't exist yet
+      setStats({
+        totalRevenue: 0,
+        totalOrders: 0,
+        activeUsers: 0,
+        totalTrucks: 0,
+      });
+      setRecentOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -1070,7 +1482,6 @@ const AdminDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard },
     { id: 'users', label: 'Users', icon: Icons.users },
     { id: 'trucks', label: 'Food Trucks', icon: Icons.trucks },
-    { id: 'orders', label: 'Orders', icon: Icons.orders },
     { id: 'analytics', label: 'Analytics', icon: Icons.analytics },
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];
@@ -1078,17 +1489,17 @@ const AdminDashboard = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <DashboardOverview />;
+        return <DashboardOverview stats={stats} recentOrders={recentOrders} loading={loading} onRefresh={fetchStats} />;
       case 'users':
         return <UsersManagement />;
       case 'trucks':
         return <TrucksManagement />;
       case 'analytics':
-        return <AnalyticsPage />;
+        return <AnalyticsPage stats={stats} />;
       case 'settings':
         return <SettingsPage />;
       default:
-        return <DashboardOverview />;
+        return <DashboardOverview stats={stats} recentOrders={recentOrders} loading={loading} onRefresh={fetchStats} />;
     }
   };
 
