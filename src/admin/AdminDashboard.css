@@ -160,6 +160,71 @@
   color: var(--admin-text-muted);
 }
 
+.login-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.login-hint svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--admin-text-muted);
+}
+
+/* Admin Badge in Header */
+.admin-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: var(--admin-primary);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.admin-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Chart Empty State */
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+  color: var(--admin-text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
+
+.chart-empty p {
+  max-width: 280px;
+}
+
+/* Page Subtitle */
+.page-subtitle {
+  font-size: 14px;
+  color: var(--admin-text-muted);
+  font-weight: 400;
+  margin-left: 16px;
+}
+
+/* Stat Change Neutral */
+.stat-change.neutral {
+  color: var(--admin-text-muted);
+}
+
+.stat-change.neutral svg {
+  display: none;
+}
+
 /* ============================================
    ADMIN LAYOUT
    ============================================ */

@@ -4,7 +4,7 @@ import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import './AdminDashboard.css';
 
 // Supabase client
@@ -12,6 +12,13 @@ const supabase = createClient(
   'https://coqwihsmmigktqqdnmis.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvcXdpaHNtbWlna3RxcWRubWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTg1NTMsImV4cCI6MjA4MjYzNDU1M30.ybwwLZguj58PGzCuM-gCdMoUjGHLh2zmkZihy6_zEx8'
 );
+
+// Hardcoded admin emails for production (add your admin emails here)
+const ADMIN_EMAILS = [
+  'admin@cravvr.com',
+  'nolan@cravvr.com',
+  // Add more admin emails as needed
+];
 
 // Icons
 const Icons = {
@@ -36,51 +43,15 @@ const Icons = {
   download: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
   menu: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
   refresh: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>,
+  mail: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+  shield: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
 };
 
 // Chart colors
 const CHART_COLORS = ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#fecdd3'];
 
-// Generate chart data for demo (will be replaced with real data)
-const generateRevenueData = () => {
-  return Array.from({ length: 30 }, (_, i) => ({
-    date: format(subDays(new Date(), 29 - i), 'MMM dd'),
-    revenue: Math.floor(Math.random() * 5000) + 2000,
-    orders: Math.floor(Math.random() * 150) + 50,
-  }));
-};
-
-const generateUserGrowthData = () => {
-  let total = 1200;
-  return Array.from({ length: 12 }, (_, i) => {
-    total += Math.floor(Math.random() * 200) + 50;
-    return {
-      month: format(subDays(new Date(), (11 - i) * 30), 'MMM'),
-      users: total,
-      newUsers: Math.floor(Math.random() * 200) + 50,
-    };
-  });
-};
-
-const generateOrdersByCategory = () => [
-  { name: 'Mexican', value: 324, color: '#e11d48' },
-  { name: 'American', value: 256, color: '#f43f5e' },
-  { name: 'Asian', value: 198, color: '#fb7185' },
-  { name: 'Italian', value: 167, color: '#fda4af' },
-  { name: 'Other', value: 89, color: '#fecdd3' },
-];
-
-const generateWeeklyOrders = () => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return days.map(day => ({
-    day,
-    pickup: Math.floor(Math.random() * 80) + 40,
-    delivery: Math.floor(Math.random() * 60) + 20,
-  }));
-};
-
-// Login Component
-const AdminLogin = ({ onLogin }) => {
+// Login Component with real Supabase auth
+const AdminLogin = ({ onLogin, onError }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -92,20 +63,26 @@ const AdminLogin = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Sign in with Supabase
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
-      onLogin(data.user);
-    } catch (err) {
-      // For demo, allow test credentials
-      if (email === 'admin@cravvr.com' && password === 'admin123') {
-        onLogin({ email: 'admin@cravvr.com', role: 'admin' });
-      } else {
-        setError(err.message || 'Invalid credentials. Try admin@cravvr.com / admin123');
+      if (authError) throw authError;
+
+      // Check if user is an admin
+      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+
+      if (!isAdmin) {
+        // Sign out non-admin users
+        await supabase.auth.signOut();
+        throw new Error('Access denied. You do not have admin privileges.');
       }
+
+      onLogin({ ...data.user, isAdmin: true });
+    } catch (err) {
+      setError(err.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -131,7 +108,7 @@ const AdminLogin = ({ onLogin }) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@cravvr.com"
+              placeholder="Enter your admin email"
               required
             />
           </div>
@@ -153,25 +130,23 @@ const AdminLogin = ({ onLogin }) => {
         </form>
 
         <div className="login-footer">
-          <p>Demo credentials: admin@cravvr.com / admin123</p>
+          <p className="login-hint">
+            {Icons.shield}
+            <span>Admin access only. Contact support if you need access.</span>
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-// Dashboard Overview Component
-const DashboardOverview = ({ stats, recentOrders, loading, onRefresh }) => {
-  const revenueData = generateRevenueData();
-  const userGrowthData = generateUserGrowthData();
-  const categoryData = generateOrdersByCategory();
-  const weeklyData = generateWeeklyOrders();
-
+// Dashboard Overview Component with REAL data
+const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefresh }) => {
   const statCards = [
-    { label: 'Total Users', value: stats.activeUsers?.toLocaleString() || '0', change: 'All time', trend: 'up', icon: Icons.users },
-    { label: 'Food Trucks', value: stats.totalTrucks?.toLocaleString() || '0', change: 'Registered', trend: 'up', icon: Icons.trucks },
-    { label: 'Reviews', value: stats.totalOrders?.toLocaleString() || '0', change: 'Total', trend: 'up', icon: Icons.star },
-    { label: 'Check-ins', value: recentOrders?.length?.toLocaleString() || '0', change: 'Recent', trend: 'up', icon: Icons.orders },
+    { label: 'Total Users', value: stats.totalUsers?.toLocaleString() || '0', change: 'All time', trend: 'neutral', icon: Icons.users },
+    { label: 'Food Trucks', value: stats.totalTrucks?.toLocaleString() || '0', change: 'Registered', trend: 'neutral', icon: Icons.trucks },
+    { label: 'Total Reviews', value: stats.totalReviews?.toLocaleString() || '0', change: 'All time', trend: 'neutral', icon: Icons.star },
+    { label: 'Check-ins', value: stats.totalCheckIns?.toLocaleString() || '0', change: 'All time', trend: 'neutral', icon: Icons.orders },
   ];
 
   return (
@@ -179,13 +154,9 @@ const DashboardOverview = ({ stats, recentOrders, loading, onRefresh }) => {
       <div className="page-header">
         <h1>Dashboard Overview</h1>
         <div className="header-actions">
-          <button className="btn-secondary" onClick={onRefresh}>
+          <button className="btn-secondary" onClick={onRefresh} disabled={loading}>
             {Icons.refresh}
-            Refresh
-          </button>
-          <button className="btn-secondary">
-            {Icons.download}
-            Export Report
+            {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>
@@ -198,69 +169,71 @@ const DashboardOverview = ({ stats, recentOrders, loading, onRefresh }) => {
             <div className="stat-content">
               <span className="stat-label">{stat.label}</span>
               <span className="stat-value">{loading ? '...' : stat.value}</span>
-              <span className={`stat-change ${stat.trend}`}>
-                {stat.trend === 'up' ? Icons.trendUp : Icons.trendDown}
-                {stat.change}
-              </span>
+              <span className="stat-change neutral">{stat.change}</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Charts Row */}
+      {/* Charts Row - Using Real Data */}
       <div className="charts-grid">
         <div className="chart-card large">
           <div className="chart-header">
-            <h3>Revenue Overview</h3>
-            <select className="chart-select">
-              <option>Last 30 Days</option>
-              <option>Last 7 Days</option>
-              <option>This Month</option>
-            </select>
+            <h3>Activity (Last 30 Days)</h3>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={revenueData}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `$${v}`} />
-              <Tooltip
-                contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
-                formatter={(value) => [`$${value}`, 'Revenue']}
-              />
-              <Area type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={2} fill="url(#colorRevenue)" />
-            </AreaChart>
-          </ResponsiveContainer>
+          {chartData.dailyActivity.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={chartData.dailyActivity}>
+                <defs>
+                  <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
+                <YAxis stroke="#64748b" fontSize={12} />
+                <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+                <Area type="monotone" dataKey="checkIns" stroke="#e11d48" strokeWidth={2} fill="url(#colorActivity)" name="Check-ins" />
+                <Area type="monotone" dataKey="reviews" stroke="#3b82f6" strokeWidth={2} fill="transparent" name="Reviews" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty">
+              <p>No activity data yet. Data will appear as users interact with the app.</p>
+            </div>
+          )}
         </div>
 
         <div className="chart-card">
           <div className="chart-header">
-            <h3>Orders by Category</h3>
+            <h3>Trucks by Cuisine</h3>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => [value, 'Orders']} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          {chartData.cuisineBreakdown.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={chartData.cuisineBreakdown}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {chartData.cuisineBreakdown.map((entry, index) => (
+                    <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [value, 'Trucks']} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty">
+              <p>No food trucks registered yet.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -268,36 +241,52 @@ const DashboardOverview = ({ stats, recentOrders, loading, onRefresh }) => {
       <div className="charts-grid">
         <div className="chart-card">
           <div className="chart-header">
-            <h3>User Growth</h3>
+            <h3>User Registrations (Last 12 Months)</h3>
           </div>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={userGrowthData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} />
-              <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
-              <Line type="monotone" dataKey="users" stroke="#e11d48" strokeWidth={2} dot={{ fill: '#e11d48' }} />
-              <Line type="monotone" dataKey="newUsers" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
-              <Legend />
-            </LineChart>
-          </ResponsiveContainer>
+          {chartData.userGrowth.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={chartData.userGrowth}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+                <YAxis stroke="#64748b" fontSize={12} />
+                <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+                <Bar dataKey="users" fill="#e11d48" radius={[4, 4, 0, 0]} name="New Users" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty">
+              <p>No user registration data yet.</p>
+            </div>
+          )}
         </div>
 
         <div className="chart-card">
           <div className="chart-header">
-            <h3>Weekly Orders</h3>
+            <h3>User Types</h3>
           </div>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={weeklyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} />
-              <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
-              <Bar dataKey="pickup" fill="#e11d48" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="delivery" fill="#fb7185" radius={[4, 4, 0, 0]} />
-              <Legend />
-            </BarChart>
-          </ResponsiveContainer>
+          {chartData.userTypes.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={chartData.userTypes}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {chartData.userTypes.map((entry, index) => (
+                    <Cell key={index} fill={index === 0 ? '#e11d48' : '#3b82f6'} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty">
+              <p>No users registered yet.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -305,35 +294,36 @@ const DashboardOverview = ({ stats, recentOrders, loading, onRefresh }) => {
       <div className="table-card">
         <div className="table-header">
           <h3>Recent Activity</h3>
-          <button className="btn-text">View All</button>
         </div>
         <table className="data-table">
           <thead>
             <tr>
-              <th>Activity</th>
+              <th>Activity ID</th>
               <th>Customer</th>
               <th>Food Truck</th>
-              <th>Points</th>
               <th>Type</th>
+              <th>Details</th>
               <th>Time</th>
             </tr>
           </thead>
           <tbody>
-            {recentOrders.length > 0 ? recentOrders.map((activity, index) => (
+            {recentActivity.length > 0 ? recentActivity.map((activity, index) => (
               <tr key={activity.id || index}>
                 <td className="font-medium">#{activity.id?.slice(0, 8) || `ACT-${index + 1}`}</td>
                 <td>{activity.customer_name || 'Guest'}</td>
                 <td>{activity.truck_name || 'Unknown'}</td>
-                <td className="font-medium">+{activity.points || 10} pts</td>
                 <td>
-                  <span className="status-badge active">Check-in</span>
+                  <span className={`status-badge ${activity.type === 'review' ? 'warning' : 'active'}`}>
+                    {activity.type === 'review' ? 'Review' : 'Check-in'}
+                  </span>
                 </td>
+                <td>{activity.type === 'review' ? `${activity.rating} stars` : `+${activity.points || 10} pts`}</td>
                 <td className="text-muted">{activity.created_at ? format(new Date(activity.created_at), 'MMM dd, HH:mm') : 'N/A'}</td>
               </tr>
             )) : (
               <tr>
                 <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                  No activity yet. Check-ins and reviews will appear here.
+                  No activity yet. Check-ins and reviews will appear here as users interact with the app.
                 </td>
               </tr>
             )}
@@ -344,7 +334,7 @@ const DashboardOverview = ({ stats, recentOrders, loading, onRefresh }) => {
   );
 };
 
-// Users Management Component - Uses profiles table from schema
+// Users Management Component with Email Invite
 const UsersManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -352,23 +342,19 @@ const UsersManagement = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [isAddMode, setIsAddMode] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const emptyUser = {
-    name: '',
-    email: '',
-    role: 'customer',
-    phone: '',
-    points: 0,
-  };
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('customer');
+  const [inviteName, setInviteName] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState('');
 
   // Fetch users from Supabase profiles table with customer/owner details
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles with customer data joined
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select(`
@@ -380,7 +366,6 @@ const UsersManagement = () => {
 
       if (error) throw error;
 
-      // Flatten the data for easier display
       const flattenedUsers = (profiles || []).map(profile => ({
         id: profile.id,
         name: profile.name,
@@ -413,23 +398,57 @@ const UsersManagement = () => {
     return matchesSearch && matchesRole;
   });
 
-  const handleAddUser = () => {
-    setSelectedUser({ ...emptyUser });
-    setIsAddMode(true);
-    setEditMode(true);
-    setShowModal(true);
+  const handleInviteUser = async () => {
+    if (!inviteEmail || !inviteName) {
+      alert('Please enter both name and email');
+      return;
+    }
+
+    setInviting(true);
+    setInviteSuccess('');
+
+    try {
+      // Use Supabase Auth Admin API to invite user
+      // Note: This requires service_role key for production
+      // For now, we'll use the magic link invite approach
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email: inviteEmail,
+        options: {
+          data: {
+            name: inviteName,
+            role: inviteRole,
+          },
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) throw error;
+
+      setInviteSuccess(`Invitation sent to ${inviteEmail}! They will receive an email to set up their account.`);
+      setInviteEmail('');
+      setInviteName('');
+
+      // Refresh users list after a short delay
+      setTimeout(() => {
+        fetchUsers();
+      }, 2000);
+
+    } catch (err) {
+      console.error('Error inviting user:', err);
+      alert('Error sending invitation: ' + err.message);
+    } finally {
+      setInviting(false);
+    }
   };
 
   const handleEditUser = (user) => {
     setSelectedUser({ ...user });
-    setIsAddMode(false);
     setEditMode(true);
     setShowModal(true);
   };
 
   const handleViewUser = (user) => {
     setSelectedUser(user);
-    setIsAddMode(false);
     setEditMode(false);
     setShowModal(true);
   };
@@ -437,34 +456,24 @@ const UsersManagement = () => {
   const handleSaveUser = async () => {
     setSaving(true);
     try {
-      if (isAddMode) {
-        // Note: Creating users requires auth signup - this creates profile only
-        // In production, you'd use Supabase admin API or invite flow
-        alert('To add new users, use Supabase Auth signup flow. This admin panel can only edit existing users.');
-        setSaving(false);
-        return;
-      } else {
-        // Update existing profile
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            name: selectedUser.name,
-            role: selectedUser.role,
-          })
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: selectedUser.name,
+          role: selectedUser.role,
+        })
+        .eq('id', selectedUser.id);
+
+      if (error) throw error;
+
+      if (selectedUser.role === 'customer' && selectedUser.phone) {
+        await supabase
+          .from('customers')
+          .update({ phone: selectedUser.phone })
           .eq('id', selectedUser.id);
-
-        if (error) throw error;
-
-        // Update customer phone if role is customer
-        if (selectedUser.role === 'customer' && selectedUser.phone) {
-          await supabase
-            .from('customers')
-            .update({ phone: selectedUser.phone })
-            .eq('id', selectedUser.id);
-        }
-
-        setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
       }
+
+      setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
       setShowModal(false);
       setSelectedUser(null);
     } catch (err) {
@@ -478,7 +487,6 @@ const UsersManagement = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user? This will remove their profile and all associated data.')) {
       try {
-        // Delete from profiles (cascades to customers/owners)
         const { error } = await supabase
           .from('profiles')
           .delete()
@@ -502,9 +510,9 @@ const UsersManagement = () => {
     <div className="users-management">
       <div className="page-header">
         <h1>Users Management</h1>
-        <button className="btn-primary" onClick={handleAddUser}>
-          {Icons.plus}
-          Add User
+        <button className="btn-primary" onClick={() => setShowInviteModal(true)}>
+          {Icons.mail}
+          Invite User
         </button>
       </div>
 
@@ -589,7 +597,7 @@ const UsersManagement = () => {
                   <td colSpan="7" style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
                     {searchTerm || filterRole !== 'all'
                       ? 'No users match your filters.'
-                      : 'No users yet. Users will appear here when they sign up.'}
+                      : 'No users yet. Invite users to get started.'}
                   </td>
                 </tr>
               )}
@@ -598,12 +606,86 @@ const UsersManagement = () => {
         )}
       </div>
 
-      {/* User Modal */}
+      {/* Invite User Modal */}
+      {showInviteModal && (
+        <div className="modal-overlay" onClick={() => setShowInviteModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Invite New User</h2>
+              <button className="modal-close" onClick={() => setShowInviteModal(false)}>
+                {Icons.x}
+              </button>
+            </div>
+            <div className="modal-body">
+              {inviteSuccess && (
+                <div className="success-message" style={{
+                  background: '#dcfce7',
+                  color: '#166534',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  marginBottom: '16px'
+                }}>
+                  {inviteSuccess}
+                </div>
+              )}
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Full Name *</label>
+                  <input
+                    type="text"
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
+                    placeholder="Enter user's full name"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email Address *</label>
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Role</label>
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value)}
+                  >
+                    <option value="customer">Customer</option>
+                    <option value="owner">Food Truck Owner</option>
+                  </select>
+                </div>
+              </div>
+              <p className="form-hint" style={{ marginTop: '16px', color: '#64748b' }}>
+                The user will receive an email with a link to set up their account.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowInviteModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleInviteUser}
+                disabled={inviting || !inviteEmail || !inviteName}
+              >
+                {inviting ? 'Sending...' : 'Send Invitation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Details/Edit Modal */}
       {showModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{isAddMode ? 'Add New User' : editMode ? 'Edit User' : 'User Details'}</h2>
+              <h2>{editMode ? 'Edit User' : 'User Details'}</h2>
               <button className="modal-close" onClick={() => setShowModal(false)}>
                 {Icons.x}
               </button>
@@ -697,9 +779,9 @@ const UsersManagement = () => {
                 <button
                   className="btn-primary"
                   onClick={handleSaveUser}
-                  disabled={saving || !selectedUser.name || !selectedUser.email}
+                  disabled={saving || !selectedUser.name}
                 >
-                  {saving ? 'Saving...' : isAddMode ? 'Create User' : 'Save Changes'}
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               )}
             </div>
@@ -710,7 +792,7 @@ const UsersManagement = () => {
   );
 };
 
-// Food Trucks Management Component - Uses food_trucks table from schema
+// Food Trucks Management Component
 const TrucksManagement = () => {
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -718,20 +800,8 @@ const TrucksManagement = () => {
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [isAddMode, setIsAddMode] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const emptyTruck = {
-    name: '',
-    slug: '',
-    description: '',
-    cuisine: '',
-    location: '',
-    price_range: '$',
-    is_open: true,
-  };
-
-  // Fetch trucks from Supabase food_trucks table with ratings
   const fetchTrucks = async () => {
     setLoading(true);
     try {
@@ -748,7 +818,6 @@ const TrucksManagement = () => {
 
       if (error) throw error;
 
-      // Flatten and add owner info
       const flattenedTrucks = (data || []).map(truck => ({
         ...truck,
         owner_name: truck.owners?.profiles?.name || 'Unknown',
@@ -773,20 +842,14 @@ const TrucksManagement = () => {
     (truck.cuisine || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddTruck = () => {
-    alert('To add a new food truck, the owner must register and create it through the app. Admin can only edit existing trucks.');
-  };
-
   const handleEditTruck = (truck) => {
     setSelectedTruck({ ...truck });
-    setIsAddMode(false);
     setEditMode(true);
     setShowModal(true);
   };
 
   const handleViewTruck = (truck) => {
     setSelectedTruck(truck);
-    setIsAddMode(false);
     setEditMode(false);
     setShowModal(true);
   };
@@ -854,10 +917,7 @@ const TrucksManagement = () => {
     <div className="trucks-management">
       <div className="page-header">
         <h1>Food Trucks</h1>
-        <button className="btn-primary" onClick={handleAddTruck}>
-          {Icons.plus}
-          Add Truck
-        </button>
+        <span className="page-subtitle">Food trucks are created by owners through the app</span>
       </div>
 
       <div className="filters-bar">
@@ -932,7 +992,7 @@ const TrucksManagement = () => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{isAddMode ? 'Add New Food Truck' : editMode ? 'Edit Food Truck' : 'Truck Details'}</h2>
+              <h2>{editMode ? 'Edit Food Truck' : 'Truck Details'}</h2>
               <button className="modal-close" onClick={() => setShowModal(false)}>
                 {Icons.x}
               </button>
@@ -1065,7 +1125,7 @@ const TrucksManagement = () => {
                   onClick={handleSaveTruck}
                   disabled={saving || !selectedTruck.name}
                 >
-                  {saving ? 'Saving...' : isAddMode ? 'Create Truck' : 'Save Changes'}
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               )}
             </div>
@@ -1076,87 +1136,39 @@ const TrucksManagement = () => {
   );
 };
 
-// Analytics Component
-const AnalyticsPage = ({ stats }) => {
-  const revenueData = generateRevenueData();
-  const userGrowthData = generateUserGrowthData();
-  const categoryData = generateOrdersByCategory();
-
+// Analytics Component - Real Data Only
+const AnalyticsPage = ({ stats, chartData }) => {
   return (
     <div className="analytics-page">
       <div className="page-header">
         <h1>Analytics</h1>
-        <div className="header-actions">
-          <select className="date-select">
-            <option>Last 30 Days</option>
-            <option>Last 7 Days</option>
-            <option>This Month</option>
-            <option>This Year</option>
-          </select>
-          <button className="btn-secondary">
-            {Icons.download}
-            Export
-          </button>
-        </div>
       </div>
 
       {/* Key Metrics */}
       <div className="metrics-grid">
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Total Revenue</span>
-            <span className="metric-change positive">+12.5%</span>
+            <span className="metric-title">Total Users</span>
           </div>
-          <div className="metric-value">${(stats.totalRevenue || 0).toLocaleString()}</div>
-          <div className="metric-chart">
-            <ResponsiveContainer width="100%" height={60}>
-              <AreaChart data={revenueData.slice(-7)}>
-                <Area type="monotone" dataKey="revenue" stroke="#16a34a" fill="#dcfce7" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="metric-value">{(stats.totalUsers || 0).toLocaleString()}</div>
         </div>
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Total Orders</span>
-            <span className="metric-change positive">+8.2%</span>
+            <span className="metric-title">Food Trucks</span>
           </div>
-          <div className="metric-value">{(stats.totalOrders || 0).toLocaleString()}</div>
-          <div className="metric-chart">
-            <ResponsiveContainer width="100%" height={60}>
-              <AreaChart data={revenueData.slice(-7)}>
-                <Area type="monotone" dataKey="orders" stroke="#3b82f6" fill="#dbeafe" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="metric-value">{(stats.totalTrucks || 0).toLocaleString()}</div>
         </div>
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Avg. Order Value</span>
-            <span className="metric-change positive">+3.8%</span>
+            <span className="metric-title">Total Reviews</span>
           </div>
-          <div className="metric-value">${stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders).toFixed(2) : '0.00'}</div>
-          <div className="metric-chart">
-            <ResponsiveContainer width="100%" height={60}>
-              <LineChart data={revenueData.slice(-7)}>
-                <Line type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="metric-value">{(stats.totalReviews || 0).toLocaleString()}</div>
         </div>
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Active Users</span>
-            <span className="metric-change positive">+15.3%</span>
+            <span className="metric-title">Total Check-ins</span>
           </div>
-          <div className="metric-value">{(stats.activeUsers || 0).toLocaleString()}</div>
-          <div className="metric-chart">
-            <ResponsiveContainer width="100%" height={60}>
-              <AreaChart data={userGrowthData.slice(-7)}>
-                <Area type="monotone" dataKey="newUsers" stroke="#f59e0b" fill="#fef3c7" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="metric-value">{(stats.totalCheckIns || 0).toLocaleString()}</div>
         </div>
       </div>
 
@@ -1164,45 +1176,56 @@ const AnalyticsPage = ({ stats }) => {
       <div className="charts-grid">
         <div className="chart-card large">
           <div className="chart-header">
-            <h3>Revenue & Orders Trend</h3>
+            <h3>Daily Activity (Last 30 Days)</h3>
           </div>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-              <YAxis yAxisId="left" stroke="#64748b" fontSize={12} tickFormatter={(v) => `$${v}`} />
-              <YAxis yAxisId="right" orientation="right" stroke="#64748b" fontSize={12} />
-              <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
-              <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={2} name="Revenue" />
-              <Line yAxisId="right" type="monotone" dataKey="orders" stroke="#3b82f6" strokeWidth={2} name="Orders" />
-            </LineChart>
-          </ResponsiveContainer>
+          {chartData.dailyActivity.length > 0 ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={chartData.dailyActivity}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
+                <YAxis stroke="#64748b" fontSize={12} />
+                <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
+                <Legend />
+                <Line type="monotone" dataKey="checkIns" stroke="#e11d48" strokeWidth={2} name="Check-ins" />
+                <Line type="monotone" dataKey="reviews" stroke="#3b82f6" strokeWidth={2} name="Reviews" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty">
+              <p>No activity data yet. Charts will populate as users interact with the app.</p>
+            </div>
+          )}
         </div>
 
         <div className="chart-card">
           <div className="chart-header">
-            <h3>Revenue by Category</h3>
+            <h3>Trucks by Cuisine</h3>
           </div>
-          <ResponsiveContainer width="100%" height={350}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                innerRadius={70}
-                outerRadius={110}
-                paddingAngle={2}
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => [`$${(value * 38.5).toFixed(0)}`, 'Revenue']} />
-            </PieChart>
-          </ResponsiveContainer>
+          {chartData.cuisineBreakdown.length > 0 ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={chartData.cuisineBreakdown}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={110}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {chartData.cuisineBreakdown.map((entry, index) => (
+                    <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty">
+              <p>No food truck data yet.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1210,7 +1233,7 @@ const AnalyticsPage = ({ stats }) => {
 };
 
 // Settings Component
-const SettingsPage = () => {
+const SettingsPage = ({ adminEmail }) => {
   const [settings, setSettings] = useState({
     siteName: 'Cravvr',
     siteDescription: 'The map-first food truck app',
@@ -1220,39 +1243,34 @@ const SettingsPage = () => {
     minOrderAmount: 10,
     maxDeliveryRadius: 5,
     enableNotifications: true,
-    enableAnalytics: true,
     maintenanceMode: false,
   });
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      // Save settings to Supabase (create settings table if needed)
-      const { error } = await supabase
-        .from('settings')
-        .upsert([{ id: 1, ...settings }]);
-
-      if (error) throw error;
-      alert('Settings saved successfully!');
-    } catch (err) {
-      console.error('Error saving settings:', err);
-      alert('Settings saved locally. Database table may not exist yet.');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   return (
     <div className="settings-page">
       <div className="page-header">
         <h1>Settings</h1>
-        <button className="btn-primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Changes'}
-        </button>
       </div>
 
       <div className="settings-grid">
+        <div className="settings-card">
+          <h3>Admin Information</h3>
+          <div className="form-group">
+            <label>Logged in as</label>
+            <input type="text" value={adminEmail} disabled className="disabled" />
+          </div>
+          <div className="form-group">
+            <label>Admin Emails</label>
+            <textarea
+              value={ADMIN_EMAILS.join('\n')}
+              disabled
+              className="disabled"
+              rows={3}
+            />
+            <span className="form-hint">Edit ADMIN_EMAILS in AdminDashboard.jsx to add admins</span>
+          </div>
+        </div>
+
         <div className="settings-card">
           <h3>General Settings</h3>
           <div className="form-group">
@@ -1300,22 +1318,6 @@ const SettingsPage = () => {
               onChange={(e) => setSettings({ ...settings, deliveryFee: parseFloat(e.target.value) || 0 })}
             />
           </div>
-          <div className="form-group">
-            <label>Minimum Order Amount ($)</label>
-            <input
-              type="number"
-              value={settings.minOrderAmount}
-              onChange={(e) => setSettings({ ...settings, minOrderAmount: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Max Delivery Radius (miles)</label>
-            <input
-              type="number"
-              value={settings.maxDeliveryRadius}
-              onChange={(e) => setSettings({ ...settings, maxDeliveryRadius: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
         </div>
 
         <div className="settings-card">
@@ -1332,17 +1334,6 @@ const SettingsPage = () => {
             </label>
           </div>
           <div className="toggle-group">
-            <label className="toggle-label">
-              <span>Enable Analytics Tracking</span>
-              <input
-                type="checkbox"
-                checked={settings.enableAnalytics}
-                onChange={(e) => setSettings({ ...settings, enableAnalytics: e.target.checked })}
-              />
-              <span className="toggle-switch"></span>
-            </label>
-          </div>
-          <div className="toggle-group">
             <label className="toggle-label danger">
               <span>Maintenance Mode</span>
               <input
@@ -1352,20 +1343,6 @@ const SettingsPage = () => {
               />
               <span className="toggle-switch"></span>
             </label>
-          </div>
-        </div>
-
-        <div className="settings-card danger-zone">
-          <h3>Danger Zone</h3>
-          <p>These actions are irreversible. Please proceed with caution.</p>
-          <div className="danger-actions">
-            <button className="btn-danger" onClick={() => alert('Cache cleared!')}>Clear All Cache</button>
-            <button className="btn-danger" onClick={() => alert('Analytics reset!')}>Reset Analytics</button>
-            <button className="btn-danger" onClick={() => {
-              if (window.confirm('Are you sure you want to delete all test data? This cannot be undone.')) {
-                alert('Test data deleted!');
-              }
-            }}>Delete All Test Data</button>
           </div>
         </div>
       </div>
@@ -1379,12 +1356,18 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [stats, setStats] = useState({
-    totalRevenue: 0,
-    totalOrders: 0,
-    activeUsers: 0,
+    totalUsers: 0,
     totalTrucks: 0,
+    totalReviews: 0,
+    totalCheckIns: 0,
   });
-  const [recentOrders, setRecentOrders] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [chartData, setChartData] = useState({
+    dailyActivity: [],
+    cuisineBreakdown: [],
+    userGrowth: [],
+    userTypes: [],
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -1392,28 +1375,76 @@ const AdminDashboard = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        setUser(session.user);
+        const isAdmin = ADMIN_EMAILS.includes(session.user.email?.toLowerCase());
+        if (isAdmin) {
+          setUser({ ...session.user, isAdmin: true });
+        } else {
+          // Sign out non-admin users
+          await supabase.auth.signOut();
+        }
       }
     };
     checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch dashboard stats from existing schema
-  const fetchStats = async () => {
+  // Fetch all dashboard data from real tables
+  const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // Fetch profiles count (all users)
+      // Fetch total users count
       const { count: usersCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      // Fetch food_trucks count
+      // Fetch users by role for pie chart
+      const { data: userRoles } = await supabase
+        .from('profiles')
+        .select('role');
+
+      const customerCount = (userRoles || []).filter(u => u.role === 'customer').length;
+      const ownerCount = (userRoles || []).filter(u => u.role === 'owner').length;
+
+      // Fetch food trucks count
       const { count: trucksCount } = await supabase
         .from('food_trucks')
         .select('*', { count: 'exact', head: true });
 
-      // Fetch recent check-ins as activity (since no orders table yet)
-      const { data: checkIns } = await supabase
+      // Fetch trucks by cuisine for pie chart
+      const { data: trucksCuisine } = await supabase
+        .from('food_trucks')
+        .select('cuisine');
+
+      const cuisineCounts = {};
+      (trucksCuisine || []).forEach(t => {
+        const cuisine = t.cuisine || 'Other';
+        cuisineCounts[cuisine] = (cuisineCounts[cuisine] || 0) + 1;
+      });
+      const cuisineBreakdown = Object.entries(cuisineCounts)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+
+      // Fetch reviews count
+      const { count: reviewsCount } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch check-ins count
+      const { count: checkInsCount } = await supabase
+        .from('check_ins')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch recent check-ins
+      const { data: recentCheckIns } = await supabase
         .from('check_ins')
         .select(`
           *,
@@ -1423,41 +1454,110 @@ const AdminDashboard = () => {
           food_trucks:truck_id (name)
         `)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(5);
 
-      // Fetch reviews count
-      const { count: reviewsCount } = await supabase
+      // Fetch recent reviews
+      const { data: recentReviews } = await supabase
         .from('reviews')
-        .select('*', { count: 'exact', head: true });
+        .select(`
+          *,
+          customers:customer_id (
+            profiles:id (name)
+          ),
+          food_trucks:truck_id (name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-      // Format check-ins as recent activity
-      const recentActivity = (checkIns || []).map(ci => ({
-        id: ci.id,
-        customer_name: ci.customers?.profiles?.name || 'Guest',
-        truck_name: ci.food_trucks?.name || 'Unknown',
-        points: ci.points_earned || 10,
-        created_at: ci.created_at,
-        type: 'check_in'
-      }));
+      // Combine and sort recent activity
+      const activity = [
+        ...(recentCheckIns || []).map(ci => ({
+          id: ci.id,
+          customer_name: ci.customers?.profiles?.name || 'Guest',
+          truck_name: ci.food_trucks?.name || 'Unknown',
+          points: ci.points_earned || 10,
+          created_at: ci.created_at,
+          type: 'check_in'
+        })),
+        ...(recentReviews || []).map(r => ({
+          id: r.id,
+          customer_name: r.customers?.profiles?.name || 'Guest',
+          truck_name: r.food_trucks?.name || 'Unknown',
+          rating: r.rating,
+          created_at: r.created_at,
+          type: 'review'
+        }))
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+
+      // Generate daily activity for last 30 days
+      const dailyActivity = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = subDays(new Date(), i);
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const displayDate = format(date, 'MMM dd');
+
+        // Count check-ins for this day
+        const { count: dayCheckIns } = await supabase
+          .from('check_ins')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', startOfDay(date).toISOString())
+          .lte('created_at', endOfDay(date).toISOString());
+
+        // Count reviews for this day
+        const { count: dayReviews } = await supabase
+          .from('reviews')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', startOfDay(date).toISOString())
+          .lte('created_at', endOfDay(date).toISOString());
+
+        dailyActivity.push({
+          date: displayDate,
+          checkIns: dayCheckIns || 0,
+          reviews: dayReviews || 0,
+        });
+      }
+
+      // User growth by month (simplified - just show total at each month)
+      const userGrowth = [];
+      for (let i = 11; i >= 0; i--) {
+        const date = subDays(new Date(), i * 30);
+        const monthStr = format(date, 'MMM');
+
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .lte('created_at', endOfDay(date).toISOString());
+
+        userGrowth.push({
+          month: monthStr,
+          users: count || 0,
+        });
+      }
 
       setStats({
-        totalRevenue: 0, // No orders table yet
-        totalOrders: reviewsCount || 0, // Show reviews as activity count
-        activeUsers: usersCount || 0,
+        totalUsers: usersCount || 0,
         totalTrucks: trucksCount || 0,
+        totalReviews: reviewsCount || 0,
+        totalCheckIns: checkInsCount || 0,
       });
 
-      setRecentOrders(recentActivity);
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-      // Set defaults if tables don't exist yet
-      setStats({
-        totalRevenue: 0,
-        totalOrders: 0,
-        activeUsers: 0,
-        totalTrucks: 0,
+      setRecentActivity(activity);
+
+      setChartData({
+        dailyActivity,
+        cuisineBreakdown,
+        userGrowth,
+        userTypes: customerCount + ownerCount > 0 ? [
+          { name: 'Customers', value: customerCount },
+          { name: 'Owners', value: ownerCount },
+        ] : [],
       });
-      setRecentOrders([]);
+
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setStats({ totalUsers: 0, totalTrucks: 0, totalReviews: 0, totalCheckIns: 0 });
+      setRecentActivity([]);
+      setChartData({ dailyActivity: [], cuisineBreakdown: [], userGrowth: [], userTypes: [] });
     } finally {
       setLoading(false);
     }
@@ -1465,7 +1565,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (user) {
-      fetchStats();
+      fetchDashboardData();
     }
   }, [user]);
 
@@ -1489,17 +1589,17 @@ const AdminDashboard = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <DashboardOverview stats={stats} recentOrders={recentOrders} loading={loading} onRefresh={fetchStats} />;
+        return <DashboardOverview stats={stats} recentActivity={recentActivity} chartData={chartData} loading={loading} onRefresh={fetchDashboardData} />;
       case 'users':
         return <UsersManagement />;
       case 'trucks':
         return <TrucksManagement />;
       case 'analytics':
-        return <AnalyticsPage stats={stats} />;
+        return <AnalyticsPage stats={stats} chartData={chartData} />;
       case 'settings':
-        return <SettingsPage />;
+        return <SettingsPage adminEmail={user.email} />;
       default:
-        return <DashboardOverview stats={stats} recentOrders={recentOrders} loading={loading} onRefresh={fetchStats} />;
+        return <DashboardOverview stats={stats} recentActivity={recentActivity} chartData={chartData} loading={loading} onRefresh={fetchDashboardData} />;
     }
   };
 
@@ -1557,10 +1657,7 @@ const AdminDashboard = () => {
             <input type="text" placeholder="Search..." />
           </div>
           <div className="header-actions">
-            <button className="header-btn">
-              {Icons.bell}
-              <span className="notification-badge">3</span>
-            </button>
+            <span className="admin-badge">{Icons.shield} Admin</span>
           </div>
         </header>
 
