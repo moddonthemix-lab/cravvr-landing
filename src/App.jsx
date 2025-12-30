@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import AdminDashboard from './admin/AdminDashboard';
 
 // SVG Icons
 const Icons = {
@@ -2589,7 +2590,31 @@ const LandingPage = ({ setCurrentView }) => {
 // ============================================
 
 const App = () => {
-  const [currentView, setCurrentView] = useState('landing');
+  const [currentView, setCurrentView] = useState(() => {
+    // Check if we're on the admin route
+    if (window.location.pathname === '/admin') {
+      return 'admin';
+    }
+    return 'landing';
+  });
+
+  // Handle browser navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      if (window.location.pathname === '/admin') {
+        setCurrentView('admin');
+      } else {
+        setCurrentView('landing');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  if (currentView === 'admin') {
+    return <AdminDashboard />;
+  }
 
   if (currentView === 'app') {
     return <AppDemo onBack={() => setCurrentView('landing')} />;
