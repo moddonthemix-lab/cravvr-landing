@@ -82,6 +82,44 @@ CREATE TABLE menu_items (
 );
 
 -- ============================================
+-- ORDERS
+-- ============================================
+
+-- Customer orders
+CREATE TABLE orders (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  truck_id UUID NOT NULL REFERENCES food_trucks(id) ON DELETE CASCADE,
+  order_number TEXT UNIQUE NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled')),
+  order_type TEXT NOT NULL DEFAULT 'pickup' CHECK (order_type IN ('pickup', 'delivery')),
+  subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  tax DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  delivery_fee DECIMAL(10, 2) DEFAULT 0,
+  tip DECIMAL(10, 2) DEFAULT 0,
+  total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  notes TEXT,
+  delivery_address TEXT,
+  delivery_coordinates JSONB,
+  estimated_ready_time TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Order items (individual menu items in an order)
+CREATE TABLE order_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  special_instructions TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
 -- EVENTS
 -- ============================================
 
@@ -190,6 +228,11 @@ CREATE INDEX idx_menu_items_truck ON menu_items(truck_id);
 CREATE INDEX idx_events_time ON events(start_time);
 CREATE INDEX idx_favorites_customer ON favorites(customer_id);
 CREATE INDEX idx_checkins_customer ON check_ins(customer_id);
+CREATE INDEX idx_orders_customer ON orders(customer_id);
+CREATE INDEX idx_orders_truck ON orders(truck_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_created ON orders(created_at DESC);
+CREATE INDEX idx_order_items_order ON order_items(order_id);
 
 -- ============================================
 -- VIEWS FOR COMPUTED DATA
@@ -236,6 +279,22 @@ CREATE TRIGGER update_food_trucks_updated_at BEFORE UPDATE ON food_trucks
 CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON events
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Generate order number
+CREATE OR REPLACE FUNCTION generate_order_number()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.order_number := 'ORD-' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' || LPAD(FLOOR(RANDOM() * 10000)::TEXT, 4, '0');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_order_number BEFORE INSERT ON orders
+  FOR EACH ROW WHEN (NEW.order_number IS NULL)
+  EXECUTE FUNCTION generate_order_number();
+
 -- Auto-update customer points when transaction added
 CREATE OR REPLACE FUNCTION update_customer_points()
 RETURNS TRIGGER AS $$
@@ -260,6 +319,8 @@ ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE owners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE food_trucks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_trucks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_attendance ENABLE ROW LEVEL SECURITY;
@@ -376,3 +437,60 @@ CREATE POLICY "Everyone can view menu ratings"
 
 CREATE POLICY "Customers can rate menu items"
   ON menu_item_ratings FOR ALL USING (auth.uid() = customer_id);
+
+-- Orders: Customers view own, truck owners view their truck orders
+CREATE POLICY "Customers can view own orders"
+  ON orders FOR SELECT USING (auth.uid() = customer_id);
+
+CREATE POLICY "Truck owners can view orders for their trucks"
+  ON orders FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM food_trucks
+      WHERE food_trucks.id = orders.truck_id
+      AND food_trucks.owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Customers can create orders"
+  ON orders FOR INSERT WITH CHECK (auth.uid() = customer_id);
+
+CREATE POLICY "Customers can update own orders"
+  ON orders FOR UPDATE USING (auth.uid() = customer_id);
+
+CREATE POLICY "Truck owners can update orders for their trucks"
+  ON orders FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM food_trucks
+      WHERE food_trucks.id = orders.truck_id
+      AND food_trucks.owner_id = auth.uid()
+    )
+  );
+
+-- Order Items: Follow parent order permissions
+CREATE POLICY "Customers can view own order items"
+  ON order_items FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM orders
+      WHERE orders.id = order_items.order_id
+      AND orders.customer_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Truck owners can view order items for their trucks"
+  ON order_items FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM orders
+      JOIN food_trucks ON food_trucks.id = orders.truck_id
+      WHERE orders.id = order_items.order_id
+      AND food_trucks.owner_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Customers can create order items"
+  ON order_items FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM orders
+      WHERE orders.id = order_items.order_id
+      AND orders.customer_id = auth.uid()
+    )
+  );
