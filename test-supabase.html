@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Test</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #e11d48;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #be123c;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Supabase Connection Test</h1>
+        <p>Click the buttons below to test your Supabase database connection:</p>
+
+        <button onclick="testConnection()">1. Test Connection</button>
+        <button onclick="testTables()">2. Check Tables</button>
+        <button onclick="testQuery()">3. Test Query</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/src/lib/supabase.js"></script>
+    <script>
+        const resultDiv = document.getElementById('result');
+
+        function showResult(message, type) {
+            resultDiv.className = type;
+            resultDiv.textContent = message;
+        }
+
+        async function testConnection() {
+            showResult('Testing connection...', 'info');
+
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('food_trucks')
+                    .select('count');
+
+                if (error) {
+                    showResult('❌ Connection Error:\n\n' + JSON.stringify(error, null, 2), 'error');
+                } else {
+                    showResult('✅ Connection Successful!\n\nYour app is connected to Supabase!', 'success');
+                }
+            } catch (err) {
+                showResult('❌ Error:\n\n' + err.message, 'error');
+            }
+        }
+
+        async function testTables() {
+            showResult('Checking tables...', 'info');
+
+            try {
+                // Try to query multiple tables
+                const tables = ['profiles', 'customers', 'owners', 'food_trucks', 'events', 'reviews'];
+                const results = [];
+
+                for (const table of tables) {
+                    const { error } = await window.supabaseClient
+                        .from(table)
+                        .select('*')
+                        .limit(1);
+
+                    results.push(`${error ? '❌' : '✅'} ${table}`);
+                }
+
+                showResult('Database Tables:\n\n' + results.join('\n'), 'success');
+            } catch (err) {
+                showResult('❌ Error:\n\n' + err.message, 'error');
+            }
+        }
+
+        async function testQuery() {
+            showResult('Testing query...', 'info');
+
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('food_trucks')
+                    .select('*');
+
+                if (error) {
+                    showResult('❌ Query Error:\n\n' + JSON.stringify(error, null, 2), 'error');
+                } else {
+                    showResult(
+                        `✅ Query Successful!\n\nFound ${data.length} food trucks in database.\n\n` +
+                        (data.length === 0 ? 'Database is empty (this is normal for a new setup)' : 'Data: ' + JSON.stringify(data, null, 2)),
+                        'success'
+                    );
+                }
+            } catch (err) {
+                showResult('❌ Error:\n\n' + err.message, 'error');
+            }
+        }
+
+        // Auto-run connection test on load
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 500);
+        });
+    </script>
+</body>
+</html>
