@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://coqwihsmmigktgqdnmis.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_7VpR4INaa_w7yp8v_SK-_A_vELGCMML';
+const SUPABASE_ANON_KEY = 'sb_publishable_7VpR41Naa_w7yp8v_SK-_A_vELGCMML';
 
 console.log('🔍 Testing Supabase connection...\n');
 
