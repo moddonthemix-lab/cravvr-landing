@@ -8,7 +8,7 @@
     return;
   }
 
-  const SUPABASE_URL = 'https://coqwihsmmigktgqdnmis.supabase.co';
+  const SUPABASE_URL = 'https://coqwihsmmigktqqdnmis.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvcXdpaHNtbWlna3RxcWRubWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTg1NTMsImV4cCI6MjA4MjYzNDU1M30.ybwwLZguj58PGzCuM-gCdMoUjGHLh2zmkZihy6_zEx8';
 
   // Create Supabase client
