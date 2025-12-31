@@ -89,14 +89,24 @@ const OwnerDashboard = ({ onBack }) => {
     }
   };
 
+  const generateSlug = (name) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
   const handleAddTruck = async (e) => {
     e.preventDefault();
     try {
+      const slug = generateSlug(truckForm.name);
+
       const { data, error } = await supabase
         .from('food_trucks')
         .insert({
           owner_id: user.id,
           name: truckForm.name,
+          slug: slug,
           cuisine: truckForm.cuisine,
           description: truckForm.description || null,
           phone: truckForm.phone || null,
@@ -120,10 +130,13 @@ const OwnerDashboard = ({ onBack }) => {
   const handleUpdateTruck = async (e) => {
     e.preventDefault();
     try {
+      const slug = generateSlug(truckForm.name);
+
       const { data, error } = await supabase
         .from('food_trucks')
         .update({
           name: truckForm.name,
+          slug: slug,
           cuisine: truckForm.cuisine,
           description: truckForm.description || null,
           phone: truckForm.phone || null,
