@@ -44,6 +44,30 @@ const Icons = {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
       <path d="M3 4h13v2H3V4m18 4v8a2 2 0 0 1-2 2h-1.17a3 3 0 0 1-5.66 0H9.83a3 3 0 0 1-5.66 0H3c-1.11 0-2-.89-2-2l.03-6A2 2 0 0 1 3 8h9v6H4.5v2H6.8c.5-.77 1.28-1.3 2.2-1.3.92 0 1.7.53 2.2 1.3h5.6c.5-.77 1.28-1.3 2.2-1.3s1.7.53 2.2 1.3H19v-6h2m-2-2l2 3h-2v-3M7 16.5A1.5 1.5 0 0 0 5.5 18A1.5 1.5 0 0 0 7 19.5A1.5 1.5 0 0 0 8.5 18A1.5 1.5 0 0 0 7 16.5m11 0a1.5 1.5 0 0 0-1.5 1.5a1.5 1.5 0 0 0 1.5 1.5a1.5 1.5 0 0 0 1.5-1.5a1.5 1.5 0 0 0-1.5-1.5z"/>
     </svg>
+  ),
+  mapPin: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+      <circle cx="12" cy="10" r="3"></circle>
+    </svg>
+  ),
+  bolt: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
+    </svg>
+  ),
+  calendar: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+  ),
+  message: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
   )
 };
 
@@ -402,6 +426,30 @@ const BrowseTrucks = () => {
           <p>Try adjusting your search or filters</p>
         </div>
       )}
+
+      {/* Bottom Navigation */}
+      <div className="bottom-nav">
+        <button className="nav-item active">
+          {Icons.mapPin}
+          <span>Map</span>
+        </button>
+        <button className="nav-item">
+          {Icons.compass}
+          <span>Discover</span>
+        </button>
+        <button className="nav-item">
+          {Icons.bolt}
+          <span>Bolt</span>
+        </button>
+        <button className="nav-item">
+          {Icons.calendar}
+          <span>Events</span>
+        </button>
+        <button className="nav-item">
+          {Icons.message}
+          <span>Login</span>
+        </button>
+      </div>
     </div>
   );
 };

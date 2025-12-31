@@ -9509,3 +9509,58 @@ button {
 .status-dot-inline.closed {
   background: var(--status-closed);
 }
+
+/* ===================================
+   Bottom Navigation
+   =================================== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0 16px;
+  z-index: 100;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--transition);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bottom-nav .nav-item svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}
+
+.bottom-nav .nav-item.active {
+  color: var(--primary);
+}
+
+.bottom-nav .nav-item.active svg {
+  stroke: var(--primary);
+  fill: none;
+}
+
+.bottom-nav .nav-item:hover {
+  color: var(--primary);
+}
+
+.bottom-nav .nav-item span {
+  margin-top: 2px;
+}
