@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import MenuManagement from './MenuManagement';
 
 const OwnerDashboard = ({ onBack }) => {
   const { user } = useAuth();
@@ -9,6 +10,8 @@ const OwnerDashboard = ({ onBack }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [stats, setStats] = useState({ views: 0, favorites: 0, messages: 0 });
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' or 'menu'
+  const [selectedTruck, setSelectedTruck] = useState(null);
 
   const supabase = window.supabaseClient;
 
@@ -82,6 +85,17 @@ const OwnerDashboard = ({ onBack }) => {
       <div style={{ padding: '40px', textAlign: 'center' }}>
         <p>Loading dashboard...</p>
       </div>
+    );
+  }
+
+  // Show Menu Management view if selected
+  if (currentView === 'menu' && selectedTruck) {
+    return (
+      <MenuManagement
+        truckId={selectedTruck.id}
+        truckName={selectedTruck.name}
+        onBack={() => setCurrentView('dashboard')}
+      />
     );
   }
 
@@ -345,14 +359,22 @@ const OwnerDashboard = ({ onBack }) => {
                 }}>
                   Edit
                 </button>
-                <button style={{
-                  padding: '8px 16px',
-                  background: '#f3f4f6',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}>
+                <button
+                  onClick={() => {
+                    setSelectedTruck(truck);
+                    setCurrentView('menu');
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#8b5cf6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
                   Manage Menu
                 </button>
               </div>
