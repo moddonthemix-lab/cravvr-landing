@@ -2598,6 +2598,7 @@ const App = () => {
     return 'landing';
   });
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [showConfirmationSuccess, setShowConfirmationSuccess] = useState(false);
 
   // Handle email confirmation from Supabase
   useEffect(() => {
@@ -2608,12 +2609,20 @@ const App = () => {
       if (hash && (hash.includes('access_token') || hash.includes('type=recovery'))) {
         console.log('🔐 Processing email confirmation...');
 
+        // Show success message
+        setShowConfirmationSuccess(true);
+
         // Supabase will automatically handle the hash and sign in the user
-        // Just clear the hash from the URL
+        // Clear the hash from the URL
         setTimeout(() => {
           window.history.replaceState(null, '', window.location.pathname);
           console.log('✅ Email confirmed! User should now be signed in.');
         }, 1000);
+
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+          setShowConfirmationSuccess(false);
+        }, 5000);
       }
     };
 
@@ -2646,6 +2655,28 @@ const App = () => {
           isOpen={authModalOpen}
           onClose={() => setAuthModalOpen(false)}
         />
+        {showConfirmationSuccess && (
+          <div style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#10b981',
+            color: 'white',
+            padding: '16px 24px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '16px',
+            fontWeight: '600'
+          }}>
+            <span style={{ fontSize: '24px' }}>✅</span>
+            <span>Email confirmed! Welcome to Cravvr!</span>
+          </div>
+        )}
       </>
     );
   }
@@ -2666,6 +2697,28 @@ const App = () => {
           setAuthModalOpen(false);
         }}
       />
+      {showConfirmationSuccess && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#10b981',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          fontSize: '16px',
+          fontWeight: '600'
+        }}>
+          <span style={{ fontSize: '24px' }}>✅</span>
+          <span>Email confirmed! Welcome to Cravvr!</span>
+        </div>
+      )}
     </>
   );
 };
