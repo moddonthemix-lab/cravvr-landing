@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { AuthModal, AuthButton } from './components/Auth.jsx';
+import { useAuth } from './contexts/AuthContext.jsx';
 import AdminDashboard from './admin/AdminDashboard';
 
 // SVG Icons
@@ -554,7 +556,7 @@ const useInView = (options = {}) => {
 // SHARED COMPONENTS
 // ============================================
 
-const Header = ({ mobileMenuOpen, setMobileMenuOpen, currentView, setCurrentView }) => (
+const Header = ({ mobileMenuOpen, setMobileMenuOpen, currentView, setCurrentView, onAuthClick }) => (
   <header className="site-header">
     <a href="#main" className="skip-link">Skip to main content</a>
     <div className="header-container">
@@ -572,10 +574,7 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, currentView, setCurrentView
       </nav>
 
       <div className="header-actions">
-        <a href="#waitlist" className="btn-primary btn-sm">
-          Join Waitlist
-          <span className="btn-icon">{Icons.arrowRight}</span>
-        </a>
+        <AuthButton onClick={onAuthClick} />
       </div>
 
       <button
@@ -596,9 +595,9 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, currentView, setCurrentView
         <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
         <button onClick={() => { setCurrentView('app'); setMobileMenuOpen(false); }} className="nav-app-link">Try Demo</button>
       </nav>
-      <a href="#waitlist" className="btn-primary mobile-cta" onClick={() => setMobileMenuOpen(false)}>
-        Join Waitlist
-      </a>
+      <div className="mobile-cta">
+        <AuthButton onClick={() => { onAuthClick(); setMobileMenuOpen(false); }} />
+      </div>
     </div>
   </header>
 );
@@ -2266,6 +2265,7 @@ const LandingPage = ({ setCurrentView }) => {
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
         setCurrentView={setCurrentView}
+        onAuthClick={onAuthClick}
       />
 
       <main id="main">
@@ -2590,6 +2590,8 @@ const LandingPage = ({ setCurrentView }) => {
 // ============================================
 
 const App = () => {
+  const [currentView, setCurrentView] = useState('landing');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState(() => {
     // Check if we're on the admin route
     if (window.location.pathname === '/admin') {
@@ -2617,10 +2619,29 @@ const App = () => {
   }
 
   if (currentView === 'app') {
-    return <AppDemo onBack={() => setCurrentView('landing')} />;
+    return (
+      <>
+        <AppDemo onBack={() => setCurrentView('landing')} />
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+        />
+      </>
+    );
   }
 
-  return <LandingPage setCurrentView={setCurrentView} />;
+  return (
+    <>
+      <LandingPage
+        setCurrentView={setCurrentView}
+        onAuthClick={() => setAuthModalOpen(true)}
+      />
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
+    </>
+  );
 };
 
 export default App;
