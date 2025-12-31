@@ -9194,3 +9194,18 @@ button {
   font-size: 11px;
   font-weight: 500;
 }
+
+/* ===================================
+   Browse Page - Full Width Desktop
+   =================================== */
+
+/* Override mobile max-width for desktop */
+.browse-app-container {
+  max-width: 100%;
+  margin: 0;
+}
+
+.bottom-nav-browse {
+  max-width: 100%;
+  width: 100%;
+}

@@ -72,6 +72,11 @@ const Icons = {
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
       <circle cx="12" cy="7" r="4"></circle>
     </svg>
+  ),
+  bolt: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
+    </svg>
   )
 };
 
@@ -287,7 +292,8 @@ const BrowseTrucks = () => {
             <span>Map</span>
           </button>
           <button className="bottom-nav-item active">
-            <span className="bottom-nav-icon">{Icons.cart}</span>
+            <span className="bottom-nav-icon">{Icons.bolt}</span>
+            <span>Bolt</span>
           </button>
           <button className="bottom-nav-item">
             <span className="bottom-nav-icon">{Icons.heart}</span>
@@ -420,7 +426,8 @@ const BrowseTrucks = () => {
           <span>Map</span>
         </button>
         <button className="bottom-nav-item active">
-          <span className="bottom-nav-icon">{Icons.cart}</span>
+          <span className="bottom-nav-icon">{Icons.bolt}</span>
+          <span>Bolt</span>
         </button>
         <button className="bottom-nav-item">
           <span className="bottom-nav-icon">{Icons.heart}</span>
