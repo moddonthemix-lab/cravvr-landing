@@ -72,7 +72,7 @@ const Icons = {
 };
 
 const BrowseTrucks = () => {
-  const { user, login, logout } = useAuth();
+  const { user, signIn, signOut } = useAuth();
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,7 +142,7 @@ const BrowseTrucks = () => {
         // If logged in, show logout option or profile
         const shouldLogout = window.confirm('You are logged in. Do you want to logout?');
         if (shouldLogout) {
-          logout();
+          signOut();
         }
       } else {
         setShowLoginModal(true);
@@ -155,7 +155,8 @@ const BrowseTrucks = () => {
 
   const handleLogin = async (email, password) => {
     try {
-      await login(email, password);
+      const { error } = await signIn(email, password);
+      if (error) throw error;
       setShowLoginModal(false);
     } catch (error) {
       alert('Login failed: ' + error.message);
@@ -326,14 +327,15 @@ const BrowseTrucks = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
+    const { signUp } = useAuth();
 
     const handleSubmit = async () => {
       if (isSignUp) {
-        // Sign up logic - you can expand this later
+        // Sign up logic
         try {
-          const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password
+          const { error } = await signUp(email, password, {
+            role: 'customer',
+            name: email.split('@')[0]
           });
           if (error) throw error;
           alert('Sign up successful! Please check your email to verify your account.');
