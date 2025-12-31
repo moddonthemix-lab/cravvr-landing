@@ -72,13 +72,15 @@ const Icons = {
 };
 
 const BrowseTrucks = () => {
-  const { user } = useAuth();
+  const { user, login, logout } = useAuth();
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [favorites, setFavorites] = useState([]);
+  const [activeTab, setActiveTab] = useState('map');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const supabase = window.supabaseClient;
 
@@ -129,6 +131,32 @@ const BrowseTrucks = () => {
         ? prev.filter(id => id !== truckId)
         : [...prev, truckId]
     );
+  };
+
+  const handleTabClick = (tab) => {
+    if (tab === 'login') {
+      if (user) {
+        // If logged in, show logout option or profile
+        const shouldLogout = window.confirm('You are logged in. Do you want to logout?');
+        if (shouldLogout) {
+          logout();
+        }
+      } else {
+        setShowLoginModal(true);
+      }
+    } else {
+      setActiveTab(tab);
+      setSelectedTruck(null);
+    }
+  };
+
+  const handleLogin = async (email, password) => {
+    try {
+      await login(email, password);
+      setShowLoginModal(false);
+    } catch (error) {
+      alert('Login failed: ' + error.message);
+    }
   };
 
   const cuisineFilters = ['all', ...new Set(trucks.map(t => t.cuisine).filter(Boolean))];
@@ -261,9 +289,222 @@ const BrowseTrucks = () => {
     );
   }
 
-  // Main Browse View
+  // Login Modal
+  const LoginModal = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '40px',
+          maxWidth: '400px',
+          width: '90%'
+        }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Login to Cravvr</h2>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid #e5e7eb',
+              marginBottom: '12px',
+              fontSize: '16px'
+            }}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid #e5e7eb',
+              marginBottom: '20px',
+              fontSize: '16px'
+            }}
+          />
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => handleLogin(email, password)}
+              style={{
+                flex: 1,
+                padding: '12px',
+                background: 'linear-gradient(135deg, #e11d48 0%, #be185d 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setShowLoginModal(false)}
+              style={{
+                flex: 1,
+                padding: '12px',
+                background: '#f3f4f6',
+                color: '#374151',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Discover Tab View
+  if (activeTab === 'discover') {
+    return (
+      <div className="app-view explore-view-new">
+        <div className="explore-hero">
+          <div className="explore-hero-content">
+            <h1 className="explore-hero-title">
+              <span className="gradient-text">Discover</span> New Favorites
+            </h1>
+            <p className="explore-hero-subtitle">Explore curated collections and trending trucks</p>
+          </div>
+        </div>
+        <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔍</div>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#374151' }}>
+            Discover Coming Soon
+          </h2>
+          <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+            We're working on bringing you personalized recommendations and curated collections.
+          </p>
+        </div>
+        {renderBottomNav()}
+      </div>
+    );
+  }
+
+  // Bolt Tab View
+  if (activeTab === 'bolt') {
+    return (
+      <div className="app-view explore-view-new">
+        <div className="explore-hero">
+          <div className="explore-hero-content">
+            <h1 className="explore-hero-title">
+              <span className="gradient-text">Bolt</span> Quick Orders
+            </h1>
+            <p className="explore-hero-subtitle">Lightning-fast delivery from nearby trucks</p>
+          </div>
+        </div>
+        <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚡</div>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#374151' }}>
+            Bolt Orders Coming Soon
+          </h2>
+          <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+            Get your favorite meals delivered in under 15 minutes with Bolt.
+          </p>
+        </div>
+        {renderBottomNav()}
+      </div>
+    );
+  }
+
+  // Events Tab View
+  if (activeTab === 'events') {
+    return (
+      <div className="app-view explore-view-new">
+        <div className="explore-hero">
+          <div className="explore-hero-content">
+            <h1 className="explore-hero-title">
+              Food Truck <span className="gradient-text">Events</span>
+            </h1>
+            <p className="explore-hero-subtitle">Find trucks at festivals, markets, and special events</p>
+          </div>
+        </div>
+        <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>📅</div>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#374151' }}>
+            Events Coming Soon
+          </h2>
+          <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+            Discover food truck gatherings, festivals, and pop-up events near you.
+          </p>
+        </div>
+        {renderBottomNav()}
+      </div>
+    );
+  }
+
+  // Bottom Navigation Component
+  const renderBottomNav = () => (
+    <div className="bottom-nav">
+      <button
+        className={`nav-item ${activeTab === 'map' ? 'active' : ''}`}
+        onClick={() => handleTabClick('map')}
+      >
+        {Icons.mapPin}
+        <span>Map</span>
+      </button>
+      <button
+        className={`nav-item ${activeTab === 'discover' ? 'active' : ''}`}
+        onClick={() => handleTabClick('discover')}
+      >
+        {Icons.compass}
+        <span>Discover</span>
+      </button>
+      <button
+        className={`nav-item ${activeTab === 'bolt' ? 'active' : ''}`}
+        onClick={() => handleTabClick('bolt')}
+      >
+        {Icons.bolt}
+        <span>Bolt</span>
+      </button>
+      <button
+        className={`nav-item ${activeTab === 'events' ? 'active' : ''}`}
+        onClick={() => handleTabClick('events')}
+      >
+        {Icons.calendar}
+        <span>Events</span>
+      </button>
+      <button
+        className={`nav-item ${user ? 'active' : ''}`}
+        onClick={() => handleTabClick('login')}
+      >
+        {Icons.message}
+        <span>{user ? 'Profile' : 'Login'}</span>
+      </button>
+    </div>
+  );
+
+  // Main Browse View (Map Tab)
   return (
     <div className="app-view explore-view-new">
+      {showLoginModal && <LoginModal />}
       {/* Hero Search Section */}
       <div className="explore-hero">
         <div className="explore-hero-content">
@@ -428,28 +669,7 @@ const BrowseTrucks = () => {
       )}
 
       {/* Bottom Navigation */}
-      <div className="bottom-nav">
-        <button className="nav-item active">
-          {Icons.mapPin}
-          <span>Map</span>
-        </button>
-        <button className="nav-item">
-          {Icons.compass}
-          <span>Discover</span>
-        </button>
-        <button className="nav-item">
-          {Icons.bolt}
-          <span>Bolt</span>
-        </button>
-        <button className="nav-item">
-          {Icons.calendar}
-          <span>Events</span>
-        </button>
-        <button className="nav-item">
-          {Icons.message}
-          <span>Login</span>
-        </button>
-      </div>
+      {renderBottomNav()}
     </div>
   );
 };
