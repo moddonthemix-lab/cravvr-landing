@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check Database Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Database Check</h1>
+  <button onclick="checkData()">Check Data</button>
+  <pre id="output"></pre>
+
+  <script type="module">
+    const SUPABASE_URL = 'https://pzvpjknexsnrewfmvhov.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6dnBqa25leHNucmV3Zm12aG92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1MDcxMzUsImV4cCI6MjA1MTA4MzEzNX0.mU-dC62ZuXABa_C-9MpVqfuzCKQPTBKvJ9gY9LsLPLg';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    window.checkData = async function() {
+      const output = document.getElementById('output');
+      output.textContent = 'Checking database...\n';
+
+      try {
+        const { data: trucks, error: trucksError } = await supabase
+          .from('food_trucks')
+          .select('*');
+
+        if (trucksError) {
+          output.textContent += `Error loading trucks: ${trucksError.message}\n`;
+        } else {
+          output.textContent += `Found ${trucks.length} trucks\n`;
+          output.textContent += JSON.stringify(trucks, null, 2);
+        }
+      } catch (error) {
+        output.textContent += `Error: ${error.message}\n`;
+      }
+    };
+  </script>
+</body>
+</html>

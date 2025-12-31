@@ -455,6 +455,48 @@ const BrowseTrucks = () => {
 
   // Discover Tab View
   if (activeTab === 'discover') {
+    // Handle empty state
+    if (trucks.length === 0) {
+      return (
+        <div className="app-view explore-view-new">
+          <div className="explore-hero">
+            <div className="explore-hero-content">
+              <h1 className="explore-hero-title">
+                <span className="gradient-text">Discover</span> New Favorites
+              </h1>
+              <p className="explore-hero-subtitle">Swipe to find your next favorite truck</p>
+            </div>
+          </div>
+          <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '80px', marginBottom: '20px' }}>🚚</div>
+            <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '16px', color: '#374151' }}>
+              No Food Trucks Yet
+            </h2>
+            <p style={{ color: '#6b7280', marginBottom: '30px', fontSize: '16px', maxWidth: '400px', margin: '0 auto 30px' }}>
+              Add demo data to start discovering food trucks.
+            </p>
+            <a
+              href="/add-demo-data.html"
+              style={{
+                display: 'inline-block',
+                padding: '14px 28px',
+                background: 'linear-gradient(135deg, #e11d48 0%, #be185d 100%)',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                boxShadow: '0 4px 12px rgba(225,29,72,0.3)'
+              }}
+            >
+              Add Demo Data
+            </a>
+          </div>
+          {renderBottomNav()}
+        </div>
+      );
+    }
+
     const currentTruck = trucks[discoverIndex];
 
     if (discoverIndex >= trucks.length) {
@@ -677,6 +719,49 @@ const BrowseTrucks = () => {
 
   // Bolt Tab View
   if (activeTab === 'bolt') {
+    // Handle empty state
+    if (trucks.length === 0) {
+      return (
+        <div className="app-view explore-view-new">
+          <div className="explore-hero">
+            <div className="explore-hero-content" style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '64px', marginBottom: '16px' }}>⚡</div>
+              <h1 className="explore-hero-title" style={{ fontSize: '32px', marginBottom: '12px' }}>
+                Bolt
+              </h1>
+              <p className="explore-hero-subtitle">Let me help you discover something new!</p>
+            </div>
+          </div>
+          <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '80px', marginBottom: '20px' }}>🚚</div>
+            <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '16px', color: '#374151' }}>
+              No Food Trucks Yet
+            </h2>
+            <p style={{ color: '#6b7280', marginBottom: '30px', fontSize: '16px', maxWidth: '400px', margin: '0 auto 30px' }}>
+              Add demo data to start generating meal suggestions.
+            </p>
+            <a
+              href="/add-demo-data.html"
+              style={{
+                display: 'inline-block',
+                padding: '14px 28px',
+                background: 'linear-gradient(135deg, #e11d48 0%, #be185d 100%)',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                boxShadow: '0 4px 12px rgba(225,29,72,0.3)'
+              }}
+            >
+              Add Demo Data
+            </a>
+          </div>
+          {renderBottomNav()}
+        </div>
+      );
+    }
+
     return (
       <div className="app-view explore-view-new">
         {/* Bolt Header */}
@@ -1084,19 +1169,50 @@ const BrowseTrucks = () => {
       </div>
 
       {/* Cuisine Filters */}
-      <div className="explore-filters">
-        <div className="filter-scroll">
-          {cuisineFilters.map(filter => (
-            <button
-              key={filter}
-              className={`filter-chip ${activeFilter === filter ? 'active' : ''}`}
-              onClick={() => setActiveFilter(filter)}
-            >
-              {filter === 'all' ? 'All Trucks' : filter}
-            </button>
-          ))}
+      {trucks.length > 0 && (
+        <div className="explore-filters">
+          <div className="filter-scroll">
+            {cuisineFilters.map(filter => (
+              <button
+                key={filter}
+                className={`filter-chip ${activeFilter === filter ? 'active' : ''}`}
+                onClick={() => setActiveFilter(filter)}
+              >
+                {filter === 'all' ? 'All Trucks' : filter}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Empty State - No Trucks */}
+      {trucks.length === 0 && (
+        <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '80px', marginBottom: '20px' }}>🚚</div>
+          <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '16px', color: '#374151' }}>
+            No Food Trucks Yet
+          </h2>
+          <p style={{ color: '#6b7280', marginBottom: '30px', fontSize: '16px', maxWidth: '400px', margin: '0 auto 30px' }}>
+            Add demo data to get started and explore food trucks in your area.
+          </p>
+          <a
+            href="/add-demo-data.html"
+            style={{
+              display: 'inline-block',
+              padding: '14px 28px',
+              background: 'linear-gradient(135deg, #e11d48 0%, #be185d 100%)',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(225,29,72,0.3)'
+            }}
+          >
+            Add Demo Data
+          </a>
+        </div>
+      )}
 
       {/* Featured Section */}
       {featuredTrucks.length > 0 && (
