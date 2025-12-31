@@ -245,7 +245,7 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
 };
 
 // Auth Button Component (for header/nav)
-export const AuthButton = ({ onClick }) => {
+export const AuthButton = ({ onClick, onProfileClick }) => {
   const { user, signOut, isAuthenticated } = useAuth();
 
   if (isAuthenticated) {
@@ -254,6 +254,14 @@ export const AuthButton = ({ onClick }) => {
         <span className="text-sm text-gray-700 hidden sm:block">
           {user.email}
         </span>
+        {onProfileClick && (
+          <button
+            onClick={onProfileClick}
+            className="px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+          >
+            Profile
+          </button>
+        )}
         <button
           onClick={signOut}
           className="px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"

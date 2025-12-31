@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { AuthModal, AuthButton } from './components/Auth.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
 import AdminDashboard from './admin/AdminDashboard';
+import CustomerProfile from './components/CustomerProfile.jsx';
+import OwnerDashboard from './components/OwnerDashboard.jsx';
 
 // SVG Icons
 const Icons = {
@@ -556,7 +558,7 @@ const useInView = (options = {}) => {
 // SHARED COMPONENTS
 // ============================================
 
-const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView, onAuthClick }) => (
+const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView, onAuthClick, onProfileClick }) => (
   <header className="site-header">
     <a href="#main" className="skip-link">Skip to main content</a>
     <div className="header-container">
@@ -574,7 +576,7 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView, onAuthClick
       </nav>
 
       <div className="header-actions">
-        <AuthButton onClick={onAuthClick} />
+        <AuthButton onClick={onAuthClick} onProfileClick={onProfileClick} />
       </div>
 
       <button
@@ -596,7 +598,10 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView, onAuthClick
         <button onClick={() => { setCurrentView('app'); setMobileMenuOpen(false); }} className="nav-app-link">Try Demo</button>
       </nav>
       <div className="mobile-cta">
-        <AuthButton onClick={() => { onAuthClick(); setMobileMenuOpen(false); }} />
+        <AuthButton
+          onClick={() => { onAuthClick(); setMobileMenuOpen(false); }}
+          onProfileClick={() => { onProfileClick(); setMobileMenuOpen(false); }}
+        />
       </div>
     </div>
   </header>
@@ -2216,7 +2221,7 @@ const Footer = () => (
 // LANDING PAGE
 // ============================================
 
-const LandingPage = ({ setCurrentView, onAuthClick }) => {
+const LandingPage = ({ setCurrentView, onAuthClick, onProfileClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [waitlistType, setWaitlistType] = useState('lover');
   const [openFaq, setOpenFaq] = useState(0);
@@ -2266,6 +2271,7 @@ const LandingPage = ({ setCurrentView, onAuthClick }) => {
         setMobileMenuOpen={setMobileMenuOpen}
         setCurrentView={setCurrentView}
         onAuthClick={onAuthClick}
+        onProfileClick={onProfileClick}
       />
 
       <main id="main">
@@ -2590,6 +2596,8 @@ const LandingPage = ({ setCurrentView, onAuthClick }) => {
 // ============================================
 
 const App = () => {
+  const { user } = useAuth();
+  const [userRole, setUserRole] = useState(null);
   const [currentView, setCurrentView] = useState(() => {
     // Check if we're on the admin route
     if (window.location.pathname === '/admin') {
@@ -2599,6 +2607,29 @@ const App = () => {
   });
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [showConfirmationSuccess, setShowConfirmationSuccess] = useState(false);
+
+  const supabase = window.supabaseClient;
+
+  // Get user role when user changes
+  useEffect(() => {
+    const loadUserRole = async () => {
+      if (user && supabase) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (data) {
+          setUserRole(data.role);
+        }
+      } else {
+        setUserRole(null);
+      }
+    };
+
+    loadUserRole();
+  }, [user, supabase]);
 
   // Handle email confirmation from Supabase
   useEffect(() => {
@@ -2647,6 +2678,18 @@ const App = () => {
     return <AdminDashboard />;
   }
 
+  if (currentView === 'profile') {
+    // Show appropriate profile based on user role
+    if (userRole === 'customer') {
+      return <CustomerProfile onBack={() => setCurrentView('landing')} />;
+    } else if (userRole === 'owner') {
+      return <OwnerDashboard onBack={() => setCurrentView('landing')} />;
+    } else {
+      // If no role yet, show loading or redirect to landing
+      return <div style={{ padding: '40px', textAlign: 'center' }}>Loading profile...</div>;
+    }
+  }
+
   if (currentView === 'app') {
     return (
       <>
@@ -2688,6 +2731,10 @@ const App = () => {
         onAuthClick={() => {
           console.log('🔓 Opening auth modal');
           setAuthModalOpen(true);
+        }}
+        onProfileClick={() => {
+          console.log('👤 Opening profile');
+          setCurrentView('profile');
         }}
       />
       <AuthModal
