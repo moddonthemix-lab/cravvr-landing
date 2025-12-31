@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -7,6 +8,7 @@ import { useAuth } from './contexts/AuthContext.jsx';
 import AdminDashboard from './admin/AdminDashboard';
 import CustomerProfile from './components/CustomerProfile.jsx';
 import OwnerDashboard from './components/OwnerDashboard.jsx';
+import BrowseTrucks from './pages/BrowseTrucks.jsx';
 
 // SVG Icons
 const Icons = {
@@ -2595,22 +2597,13 @@ const LandingPage = ({ setCurrentView, onAuthClick, onProfileClick }) => {
 // MAIN APP
 // ============================================
 
-const App = () => {
+// Wrapper components for routes
+const ProfileRoute = () => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState(null);
-  const [currentView, setCurrentView] = useState(() => {
-    // Check if we're on the admin route
-    if (window.location.pathname === '/admin') {
-      return 'admin';
-    }
-    return 'landing';
-  });
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [showConfirmationSuccess, setShowConfirmationSuccess] = useState(false);
-
+  const navigate = useNavigate();
   const supabase = window.supabaseClient;
 
-  // Get user role when user changes
   useEffect(() => {
     const loadUserRole = async () => {
       if (user && supabase) {
@@ -2623,34 +2616,48 @@ const App = () => {
         if (data) {
           setUserRole(data.role);
         }
-      } else {
-        setUserRole(null);
       }
     };
 
     loadUserRole();
   }, [user, supabase]);
 
+  if (!user) {
+    return <div style={{ padding: '40px', textAlign: 'center' }}>Please sign in to view your profile.</div>;
+  }
+
+  if (!userRole) {
+    return <div style={{ padding: '40px', textAlign: 'center' }}>Loading profile...</div>;
+  }
+
+  if (userRole === 'customer') {
+    return <CustomerProfile onBack={() => navigate('/')} />;
+  } else if (userRole === 'owner') {
+    return <OwnerDashboard onBack={() => navigate('/')} />;
+  }
+
+  return null;
+};
+
+const LandingRoute = () => {
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [showConfirmationSuccess, setShowConfirmationSuccess] = useState(false);
+  const navigate = useNavigate();
+
   // Handle email confirmation from Supabase
   useEffect(() => {
     const handleEmailConfirmation = async () => {
       const hash = window.location.hash;
 
-      // Check if this is an auth callback (email confirmation, password reset, etc.)
       if (hash && (hash.includes('access_token') || hash.includes('type=recovery'))) {
         console.log('🔐 Processing email confirmation...');
-
-        // Show success message
         setShowConfirmationSuccess(true);
 
-        // Supabase will automatically handle the hash and sign in the user
-        // Clear the hash from the URL
         setTimeout(() => {
           window.history.replaceState(null, '', window.location.pathname);
           console.log('✅ Email confirmed! User should now be signed in.');
         }, 1000);
 
-        // Hide success message after 5 seconds
         setTimeout(() => {
           setShowConfirmationSuccess(false);
         }, 5000);
@@ -2660,89 +2667,19 @@ const App = () => {
     handleEmailConfirmation();
   }, []);
 
-  // Handle browser navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      if (window.location.pathname === '/admin') {
-        setCurrentView('admin');
-      } else {
-        setCurrentView('landing');
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  if (currentView === 'admin') {
-    return <AdminDashboard />;
-  }
-
-  if (currentView === 'profile') {
-    // Show appropriate profile based on user role
-    if (userRole === 'customer') {
-      return <CustomerProfile onBack={() => setCurrentView('landing')} />;
-    } else if (userRole === 'owner') {
-      return <OwnerDashboard onBack={() => setCurrentView('landing')} />;
-    } else {
-      // If no role yet, show loading or redirect to landing
-      return <div style={{ padding: '40px', textAlign: 'center' }}>Loading profile...</div>;
-    }
-  }
-
-  if (currentView === 'app') {
-    return (
-      <>
-        <AppDemo onBack={() => setCurrentView('landing')} />
-        <AuthModal
-          isOpen={authModalOpen}
-          onClose={() => setAuthModalOpen(false)}
-        />
-        {showConfirmationSuccess && (
-          <div style={{
-            position: 'fixed',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: '#10b981',
-            color: 'white',
-            padding: '16px 24px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            fontSize: '16px',
-            fontWeight: '600'
-          }}>
-            <span style={{ fontSize: '24px' }}>✅</span>
-            <span>Email confirmed! Welcome to Cravvr!</span>
-          </div>
-        )}
-      </>
-    );
-  }
-
   return (
     <>
       <LandingPage
-        setCurrentView={setCurrentView}
-        onAuthClick={() => {
-          console.log('🔓 Opening auth modal');
-          setAuthModalOpen(true);
+        setCurrentView={(view) => {
+          if (view === 'app') navigate('/app');
+          if (view === 'admin') navigate('/admin');
         }}
-        onProfileClick={() => {
-          console.log('👤 Opening profile');
-          setCurrentView('profile');
-        }}
+        onAuthClick={() => setAuthModalOpen(true)}
+        onProfileClick={() => navigate('/profile')}
       />
       <AuthModal
         isOpen={authModalOpen}
-        onClose={() => {
-          console.log('🔒 Closing auth modal');
-          setAuthModalOpen(false);
-        }}
+        onClose={() => setAuthModalOpen(false)}
       />
       {showConfirmationSuccess && (
         <div style={{
@@ -2767,6 +2704,17 @@ const App = () => {
         </div>
       )}
     </>
+  );
+};
+
+const App = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingRoute />} />
+      <Route path="/app" element={<BrowseTrucks />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/profile" element={<ProfileRoute />} />
+    </Routes>
   );
 };
 
