@@ -2590,8 +2590,6 @@ const LandingPage = ({ setCurrentView, onAuthClick }) => {
 // ============================================
 
 const App = () => {
-  const [currentView, setCurrentView] = useState('landing');
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState(() => {
     // Check if we're on the admin route
     if (window.location.pathname === '/admin') {
@@ -2599,6 +2597,7 @@ const App = () => {
     }
     return 'landing';
   });
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Handle browser navigation
   useEffect(() => {
