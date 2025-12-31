@@ -375,38 +375,44 @@ const BrowseTrucks = () => {
             filteredTrucks.map((truck) => (
               <div
                 key={truck.id}
-                className="browse-truck-card"
+                className="browse-truck-card-horizontal"
                 onClick={() => handleTruckClick(truck)}
               >
                 {/* Truck Image */}
-                <div className="browse-truck-image">
+                <div className="browse-truck-image-square">
                   <img
                     src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800'}
                     alt={truck.name}
                   />
-                  {/* LIVE Badge */}
+                  {/* Promoted/LIVE Badge */}
                   {truck.status === 'open' && (
-                    <div className="live-badge">LIVE</div>
+                    <div className="promoted-badge">Promoted</div>
                   )}
                   {/* Rating Badge */}
-                  <div className="rating-badge-browse">
+                  <div className="rating-badge-top-right">
                     {Icons.star} {truck.rating || '4.8'}
                   </div>
+                  {/* Heart Icon */}
+                  <button
+                    className="heart-btn-bottom-right"
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(truck.id); }}
+                  >
+                    {favorites.includes(truck.id) ? Icons.heartFilled : Icons.heart}
+                  </button>
                 </div>
 
                 {/* Truck Info */}
-                <div className="browse-truck-info">
-                  <h3 className="browse-truck-name">{truck.name}</h3>
-                  <p className="browse-truck-cuisine">
+                <div className="browse-truck-info-right">
+                  <h3 className="browse-truck-title">{truck.name}</h3>
+                  <p className="browse-truck-tags">
                     {truck.cuisine} • Street Food
                   </p>
-                  <div className="browse-truck-meta">
-                    <span className="browse-truck-distance">
-                      {Icons.location} 0.3 mi away
-                    </span>
-                    <span className="browse-truck-status">
-                      {truck.status === 'open' ? 'Open now' : 'Closed'}
-                    </span>
+                  <div className="browse-truck-time-price">
+                    <span>⏱ 15-30 min</span>
+                    <span>$12 avg</span>
+                  </div>
+                  <div className="browse-promo-badge">
+                    {truck.status === 'open' ? 'Free delivery' : 'PROMO20'}
                   </div>
                 </div>
               </div>

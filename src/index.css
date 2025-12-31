@@ -9209,3 +9209,151 @@ button {
   max-width: 100%;
   width: 100%;
 }
+
+/* ===================================
+   Horizontal Truck Cards (Like Screenshot)
+   =================================== */
+
+/* Override vertical cards with horizontal layout */
+.browse-truck-card-horizontal {
+  display: flex;
+  gap: 16px;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 16px;
+}
+
+.browse-truck-card-horizontal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Square image on left */
+.browse-truck-image-square {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.browse-truck-image-square img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Promoted Badge (top-left) */
+.promoted-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Rating Badge (top-right) */
+.rating-badge-top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.rating-badge-top-right svg {
+  width: 14px;
+  height: 14px;
+  fill: #fbbf24;
+}
+
+/* Heart Button (bottom-right) */
+.heart-btn-bottom-right {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s;
+}
+
+.heart-btn-bottom-right:hover {
+  transform: scale(1.1);
+}
+
+.heart-btn-bottom-right svg {
+  width: 20px;
+  height: 20px;
+  color: #e91e63;
+  fill: none;
+}
+
+.heart-btn-bottom-right:has(svg[fill]) svg {
+  fill: #e91e63;
+}
+
+/* Info section on right */
+.browse-truck-info-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.browse-truck-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #111;
+}
+
+.browse-truck-tags {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 12px 0;
+}
+
+.browse-truck-time-price {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+/* Promo badge at bottom */
+.browse-promo-badge {
+  background: #ffe4f0;
+  color: #e91e63;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: auto;
+}
