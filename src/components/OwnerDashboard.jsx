@@ -310,16 +310,19 @@ const OwnerDashboard = ({ onBack }) => {
           marginBottom: '20px'
         }}>
           <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>My Trucks</h3>
-          <button style={{
-            background: '#8b5cf6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '10px 20px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer'
-          }}>
+          <button
+            onClick={() => alert('Add Truck feature coming soon! This will let you add a new food truck to your account.')}
+            style={{
+              background: '#8b5cf6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
             + Add Truck
           </button>
         </div>
@@ -349,14 +352,17 @@ const OwnerDashboard = ({ onBack }) => {
               </h4>
               <p style={{ color: '#666', marginBottom: '12px' }}>{truck.cuisine}</p>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button style={{
-                  padding: '8px 16px',
-                  background: '#f3f4f6',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}>
+                <button
+                  onClick={() => alert('Edit Truck feature coming soon! This will let you update truck details.')}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#f3f4f6',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
                   Edit
                 </button>
                 <button
@@ -405,16 +411,19 @@ const OwnerDashboard = ({ onBack }) => {
             <div style={{ fontWeight: '600', marginBottom: '4px' }}>Currently</div>
             <div style={{ fontSize: '14px', color: '#666' }}>Let customers know if you're serving</div>
           </div>
-          <button style={{
-            background: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '20px',
-            padding: '8px 20px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer'
-          }}>
+          <button
+            onClick={() => alert('Truck Status toggle feature coming soon! This will let you toggle between Open and Closed status.')}
+            style={{
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '8px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
             ● OPEN
           </button>
         </div>
@@ -436,7 +445,11 @@ const OwnerDashboard = ({ onBack }) => {
             width: '50px',
             height: '28px'
           }}>
-            <input type="checkbox" style={{ opacity: 0, width: 0, height: 0 }} />
+            <input
+              type="checkbox"
+              onChange={(e) => alert('Share Location toggle feature coming soon! This will enable GPS tracking of your truck.')}
+              style={{ opacity: 0, width: 0, height: 0 }}
+            />
             <span style={{
               position: 'absolute',
               cursor: 'pointer',
@@ -476,17 +489,20 @@ const OwnerDashboard = ({ onBack }) => {
           <div style={{ fontWeight: 'bold', color: '#10b981' }}>Open 24/7</div>
         </div>
 
-        <button style={{
-          width: '100%',
-          padding: '12px',
-          background: 'white',
-          color: '#374151',
-          border: '2px solid #e5e7eb',
-          borderRadius: '8px',
-          fontSize: '16px',
-          fontWeight: '600',
-          cursor: 'pointer'
-        }}>
+        <button
+          onClick={() => alert('Edit Weekly Schedule feature coming soon! This will let you set your operating hours for each day.')}
+          style={{
+            width: '100%',
+            padding: '12px',
+            background: 'white',
+            color: '#374151',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer'
+          }}
+        >
           Edit Weekly Schedule
         </button>
       </div>
@@ -503,56 +519,65 @@ const OwnerDashboard = ({ onBack }) => {
         </h3>
 
         <div style={{ display: 'grid', gap: '12px' }}>
-          <button style={{
-            width: '100%',
-            padding: '16px',
-            background: '#f3f4f6',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            textAlign: 'left',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
+          <button
+            onClick={() => alert('Update Photos feature coming soon! This will let you upload images of your truck and food.')}
+            style={{
+              width: '100%',
+              padding: '16px',
+              background: '#f3f4f6',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
             <span>📸 Update Photos</span>
             <span style={{ fontSize: '20px', color: '#9ca3af' }}>→</span>
           </button>
 
-          <button style={{
-            width: '100%',
-            padding: '16px',
-            background: '#f3f4f6',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            textAlign: 'left',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
+          <button
+            onClick={() => alert('Edit Description feature coming soon! This will let you update your truck\'s bio and story.')}
+            style={{
+              width: '100%',
+              padding: '16px',
+              background: '#f3f4f6',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
             <span>✏️ Edit Description</span>
             <span style={{ fontSize: '20px', color: '#9ca3af' }}>→</span>
           </button>
 
-          <button style={{
-            width: '100%',
-            padding: '16px',
-            background: '#f3f4f6',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            textAlign: 'left',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
+          <button
+            onClick={() => alert('Manage Locations feature coming soon! This will let you set your regular locations and routes.')}
+            style={{
+              width: '100%',
+              padding: '16px',
+              background: '#f3f4f6',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
             <span>📍 Manage Locations</span>
             <span style={{ fontSize: '20px', color: '#9ca3af' }}>→</span>
           </button>
