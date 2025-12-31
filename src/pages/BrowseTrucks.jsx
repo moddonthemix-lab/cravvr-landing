@@ -81,6 +81,9 @@ const BrowseTrucks = () => {
   const [favorites, setFavorites] = useState([]);
   const [activeTab, setActiveTab] = useState('map');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [discoverIndex, setDiscoverIndex] = useState(0);
+  const [boltRadius, setBoltRadius] = useState(5);
+  const [boltSuggestions, setBoltSuggestions] = useState(null);
 
   const supabase = window.supabaseClient;
 
@@ -156,6 +159,35 @@ const BrowseTrucks = () => {
       setShowLoginModal(false);
     } catch (error) {
       alert('Login failed: ' + error.message);
+    }
+  };
+
+  const handleSwipe = (direction) => {
+    if (direction === 'right') {
+      const currentTruck = trucks[discoverIndex];
+      setFavorites(prev => [...prev, currentTruck.id]);
+    }
+    setDiscoverIndex(prev => prev + 1);
+  };
+
+  const generateBoltSuggestions = async () => {
+    if (trucks.length === 0) return;
+
+    // Get random truck
+    const randomTruck = trucks[Math.floor(Math.random() * trucks.length)];
+
+    // Load its menu
+    const menu = await loadTruckMenu(randomTruck.id);
+
+    // Get 2 random menu items
+    if (menu.length > 0) {
+      const shuffled = [...menu].sort(() => 0.5 - Math.random());
+      const selectedMeals = shuffled.slice(0, Math.min(2, menu.length));
+
+      setBoltSuggestions({
+        truck: randomTruck,
+        meals: selectedMeals
+      });
     }
   };
 
@@ -293,6 +325,26 @@ const BrowseTrucks = () => {
   const LoginModal = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isSignUp, setIsSignUp] = useState(false);
+
+    const handleSubmit = async () => {
+      if (isSignUp) {
+        // Sign up logic - you can expand this later
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password
+          });
+          if (error) throw error;
+          alert('Sign up successful! Please check your email to verify your account.');
+          setShowLoginModal(false);
+        } catch (error) {
+          alert('Sign up failed: ' + error.message);
+        }
+      } else {
+        handleLogin(email, password);
+      }
+    };
 
     return (
       <div style={{
@@ -314,7 +366,9 @@ const BrowseTrucks = () => {
           maxWidth: '400px',
           width: '90%'
         }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Login to Cravvr</h2>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>
+            {isSignUp ? 'Sign Up for Cravvr' : 'Login to Cravvr'}
+          </h2>
           <input
             type="email"
             placeholder="Email"
@@ -343,9 +397,9 @@ const BrowseTrucks = () => {
               fontSize: '16px'
             }}
           />
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
             <button
-              onClick={() => handleLogin(email, password)}
+              onClick={handleSubmit}
               style={{
                 flex: 1,
                 padding: '12px',
@@ -358,7 +412,7 @@ const BrowseTrucks = () => {
                 cursor: 'pointer'
               }}
             >
-              Login
+              {isSignUp ? 'Sign Up' : 'Login'}
             </button>
             <button
               onClick={() => setShowLoginModal(false)}
@@ -377,6 +431,23 @@ const BrowseTrucks = () => {
               Cancel
             </button>
           </div>
+          <div style={{ textAlign: 'center', fontSize: '14px', color: '#6b7280' }}>
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#e11d48',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginLeft: '4px',
+                textDecoration: 'underline'
+              }}
+            >
+              {isSignUp ? 'Login' : 'Sign Up'}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -384,24 +455,220 @@ const BrowseTrucks = () => {
 
   // Discover Tab View
   if (activeTab === 'discover') {
-    return (
-      <div className="app-view explore-view-new">
-        <div className="explore-hero">
-          <div className="explore-hero-content">
-            <h1 className="explore-hero-title">
-              <span className="gradient-text">Discover</span> New Favorites
-            </h1>
-            <p className="explore-hero-subtitle">Explore curated collections and trending trucks</p>
+    const currentTruck = trucks[discoverIndex];
+
+    if (discoverIndex >= trucks.length) {
+      return (
+        <div className="app-view explore-view-new">
+          <div className="explore-hero">
+            <div className="explore-hero-content">
+              <h1 className="explore-hero-title">
+                <span className="gradient-text">Discover</span> New Favorites
+              </h1>
+              <p className="explore-hero-subtitle">Swipe to find your next favorite truck</p>
+            </div>
           </div>
+          <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#374151' }}>
+              You've seen all trucks!
+            </h2>
+            <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+              Check back later for new food trucks in your area.
+            </p>
+            <button
+              onClick={() => setDiscoverIndex(0)}
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #e11d48 0%, #be185d 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Start Over
+            </button>
+          </div>
+          {renderBottomNav()}
         </div>
-        <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔍</div>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#374151' }}>
-            Discover Coming Soon
-          </h2>
-          <p style={{ color: '#6b7280', marginBottom: '20px' }}>
-            We're working on bringing you personalized recommendations and curated collections.
-          </p>
+      );
+    }
+
+    if (!currentTruck) {
+      return (
+        <div className="app-view explore-view-new">
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <p>Loading trucks...</p>
+          </div>
+          {renderBottomNav()}
+        </div>
+      );
+    }
+
+    return (
+      <div className="app-view discover-swipe-view">
+        <div style={{ padding: '20px 20px 120px', display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '100vh' }}>
+          {/* Swipe Card */}
+          <div className="swipe-card" style={{
+            width: '100%',
+            maxWidth: '500px',
+            marginTop: '40px'
+          }}>
+            {/* Card Image */}
+            <div style={{
+              width: '100%',
+              height: '400px',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              background: 'linear-gradient(135deg, #e11d48 0%, #be185d 50%, #9333ea 100%)',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {currentTruck.image_url ? (
+                <img
+                  src={currentTruck.image_url}
+                  alt={currentTruck.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div style={{ fontSize: '120px' }}>🌮</div>
+              )}
+            </div>
+
+            {/* Card Info */}
+            <div style={{
+              background: 'white',
+              borderRadius: '20px',
+              padding: '30px',
+              marginTop: '-20px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>{currentTruck.name}</h2>
+              <p style={{ fontSize: '18px', color: '#6b7280', marginBottom: '12px' }}>{currentTruck.cuisine}</p>
+              {currentTruck.description && (
+                <p style={{ fontSize: '15px', color: '#6b7280', marginBottom: '16px', lineHeight: '1.5' }}>
+                  {currentTruck.description}
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', fontSize: '15px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {Icons.mapPin}
+                  <span>{currentTruck.location || '0.3 mi away'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f59e0b' }}>
+                  {Icons.star}
+                  <span>{currentTruck.rating || '4.8'}</span>
+                </div>
+              </div>
+
+              {/* Dietary Options */}
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <span style={{
+                  padding: '6px 12px',
+                  background: '#f0fdf4',
+                  color: '#16a34a',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  🌱 Vegan
+                </span>
+                <span style={{
+                  padding: '6px 12px',
+                  background: '#fef2f2',
+                  color: '#dc2626',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  🚫 Gluten-Free
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '20px',
+            marginTop: '30px',
+            justifyContent: 'center'
+          }}>
+            <button
+              onClick={() => handleSwipe('left')}
+              style={{
+                width: '70px',
+                height: '70px',
+                borderRadius: '50%',
+                border: '3px solid #e5e7eb',
+                background: 'white',
+                color: '#6b7280',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}
+            >
+              ✕
+            </button>
+            <button
+              onClick={() => handleTruckClick(currentTruck)}
+              style={{
+                width: '70px',
+                height: '70px',
+                borderRadius: '50%',
+                border: '3px solid #3b82f6',
+                background: '#3b82f6',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(59,130,246,0.3)'
+              }}
+            >
+              {Icons.mapPin}
+            </button>
+            <button
+              onClick={() => handleSwipe('right')}
+              style={{
+                width: '70px',
+                height: '70px',
+                borderRadius: '50%',
+                border: '3px solid #ec4899',
+                background: '#ec4899',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(236,72,153,0.3)'
+              }}
+            >
+              ♥
+            </button>
+          </div>
         </div>
         {renderBottomNav()}
       </div>
@@ -412,22 +679,198 @@ const BrowseTrucks = () => {
   if (activeTab === 'bolt') {
     return (
       <div className="app-view explore-view-new">
+        {/* Bolt Header */}
         <div className="explore-hero">
-          <div className="explore-hero-content">
-            <h1 className="explore-hero-title">
-              <span className="gradient-text">Bolt</span> Quick Orders
+          <div className="explore-hero-content" style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '64px', marginBottom: '16px' }}>⚡</div>
+            <h1 className="explore-hero-title" style={{ fontSize: '32px', marginBottom: '12px' }}>
+              Bolt
             </h1>
-            <p className="explore-hero-subtitle">Lightning-fast delivery from nearby trucks</p>
+            <p className="explore-hero-subtitle">Let me help you discover something new!</p>
           </div>
         </div>
-        <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>⚡</div>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#374151' }}>
-            Bolt Orders Coming Soon
-          </h2>
-          <p style={{ color: '#6b7280', marginBottom: '20px' }}>
-            Get your favorite meals delivered in under 15 minutes with Bolt.
-          </p>
+
+        <div style={{ padding: '30px 20px 120px', maxWidth: '600px', margin: '0 auto' }}>
+          {/* Search Radius Card */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            marginBottom: '30px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <span style={{ color: '#9333ea', fontSize: '20px' }}>{Icons.mapPin}</span>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>Search Radius</h3>
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>Distance:</span>
+                <span style={{ fontSize: '16px', fontWeight: '600', color: '#9333ea' }}>{boltRadius} miles</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="6"
+                value={boltRadius}
+                onChange={(e) => setBoltRadius(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  height: '6px',
+                  borderRadius: '5px',
+                  background: 'linear-gradient(90deg, #9333ea 0%, #e11d48 100%)',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '12px', color: '#9ca3af' }}>
+                <span>1 mi</span>
+                <span>6 mi</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Ready to Explore Section */}
+          {!boltSuggestions ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <div style={{ fontSize: '80px', marginBottom: '20px' }}>⚡</div>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px' }}>Ready to explore?</h2>
+              <p style={{ color: '#6b7280', marginBottom: '30px', fontSize: '15px' }}>
+                I'll find you a great food truck and event!
+              </p>
+              <button
+                onClick={generateBoltSuggestions}
+                style={{
+                  padding: '16px 32px',
+                  background: 'linear-gradient(135deg, #9333ea 0%, #e11d48 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(147,51,234,0.3)'
+                }}
+              >
+                ✨ Generate Suggestions
+              </button>
+
+              {/* How it Works */}
+              <div style={{
+                background: '#fef3c7',
+                borderRadius: '12px',
+                padding: '20px',
+                marginTop: '40px',
+                textAlign: 'left'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ fontSize: '24px' }}>💡</span>
+                  <div>
+                    <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>How it works:</h4>
+                    <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: '#78350f', lineHeight: '1.8' }}>
+                      <li>Only open trucks within your radius are shown</li>
+                      <li>Events and meals are randomly selected just for you!</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Bolt Suggestions Result */
+            <div>
+              <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '20px', textAlign: 'center' }}>
+                Your Bolt Suggestions ⚡
+              </h2>
+
+              {/* Truck Card */}
+              <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                marginBottom: '20px'
+              }}>
+                {boltSuggestions.truck.image_url && (
+                  <img
+                    src={boltSuggestions.truck.image_url}
+                    alt={boltSuggestions.truck.name}
+                    style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                  />
+                )}
+                <div style={{ padding: '20px' }}>
+                  <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    {boltSuggestions.truck.name}
+                  </h3>
+                  <p style={{ color: '#6b7280', marginBottom: '12px' }}>{boltSuggestions.truck.cuisine}</p>
+
+                  <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', marginTop: '20px' }}>
+                    Recommended Meals:
+                  </h4>
+                  {boltSuggestions.meals.map((meal, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '12px',
+                        background: '#f9fafb',
+                        borderRadius: '8px',
+                        marginBottom: '8px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: '600', marginBottom: '4px' }}>{meal.name}</div>
+                          {meal.description && (
+                            <div style={{ fontSize: '13px', color: '#6b7280' }}>{meal.description}</div>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '16px', fontWeight: '600', color: '#9333ea' }}>
+                          ${meal.price?.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => handleTruckClick(boltSuggestions.truck)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: 'linear-gradient(135deg, #9333ea 0%, #e11d48 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      marginTop: '16px'
+                    }}
+                  >
+                    View Full Menu
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setBoltSuggestions(null)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
         </div>
         {renderBottomNav()}
       </div>
@@ -436,6 +879,36 @@ const BrowseTrucks = () => {
 
   // Events Tab View
   if (activeTab === 'events') {
+    const mockEvents = [
+      {
+        id: 1,
+        title: 'Downtown Food Truck Festival',
+        date: 'Saturday, Jan 6',
+        time: '11:00 AM - 8:00 PM',
+        location: 'Central Park, Downtown',
+        trucks: 12,
+        image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800'
+      },
+      {
+        id: 2,
+        title: 'Taco Tuesday Meetup',
+        date: 'Tuesday, Jan 9',
+        time: '5:00 PM - 9:00 PM',
+        location: 'Riverside Plaza',
+        trucks: 5,
+        image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800'
+      },
+      {
+        id: 3,
+        title: 'Weekend Market & Trucks',
+        date: 'Sunday, Jan 14',
+        time: '10:00 AM - 4:00 PM',
+        location: 'Farmers Market Square',
+        trucks: 8,
+        image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800'
+      }
+    ];
+
     return (
       <div className="app-view explore-view-new">
         <div className="explore-hero">
@@ -446,14 +919,95 @@ const BrowseTrucks = () => {
             <p className="explore-hero-subtitle">Find trucks at festivals, markets, and special events</p>
           </div>
         </div>
-        <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>📅</div>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#374151' }}>
-            Events Coming Soon
-          </h2>
-          <p style={{ color: '#6b7280', marginBottom: '20px' }}>
-            Discover food truck gatherings, festivals, and pop-up events near you.
-          </p>
+
+        <div style={{ padding: '20px 20px 120px', maxWidth: '900px', margin: '0 auto' }}>
+          {mockEvents.length === 0 ? (
+            <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '64px', marginBottom: '20px' }}>📅</div>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#374151' }}>
+                No Events Scheduled
+              </h2>
+              <p style={{ color: '#6b7280' }}>
+                Check back later for upcoming food truck events near you.
+              </p>
+            </div>
+          ) : (
+            <>
+              <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px' }}>
+                Upcoming Events ({mockEvents.length})
+              </h2>
+              {mockEvents.map((event, index) => (
+                <div
+                  key={event.id}
+                  style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    marginBottom: '20px',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    animation: `fadeInUp 0.6s ease forwards ${index * 100}ms`,
+                    opacity: 0
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: window.innerWidth < 600 ? 'column' : 'row' }}>
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      style={{
+                        width: window.innerWidth < 600 ? '100%' : '200px',
+                        height: '180px',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    <div style={{ padding: '20px', flex: 1 }}>
+                      <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '12px' }}>
+                        {event.title}
+                      </h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#6b7280', fontSize: '14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>📅</span>
+                          <span>{event.date}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>🕐</span>
+                          <span>{event.time}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>📍</span>
+                          <span>{event.location}</span>
+                        </div>
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          marginTop: '8px',
+                          padding: '6px 12px',
+                          background: '#f0fdf4',
+                          color: '#16a34a',
+                          borderRadius: '20px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          width: 'fit-content'
+                        }}>
+                          🚚 {event.trucks} Trucks
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
         {renderBottomNav()}
       </div>
@@ -496,7 +1050,7 @@ const BrowseTrucks = () => {
         onClick={() => handleTabClick('login')}
       >
         {Icons.message}
-        <span>{user ? 'Profile' : 'Login'}</span>
+        <span>{user ? 'Profile' : 'Login / Sign Up'}</span>
       </button>
     </div>
   );
