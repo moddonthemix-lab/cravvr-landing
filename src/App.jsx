@@ -2599,6 +2599,27 @@ const App = () => {
   });
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
+  // Handle email confirmation from Supabase
+  useEffect(() => {
+    const handleEmailConfirmation = async () => {
+      const hash = window.location.hash;
+
+      // Check if this is an auth callback (email confirmation, password reset, etc.)
+      if (hash && (hash.includes('access_token') || hash.includes('type=recovery'))) {
+        console.log('🔐 Processing email confirmation...');
+
+        // Supabase will automatically handle the hash and sign in the user
+        // Just clear the hash from the URL
+        setTimeout(() => {
+          window.history.replaceState(null, '', window.location.pathname);
+          console.log('✅ Email confirmed! User should now be signed in.');
+        }, 1000);
+      }
+    };
+
+    handleEmailConfirmation();
+  }, []);
+
   // Handle browser navigation
   useEffect(() => {
     const handlePopState = () => {
