@@ -12,6 +12,15 @@ const OwnerDashboard = ({ onBack }) => {
   const [stats, setStats] = useState({ views: 0, favorites: 0, messages: 0 });
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' or 'menu'
   const [selectedTruck, setSelectedTruck] = useState(null);
+  const [showTruckForm, setShowTruckForm] = useState(false);
+  const [editingTruck, setEditingTruck] = useState(null);
+  const [truckForm, setTruckForm] = useState({
+    name: '',
+    cuisine: '',
+    description: '',
+    phone: '',
+    location: ''
+  });
 
   const supabase = window.supabaseClient;
 
@@ -78,6 +87,81 @@ const OwnerDashboard = ({ onBack }) => {
       console.error('Error updating profile:', error);
       alert('Failed to update profile');
     }
+  };
+
+  const handleAddTruck = async (e) => {
+    e.preventDefault();
+    try {
+      const { data, error } = await supabase
+        .from('food_trucks')
+        .insert({
+          owner_id: user.id,
+          name: truckForm.name,
+          cuisine: truckForm.cuisine,
+          description: truckForm.description || null,
+          phone: truckForm.phone || null,
+          location: truckForm.location || null
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTrucks([...trucks, data]);
+      setTruckForm({ name: '', cuisine: '', description: '', phone: '', location: '' });
+      setShowTruckForm(false);
+      alert('Truck added successfully!');
+    } catch (error) {
+      console.error('Error adding truck:', error);
+      alert('Failed to add truck: ' + error.message);
+    }
+  };
+
+  const handleUpdateTruck = async (e) => {
+    e.preventDefault();
+    try {
+      const { data, error } = await supabase
+        .from('food_trucks')
+        .update({
+          name: truckForm.name,
+          cuisine: truckForm.cuisine,
+          description: truckForm.description || null,
+          phone: truckForm.phone || null,
+          location: truckForm.location || null
+        })
+        .eq('id', editingTruck.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTrucks(trucks.map(t => t.id === editingTruck.id ? data : t));
+      setTruckForm({ name: '', cuisine: '', description: '', phone: '', location: '' });
+      setEditingTruck(null);
+      setShowTruckForm(false);
+      alert('Truck updated successfully!');
+    } catch (error) {
+      console.error('Error updating truck:', error);
+      alert('Failed to update truck: ' + error.message);
+    }
+  };
+
+  const startEditTruck = (truck) => {
+    setEditingTruck(truck);
+    setTruckForm({
+      name: truck.name,
+      cuisine: truck.cuisine,
+      description: truck.description || '',
+      phone: truck.phone || '',
+      location: truck.location || ''
+    });
+    setShowTruckForm(true);
+  };
+
+  const cancelTruckForm = () => {
+    setShowTruckForm(false);
+    setEditingTruck(null);
+    setTruckForm({ name: '', cuisine: '', description: '', phone: '', location: '' });
   };
 
   if (loading) {
@@ -310,24 +394,180 @@ const OwnerDashboard = ({ onBack }) => {
           marginBottom: '20px'
         }}>
           <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>My Trucks</h3>
-          <button
-            onClick={() => alert('Add Truck feature coming soon! This will let you add a new food truck to your account.')}
-            style={{
-              background: '#8b5cf6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}
-          >
-            + Add Truck
-          </button>
+          {!showTruckForm && (
+            <button
+              onClick={() => setShowTruckForm(true)}
+              style={{
+                background: '#8b5cf6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              + Add Truck
+            </button>
+          )}
         </div>
 
-        {trucks.length === 0 ? (
+        {/* Add/Edit Truck Form */}
+        {showTruckForm && (
+          <div style={{
+            background: '#f9fafb',
+            border: '2px solid #8b5cf6',
+            borderRadius: '12px',
+            padding: '24px',
+            marginBottom: '20px'
+          }}>
+            <h4 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
+              {editingTruck ? 'Edit Truck' : 'Add New Truck'}
+            </h4>
+            <form onSubmit={editingTruck ? handleUpdateTruck : handleAddTruck}>
+              <div style={{ display: 'grid', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>
+                    Truck Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={truckForm.name}
+                    onChange={(e) => setTruckForm({ ...truckForm, name: e.target.value })}
+                    required
+                    placeholder="e.g., Seoul Street Food"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>
+                    Cuisine Type *
+                  </label>
+                  <input
+                    type="text"
+                    value={truckForm.cuisine}
+                    onChange={(e) => setTruckForm({ ...truckForm, cuisine: e.target.value })}
+                    required
+                    placeholder="e.g., Korean BBQ"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>
+                    Description
+                  </label>
+                  <textarea
+                    value={truckForm.description}
+                    onChange={(e) => setTruckForm({ ...truckForm, description: e.target.value })}
+                    placeholder="Tell customers about your truck..."
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={truckForm.phone}
+                      onChange={(e) => setTruckForm({ ...truckForm, phone: e.target.value })}
+                      placeholder="(555) 123-4567"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      value={truckForm.location}
+                      onChange={(e) => setTruckForm({ ...truckForm, location: e.target.value })}
+                      placeholder="San Francisco, CA"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '6px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                  <button
+                    type="submit"
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: '#8b5cf6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {editingTruck ? 'Update Truck' : 'Add Truck'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelTruckForm}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: '#f3f4f6',
+                      color: '#374151',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {trucks.length === 0 && !showTruckForm ? (
           <div style={{
             textAlign: 'center',
             padding: '40px 20px',
@@ -353,14 +593,15 @@ const OwnerDashboard = ({ onBack }) => {
               <p style={{ color: '#666', marginBottom: '12px' }}>{truck.cuisine}</p>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
-                  onClick={() => alert('Edit Truck feature coming soon! This will let you update truck details.')}
+                  onClick={() => startEditTruck(truck)}
                   style={{
                     padding: '8px 16px',
                     background: '#f3f4f6',
                     border: 'none',
                     borderRadius: '6px',
                     fontSize: '14px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    fontWeight: '600'
                   }}
                 >
                   Edit
