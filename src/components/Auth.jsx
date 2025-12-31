@@ -14,6 +14,8 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
 
   const { signUp, signIn } = useAuth();
 
+  console.log('🎭 AuthModal render - isOpen:', isOpen, 'mode:', mode);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -264,7 +266,14 @@ export const AuthButton = ({ onClick }) => {
 
   return (
     <button
-      onClick={onClick}
+      onClick={() => {
+        console.log('🔘 Sign In button clicked');
+        if (onClick) {
+          onClick();
+        } else {
+          console.error('❌ onClick handler is undefined');
+        }
+      }}
       className="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors"
     >
       Sign In

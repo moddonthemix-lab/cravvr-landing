@@ -2633,11 +2633,17 @@ const App = () => {
     <>
       <LandingPage
         setCurrentView={setCurrentView}
-        onAuthClick={() => setAuthModalOpen(true)}
+        onAuthClick={() => {
+          console.log('🔓 Opening auth modal');
+          setAuthModalOpen(true);
+        }}
       />
       <AuthModal
         isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={() => {
+          console.log('🔒 Closing auth modal');
+          setAuthModalOpen(false);
+        }}
       />
     </>
   );
