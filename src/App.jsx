@@ -556,7 +556,7 @@ const useInView = (options = {}) => {
 // SHARED COMPONENTS
 // ============================================
 
-const Header = ({ mobileMenuOpen, setMobileMenuOpen, currentView, setCurrentView, onAuthClick }) => (
+const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView, onAuthClick }) => (
   <header className="site-header">
     <a href="#main" className="skip-link">Skip to main content</a>
     <div className="header-container">
@@ -2216,7 +2216,7 @@ const Footer = () => (
 // LANDING PAGE
 // ============================================
 
-const LandingPage = ({ setCurrentView }) => {
+const LandingPage = ({ setCurrentView, onAuthClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [waitlistType, setWaitlistType] = useState('lover');
   const [openFaq, setOpenFaq] = useState(0);
