@@ -8852,3 +8852,345 @@ button {
   width: 12px;
   height: 12px;
 }
+
+/* ===================================
+   Browse Page - Mobile App Style
+   =================================== */
+
+.browse-app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #f8f9fa;
+  position: relative;
+  padding-bottom: 80px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* Header */
+.browse-header {
+  background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.browse-menu-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.browse-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.browse-filter-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Search Bar */
+.browse-search-container {
+  padding: 16px 20px;
+  background: white;
+}
+
+.browse-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.browse-search-box .search-icon {
+  display: flex;
+  align-items: center;
+  color: #999;
+  margin-right: 10px;
+}
+
+.browse-search-box .search-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.browse-search-box input {
+  border: none;
+  background: none;
+  outline: none;
+  flex: 1;
+  font-size: 16px;
+  color: #333;
+}
+
+.browse-search-box input::placeholder {
+  color: #999;
+}
+
+/* Category Filters */
+.browse-category-filters {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: white;
+}
+
+.browse-category-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.category-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.category-chip.active {
+  background: #ffebee;
+  border-color: #e91e63;
+}
+
+.category-emoji {
+  font-size: 24px;
+}
+
+.category-chip span:last-child {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* Section */
+.browse-section {
+  padding: 0 20px 20px;
+}
+
+.browse-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.browse-section-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.map-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #e91e63;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.map-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Truck List */
+.browse-truck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Truck Card */
+.browse-truck-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.browse-truck-card:active {
+  transform: scale(0.98);
+}
+
+.browse-truck-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+.browse-truck-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* LIVE Badge */
+.live-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #e91e63;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Rating Badge */
+.rating-badge-browse {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rating-badge-browse svg {
+  width: 14px;
+  height: 14px;
+  fill: #fbbf24;
+}
+
+/* Truck Info */
+.browse-truck-info {
+  padding: 16px;
+}
+
+.browse-truck-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: #111;
+}
+
+.browse-truck-cuisine {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 12px 0;
+}
+
+.browse-truck-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.browse-truck-distance {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+.browse-truck-distance svg {
+  color: #e91e63;
+}
+
+.browse-truck-status {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4caf50;
+}
+
+/* Bottom Navigation */
+.bottom-nav-browse {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 480px;
+  width: 100%;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 12px;
+  z-index: 1000;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 12px;
+  color: #999;
+  transition: color 0.2s;
+}
+
+.bottom-nav-item.active {
+  color: #e91e63;
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+  background: #e91e63;
+  color: white;
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.bottom-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.bottom-nav-item span:last-child {
+  font-size: 11px;
+  font-weight: 500;
+}
