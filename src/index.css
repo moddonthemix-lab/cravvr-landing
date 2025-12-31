@@ -9357,3 +9357,155 @@ button {
   font-weight: 600;
   margin-top: auto;
 }
+
+/* ===================================
+   Nearby Section Cards
+   =================================== */
+
+.nearby-trucks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  padding: 0 20px 20px;
+}
+
+.nearby-truck-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+  animation: fadeInUp 0.4s ease backwards;
+}
+
+.nearby-truck-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.nearby-card-image {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+}
+
+.nearby-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.nearby-truck-card:hover .nearby-card-image img {
+  transform: scale(1.05);
+}
+
+.card-fav-btn-nearby {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s;
+  z-index: 2;
+}
+
+.card-fav-btn-nearby:hover {
+  transform: scale(1.1);
+}
+
+.card-fav-btn-nearby svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--text-secondary);
+}
+
+.card-fav-btn-nearby.active svg {
+  fill: var(--primary);
+  stroke: var(--primary);
+}
+
+.delivery-time-badge-nearby {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.nearby-card-body {
+  padding: 16px;
+}
+
+.nearby-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.nearby-card-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.rating-badge-nearby {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--rating);
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.rating-badge-nearby svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--rating);
+}
+
+.nearby-card-cuisine {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+}
+
+.nearby-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.status-dot-inline {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-open);
+}
+
+.status-dot-inline.open {
+  background: var(--status-open);
+}
+
+.status-dot-inline.closed {
+  background: var(--status-closed);
+}
