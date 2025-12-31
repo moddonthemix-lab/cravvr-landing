@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import AdminDashboard from './admin/AdminDashboard';
+import Header from './components/landing/Header';
 
 // SVG Icons
 const Icons = {
@@ -553,55 +554,7 @@ const useInView = (options = {}) => {
 // ============================================
 // SHARED COMPONENTS
 // ============================================
-
-const Header = ({ mobileMenuOpen, setMobileMenuOpen, currentView, setCurrentView }) => (
-  <header className="site-header">
-    <a href="#main" className="skip-link">Skip to main content</a>
-    <div className="header-container">
-      <a href="/" className="logo" onClick={(e) => { e.preventDefault(); setCurrentView('landing'); }}>
-        <span className="logo-icon">{Icons.truck}</span>
-        <span className="logo-text">Cravrr</span>
-      </a>
-
-      <nav className="desktop-nav">
-        <a href="#features">Features</a>
-        <a href="#how-it-works">How it Works</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#faq">FAQ</a>
-        <button onClick={() => setCurrentView('app')} className="nav-app-link">Try Demo</button>
-      </nav>
-
-      <div className="header-actions">
-        <a href="#waitlist" className="btn-primary btn-sm">
-          Join Waitlist
-          <span className="btn-icon">{Icons.arrowRight}</span>
-        </a>
-      </div>
-
-      <button
-        className="mobile-menu-btn"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        aria-label="Toggle menu"
-        aria-expanded={mobileMenuOpen}
-      >
-        {mobileMenuOpen ? Icons.x : Icons.menu}
-      </button>
-    </div>
-
-    <div className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
-      <nav>
-        <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
-        <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
-        <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
-        <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
-        <button onClick={() => { setCurrentView('app'); setMobileMenuOpen(false); }} className="nav-app-link">Try Demo</button>
-      </nav>
-      <a href="#waitlist" className="btn-primary mobile-cta" onClick={() => setMobileMenuOpen(false)}>
-        Join Waitlist
-      </a>
-    </div>
-  </header>
-);
+// Note: Header component is now imported from ./components/landing/Header
 
 const AppHeader = ({ title, onBack, rightAction }) => (
   <header className="app-header">

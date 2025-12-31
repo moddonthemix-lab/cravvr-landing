@@ -15,6 +15,7 @@ This folder contains SQL migration scripts for the Cravvr database.
 | File | Description | Status |
 |------|-------------|--------|
 | `001_add_orders.sql` | Adds orders and order_items tables with RLS | Pending |
+| `002_auto_profile_trigger.sql` | Auto-creates profile on user signup | Pending |
 
 ## Initial Setup
 
@@ -37,6 +38,16 @@ Adds e-commerce order functionality:
 - `order_items` - Line items for each order
 
 **Run this if:** You already have the base schema and need to add ordering functionality.
+
+### 002_auto_profile_trigger.sql
+**Added:** 2024-12-31
+
+Automatically creates a profile when users sign up:
+- Creates a trigger on `auth.users` table
+- Inserts record into `profiles` table with user metadata
+- Creates corresponding `customers` or `owners` record based on role
+
+**Run this if:** You want automatic profile creation on signup (required for auth to work properly).
 
 ---
 
