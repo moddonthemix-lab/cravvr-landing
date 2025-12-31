@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Demo Data - CravvR</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #e91e63;
+      margin-bottom: 10px;
+    }
+    button {
+      background: #e91e63;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: #c2185b;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 5px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .error {
+      color: #f44336;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚚 Add Demo Data to CravvR</h1>
+    <p>This will add 5 demo food trucks with full menus to your database.</p>
+    <button id="addDataBtn" onclick="addDemoData()">Add Demo Data</button>
+    <div id="output"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://coqwihsmmigktqqdnmis.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvcXdpaHNtbWlna3RxcWRubWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTg1NTMsImV4cCI6MjA4MjYzNDU1M30.ybwwLZguj58PGzCuM-gCdMoUjGHLh2zmkZihy6_zEx8';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const demoTrucks = [
+      {
+        name: 'Taco Fiesta',
+        cuisine: 'Mexican',
+        description: 'Authentic street tacos and Mexican favorites made fresh daily',
+        phone: '(555) 123-4567',
+        location: 'Downtown Food Court',
+        image_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800',
+        rating: 4.8,
+        status: 'open'
+      },
+      {
+        name: 'Burger Haven',
+        cuisine: 'American',
+        description: 'Gourmet burgers with locally sourced ingredients',
+        phone: '(555) 234-5678',
+        location: 'City Park',
+        image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800',
+        rating: 4.6,
+        status: 'open'
+      },
+      {
+        name: 'Thai Street Eats',
+        cuisine: 'Thai',
+        description: 'Traditional Thai street food with bold flavors',
+        phone: '(555) 345-6789',
+        location: 'University District',
+        image_url: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800',
+        rating: 4.9,
+        status: 'open'
+      },
+      {
+        name: 'Pizza Paradise',
+        cuisine: 'Italian',
+        description: 'Wood-fired Neapolitan pizza on the go',
+        phone: '(555) 456-7890',
+        location: 'Market Square',
+        image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800',
+        rating: 4.7,
+        status: 'open'
+      },
+      {
+        name: 'Morning Brew Coffee',
+        cuisine: 'Coffee',
+        description: 'Specialty coffee and fresh pastries',
+        phone: '(555) 567-8901',
+        location: 'Business District',
+        image_url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800',
+        rating: 4.5,
+        status: 'open'
+      }
+    ];
+
+    const menusByTruck = {
+      'Taco Fiesta': [
+        { name: 'Street Tacos', description: 'Three tacos with choice of meat', price: 8.99, category: 'Tacos', available: true },
+        { name: 'Burrito Bowl', description: 'Rice, beans, meat, and toppings', price: 10.99, category: 'Bowls', available: true },
+        { name: 'Quesadilla', description: 'Cheese and meat in a grilled tortilla', price: 7.99, category: 'Appetizers', available: true },
+        { name: 'Chips & Guacamole', description: 'Fresh made guacamole with tortilla chips', price: 6.99, category: 'Appetizers', available: true },
+        { name: 'Horchata', description: 'Traditional rice drink', price: 3.99, category: 'Beverages', available: true }
+      ],
+      'Burger Haven': [
+        { name: 'Classic Cheeseburger', description: 'Beef patty, cheese, lettuce, tomato', price: 11.99, category: 'Burgers', available: true },
+        { name: 'Bacon BBQ Burger', description: 'With bacon and BBQ sauce', price: 13.99, category: 'Burgers', available: true },
+        { name: 'Veggie Burger', description: 'House-made veggie patty', price: 10.99, category: 'Burgers', available: true },
+        { name: 'French Fries', description: 'Crispy golden fries', price: 4.99, category: 'Sides', available: true },
+        { name: 'Milkshake', description: 'Chocolate, vanilla, or strawberry', price: 5.99, category: 'Beverages', available: true }
+      ],
+      'Thai Street Eats': [
+        { name: 'Pad Thai', description: 'Classic rice noodles with peanuts', price: 12.99, category: 'Noodles', available: true },
+        { name: 'Green Curry', description: 'Coconut curry with vegetables', price: 11.99, category: 'Curry', available: true },
+        { name: 'Spring Rolls', description: 'Fresh vegetable spring rolls', price: 6.99, category: 'Appetizers', available: true },
+        { name: 'Mango Sticky Rice', description: 'Sweet sticky rice with fresh mango', price: 7.99, category: 'Desserts', available: true },
+        { name: 'Thai Iced Tea', description: 'Sweet and creamy Thai tea', price: 4.99, category: 'Beverages', available: true }
+      ],
+      'Pizza Paradise': [
+        { name: 'Margherita Pizza', description: 'Fresh mozzarella, basil, tomato', price: 14.99, category: 'Pizza', available: true },
+        { name: 'Pepperoni Pizza', description: 'Classic pepperoni and cheese', price: 15.99, category: 'Pizza', available: true },
+        { name: 'Veggie Supreme', description: 'Loaded with fresh vegetables', price: 16.99, category: 'Pizza', available: true },
+        { name: 'Caesar Salad', description: 'Romaine, parmesan, croutons', price: 7.99, category: 'Salads', available: true },
+        { name: 'Tiramisu', description: 'Italian coffee-flavored dessert', price: 6.99, category: 'Desserts', available: true }
+      ],
+      'Morning Brew Coffee': [
+        { name: 'Espresso', description: 'Double shot espresso', price: 3.99, category: 'Coffee', available: true },
+        { name: 'Cappuccino', description: 'Espresso with steamed milk foam', price: 5.99, category: 'Coffee', available: true },
+        { name: 'Cold Brew', description: 'Smooth cold-brewed coffee', price: 4.99, category: 'Coffee', available: true },
+        { name: 'Croissant', description: 'Buttery flaky croissant', price: 4.99, category: 'Pastries', available: true },
+        { name: 'Avocado Toast', description: 'Smashed avocado on sourdough', price: 8.99, category: 'Food', available: true }
+      ]
+    };
+
+    function log(message, isError = false) {
+      const output = document.getElementById('output');
+      const className = isError ? 'error' : (message.includes('✓') || message.includes('✅') ? 'success' : '');
+      output.innerHTML += `<div class="${className}">${message}</div>`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    async function addDemoData() {
+      const btn = document.getElementById('addDataBtn');
+      const output = document.getElementById('output');
+
+      btn.disabled = true;
+      output.innerHTML = '';
+
+      log('Starting to add demo data...\n');
+
+      for (const truck of demoTrucks) {
+        log(`Adding truck: ${truck.name}...`);
+
+        try {
+          // Insert the truck
+          const { data: truckData, error: truckError } = await supabase
+            .from('food_trucks')
+            .insert(truck)
+            .select()
+            .single();
+
+          if (truckError) {
+            log(`✗ Error adding ${truck.name}: ${truckError.message}`, true);
+            continue;
+          }
+
+          log(`✓ Added truck: ${truck.name} (ID: ${truckData.id})`);
+
+          // Add menu items for this truck
+          const menuItems = menusByTruck[truck.name];
+          if (menuItems) {
+            const menuItemsWithTruckId = menuItems.map(item => ({
+              ...item,
+              food_truck_id: truckData.id
+            }));
+
+            const { error: menuError } = await supabase
+              .from('food_truck_menus')
+              .insert(menuItemsWithTruckId);
+
+            if (menuError) {
+              log(`✗ Error adding menu items for ${truck.name}: ${menuError.message}`, true);
+            } else {
+              log(`✓ Added ${menuItems.length} menu items for ${truck.name}\n`);
+            }
+          }
+        } catch (error) {
+          log(`✗ Error: ${error.message}`, true);
+        }
+      }
+
+      log('\n✅ Demo data added successfully!');
+      log(`Total trucks added: ${demoTrucks.length}`);
+
+      setTimeout(() => {
+        btn.disabled = false;
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
