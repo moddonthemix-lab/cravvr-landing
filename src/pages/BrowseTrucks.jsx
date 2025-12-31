@@ -34,9 +34,9 @@ const BrowseTrucks = () => {
   const loadTruckMenu = async (truckId) => {
     try {
       const { data, error } = await supabase
-        .from('food_truck_menus')
+        .from('menu_items')
         .select('*')
-        .eq('food_truck_id', truckId)
+        .eq('truck_id', truckId)
         .order('category', { ascending: true });
 
       if (error) throw error;

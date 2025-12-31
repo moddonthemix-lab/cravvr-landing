@@ -121,11 +121,11 @@ async function addDemoData() {
     if (menuItems) {
       const menuItemsWithTruckId = menuItems.map(item => ({
         ...item,
-        food_truck_id: truckData.id
+        truck_id: truckData.id
       }));
 
       const { error: menuError } = await supabase
-        .from('food_truck_menus')
+        .from('menu_items')
         .insert(menuItemsWithTruckId);
 
       if (menuError) {

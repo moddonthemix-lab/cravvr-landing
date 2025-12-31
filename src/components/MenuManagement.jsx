@@ -26,9 +26,9 @@ const MenuManagement = ({ truckId, truckName, onBack }) => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('food_truck_menus')
+        .from('menu_items')
         .select('*')
-        .eq('food_truck_id', truckId)
+        .eq('truck_id', truckId)
         .order('category', { ascending: true });
 
       if (error) throw error;
@@ -45,9 +45,9 @@ const MenuManagement = ({ truckId, truckName, onBack }) => {
 
     try {
       const { data, error } = await supabase
-        .from('food_truck_menus')
+        .from('menu_items')
         .insert({
-          food_truck_id: truckId,
+          truck_id: truckId,
           name: formData.name,
           description: formData.description,
           price: parseFloat(formData.price),
@@ -73,7 +73,7 @@ const MenuManagement = ({ truckId, truckName, onBack }) => {
 
     try {
       const { data, error } = await supabase
-        .from('food_truck_menus')
+        .from('menu_items')
         .update({
           name: formData.name,
           description: formData.description,
@@ -105,7 +105,7 @@ const MenuManagement = ({ truckId, truckName, onBack }) => {
 
     try {
       const { error } = await supabase
-        .from('food_truck_menus')
+        .from('menu_items')
         .delete()
         .eq('id', itemId);
 
