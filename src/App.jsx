@@ -12,6 +12,7 @@ import Checkout from './components/cart/Checkout';
 import HomePage from './components/home/HomePage';
 import TruckDetailPage from './components/truck/TruckDetailPage';
 import SocialPage from './pages/SocialPage';
+import TabContainer from './components/app/TabContainer';
 import { useCart } from './contexts/CartContext';
 import { supabase } from './lib/supabase';
 
@@ -2801,14 +2802,14 @@ const App = () => {
     <>
       <CartDrawer />
       <Routes>
-        {/* New DoorDash-style home page */}
-        <Route path="/" element={<HomePage />} />
+        {/* Main app with tabbed navigation (mobile) */}
+        <Route path="/" element={<TabContainer />} />
 
         {/* Landing/Marketing page at /eat */}
         <Route path="/eat" element={<LandingPageWrapper />} />
 
-        {/* Browse trucks - redirects to home since all trucks are shown there */}
-        <Route path="/browse" element={<HomePage />} />
+        {/* Browse trucks - alias to home */}
+        <Route path="/browse" element={<TabContainer />} />
 
         {/* Truck detail page - production version */}
         <Route path="/truck/:id" element={<TruckDetailPage />} />
@@ -2828,7 +2829,7 @@ const App = () => {
         <Route path="/social" element={<SocialPage />} />
 
         {/* Fallback to home */}
-        <Route path="*" element={<HomePage />} />
+        <Route path="*" element={<TabContainer />} />
       </Routes>
     </>
   );

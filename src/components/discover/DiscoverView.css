@@ -1,0 +1,473 @@
+/* DiscoverView - Swipe Card Interface */
+
+.discover-view {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(180deg, #fef2f2 0%, #ffffff 30%);
+  padding-bottom: 20px;
+}
+
+/* Loading State */
+.discover-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.discover-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #e11d48;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.discover-loading p {
+  color: #64748b;
+  font-size: 15px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
+.discover-header {
+  padding: 20px 20px 16px;
+  text-align: center;
+}
+
+.discover-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.discover-title h1 {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #e11d48, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.liked-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #fef2f2;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e11d48;
+}
+
+.liked-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.discover-header p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Card Stack */
+.discover-stack {
+  flex: 1;
+  position: relative;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 440px;
+}
+
+/* Cards */
+.discover-card {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+}
+
+.discover-card.next-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.92);
+  z-index: 1;
+  opacity: 0.7;
+  width: calc(100% - 40px);
+  max-width: 360px;
+}
+
+/* Swipe Animations */
+@keyframes swipeLeft {
+  to {
+    transform: translateX(-150%) rotate(-20deg);
+    opacity: 0;
+  }
+}
+
+@keyframes swipeRight {
+  to {
+    transform: translateX(150%) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+.discover-card.swipe-left {
+  animation: swipeLeft 0.4s ease forwards;
+}
+
+.discover-card.swipe-right {
+  animation: swipeRight 0.4s ease forwards;
+}
+
+/* Swipe Indicators */
+.swipe-indicator {
+  position: absolute;
+  top: 60px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: scale(0.8) rotate(-12deg);
+  transition: all 0.2s ease;
+  z-index: 20;
+}
+
+.swipe-indicator.like {
+  right: 20px;
+  background: #dcfce7;
+  color: #16a34a;
+  border: 3px solid #16a34a;
+}
+
+.swipe-indicator.nope {
+  left: 20px;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 3px solid #dc2626;
+}
+
+.swipe-indicator.show {
+  opacity: 1;
+  transform: scale(1) rotate(-12deg);
+}
+
+.indicator-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Card Image */
+.card-image-container {
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+}
+
+.card-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+}
+
+/* Card Badges */
+.card-badges {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.badge.featured {
+  background: rgba(251, 191, 36, 0.9);
+  color: white;
+}
+
+.badge.status.open {
+  background: rgba(22, 163, 74, 0.9);
+  color: white;
+}
+
+.badge.status.closed {
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+}
+
+/* Delivery Info */
+.card-delivery-info {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 12px;
+}
+
+.delivery-time,
+.delivery-fee {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.delivery-time svg {
+  width: 14px;
+  height: 14px;
+  color: #e11d48;
+}
+
+/* Card Info */
+.card-info {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.card-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 4px;
+  color: #1e293b;
+}
+
+.card-cuisine {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.card-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #fef3c7;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.card-rating svg {
+  width: 16px;
+  height: 16px;
+  color: #fbbf24;
+}
+
+.card-description {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.distance {
+  font-weight: 600;
+  color: #e11d48;
+}
+
+.location {
+  color: #64748b;
+}
+
+/* Action Buttons */
+.discover-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.action-btn {
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.action-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.action-btn.nope {
+  width: 64px;
+  height: 64px;
+  background: white;
+  border: 2px solid #fee2e2;
+  color: #dc2626;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.15);
+}
+
+.action-btn.nope:hover {
+  background: #fee2e2;
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.25);
+}
+
+.action-btn.like {
+  width: 64px;
+  height: 64px;
+  background: white;
+  border: 2px solid #dcfce7;
+  color: #16a34a;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.15);
+}
+
+.action-btn.like:hover {
+  background: #dcfce7;
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px rgba(22, 163, 74, 0.25);
+}
+
+.action-btn.info {
+  width: 52px;
+  height: 52px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  color: #64748b;
+}
+
+.action-btn.info:hover {
+  background: #f8fafc;
+  transform: scale(1.1);
+}
+
+/* Progress Bar */
+.discover-progress {
+  padding: 0 20px 16px;
+}
+
+.progress-text {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.progress-track {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e11d48 0%, #9333ea 100%);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Desktop */
+@media (min-width: 769px) {
+  .discover-view {
+    min-height: calc(100vh - 65px);
+  }
+
+  .discover-card {
+    max-width: 400px;
+  }
+
+  .card-image-container {
+    height: 300px;
+  }
+}
+
+/* Small screens */
+@media (max-width: 380px) {
+  .discover-stack {
+    min-height: 380px;
+  }
+
+  .card-image-container {
+    height: 200px;
+  }
+
+  .action-btn.nope,
+  .action-btn.like {
+    width: 56px;
+    height: 56px;
+  }
+
+  .action-btn.info {
+    width: 46px;
+    height: 46px;
+  }
+}

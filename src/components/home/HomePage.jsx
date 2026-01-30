@@ -123,7 +123,7 @@ const mockTrucks = [
   },
 ];
 
-const HomePage = () => {
+const HomePage = ({ embedded = false }) => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { itemCount, openCart } = useCart();
@@ -478,21 +478,23 @@ const HomePage = () => {
         </main>
       </div>
 
-      {/* Footer */}
-      <footer className="home-footer">
-        <div className="footer-content">
-          <div className="footer-brand">
-            <img src="/logo/cravvr-logo.png" alt="Cravrr" className="footer-logo-image" />
+      {/* Footer - hidden when embedded in TabContainer */}
+      {!embedded && (
+        <footer className="home-footer">
+          <div className="footer-content">
+            <div className="footer-brand">
+              <img src="/logo/cravvr-logo.png" alt="Cravrr" className="footer-logo-image" />
+            </div>
+            <div className="footer-links">
+              <a href="/eat">About</a>
+              <a href="/eat#features">Features</a>
+              <a href="/eat#pricing">Pricing</a>
+              <a href="/eat#faq">FAQ</a>
+            </div>
+            <p className="footer-copy">© 2025 Cravvr. All rights reserved.</p>
           </div>
-          <div className="footer-links">
-            <a href="/eat">About</a>
-            <a href="/eat#features">Features</a>
-            <a href="/eat#pricing">Pricing</a>
-            <a href="/eat#faq">FAQ</a>
-          </div>
-          <p className="footer-copy">© 2025 Cravvr. All rights reserved.</p>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 };

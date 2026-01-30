@@ -1,0 +1,572 @@
+/* BoltView - AI Generator */
+
+.bolt-view {
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(180deg, #fef9c3 0%, #ffffff 40%);
+  padding-bottom: 40px;
+}
+
+/* Loading */
+.bolt-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
+}
+
+.bolt-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Hero Section */
+.bolt-hero {
+  position: relative;
+  padding: 40px 20px 32px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.bolt-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.bolt-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.4;
+}
+
+.bolt-glow.glow-1 {
+  width: 200px;
+  height: 200px;
+  background: #fbbf24;
+  top: -50px;
+  left: 20%;
+}
+
+.bolt-glow.glow-2 {
+  width: 150px;
+  height: 150px;
+  background: #f59e0b;
+  bottom: 0;
+  right: 10%;
+}
+
+.bolt-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Bolt Icon with Rings */
+.bolt-icon-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+}
+
+.bolt-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(251, 191, 36, 0.3);
+  border-radius: 50%;
+}
+
+.bolt-ring.ring-1 {
+  animation: ringPulse 2s ease infinite;
+}
+
+.bolt-ring.ring-2 {
+  animation: ringPulse 2s ease infinite 0.3s;
+}
+
+.bolt-ring.ring-3 {
+  animation: ringPulse 2s ease infinite 0.6s;
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.6;
+  }
+}
+
+.bolt-icon-container.generating .bolt-ring {
+  animation-duration: 0.5s;
+}
+
+.bolt-icon-inner {
+  position: absolute;
+  inset: 20px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(251, 191, 36, 0.4);
+}
+
+.bolt-icon-inner svg {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
+.bolt-hero h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  background: linear-gradient(135deg, #92400e, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bolt-hero p {
+  font-size: 15px;
+  color: #78716c;
+  margin: 0;
+}
+
+/* Controls */
+.bolt-controls {
+  padding: 0 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.radius-control {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  margin-bottom: 20px;
+}
+
+.radius-control label {
+  display: block;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.radius-control strong {
+  color: #1e293b;
+}
+
+.radius-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.radius-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+}
+
+.radius-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.bolt-generate-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border: none;
+  border-radius: 16px;
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 24px rgba(251, 191, 36, 0.4);
+}
+
+.bolt-generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(251, 191, 36, 0.5);
+}
+
+.btn-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Generation Progress */
+.bolt-generating {
+  padding: 32px 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.generation-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gen-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: white;
+  border-radius: 14px;
+  opacity: 0.4;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.gen-step.active {
+  opacity: 1;
+  background: #fef3c7;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.15);
+}
+
+.step-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  color: #f59e0b;
+}
+
+.gen-step.active .step-icon {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+}
+
+.step-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.gen-step span:last-child {
+  font-size: 15px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.gen-step.active span:last-child {
+  color: #92400e;
+  font-weight: 600;
+}
+
+/* Results */
+.bolt-results {
+  padding: 0 20px;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.result-icon {
+  font-size: 28px;
+}
+
+.result-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+  color: #1e293b;
+}
+
+/* Result Card */
+.result-card {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.result-card:hover {
+  transform: translateY(-4px);
+}
+
+.result-card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+}
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #fef3c7, #fef9c3);
+  border-radius: 0 0 12px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.badge-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.result-main {
+  display: flex;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.result-image {
+  width: 90px;
+  height: 90px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.result-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-details h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #1e293b;
+}
+
+.result-cuisine {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 10px;
+}
+
+.result-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.stat-icon {
+  display: flex;
+}
+
+.stat-icon svg {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+
+.stat-icon.gold svg {
+  color: #fbbf24;
+}
+
+/* Menu Picks */
+.result-menu-picks {
+  padding: 0 20px 16px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 4px;
+}
+
+.result-menu-picks h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 16px 0 12px;
+}
+
+.picks-icon svg {
+  width: 16px;
+  height: 16px;
+  color: #fbbf24;
+}
+
+.picks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pick-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.pick-emoji {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.pick-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pick-info strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.pick-info span {
+  font-size: 12px;
+  color: #64748b;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pick-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+/* Result CTA */
+.result-cta {
+  padding: 14px 20px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.result-cta span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e11d48;
+}
+
+/* Regenerate Button */
+.bolt-regenerate-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  margin-top: 20px;
+  background: white;
+  border: 2px solid #fef3c7;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #92400e;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bolt-regenerate-btn:hover {
+  background: #fef9c3;
+  border-color: #fde68a;
+}
+
+.regen-icon {
+  font-size: 18px;
+}
+
+/* Desktop */
+@media (min-width: 769px) {
+  .bolt-view {
+    min-height: calc(100vh - 65px);
+  }
+}
+
+/* Small screens */
+@media (max-width: 380px) {
+  .bolt-hero h1 {
+    font-size: 26px;
+  }
+
+  .bolt-icon-container {
+    width: 80px;
+    height: 80px;
+  }
+
+  .bolt-icon-inner {
+    inset: 16px;
+  }
+
+  .result-main {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .result-stats {
+    justify-content: center;
+  }
+}
