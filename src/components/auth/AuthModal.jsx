@@ -44,7 +44,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     const { error } = await signIn({ email, password });
 
     if (error) {
-      setError(error.message);
+      setError(error?.message || error || 'An error occurred');
     } else {
       resetForm();
       onClose();
@@ -76,7 +76,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     const { error } = await signUp({ email, password, name, role });
 
     if (error) {
-      setError(error.message);
+      setError(error?.message || error || 'An error occurred');
     } else {
       setSuccess('Check your email for a confirmation link!');
       // Don't close modal - let user see the success message
@@ -94,7 +94,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     const { error } = await resetPassword(email);
 
     if (error) {
-      setError(error.message);
+      setError(error?.message || error || 'An error occurred');
     } else {
       setSuccess('Password reset email sent! Check your inbox.');
     }

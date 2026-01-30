@@ -182,19 +182,21 @@
 /* Password Toggle */
 .auth-password-toggle {
   position: absolute;
-  right: 12px;
+  right: 4px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 12px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .auth-password-toggle svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   stroke: #94a3b8;
 }
 
@@ -293,7 +295,7 @@
 }
 
 .auth-role-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: #64748b;
 }
 
@@ -599,6 +601,26 @@
   box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
 }
 
+/* Mobile Auth Section */
+.mobile-auth-section {
+  padding: 16px 20px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 16px;
+}
+
+.mobile-auth-section .auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-auth-section .auth-btn-login,
+.mobile-auth-section .auth-btn-signup {
+  width: 100%;
+  text-align: center;
+  padding: 12px 20px;
+}
+
 /* Mobile Auth Buttons */
 @media (max-width: 768px) {
   .auth-modal {
@@ -620,5 +642,12 @@
   .auth-btn-signup {
     width: 100%;
     text-align: center;
+  }
+}
+
+/* Hide header auth on mobile, show in mobile menu */
+@media (max-width: 1023px) {
+  .header-actions {
+    display: none !important;
   }
 }

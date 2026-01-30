@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 
 // Create Auth Context
@@ -11,29 +11,81 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Ref to prevent double profile fetch on page refresh
+  const initialLoadComplete = useRef(false);
+
   // Fetch user profile from database
   const fetchProfile = async (userId) => {
     try {
-      const { data, error } = await supabase
+      // First, fetch the basic profile
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          customers (phone, points, avatar_url),
-          owners (subscription_type)
-        `)
+        .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (profileError) {
+        // If profile doesn't exist, that's okay - user just doesn't have a profile yet
+        if (profileError.code === 'PGRST116') {
+          console.log('No profile found for user:', userId);
+          return null;
+        }
+        setError(`Profile load failed: ${profileError.message}`);
+        console.error('Error fetching profile:', profileError);
+        return null;
+      }
 
-      return {
-        ...data,
-        phone: data.customers?.phone || '',
-        points: data.customers?.points || 0,
-        avatar_url: data.customers?.avatar_url || '',
-        subscription_type: data.owners?.subscription_type || '',
+      // Clear any previous errors
+      setError(null);
+
+      // Build the profile object with basic data
+      const profile = {
+        ...profileData,
+        phone: '',
+        points: 0,
+        avatar_url: profileData.avatar_url || '',
+        subscription_type: '',
+        permissions: null,
       };
+
+      // Optionally fetch role-specific data based on role
+      if (profileData.role === 'customer') {
+        const { data: customerData } = await supabase
+          .from('customers')
+          .select('phone, points, avatar_url')
+          .eq('id', userId)
+          .single();
+
+        if (customerData) {
+          profile.phone = customerData.phone || '';
+          profile.points = customerData.points || 0;
+          profile.avatar_url = customerData.avatar_url || profile.avatar_url;
+        }
+      } else if (profileData.role === 'owner') {
+        const { data: ownerData } = await supabase
+          .from('owners')
+          .select('subscription_type')
+          .eq('id', userId)
+          .single();
+
+        if (ownerData) {
+          profile.subscription_type = ownerData.subscription_type || '';
+        }
+      } else if (profileData.role === 'admin') {
+        const { data: adminData } = await supabase
+          .from('admins')
+          .select('permissions, last_login')
+          .eq('id', userId)
+          .single();
+
+        if (adminData) {
+          profile.permissions = adminData.permissions || null;
+        }
+      }
+
+      return profile;
     } catch (err) {
+      setError(`Profile load failed: ${err.message}`);
       console.error('Error fetching profile:', err);
       return null;
     }
@@ -47,31 +99,44 @@ export const AuthProvider = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUser(session.user);
-          const profile = await fetchProfile(session.user.id);
-          setProfile(profile);
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
         }
+        // Mark initial load as complete AFTER profile fetch
+        initialLoadComplete.current = true;
+        setLoading(false);
       } catch (err) {
         console.error('Auth init error:', err);
-      } finally {
+        initialLoadComplete.current = true;
         setLoading(false);
       }
     };
 
     initAuth();
 
-    // Listen for auth changes
+    // Listen for auth changes (but skip initial session event to avoid double fetch)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Skip SIGNED_IN during initial load - initAuth handles it
       if (event === 'SIGNED_IN' && session?.user) {
+        if (!initialLoadComplete.current) {
+          // Initial load in progress, skip to avoid double fetch
+          return;
+        }
+        setLoading(true);
         setUser(session.user);
-        const profile = await fetchProfile(session.user.id);
-        setProfile(profile);
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
+        setLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
+        setError(null);
       } else if (event === 'USER_UPDATED' && session?.user) {
+        setLoading(true);
         setUser(session.user);
-        const profile = await fetchProfile(session.user.id);
-        setProfile(profile);
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
+        setLoading(false);
       }
     });
 
@@ -124,13 +189,25 @@ export const AuthProvider = ({ children }) => {
   // Sign out
   const signOut = async () => {
     setError(null);
+    setLoading(true);
     try {
+      console.log('Signing out...');
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase signOut error:', error);
+        throw error;
+      }
+      console.log('Sign out successful, clearing state');
       setUser(null);
       setProfile(null);
+      initialLoadComplete.current = false; // Reset for next login
+      setLoading(false);
+      return { error: null };
     } catch (err) {
+      console.error('SignOut failed:', err);
       setError(err.message);
+      setLoading(false);
+      throw err; // Re-throw so callers can catch
     }
   };
 
@@ -193,6 +270,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     isOwner: profile?.role === 'owner',
     isCustomer: profile?.role === 'customer',
+    isAdmin: profile?.role === 'admin',
   };
 
   return (
