@@ -1349,16 +1349,6 @@ const AdminDashboard = () => {
     userTypes: [],
   });
   const [loading, setLoading] = useState(true);
-  const [accessDenied, setAccessDenied] = useState(false);
-
-  // Check if user is admin when profile loads
-  useEffect(() => {
-    if (!authLoading && user && profile) {
-      if (!isAdmin) {
-        setAccessDenied(true);
-      }
-    }
-  }, [authLoading, user, profile, isAdmin]);
 
   // Fetch all dashboard data from real tables
   const fetchDashboardData = async () => {
@@ -1554,8 +1544,8 @@ const AdminDashboard = () => {
     );
   }
 
-  // Show access denied if user is logged in but not admin
-  if (accessDenied || (user && !isAdmin && profile)) {
+  // Show access denied if user is logged in but not admin (including when profile is null/missing)
+  if (user && !isAdmin) {
     return (
       <div className="admin-login">
         <div className="login-card">
@@ -1567,7 +1557,10 @@ const AdminDashboard = () => {
             <p>Access Denied</p>
           </div>
           <div className="login-error">
-            You do not have admin privileges. Please contact support if you believe this is an error.
+            {!profile
+              ? 'Your admin profile is not set up. Please contact support to configure your account.'
+              : 'You do not have admin privileges. Please contact support if you believe this is an error.'
+            }
           </div>
           <button className="login-btn" onClick={handleLogout}>
             Sign Out & Try Again
