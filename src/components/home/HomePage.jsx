@@ -474,6 +474,23 @@ const HomePage = () => {
           )}
         </main>
       </div>
+
+      {/* Footer */}
+      <footer className="home-footer">
+        <div className="footer-content">
+          <div className="footer-brand">
+            <span className="footer-logo">{Icons.logo}</span>
+            <span className="footer-name">Cravvr</span>
+          </div>
+          <div className="footer-links">
+            <a href="/eat">About</a>
+            <a href="/eat#features">Features</a>
+            <a href="/eat#pricing">Pricing</a>
+            <a href="/eat#faq">FAQ</a>
+          </div>
+          <p className="footer-copy">© 2025 Cravvr. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 };

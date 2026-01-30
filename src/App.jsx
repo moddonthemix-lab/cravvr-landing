@@ -2244,6 +2244,7 @@ const Footer = () => (
       <div className="footer-links">
         <div className="footer-col">
           <h4>Product</h4>
+          <a href="/eat">About Cravvr</a>
           <a href="#features">Features</a>
           <a href="#pricing">Pricing</a>
           <a href="#faq">FAQ</a>
