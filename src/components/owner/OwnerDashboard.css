@@ -1561,7 +1561,32 @@
   }
 }
 
+/* Tablet portrait - 2 column grids */
 @media (max-width: 768px) {
+  .content-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .trucks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-main {
+    padding: 20px 16px;
+  }
+}
+
+/* Mobile - collapse sidebar */
+@media (max-width: 640px) {
   .owner-sidebar {
     width: 72px;
   }
@@ -1584,20 +1609,7 @@
     padding: 16px;
   }
 
-  .content-header {
-    flex-direction: column;
-    gap: 16px;
-  }
-
   .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .trucks-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-row {
     grid-template-columns: 1fr;
   }
 

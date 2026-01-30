@@ -182,19 +182,21 @@
 /* Password Toggle */
 .auth-password-toggle {
   position: absolute;
-  right: 12px;
+  right: 4px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 12px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .auth-password-toggle svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   stroke: #94a3b8;
 }
 
@@ -293,7 +295,7 @@
 }
 
 .auth-role-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: #64748b;
 }
 

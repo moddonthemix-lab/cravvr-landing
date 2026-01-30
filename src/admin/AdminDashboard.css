@@ -1620,7 +1620,43 @@
   }
 }
 
+/* Tablet portrait - 2 column grids */
 @media (max-width: 768px) {
+  .stats-grid,
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .trucks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    max-width: none;
+  }
+
+  .filter-group {
+    flex-wrap: wrap;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .header-search {
+    width: 200px;
+  }
+}
+
+/* Mobile - collapse sidebar */
+@media (max-width: 640px) {
   .admin-sidebar {
     width: var(--sidebar-collapsed-width);
   }
@@ -1651,29 +1687,6 @@
     grid-template-columns: 1fr;
   }
 
-  .trucks-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filters-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-box {
-    max-width: none;
-  }
-
-  .filter-group {
-    flex-wrap: wrap;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
   .data-table {
     font-size: 13px;
   }
@@ -1681,10 +1694,6 @@
   .data-table th,
   .data-table td {
     padding: 12px 16px;
-  }
-
-  .header-search {
-    width: 200px;
   }
 }
 

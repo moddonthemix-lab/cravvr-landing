@@ -552,6 +552,7 @@
 /* Truck Card */
 .truck-card {
   flex: 0 0 280px;
+  min-width: 0;
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -802,17 +803,41 @@
 }
 
 /* Responsive */
+
+/* Tablet landscape - collapsed sidebar */
 @media (max-width: 1024px) {
   .home-sidebar {
+    width: 72px;
+    padding: 20px 8px;
+  }
+
+  .nav-item {
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .nav-item span {
     display: none;
   }
 
   .promo-section {
     grid-template-columns: 1fr;
   }
+
+  .home-main {
+    padding: 24px 20px;
+  }
 }
 
+/* Tablet portrait - hide sidebar */
 @media (max-width: 768px) {
+  .home-sidebar {
+    display: none;
+  }
+}
+
+/* Mobile - full width layout */
+@media (max-width: 640px) {
   .home-header {
     flex-wrap: wrap;
     gap: 12px;
@@ -841,8 +866,10 @@
     font-size: 1.5rem;
   }
 
+  /* Responsive truck cards that adapt to mobile */
   .truck-card {
-    flex: 0 0 240px;
+    flex: 0 0 calc(100vw - 48px);
+    max-width: 320px;
   }
 
   .trucks-grid {

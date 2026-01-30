@@ -1388,10 +1388,16 @@
 /* Responsive */
 @media (min-width: 768px) {
   .customer-profile {
-    max-width: 480px;
+    max-width: 600px;
     margin: 0 auto;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
     min-height: 100vh;
+  }
+}
+
+@media (min-width: 1024px) {
+  .customer-profile {
+    max-width: 720px;
   }
 }
 

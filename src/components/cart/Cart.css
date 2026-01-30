@@ -218,11 +218,11 @@
 }
 
 .qty-btn {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: #f1f5f9;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -235,9 +235,13 @@
   color: white;
 }
 
+.qty-btn:active {
+  transform: scale(0.95);
+}
+
 .qty-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
 }
 
 .qty-value {
@@ -392,6 +396,14 @@
 }
 
 /* Mobile Responsive */
+/* Tablet - intermediate breakpoint */
+@media (max-width: 600px) {
+  .cart-drawer {
+    max-width: 100%;
+  }
+}
+
+/* Mobile */
 @media (max-width: 480px) {
   .cart-drawer {
     max-width: 100%;
