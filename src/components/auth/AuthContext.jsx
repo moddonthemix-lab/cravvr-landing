@@ -151,13 +151,25 @@ export const AuthProvider = ({ children }) => {
   // Sign out
   const signOut = async () => {
     setError(null);
+    setLoading(true);
     try {
+      console.log('Signing out...');
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase signOut error:', error);
+        throw error;
+      }
+      console.log('Sign out successful, clearing state');
       setUser(null);
       setProfile(null);
+      initialLoadComplete.current = false; // Reset for next login
+      setLoading(false);
+      return { error: null };
     } catch (err) {
+      console.error('SignOut failed:', err);
       setError(err.message);
+      setLoading(false);
+      throw err; // Re-throw so callers can catch
     }
   };
 

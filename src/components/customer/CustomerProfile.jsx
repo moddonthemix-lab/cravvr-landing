@@ -705,7 +705,13 @@ const CustomerProfile = ({ onBack }) => {
           <div className="profile-notice">
             <p>Your profile is being set up. Some features may be limited.</p>
           </div>
-          <button className="logout-button" onClick={signOut}>
+          <button className="logout-button" onClick={async () => {
+            try {
+              await signOut();
+            } catch (err) {
+              console.error('Logout failed:', err);
+            }
+          }}>
             {Icons.logout}
             <span>Log Out</span>
           </button>

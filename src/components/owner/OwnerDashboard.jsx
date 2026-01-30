@@ -108,7 +108,13 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, onBack }) =
             </div>
           )}
         </div>
-        <button className="logout-btn" onClick={signOut}>
+        <button className="logout-btn" onClick={async () => {
+          try {
+            await signOut();
+          } catch (err) {
+            console.error('Logout failed:', err);
+          }
+        }}>
           {Icons.logout}
           {!collapsed && <span>Log Out</span>}
         </button>
