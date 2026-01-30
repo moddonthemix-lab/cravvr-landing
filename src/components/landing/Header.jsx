@@ -7,7 +7,7 @@ import UserMenu from '../auth/UserMenu';
 const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const openLogin = () => {
     setAuthMode('login');
@@ -51,21 +51,17 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
           </nav>
 
           <div className="header-actions">
-            {!loading && (
-              <>
-                {isAuthenticated ? (
-                  <UserMenu onNavigate={handleNavigate} />
-                ) : (
-                  <div className="auth-buttons">
-                    <button className="auth-btn-login" onClick={openLogin}>
-                      Log In
-                    </button>
-                    <button className="auth-btn-signup" onClick={openSignup}>
-                      Sign Up
-                    </button>
-                  </div>
-                )}
-              </>
+            {isAuthenticated ? (
+              <UserMenu onNavigate={handleNavigate} />
+            ) : (
+              <div className="auth-buttons">
+                <button className="auth-btn-login" onClick={openLogin}>
+                  Log In
+                </button>
+                <button className="auth-btn-signup" onClick={openSignup}>
+                  Sign Up
+                </button>
+              </div>
             )}
           </div>
 
@@ -88,24 +84,22 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
             <button onClick={() => { setCurrentView('app'); setMobileMenuOpen(false); }} className="nav-app-link">Try Demo</button>
           </nav>
 
-          {!loading && (
-            <div className="mobile-auth-section">
-              {isAuthenticated ? (
-                <div className="mobile-user-info">
-                  <UserMenu onNavigate={(dest) => { handleNavigate(dest); setMobileMenuOpen(false); }} />
-                </div>
-              ) : (
-                <div className="auth-buttons">
-                  <button className="auth-btn-login" onClick={openLogin}>
-                    Log In
-                  </button>
-                  <button className="auth-btn-signup" onClick={openSignup}>
-                    Sign Up
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="mobile-auth-section">
+            {isAuthenticated ? (
+              <div className="mobile-user-info">
+                <UserMenu onNavigate={(dest) => { handleNavigate(dest); setMobileMenuOpen(false); }} />
+              </div>
+            ) : (
+              <div className="auth-buttons">
+                <button className="auth-btn-login" onClick={openLogin}>
+                  Log In
+                </button>
+                <button className="auth-btn-signup" onClick={openSignup}>
+                  Sign Up
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
