@@ -1853,7 +1853,9 @@ button {
   }
 
   .header-actions {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   .mobile-menu-btn {
