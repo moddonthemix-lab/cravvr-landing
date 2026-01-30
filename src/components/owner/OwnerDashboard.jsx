@@ -89,15 +89,11 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, onBack }) =
       <div className="sidebar-footer">
         <div className="user-info">
           <div className="user-avatar">
-<<<<<<< HEAD
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt={profile?.name || 'Owner'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : (
               profile?.name?.charAt(0) || 'O'
             )}
-=======
-            {profile?.name?.charAt(0) || 'O'}
->>>>>>> origin/main
           </div>
           {!collapsed && (
             <div className="user-details">
@@ -405,7 +401,6 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                   />
                 </div>
               </div>
-<<<<<<< HEAD
               <ImageUpload
                 label="Truck Photo"
                 currentImage={formData.image_url}
@@ -414,17 +409,6 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                 folder={editingTruck ? `trucks/${editingTruck.id}` : 'trucks/temp'}
                 disabled={saving}
               />
-=======
-              <div className="form-group">
-                <label>Image URL (optional)</label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                />
-              </div>
->>>>>>> origin/main
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
                   Cancel
@@ -502,10 +486,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
     category: '',
     description: '',
     emoji: '',
-<<<<<<< HEAD
     image_url: '',
-=======
->>>>>>> origin/main
   });
 
   const categories = ['all', ...new Set(menuItems.filter(item => item.category).map(item => item.category))];
@@ -521,10 +502,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       category: '',
       description: '',
       emoji: '',
-<<<<<<< HEAD
       image_url: '',
-=======
->>>>>>> origin/main
     });
     setEditingItem(null);
   };
@@ -536,10 +514,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       category: item.category || '',
       description: item.description || '',
       emoji: item.emoji || '',
-<<<<<<< HEAD
       image_url: item.image_url || '',
-=======
->>>>>>> origin/main
     });
     setEditingItem(item);
     setShowForm(true);
@@ -693,7 +668,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
                       </select>
                     </div>
                   </div>
-<<<<<<< HEAD
                   <div className="form-group">
                     <label>Description</label>
                     <textarea
@@ -721,29 +695,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
                       maxLength={4}
                       style={{ textAlign: 'center', fontSize: '1.5rem' }}
                     />
-=======
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Description</label>
-                      <textarea
-                        placeholder="Describe this item..."
-                        rows={2}
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      ></textarea>
-                    </div>
-                    <div className="form-group" style={{ flex: '0 0 80px' }}>
-                      <label>Emoji</label>
-                      <input
-                        type="text"
-                        placeholder="🌮"
-                        value={formData.emoji}
-                        onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                        maxLength={4}
-                        style={{ textAlign: 'center', fontSize: '1.5rem' }}
-                      />
-                    </div>
->>>>>>> origin/main
                   </div>
                   <div className="form-actions">
                     <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
@@ -769,13 +720,9 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
               {filteredItems.map(item => (
                 <div className={`menu-item-card ${!item.is_available ? 'unavailable' : ''}`} key={item.id}>
                   <div className="menu-item-image">
-<<<<<<< HEAD
                     {item.image_url ? (
                       <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : item.emoji ? (
-=======
-                    {item.emoji ? (
->>>>>>> origin/main
                       <div className="menu-item-emoji">{item.emoji}</div>
                     ) : (
                       <div className="menu-item-placeholder">{Icons.menu}</div>
@@ -1129,22 +1076,16 @@ const AnalyticsTab = ({ trucks, orders }) => {
 
 // Settings Tab
 const SettingsTab = () => {
-<<<<<<< HEAD
   const { profile, updateProfile, user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
     name: profile?.name || '',
     avatar_url: profile?.avatar_url || '',
   });
-=======
-  const { profile, updateProfile } = useAuth();
-  const [saving, setSaving] = useState(false);
->>>>>>> origin/main
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-<<<<<<< HEAD
     try {
       await updateProfile(profileData);
       alert('Profile updated successfully!');
@@ -1154,10 +1095,6 @@ const SettingsTab = () => {
     } finally {
       setSaving(false);
     }
-=======
-    // Save settings
-    setTimeout(() => setSaving(false), 1000);
->>>>>>> origin/main
   };
 
   return (
@@ -1175,7 +1112,6 @@ const SettingsTab = () => {
             <h3>Profile Information</h3>
           </div>
           <form onSubmit={handleSubmit}>
-<<<<<<< HEAD
             <ImageUpload
               label="Profile Picture"
               currentImage={profileData.avatar_url}
@@ -1195,15 +1131,6 @@ const SettingsTab = () => {
             <div className="form-group">
               <label>Email</label>
               <input type="email" defaultValue={user?.email} disabled />
-=======
-            <div className="form-group">
-              <label>Full Name</label>
-              <input type="text" defaultValue={profile?.name} />
-            </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input type="email" defaultValue={profile?.email} disabled />
->>>>>>> origin/main
             </div>
             <div className="form-group">
               <label>Phone</label>
