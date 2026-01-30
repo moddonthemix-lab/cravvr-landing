@@ -144,8 +144,7 @@ const HomePage = () => {
       try {
         const { data, error } = await supabase
           .from('food_trucks')
-          .select('*')
-          .eq('is_active', true);
+          .select('*');
 
         if (error) throw error;
 
