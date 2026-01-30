@@ -17,35 +17,73 @@ export const AuthProvider = ({ children }) => {
   // Fetch user profile from database
   const fetchProfile = async (userId) => {
     try {
-      const { data, error: fetchError } = await supabase
+      // First, fetch the basic profile
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          customers (phone, points, avatar_url),
-          owners (subscription_type),
-          admins (permissions, last_login)
-        `)
+        .select('*')
         .eq('id', userId)
         .single();
 
-      if (fetchError) {
-        // Surface error to context instead of silent failure
-        setError(`Profile load failed: ${fetchError.message}`);
-        console.error('Error fetching profile:', fetchError);
+      if (profileError) {
+        // If profile doesn't exist, that's okay - user just doesn't have a profile yet
+        if (profileError.code === 'PGRST116') {
+          console.log('No profile found for user:', userId);
+          return null;
+        }
+        setError(`Profile load failed: ${profileError.message}`);
+        console.error('Error fetching profile:', profileError);
         return null;
       }
 
       // Clear any previous errors
       setError(null);
 
-      return {
-        ...data,
-        phone: data.customers?.phone || '',
-        points: data.customers?.points || 0,
-        avatar_url: data.customers?.avatar_url || data.avatar_url || '',
-        subscription_type: data.owners?.subscription_type || '',
-        permissions: data.admins?.permissions || null,
+      // Build the profile object with basic data
+      const profile = {
+        ...profileData,
+        phone: '',
+        points: 0,
+        avatar_url: profileData.avatar_url || '',
+        subscription_type: '',
+        permissions: null,
       };
+
+      // Optionally fetch role-specific data based on role
+      if (profileData.role === 'customer') {
+        const { data: customerData } = await supabase
+          .from('customers')
+          .select('phone, points, avatar_url')
+          .eq('id', userId)
+          .single();
+
+        if (customerData) {
+          profile.phone = customerData.phone || '';
+          profile.points = customerData.points || 0;
+          profile.avatar_url = customerData.avatar_url || profile.avatar_url;
+        }
+      } else if (profileData.role === 'owner') {
+        const { data: ownerData } = await supabase
+          .from('owners')
+          .select('subscription_type')
+          .eq('id', userId)
+          .single();
+
+        if (ownerData) {
+          profile.subscription_type = ownerData.subscription_type || '';
+        }
+      } else if (profileData.role === 'admin') {
+        const { data: adminData } = await supabase
+          .from('admins')
+          .select('permissions, last_login')
+          .eq('id', userId)
+          .single();
+
+        if (adminData) {
+          profile.permissions = adminData.permissions || null;
+        }
+      }
+
+      return profile;
     } catch (err) {
       setError(`Profile load failed: ${err.message}`);
       console.error('Error fetching profile:', err);
