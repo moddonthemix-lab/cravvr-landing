@@ -1394,3 +1394,58 @@
     min-height: 100vh;
   }
 }
+
+/* ============================================
+   LOADING & EMPTY STATES
+   ============================================ */
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.loading-state svg {
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+}
+
+.empty-state p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.order-items-count {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.reward-ready {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ffe4e6, #fecdd3);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e11d48;
+  text-align: center;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

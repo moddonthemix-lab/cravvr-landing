@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { supabase } from '../../lib/supabase';
 import './CustomerProfile.css';
 
 // Icons
@@ -26,74 +27,21 @@ const Icons = {
   help: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
   shield: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   repeat: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>,
+  loader: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/></svg>,
 };
 
-// Mock data
-const mockOrders = [
-  {
-    id: 'ORD-2024-001',
-    truck: 'Taco Loco',
-    truckImage: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=100&q=80',
-    items: ['Street Tacos (3)', 'Loaded Nachos'],
-    total: 27.98,
-    status: 'delivered',
-    date: 'Jan 15, 2025',
-    rating: 5,
-  },
-  {
-    id: 'ORD-2024-002',
-    truck: 'Burger Joint',
-    truckImage: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=100&q=80',
-    items: ['Classic Smash', 'Truffle Fries', 'Milkshake'],
-    total: 32.47,
-    status: 'delivered',
-    date: 'Jan 12, 2025',
-    rating: 4,
-  },
-  {
-    id: 'ORD-2024-003',
-    truck: 'Thai Street',
-    truckImage: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=100&q=80',
-    items: ['Pad Thai', 'Green Curry'],
-    total: 28.98,
-    status: 'preparing',
-    date: 'Today',
-    rating: null,
-  },
-];
+// Helper to format date
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / 86400000);
 
-const mockFavorites = [
-  {
-    id: 1,
-    name: 'Taco Loco',
-    cuisine: 'Mexican',
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=200&q=80',
-    isOpen: true,
-  },
-  {
-    id: 2,
-    name: 'Thai Street',
-    cuisine: 'Thai',
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=200&q=80',
-    isOpen: false,
-  },
-  {
-    id: 3,
-    name: 'Slice Mobile',
-    cuisine: 'Italian',
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=200&q=80',
-    isOpen: true,
-  },
-];
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
 
-const mockRewards = [
-  { id: 1, truck: 'Taco Loco', punches: 7, total: 10, reward: 'Free Taco' },
-  { id: 2, truck: 'Burger Joint', punches: 3, total: 8, reward: 'Free Fries' },
-  { id: 3, truck: 'Morning Brew', punches: 9, total: 10, reward: 'Free Coffee' },
-];
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
 // Header Component
 const ProfileHeader = ({ onBack, title }) => (
@@ -107,7 +55,7 @@ const ProfileHeader = ({ onBack, title }) => (
 );
 
 // Account Overview Tab
-const AccountTab = ({ profile, setActiveTab }) => {
+const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount }) => {
   const { signOut } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -122,8 +70,8 @@ const AccountTab = ({ profile, setActiveTab }) => {
   };
 
   const menuItems = [
-    { icon: Icons.orders, label: 'Order History', tab: 'orders', badge: '3' },
-    { icon: Icons.heart, label: 'Favorites', tab: 'favorites', badge: mockFavorites.length.toString() },
+    { icon: Icons.orders, label: 'Order History', tab: 'orders', badge: ordersCount > 0 ? ordersCount.toString() : null },
+    { icon: Icons.heart, label: 'Favorites', tab: 'favorites', badge: favoritesCount > 0 ? favoritesCount.toString() : null },
     { icon: Icons.gift, label: 'Rewards & Points', tab: 'rewards', badge: `${profile?.points || 0} pts` },
     { icon: Icons.mapPin, label: 'Saved Addresses', tab: 'addresses' },
     { icon: Icons.creditCard, label: 'Payment Methods', tab: 'payment' },
@@ -188,12 +136,25 @@ const AccountTab = ({ profile, setActiveTab }) => {
 };
 
 // Orders Tab
-const OrdersTab = ({ onBack }) => {
+const OrdersTab = ({ onBack, orders, loading }) => {
   const [filter, setFilter] = useState('all');
 
+  // Map database status to display status
+  const getDisplayStatus = (status) => {
+    switch (status) {
+      case 'completed': return 'delivered';
+      case 'pending':
+      case 'confirmed':
+      case 'preparing':
+      case 'ready': return 'preparing';
+      case 'cancelled': return 'cancelled';
+      default: return status;
+    }
+  };
+
   const filteredOrders = filter === 'all'
-    ? mockOrders
-    : mockOrders.filter(o => o.status === filter);
+    ? orders
+    : orders.filter(o => getDisplayStatus(o.status) === filter);
 
   return (
     <div className="tab-page">
@@ -212,191 +173,254 @@ const OrdersTab = ({ onBack }) => {
           ))}
         </div>
 
-        <div className="orders-list">
-          {filteredOrders.map(order => (
-            <div className="order-card" key={order.id}>
-              <div className="order-header">
-                <img src={order.truckImage} alt={order.truck} className="order-truck-img" />
-                <div className="order-truck-info">
-                  <h4>{order.truck}</h4>
-                  <span className="order-date">{order.date}</span>
+        {loading ? (
+          <div className="loading-state">{Icons.loader} Loading orders...</div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="empty-state">
+            <p>{filter === 'all' ? 'No orders yet. Start ordering to see your history!' : `No ${filter} orders`}</p>
+          </div>
+        ) : (
+          <div className="orders-list">
+            {filteredOrders.map(order => (
+              <div className="order-card" key={order.id}>
+                <div className="order-header">
+                  <img
+                    src={order.truck_image || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=100&q=80'}
+                    alt={order.truck_name}
+                    className="order-truck-img"
+                  />
+                  <div className="order-truck-info">
+                    <h4>{order.truck_name || 'Food Truck'}</h4>
+                    <span className="order-date">{formatDate(order.created_at)}</span>
+                  </div>
+                  <span className={`order-status ${getDisplayStatus(order.status)}`}>
+                    {getDisplayStatus(order.status)}
+                  </span>
                 </div>
-                <span className={`order-status ${order.status}`}>{order.status}</span>
-              </div>
-              <div className="order-items">
-                {order.items.map((item, i) => (
-                  <span key={i}>{item}{i < order.items.length - 1 ? ', ' : ''}</span>
-                ))}
-              </div>
-              <div className="order-footer">
-                <span className="order-total">${order.total.toFixed(2)}</span>
-                <div className="order-actions">
-                  {order.status === 'delivered' && (
-                    <>
-                      <button className="order-btn secondary">
-                        {Icons.repeat}
-                        Reorder
-                      </button>
-                      {!order.rating && (
-                        <button className="order-btn primary">
-                          {Icons.star}
-                          Rate
+                <div className="order-items">
+                  {order.items && order.items.length > 0 ? (
+                    order.items.map((item, i) => (
+                      <span key={i}>{item.name}{i < order.items.length - 1 ? ', ' : ''}</span>
+                    ))
+                  ) : (
+                    <span className="order-items-count">{order.item_count || 0} items</span>
+                  )}
+                </div>
+                <div className="order-footer">
+                  <span className="order-total">${parseFloat(order.total).toFixed(2)}</span>
+                  <div className="order-actions">
+                    {getDisplayStatus(order.status) === 'delivered' && (
+                      <>
+                        <button className="order-btn secondary">
+                          {Icons.repeat}
+                          Reorder
                         </button>
-                      )}
-                    </>
-                  )}
-                  {order.status === 'preparing' && (
-                    <button className="order-btn primary">
-                      {Icons.truck}
-                      Track Order
-                    </button>
-                  )}
-                </div>
-              </div>
-              {order.rating && (
-                <div className="order-rating">
-                  <span>Your rating:</span>
-                  <div className="rating-stars">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <span
-                        key={star}
-                        className={`star ${star <= order.rating ? 'filled' : ''}`}
-                      >
-                        {Icons.star}
-                      </span>
-                    ))}
+                        {!order.has_review && (
+                          <button className="order-btn primary">
+                            {Icons.star}
+                            Rate
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {getDisplayStatus(order.status) === 'preparing' && (
+                      <button className="order-btn primary">
+                        {Icons.truck}
+                        Track Order
+                      </button>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
+                {order.review_rating && (
+                  <div className="order-rating">
+                    <span>Your rating:</span>
+                    <div className="rating-stars">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <span
+                          key={star}
+                          className={`star ${star <= order.review_rating ? 'filled' : ''}`}
+                        >
+                          {Icons.star}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 // Favorites Tab
-const FavoritesTab = ({ onBack }) => (
+const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite }) => (
   <div className="tab-page">
     <ProfileHeader onBack={onBack} title="Favorites" />
 
     <div className="tab-content">
       <p className="tab-subtitle">Your saved food trucks</p>
 
-      <div className="favorites-grid">
-        {mockFavorites.map(truck => (
-          <div className="favorite-card" key={truck.id}>
-            <div className="favorite-image">
-              <img src={truck.image} alt={truck.name} />
-              <button className="favorite-heart active">
-                {Icons.heartFilled}
-              </button>
-              {truck.isOpen ? (
-                <span className="open-badge">Open</span>
-              ) : (
-                <span className="closed-badge">Closed</span>
-              )}
-            </div>
-            <div className="favorite-info">
-              <h4>{truck.name}</h4>
-              <span className="favorite-cuisine">{truck.cuisine}</span>
-              <div className="favorite-rating">
-                {Icons.star}
-                <span>{truck.rating}</span>
+      {loading ? (
+        <div className="loading-state">{Icons.loader} Loading favorites...</div>
+      ) : favorites.length === 0 ? (
+        <div className="empty-state">
+          <p>No favorites yet. Explore food trucks and add your favorites!</p>
+        </div>
+      ) : (
+        <div className="favorites-grid">
+          {favorites.map(truck => (
+            <div className="favorite-card" key={truck.id}>
+              <div className="favorite-image">
+                <img
+                  src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=200&q=80'}
+                  alt={truck.name}
+                />
+                <button
+                  className="favorite-heart active"
+                  onClick={() => onRemoveFavorite(truck.id)}
+                >
+                  {Icons.heartFilled}
+                </button>
+                {truck.is_open ? (
+                  <span className="open-badge">Open</span>
+                ) : (
+                  <span className="closed-badge">Closed</span>
+                )}
               </div>
+              <div className="favorite-info">
+                <h4>{truck.name}</h4>
+                <span className="favorite-cuisine">{truck.cuisine}</span>
+                <div className="favorite-rating">
+                  {Icons.star}
+                  <span>{truck.average_rating || 'N/A'}</span>
+                </div>
+              </div>
+              <button className="view-menu-btn">View Menu</button>
             </div>
-            <button className="view-menu-btn">View Menu</button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   </div>
 );
 
 // Rewards Tab
-const RewardsTab = ({ onBack, points }) => (
-  <div className="tab-page">
-    <ProfileHeader onBack={onBack} title="Rewards & Points" />
+const RewardsTab = ({ onBack, points, checkIns, loading }) => {
+  // Group check-ins by truck for punch cards
+  const punchCards = Object.values(
+    (checkIns || []).reduce((acc, checkIn) => {
+      const truckId = checkIn.truck_id;
+      if (!acc[truckId]) {
+        acc[truckId] = {
+          id: truckId,
+          truck: checkIn.truck_name || 'Food Truck',
+          punches: 0,
+          total: 10,
+          reward: 'Free Item',
+        };
+      }
+      acc[truckId].punches += 1;
+      return acc;
+    }, {})
+  );
 
-    <div className="tab-content">
-      <div className="rewards-hero">
-        <div className="rewards-points-display">
-          <span className="points-number">{points || 0}</span>
-          <span className="points-suffix">Points</span>
-        </div>
-        <p className="rewards-subtitle">Keep ordering to earn more points!</p>
-        <div className="points-info-row">
-          <div className="points-info-item">
-            <span className="info-value">10</span>
-            <span className="info-label">pts per $1</span>
+  return (
+    <div className="tab-page">
+      <ProfileHeader onBack={onBack} title="Rewards & Points" />
+
+      <div className="tab-content">
+        <div className="rewards-hero">
+          <div className="rewards-points-display">
+            <span className="points-number">{points || 0}</span>
+            <span className="points-suffix">Points</span>
           </div>
-          <div className="points-divider"></div>
-          <div className="points-info-item">
-            <span className="info-value">500</span>
-            <span className="info-label">pts = $5 off</span>
+          <p className="rewards-subtitle">Keep ordering to earn more points!</p>
+          <div className="points-info-row">
+            <div className="points-info-item">
+              <span className="info-value">10</span>
+              <span className="info-label">pts per $1</span>
+            </div>
+            <div className="points-divider"></div>
+            <div className="points-info-item">
+              <span className="info-value">500</span>
+              <span className="info-label">pts = $5 off</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="rewards-section">
-        <h3>Punch Cards</h3>
-        <p className="section-subtitle">Get rewards from your favorite trucks</p>
+        <div className="rewards-section">
+          <h3>Punch Cards</h3>
+          <p className="section-subtitle">Get rewards from your favorite trucks</p>
 
-        <div className="punch-cards">
-          {mockRewards.map(card => (
-            <div className="punch-card" key={card.id}>
-              <div className="punch-card-header">
-                <h4>{card.truck}</h4>
-                <span className="punch-reward">{card.reward}</span>
-              </div>
-              <div className="punch-progress">
-                <div className="punch-circles">
-                  {Array.from({ length: card.total }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`punch-circle ${i < card.punches ? 'filled' : ''}`}
-                    >
-                      {i < card.punches && Icons.check}
+          {loading ? (
+            <div className="loading-state">{Icons.loader} Loading...</div>
+          ) : punchCards.length === 0 ? (
+            <div className="empty-state">
+              <p>No punch cards yet. Check in at food trucks to start earning rewards!</p>
+            </div>
+          ) : (
+            <div className="punch-cards">
+              {punchCards.map(card => (
+                <div className="punch-card" key={card.id}>
+                  <div className="punch-card-header">
+                    <h4>{card.truck}</h4>
+                    <span className="punch-reward">{card.reward}</span>
+                  </div>
+                  <div className="punch-progress">
+                    <div className="punch-circles">
+                      {Array.from({ length: card.total }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`punch-circle ${i < (card.punches % card.total) || (card.punches >= card.total && i < card.total) ? 'filled' : ''}`}
+                        >
+                          {(i < (card.punches % card.total) || (card.punches >= card.total && i < card.total)) && Icons.check}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                    <span className="punch-count">{card.punches % card.total}/{card.total}</span>
+                  </div>
+                  {card.punches >= card.total && (
+                    <div className="reward-ready">Reward ready to claim!</div>
+                  )}
                 </div>
-                <span className="punch-count">{card.punches}/{card.total}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rewards-section">
+          <h3>How to Earn</h3>
+          <div className="earn-methods">
+            <div className="earn-item">
+              <span className="earn-icon">{Icons.orders}</span>
+              <div className="earn-info">
+                <span className="earn-title">Place Orders</span>
+                <span className="earn-desc">Earn 10 points per $1 spent</span>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rewards-section">
-        <h3>How to Earn</h3>
-        <div className="earn-methods">
-          <div className="earn-item">
-            <span className="earn-icon">{Icons.orders}</span>
-            <div className="earn-info">
-              <span className="earn-title">Place Orders</span>
-              <span className="earn-desc">Earn 10 points per $1 spent</span>
+            <div className="earn-item">
+              <span className="earn-icon">{Icons.star}</span>
+              <div className="earn-info">
+                <span className="earn-title">Leave Reviews</span>
+                <span className="earn-desc">Earn 50 points per review</span>
+              </div>
             </div>
-          </div>
-          <div className="earn-item">
-            <span className="earn-icon">{Icons.star}</span>
-            <div className="earn-info">
-              <span className="earn-title">Leave Reviews</span>
-              <span className="earn-desc">Earn 50 points per review</span>
-            </div>
-          </div>
-          <div className="earn-item">
-            <span className="earn-icon">{Icons.user}</span>
-            <div className="earn-info">
-              <span className="earn-title">Refer Friends</span>
-              <span className="earn-desc">Earn 200 points per referral</span>
+            <div className="earn-item">
+              <span className="earn-icon">{Icons.mapPin}</span>
+              <div className="earn-info">
+                <span className="earn-title">Check In</span>
+                <span className="earn-desc">Earn 10 points per check-in</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Addresses Tab
 const AddressesTab = ({ onBack }) => {
@@ -671,10 +695,149 @@ const HelpTab = ({ onBack }) => (
 
 // Main Customer Profile Component
 const CustomerProfile = ({ onBack }) => {
-  const { profile, loading, user, signOut } = useAuth();
+  const { profile, loading: authLoading, user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
 
-  if (loading) {
+  // Data state
+  const [orders, setOrders] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [checkIns, setCheckIns] = useState([]);
+
+  // Loading states
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingFavorites, setLoadingFavorites] = useState(true);
+  const [loadingCheckIns, setLoadingCheckIns] = useState(true);
+
+  // Fetch customer orders
+  const fetchOrders = useCallback(async () => {
+    if (!user?.id) return;
+    setLoadingOrders(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          food_trucks:truck_id(name, image_url),
+          order_items(name, quantity, price)
+        `)
+        .eq('customer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedOrders = (data || []).map(order => ({
+        ...order,
+        truck_name: order.food_trucks?.name || 'Food Truck',
+        truck_image: order.food_trucks?.image_url,
+        items: order.order_items || [],
+        item_count: order.order_items?.length || 0,
+      }));
+
+      setOrders(formattedOrders);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [user?.id]);
+
+  // Fetch customer favorites
+  const fetchFavorites = useCallback(async () => {
+    if (!user?.id) return;
+    setLoadingFavorites(true);
+    try {
+      const { data, error } = await supabase
+        .from('favorites')
+        .select(`
+          *,
+          food_trucks:truck_id(*)
+        `)
+        .eq('customer_id', user.id);
+
+      if (error) throw error;
+
+      // Also get ratings for each truck
+      const formattedFavorites = await Promise.all((data || []).map(async (fav) => {
+        const truck = fav.food_trucks;
+        if (!truck) return null;
+
+        // Get rating from view
+        const { data: ratingData } = await supabase
+          .from('truck_ratings_summary')
+          .select('average_rating')
+          .eq('truck_id', truck.id)
+          .single();
+
+        return {
+          ...truck,
+          favorite_id: fav.id,
+          average_rating: ratingData?.average_rating || null,
+        };
+      }));
+
+      setFavorites(formattedFavorites.filter(f => f !== null));
+    } catch (err) {
+      console.error('Error fetching favorites:', err);
+    } finally {
+      setLoadingFavorites(false);
+    }
+  }, [user?.id]);
+
+  // Fetch check-ins for punch cards
+  const fetchCheckIns = useCallback(async () => {
+    if (!user?.id) return;
+    setLoadingCheckIns(true);
+    try {
+      const { data, error } = await supabase
+        .from('check_ins')
+        .select(`
+          *,
+          food_trucks:truck_id(name)
+        `)
+        .eq('customer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedCheckIns = (data || []).map(ci => ({
+        ...ci,
+        truck_name: ci.food_trucks?.name || 'Food Truck',
+      }));
+
+      setCheckIns(formattedCheckIns);
+    } catch (err) {
+      console.error('Error fetching check-ins:', err);
+    } finally {
+      setLoadingCheckIns(false);
+    }
+  }, [user?.id]);
+
+  // Remove from favorites
+  const handleRemoveFavorite = async (truckId) => {
+    try {
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('customer_id', user.id)
+        .eq('truck_id', truckId);
+
+      if (error) throw error;
+      setFavorites(prev => prev.filter(f => f.id !== truckId));
+    } catch (err) {
+      console.error('Error removing favorite:', err);
+    }
+  };
+
+  // Fetch data on mount
+  useEffect(() => {
+    if (user?.id) {
+      fetchOrders();
+      fetchFavorites();
+      fetchCheckIns();
+    }
+  }, [user?.id, fetchOrders, fetchFavorites, fetchCheckIns]);
+
+  if (authLoading) {
     return (
       <div className="profile-loading">
         <div className="loading-spinner"></div>
@@ -725,13 +888,40 @@ const CustomerProfile = ({ onBack }) => {
   const renderTab = () => {
     switch (activeTab) {
       case 'account':
-        return <AccountTab profile={profile} setActiveTab={setActiveTab} />;
+        return (
+          <AccountTab
+            profile={profile}
+            setActiveTab={setActiveTab}
+            ordersCount={orders.length}
+            favoritesCount={favorites.length}
+          />
+        );
       case 'orders':
-        return <OrdersTab onBack={handleTabBack} />;
+        return (
+          <OrdersTab
+            onBack={handleTabBack}
+            orders={orders}
+            loading={loadingOrders}
+          />
+        );
       case 'favorites':
-        return <FavoritesTab onBack={handleTabBack} />;
+        return (
+          <FavoritesTab
+            onBack={handleTabBack}
+            favorites={favorites}
+            loading={loadingFavorites}
+            onRemoveFavorite={handleRemoveFavorite}
+          />
+        );
       case 'rewards':
-        return <RewardsTab onBack={handleTabBack} points={profile?.points} />;
+        return (
+          <RewardsTab
+            onBack={handleTabBack}
+            points={profile?.points}
+            checkIns={checkIns}
+            loading={loadingCheckIns}
+          />
+        );
       case 'addresses':
         return <AddressesTab onBack={handleTabBack} />;
       case 'payment':
@@ -743,7 +933,14 @@ const CustomerProfile = ({ onBack }) => {
       case 'help':
         return <HelpTab onBack={handleTabBack} />;
       default:
-        return <AccountTab profile={profile} setActiveTab={setActiveTab} />;
+        return (
+          <AccountTab
+            profile={profile}
+            setActiveTab={setActiveTab}
+            ordersCount={orders.length}
+            favoritesCount={favorites.length}
+          />
+        );
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { supabase } from '../../lib/supabase';
 import './OwnerDashboard.css';
@@ -25,36 +25,24 @@ const Icons = {
   trendingUp: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
   eye: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
   logout: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+  loader: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/></svg>,
+  alertCircle: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
 };
 
-// Mock data for demo
-const mockTrucks = [
-  {
-    id: 1,
-    name: "Taco Loco",
-    cuisine: "Mexican",
-    status: "active",
-    rating: 4.8,
-    reviewCount: 328,
-    todayOrders: 47,
-    todayRevenue: 892.50,
-    image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80"
-  }
-];
+// Helper to format relative time
+const formatRelativeTime = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
 
-const mockOrders = [
-  { id: 'ORD-001', customer: 'John D.', items: 3, total: 34.99, status: 'preparing', time: '2 min ago' },
-  { id: 'ORD-002', customer: 'Sarah M.', items: 2, total: 22.50, status: 'ready', time: '5 min ago' },
-  { id: 'ORD-003', customer: 'Mike R.', items: 5, total: 67.25, status: 'completed', time: '12 min ago' },
-  { id: 'ORD-004', customer: 'Emily K.', items: 1, total: 12.99, status: 'new', time: 'Just now' },
-];
-
-const mockMenuItems = [
-  { id: 1, name: 'Street Tacos (3)', price: 12.99, category: 'Tacos', available: true, image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=200&q=80' },
-  { id: 2, name: 'Loaded Nachos', price: 14.99, category: 'Appetizers', available: true, image: 'https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=200&q=80' },
-  { id: 3, name: 'Burrito Supreme', price: 13.99, category: 'Burritos', available: false, image: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=200&q=80' },
-  { id: 4, name: 'Quesadilla', price: 10.99, category: 'Specials', available: true, image: 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=200&q=80' },
-];
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hr ago`;
+  return `${diffDays} days ago`;
+};
 
 // Sidebar Navigation
 const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, onBack }) => {
@@ -124,13 +112,8 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, onBack }) =
 };
 
 // Overview Tab
-const OverviewTab = ({ setActiveTab }) => {
-  const stats = [
-    { label: "Today's Orders", value: '47', change: '+12%', icon: Icons.orders, color: '#e11d48' },
-    { label: "Today's Revenue", value: '$892', change: '+8%', icon: Icons.dollar, color: '#16a34a' },
-    { label: 'Avg Rating', value: '4.8', change: '+0.2', icon: Icons.star, color: '#f59e0b' },
-    { label: 'Customers', value: '2.1K', change: '+156', icon: Icons.users, color: '#3b82f6' },
-  ];
+const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
+  const recentOrders = orders.slice(0, 3);
 
   return (
     <div className="tab-content">
@@ -149,7 +132,7 @@ const OverviewTab = ({ setActiveTab }) => {
               <span className="stat-value">{stat.value}</span>
               <span className="stat-label">{stat.label}</span>
             </div>
-            <span className="stat-change positive">{stat.change}</span>
+            {stat.change && <span className="stat-change positive">{stat.change}</span>}
           </div>
         ))}
       </div>
@@ -161,18 +144,22 @@ const OverviewTab = ({ setActiveTab }) => {
             <button className="btn-link" onClick={() => setActiveTab('orders')}>View All</button>
           </div>
           <div className="orders-list">
-            {mockOrders.slice(0, 3).map(order => (
-              <div className="order-item" key={order.id}>
-                <div className="order-info">
-                  <span className="order-id">{order.id}</span>
-                  <span className="order-customer">{order.customer}</span>
+            {recentOrders.length === 0 ? (
+              <p className="empty-state">No orders yet</p>
+            ) : (
+              recentOrders.map(order => (
+                <div className="order-item" key={order.id}>
+                  <div className="order-info">
+                    <span className="order-id">{order.order_number}</span>
+                    <span className="order-customer">{order.customer_name || 'Customer'}</span>
+                  </div>
+                  <div className="order-details">
+                    <span className="order-total">${parseFloat(order.total).toFixed(2)}</span>
+                    <span className={`order-status ${order.status}`}>{order.status}</span>
+                  </div>
                 </div>
-                <div className="order-details">
-                  <span className="order-total">${order.total.toFixed(2)}</span>
-                  <span className={`order-status ${order.status}`}>{order.status}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -203,20 +190,26 @@ const OverviewTab = ({ setActiveTab }) => {
           <button className="btn-link" onClick={() => setActiveTab('trucks')}>Manage</button>
         </div>
         <div className="trucks-preview">
-          {mockTrucks.map(truck => (
-            <div className="truck-preview-card" key={truck.id}>
-              <img src={truck.image} alt={truck.name} />
-              <div className="truck-preview-info">
-                <h4>{truck.name}</h4>
-                <span className="truck-cuisine">{truck.cuisine}</span>
-                <div className="truck-stats">
-                  <span className="truck-rating">{Icons.star} {truck.rating}</span>
-                  <span className="truck-orders">{truck.todayOrders} orders today</span>
+          {trucks.length === 0 ? (
+            <p className="empty-state">No trucks yet. Add your first truck to get started!</p>
+          ) : (
+            trucks.map(truck => (
+              <div className="truck-preview-card" key={truck.id}>
+                <img src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80'} alt={truck.name} />
+                <div className="truck-preview-info">
+                  <h4>{truck.name}</h4>
+                  <span className="truck-cuisine">{truck.cuisine}</span>
+                  <div className="truck-stats">
+                    <span className="truck-rating">{Icons.star} {truck.average_rating || 'N/A'}</span>
+                    <span className="truck-orders">{truck.today_orders || 0} orders today</span>
+                  </div>
                 </div>
+                <span className={`truck-status ${truck.is_open ? 'active' : 'inactive'}`}>
+                  {truck.is_open ? 'Open' : 'Closed'}
+                </span>
               </div>
-              <span className={`truck-status ${truck.status}`}>{truck.status}</span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -224,16 +217,77 @@ const OverviewTab = ({ setActiveTab }) => {
 };
 
 // Trucks Management Tab
-const TrucksTab = () => {
+const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loading }) => {
   const [showForm, setShowForm] = useState(false);
-  const [trucks, setTrucks] = useState(mockTrucks);
   const [editingTruck, setEditingTruck] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    cuisine: '',
+    price_range: '$',
+    description: '',
+    location: '',
+    hours: '',
+    phone: '',
+    image_url: '',
+  });
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    // Save truck logic here
-    setShowForm(false);
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      cuisine: '',
+      price_range: '$',
+      description: '',
+      location: '',
+      hours: '',
+      phone: '',
+      image_url: '',
+    });
     setEditingTruck(null);
+  };
+
+  const openEditForm = (truck) => {
+    setFormData({
+      name: truck.name || '',
+      cuisine: truck.cuisine || '',
+      price_range: truck.price_range || '$',
+      description: truck.description || '',
+      location: truck.location || '',
+      hours: truck.hours || '',
+      phone: truck.phone || '',
+      image_url: truck.image_url || '',
+    });
+    setEditingTruck(truck);
+    setShowForm(true);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (editingTruck) {
+        await onTruckUpdate(editingTruck.id, formData);
+      } else {
+        await onTruckCreate(formData);
+      }
+      setShowForm(false);
+      resetForm();
+    } catch (err) {
+      console.error('Failed to save truck:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (truckId) => {
+    if (!window.confirm('Are you sure you want to delete this truck? This cannot be undone.')) {
+      return;
+    }
+    try {
+      await onTruckDelete(truckId);
+    } catch (err) {
+      console.error('Failed to delete truck:', err);
+    }
   };
 
   return (
@@ -243,7 +297,7 @@ const TrucksTab = () => {
           <h1>My Trucks</h1>
           <p>Manage your food trucks and their details.</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>
+        <button className="btn-primary" onClick={() => { resetForm(); setShowForm(true); }}>
           {Icons.plus} Add Truck
         </button>
       </div>
@@ -253,19 +307,29 @@ const TrucksTab = () => {
           <div className="modal">
             <div className="modal-header">
               <h2>{editingTruck ? 'Edit Truck' : 'Add New Truck'}</h2>
-              <button className="close-btn" onClick={() => { setShowForm(false); setEditingTruck(null); }}>
+              <button className="close-btn" onClick={() => { setShowForm(false); resetForm(); }}>
                 {Icons.x}
               </button>
             </div>
             <form onSubmit={handleSave}>
               <div className="form-group">
                 <label>Truck Name</label>
-                <input type="text" placeholder="Enter truck name" defaultValue={editingTruck?.name} required />
+                <input
+                  type="text"
+                  placeholder="Enter truck name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>Cuisine Type</label>
-                  <select defaultValue={editingTruck?.cuisine || ''}>
+                  <select
+                    value={formData.cuisine}
+                    onChange={(e) => setFormData({ ...formData, cuisine: e.target.value })}
+                    required
+                  >
                     <option value="">Select cuisine</option>
                     <option value="Mexican">Mexican</option>
                     <option value="American">American</option>
@@ -273,49 +337,79 @@ const TrucksTab = () => {
                     <option value="Italian">Italian</option>
                     <option value="BBQ">BBQ</option>
                     <option value="Seafood">Seafood</option>
+                    <option value="Indian">Indian</option>
+                    <option value="Mediterranean">Mediterranean</option>
+                    <option value="Fusion">Fusion</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Price Range</label>
-                  <select>
+                  <select
+                    value={formData.price_range}
+                    onChange={(e) => setFormData({ ...formData, price_range: e.target.value })}
+                  >
                     <option value="$">$ (Budget)</option>
                     <option value="$$">$$ (Moderate)</option>
                     <option value="$$$">$$$ (Premium)</option>
+                    <option value="$$$$">$$$$ (Luxury)</option>
                   </select>
                 </div>
               </div>
               <div className="form-group">
                 <label>Description</label>
-                <textarea placeholder="Describe your truck and cuisine..." rows={3}></textarea>
+                <textarea
+                  placeholder="Describe your truck and cuisine..."
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                ></textarea>
               </div>
               <div className="form-group">
                 <label>Location</label>
-                <input type="text" placeholder="Current location or address" />
+                <input
+                  type="text"
+                  placeholder="Current location or address"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  required
+                />
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>Opening Hours</label>
-                  <input type="text" placeholder="e.g., 11am - 10pm" />
+                  <input
+                    type="text"
+                    placeholder="e.g., 11am - 10pm"
+                    value={formData.hours}
+                    onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Phone</label>
-                  <input type="tel" placeholder="Contact number" />
+                  <input
+                    type="tel"
+                    placeholder="Contact number"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="form-group">
-                <label>Truck Image</label>
-                <div className="image-upload">
-                  {Icons.image}
-                  <span>Click to upload or drag and drop</span>
-                  <input type="file" accept="image/*" />
-                </div>
+                <label>Image URL (optional)</label>
+                <input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                />
               </div>
               <div className="form-actions">
-                <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setEditingTruck(null); }}>
+                <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary">
-                  {editingTruck ? 'Save Changes' : 'Create Truck'}
+                <button type="submit" className="btn-primary" disabled={saving}>
+                  {saving ? 'Saving...' : (editingTruck ? 'Save Changes' : 'Create Truck')}
                 </button>
               </div>
             </form>
@@ -323,69 +417,145 @@ const TrucksTab = () => {
         </div>
       )}
 
-      <div className="trucks-grid">
-        {trucks.map(truck => (
-          <div className="truck-card" key={truck.id}>
-            <div className="truck-image">
-              <img src={truck.image} alt={truck.name} />
-              <span className={`status-badge ${truck.status}`}>{truck.status}</span>
-            </div>
-            <div className="truck-content">
-              <h3>{truck.name}</h3>
-              <p className="truck-cuisine">{truck.cuisine}</p>
-              <div className="truck-meta">
-                <span>{Icons.star} {truck.rating} ({truck.reviewCount} reviews)</span>
+      {loading ? (
+        <div className="loading-state">{Icons.loader} Loading trucks...</div>
+      ) : (
+        <div className="trucks-grid">
+          {trucks.map(truck => (
+            <div className="truck-card" key={truck.id}>
+              <div className="truck-image">
+                <img src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80'} alt={truck.name} />
+                <span className={`status-badge ${truck.is_open ? 'active' : 'inactive'}`}>
+                  {truck.is_open ? 'Open' : 'Closed'}
+                </span>
               </div>
-              <div className="truck-stats-row">
-                <div className="mini-stat">
-                  <span className="mini-stat-value">{truck.todayOrders}</span>
-                  <span className="mini-stat-label">Orders</span>
+              <div className="truck-content">
+                <h3>{truck.name}</h3>
+                <p className="truck-cuisine">{truck.cuisine}</p>
+                <div className="truck-meta">
+                  <span>{Icons.star} {truck.average_rating || 'N/A'} ({truck.review_count || 0} reviews)</span>
                 </div>
-                <div className="mini-stat">
-                  <span className="mini-stat-value">${truck.todayRevenue}</span>
-                  <span className="mini-stat-label">Revenue</span>
+                <div className="truck-stats-row">
+                  <div className="mini-stat">
+                    <span className="mini-stat-value">{truck.today_orders || 0}</span>
+                    <span className="mini-stat-label">Orders</span>
+                  </div>
+                  <div className="mini-stat">
+                    <span className="mini-stat-value">${truck.today_revenue?.toFixed(2) || '0.00'}</span>
+                    <span className="mini-stat-label">Revenue</span>
+                  </div>
                 </div>
               </div>
+              <div className="truck-actions">
+                <button className="btn-icon" onClick={() => openEditForm(truck)}>
+                  {Icons.edit}
+                </button>
+                <button className="btn-icon danger" onClick={() => handleDelete(truck.id)}>
+                  {Icons.trash}
+                </button>
+              </div>
             </div>
-            <div className="truck-actions">
-              <button className="btn-icon" onClick={() => { setEditingTruck(truck); setShowForm(true); }}>
-                {Icons.edit}
-              </button>
-              <button className="btn-icon danger">
-                {Icons.trash}
-              </button>
-            </div>
-          </div>
-        ))}
+          ))}
 
-        <div className="truck-card add-card" onClick={() => setShowForm(true)}>
-          <div className="add-card-content">
-            {Icons.plus}
-            <span>Add New Truck</span>
+          <div className="truck-card add-card" onClick={() => { resetForm(); setShowForm(true); }}>
+            <div className="add-card-content">
+              {Icons.plus}
+              <span>Add New Truck</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
 // Menu Management Tab
-const MenuTab = () => {
-  const [items, setItems] = useState(mockMenuItems);
+const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItemCreate, onMenuItemUpdate, onMenuItemDelete, loading }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    price: '',
+    category: '',
+    description: '',
+    emoji: '',
+  });
 
-  const categories = ['all', ...new Set(mockMenuItems.map(item => item.category))];
+  const categories = ['all', ...new Set(menuItems.filter(item => item.category).map(item => item.category))];
 
   const filteredItems = activeCategory === 'all'
-    ? items
-    : items.filter(item => item.category === activeCategory);
+    ? menuItems
+    : menuItems.filter(item => item.category === activeCategory);
 
-  const toggleAvailability = (id) => {
-    setItems(items.map(item =>
-      item.id === id ? { ...item, available: !item.available } : item
-    ));
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      price: '',
+      category: '',
+      description: '',
+      emoji: '',
+    });
+    setEditingItem(null);
+  };
+
+  const openEditForm = (item) => {
+    setFormData({
+      name: item.name || '',
+      price: item.price || '',
+      category: item.category || '',
+      description: item.description || '',
+      emoji: item.emoji || '',
+    });
+    setEditingItem(item);
+    setShowForm(true);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!selectedTruckId) {
+      alert('Please select a truck first');
+      return;
+    }
+    setSaving(true);
+    try {
+      const data = {
+        ...formData,
+        price: parseFloat(formData.price),
+        truck_id: selectedTruckId,
+      };
+      if (editingItem) {
+        await onMenuItemUpdate(editingItem.id, data);
+      } else {
+        await onMenuItemCreate(data);
+      }
+      setShowForm(false);
+      resetForm();
+    } catch (err) {
+      console.error('Failed to save menu item:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (itemId) => {
+    if (!window.confirm('Are you sure you want to delete this menu item?')) {
+      return;
+    }
+    try {
+      await onMenuItemDelete(itemId);
+    } catch (err) {
+      console.error('Failed to delete menu item:', err);
+    }
+  };
+
+  const toggleAvailability = async (item) => {
+    try {
+      await onMenuItemUpdate(item.id, { is_available: !item.is_available });
+    } catch (err) {
+      console.error('Failed to update availability:', err);
+    }
   };
 
   return (
@@ -395,138 +565,241 @@ const MenuTab = () => {
           <h1>Menu Management</h1>
           <p>Add, edit, and manage your menu items.</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>
-          {Icons.plus} Add Item
-        </button>
-      </div>
-
-      <div className="category-tabs">
-        {categories.map(cat => (
+        <div className="header-actions">
+          {trucks.length > 0 && (
+            <select
+              className="truck-select"
+              value={selectedTruckId || ''}
+              onChange={(e) => onTruckSelect(e.target.value)}
+            >
+              <option value="">Select a truck</option>
+              {trucks.map(truck => (
+                <option key={truck.id} value={truck.id}>{truck.name}</option>
+              ))}
+            </select>
+          )}
           <button
-            key={cat}
-            className={`category-tab ${activeCategory === cat ? 'active' : ''}`}
-            onClick={() => setActiveCategory(cat)}
+            className="btn-primary"
+            onClick={() => { resetForm(); setShowForm(true); }}
+            disabled={!selectedTruckId}
           >
-            {cat === 'all' ? 'All Items' : cat}
+            {Icons.plus} Add Item
           </button>
-        ))}
-      </div>
-
-      {showForm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>{editingItem ? 'Edit Menu Item' : 'Add Menu Item'}</h2>
-              <button className="close-btn" onClick={() => { setShowForm(false); setEditingItem(null); }}>
-                {Icons.x}
-              </button>
-            </div>
-            <form onSubmit={(e) => { e.preventDefault(); setShowForm(false); setEditingItem(null); }}>
-              <div className="form-group">
-                <label>Item Name</label>
-                <input type="text" placeholder="Enter item name" defaultValue={editingItem?.name} required />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Price</label>
-                  <input type="number" step="0.01" placeholder="0.00" defaultValue={editingItem?.price} required />
-                </div>
-                <div className="form-group">
-                  <label>Category</label>
-                  <select defaultValue={editingItem?.category || ''}>
-                    <option value="">Select category</option>
-                    <option value="Tacos">Tacos</option>
-                    <option value="Burritos">Burritos</option>
-                    <option value="Appetizers">Appetizers</option>
-                    <option value="Specials">Specials</option>
-                    <option value="Drinks">Drinks</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Description</label>
-                <textarea placeholder="Describe this item..." rows={2}></textarea>
-              </div>
-              <div className="form-group">
-                <label>Item Image</label>
-                <div className="image-upload">
-                  {Icons.image}
-                  <span>Click to upload or drag and drop</span>
-                  <input type="file" accept="image/*" />
-                </div>
-              </div>
-              <div className="form-actions">
-                <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setEditingItem(null); }}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  {editingItem ? 'Save Changes' : 'Add Item'}
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
-      )}
+      </div>
 
-      <div className="menu-grid">
-        {filteredItems.map(item => (
-          <div className={`menu-item-card ${!item.available ? 'unavailable' : ''}`} key={item.id}>
-            <div className="menu-item-image">
-              <img src={item.image} alt={item.name} />
+      {!selectedTruckId ? (
+        <div className="empty-state-card">
+          <p>Please select a truck to manage its menu</p>
+        </div>
+      ) : (
+        <>
+          {categories.length > 1 && (
+            <div className="category-tabs">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  className={`category-tab ${activeCategory === cat ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(cat)}
+                >
+                  {cat === 'all' ? 'All Items' : cat}
+                </button>
+              ))}
             </div>
-            <div className="menu-item-content">
-              <div className="menu-item-header">
-                <h4>{item.name}</h4>
-                <span className="menu-item-price">${item.price.toFixed(2)}</span>
-              </div>
-              <span className="menu-item-category">{item.category}</span>
-              <div className="menu-item-actions">
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={item.available}
-                    onChange={() => toggleAvailability(item.id)}
-                  />
-                  <span className="toggle-slider"></span>
-                  <span className="toggle-label">{item.available ? 'Available' : 'Unavailable'}</span>
-                </label>
-                <div className="action-buttons">
-                  <button className="btn-icon small" onClick={() => { setEditingItem(item); setShowForm(true); }}>
-                    {Icons.edit}
-                  </button>
-                  <button className="btn-icon small danger">
-                    {Icons.trash}
+          )}
+
+          {showForm && (
+            <div className="modal-overlay">
+              <div className="modal">
+                <div className="modal-header">
+                  <h2>{editingItem ? 'Edit Menu Item' : 'Add Menu Item'}</h2>
+                  <button className="close-btn" onClick={() => { setShowForm(false); resetForm(); }}>
+                    {Icons.x}
                   </button>
                 </div>
+                <form onSubmit={handleSave}>
+                  <div className="form-group">
+                    <label>Item Name</label>
+                    <input
+                      type="text"
+                      placeholder="Enter item name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Price</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Category</label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      >
+                        <option value="">Select category</option>
+                        <option value="Appetizers">Appetizers</option>
+                        <option value="Mains">Mains</option>
+                        <option value="Tacos">Tacos</option>
+                        <option value="Burritos">Burritos</option>
+                        <option value="Bowls">Bowls</option>
+                        <option value="Sides">Sides</option>
+                        <option value="Desserts">Desserts</option>
+                        <option value="Drinks">Drinks</option>
+                        <option value="Specials">Specials</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Description</label>
+                      <textarea
+                        placeholder="Describe this item..."
+                        rows={2}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      ></textarea>
+                    </div>
+                    <div className="form-group" style={{ flex: '0 0 80px' }}>
+                      <label>Emoji</label>
+                      <input
+                        type="text"
+                        placeholder="🌮"
+                        value={formData.emoji}
+                        onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
+                        maxLength={4}
+                        style={{ textAlign: 'center', fontSize: '1.5rem' }}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-actions">
+                    <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-primary" disabled={saving}>
+                      {saving ? 'Saving...' : (editingItem ? 'Save Changes' : 'Add Item')}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          )}
+
+          {loading ? (
+            <div className="loading-state">{Icons.loader} Loading menu items...</div>
+          ) : filteredItems.length === 0 ? (
+            <div className="empty-state-card">
+              <p>No menu items yet. Add your first item to get started!</p>
+            </div>
+          ) : (
+            <div className="menu-grid">
+              {filteredItems.map(item => (
+                <div className={`menu-item-card ${!item.is_available ? 'unavailable' : ''}`} key={item.id}>
+                  <div className="menu-item-image">
+                    {item.emoji ? (
+                      <div className="menu-item-emoji">{item.emoji}</div>
+                    ) : (
+                      <div className="menu-item-placeholder">{Icons.menu}</div>
+                    )}
+                  </div>
+                  <div className="menu-item-content">
+                    <div className="menu-item-header">
+                      <h4>{item.name}</h4>
+                      <span className="menu-item-price">${parseFloat(item.price).toFixed(2)}</span>
+                    </div>
+                    {item.category && <span className="menu-item-category">{item.category}</span>}
+                    {item.description && <p className="menu-item-desc">{item.description}</p>}
+                    <div className="menu-item-actions">
+                      <label className="toggle">
+                        <input
+                          type="checkbox"
+                          checked={item.is_available}
+                          onChange={() => toggleAvailability(item)}
+                        />
+                        <span className="toggle-slider"></span>
+                        <span className="toggle-label">{item.is_available ? 'Available' : 'Unavailable'}</span>
+                      </label>
+                      <div className="action-buttons">
+                        <button className="btn-icon small" onClick={() => openEditForm(item)}>
+                          {Icons.edit}
+                        </button>
+                        <button className="btn-icon small danger" onClick={() => handleDelete(item.id)}>
+                          {Icons.trash}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
 
 // Orders Tab
-const OrdersTab = () => {
-  const [orders, setOrders] = useState(mockOrders);
+const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
   const [filter, setFilter] = useState('all');
+  const [updating, setUpdating] = useState(null);
 
   const statusColors = {
-    new: '#3b82f6',
+    pending: '#6366f1',
+    confirmed: '#3b82f6',
     preparing: '#f59e0b',
     ready: '#16a34a',
     completed: '#64748b',
+    cancelled: '#ef4444',
+  };
+
+  const statusLabels = {
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    preparing: 'Preparing',
+    ready: 'Ready',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
   };
 
   const filteredOrders = filter === 'all'
     ? orders
     : orders.filter(o => o.status === filter);
 
-  const updateStatus = (orderId, newStatus) => {
-    setOrders(orders.map(o =>
-      o.id === orderId ? { ...o, status: newStatus } : o
-    ));
+  const updateStatus = async (orderId, newStatus) => {
+    setUpdating(orderId);
+    try {
+      await onOrderStatusUpdate(orderId, newStatus);
+    } catch (err) {
+      console.error('Failed to update order status:', err);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const getNextAction = (status) => {
+    switch (status) {
+      case 'pending':
+        return { label: 'Confirm', next: 'confirmed', style: 'primary' };
+      case 'confirmed':
+        return { label: 'Start Preparing', next: 'preparing', style: 'primary' };
+      case 'preparing':
+        return { label: 'Mark Ready', next: 'ready', style: 'success' };
+      case 'ready':
+        return { label: 'Complete', next: 'completed', style: '' };
+      default:
+        return null;
+    }
   };
 
   return (
@@ -539,13 +812,13 @@ const OrdersTab = () => {
       </div>
 
       <div className="orders-filters">
-        {['all', 'new', 'preparing', 'ready', 'completed'].map(status => (
+        {['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed'].map(status => (
           <button
             key={status}
             className={`filter-btn ${filter === status ? 'active' : ''}`}
             onClick={() => setFilter(status)}
           >
-            {status === 'all' ? 'All Orders' : status.charAt(0).toUpperCase() + status.slice(1)}
+            {status === 'all' ? 'All Orders' : statusLabels[status]}
             {status !== 'all' && (
               <span className="filter-count" style={{ background: statusColors[status] }}>
                 {orders.filter(o => o.status === status).length}
@@ -555,80 +828,114 @@ const OrdersTab = () => {
         ))}
       </div>
 
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Time</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrders.map(order => (
-              <tr key={order.id}>
-                <td className="order-id-cell">{order.id}</td>
-                <td>{order.customer}</td>
-                <td>{order.items} items</td>
-                <td className="order-total-cell">${order.total.toFixed(2)}</td>
-                <td className="order-time-cell">{order.time}</td>
-                <td>
-                  <span className="status-pill" style={{ background: `${statusColors[order.status]}20`, color: statusColors[order.status] }}>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="actions-cell">
-                  {order.status === 'new' && (
-                    <button className="btn-small primary" onClick={() => updateStatus(order.id, 'preparing')}>
-                      Start Preparing
-                    </button>
-                  )}
-                  {order.status === 'preparing' && (
-                    <button className="btn-small success" onClick={() => updateStatus(order.id, 'ready')}>
-                      Mark Ready
-                    </button>
-                  )}
-                  {order.status === 'ready' && (
-                    <button className="btn-small" onClick={() => updateStatus(order.id, 'completed')}>
-                      Complete
-                    </button>
-                  )}
-                  {order.status === 'completed' && (
-                    <button className="btn-small" disabled>Completed</button>
-                  )}
-                </td>
+      {loading ? (
+        <div className="loading-state">{Icons.loader} Loading orders...</div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="empty-state-card">
+          <p>{filter === 'all' ? 'No orders yet' : `No ${filter} orders`}</p>
+        </div>
+      ) : (
+        <div className="orders-table-wrapper">
+          <table className="orders-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filteredOrders.map(order => {
+                const action = getNextAction(order.status);
+                return (
+                  <tr key={order.id}>
+                    <td className="order-id-cell">{order.order_number}</td>
+                    <td>{order.customer_name || 'Customer'}</td>
+                    <td>{order.item_count || 0} items</td>
+                    <td className="order-total-cell">${parseFloat(order.total).toFixed(2)}</td>
+                    <td className="order-time-cell">{formatRelativeTime(order.created_at)}</td>
+                    <td>
+                      <span className="status-pill" style={{ background: `${statusColors[order.status]}20`, color: statusColors[order.status] }}>
+                        {statusLabels[order.status] || order.status}
+                      </span>
+                    </td>
+                    <td className="actions-cell">
+                      {action ? (
+                        <button
+                          className={`btn-small ${action.style}`}
+                          onClick={() => updateStatus(order.id, action.next)}
+                          disabled={updating === order.id}
+                        >
+                          {updating === order.id ? 'Updating...' : action.label}
+                        </button>
+                      ) : order.status === 'completed' ? (
+                        <button className="btn-small" disabled>Completed</button>
+                      ) : order.status === 'cancelled' ? (
+                        <button className="btn-small" disabled>Cancelled</button>
+                      ) : null}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
 
 // Analytics Tab
-const AnalyticsTab = () => {
-  const weeklyData = [
-    { day: 'Mon', orders: 45, revenue: 856 },
-    { day: 'Tue', orders: 52, revenue: 978 },
-    { day: 'Wed', orders: 49, revenue: 912 },
-    { day: 'Thu', orders: 63, revenue: 1205 },
-    { day: 'Fri', orders: 78, revenue: 1489 },
-    { day: 'Sat', orders: 92, revenue: 1756 },
-    { day: 'Sun', orders: 67, revenue: 1287 },
-  ];
+const AnalyticsTab = ({ trucks, orders }) => {
+  // Calculate weekly data from actual orders
+  const getWeeklyData = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekData = Array(7).fill(null).map((_, i) => ({
+      day: days[i],
+      orders: 0,
+      revenue: 0,
+    }));
 
-  const maxRevenue = Math.max(...weeklyData.map(d => d.revenue));
-  const topItems = [
-    { name: 'Street Tacos (3)', orders: 156, revenue: 2023 },
-    { name: 'Burrito Supreme', orders: 98, revenue: 1371 },
-    { name: 'Loaded Nachos', orders: 87, revenue: 1304 },
-    { name: 'Quesadilla', orders: 72, revenue: 791 },
-  ];
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    orders.forEach(order => {
+      const orderDate = new Date(order.created_at);
+      if (orderDate >= weekAgo) {
+        const dayIndex = orderDate.getDay();
+        weekData[dayIndex].orders += 1;
+        weekData[dayIndex].revenue += parseFloat(order.total || 0);
+      }
+    });
+
+    // Reorder to start from Monday
+    return [...weekData.slice(1), weekData[0]];
+  };
+
+  const weeklyData = getWeeklyData();
+  const maxRevenue = Math.max(...weeklyData.map(d => d.revenue), 1);
+  const totalWeeklyRevenue = weeklyData.reduce((sum, d) => sum + d.revenue, 0);
+  const totalWeeklyOrders = weeklyData.reduce((sum, d) => sum + d.orders, 0);
+
+  // Calculate average order value
+  const avgOrderValue = orders.length > 0
+    ? orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0) / orders.length
+    : 0;
+
+  // Calculate orders per day (last 30 days)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const recentOrders = orders.filter(o => new Date(o.created_at) >= thirtyDaysAgo);
+  const ordersPerDay = recentOrders.length > 0 ? (recentOrders.length / 30).toFixed(1) : 0;
+
+  // Find best performing truck
+  const bestTruck = trucks.reduce((best, truck) => {
+    if (!best || (truck.today_revenue || 0) > (best.today_revenue || 0)) return truck;
+    return best;
+  }, null);
 
   return (
     <div className="tab-content">
@@ -649,16 +956,16 @@ const AnalyticsTab = () => {
         <div className="card chart-card">
           <div className="card-header">
             <h3>Weekly Revenue</h3>
-            <span className="chart-total">$8,483 total</span>
+            <span className="chart-total">${totalWeeklyRevenue.toFixed(0)} total</span>
           </div>
           <div className="bar-chart">
             {weeklyData.map((d, i) => (
               <div className="bar-group" key={i}>
                 <div
                   className="bar"
-                  style={{ height: `${(d.revenue / maxRevenue) * 100}%` }}
+                  style={{ height: `${maxRevenue > 0 ? (d.revenue / maxRevenue) * 100 : 0}%` }}
                 >
-                  <span className="bar-value">${d.revenue}</span>
+                  <span className="bar-value">${d.revenue.toFixed(0)}</span>
                 </div>
                 <span className="bar-label">{d.day}</span>
               </div>
@@ -668,19 +975,23 @@ const AnalyticsTab = () => {
 
         <div className="card">
           <div className="card-header">
-            <h3>Top Selling Items</h3>
+            <h3>Truck Performance</h3>
           </div>
           <div className="top-items-list">
-            {topItems.map((item, i) => (
-              <div className="top-item" key={i}>
-                <span className="top-item-rank">#{i + 1}</span>
-                <div className="top-item-info">
-                  <span className="top-item-name">{item.name}</span>
-                  <span className="top-item-orders">{item.orders} orders</span>
+            {trucks.length === 0 ? (
+              <p className="empty-state">No trucks yet</p>
+            ) : (
+              trucks.map((truck, i) => (
+                <div className="top-item" key={truck.id}>
+                  <span className="top-item-rank">#{i + 1}</span>
+                  <div className="top-item-info">
+                    <span className="top-item-name">{truck.name}</span>
+                    <span className="top-item-orders">{truck.today_orders || 0} orders today</span>
+                  </div>
+                  <span className="top-item-revenue">${(truck.today_revenue || 0).toFixed(0)}</span>
                 </div>
-                <span className="top-item-revenue">${item.revenue}</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -691,47 +1002,53 @@ const AnalyticsTab = () => {
           <div className="metrics-list">
             <div className="metric-item">
               <span className="metric-label">Average Order Value</span>
-              <span className="metric-value">$18.75</span>
+              <span className="metric-value">${avgOrderValue.toFixed(2)}</span>
             </div>
             <div className="metric-item">
-              <span className="metric-label">Orders Per Day</span>
-              <span className="metric-value">63</span>
+              <span className="metric-label">Orders Per Day (30d avg)</span>
+              <span className="metric-value">{ordersPerDay}</span>
             </div>
             <div className="metric-item">
-              <span className="metric-label">Repeat Customers</span>
-              <span className="metric-value">34%</span>
+              <span className="metric-label">This Week Orders</span>
+              <span className="metric-value">{totalWeeklyOrders}</span>
             </div>
             <div className="metric-item">
-              <span className="metric-label">Avg Preparation Time</span>
-              <span className="metric-value">12 min</span>
+              <span className="metric-label">Active Trucks</span>
+              <span className="metric-value">{trucks.filter(t => t.is_open).length}/{trucks.length}</span>
             </div>
           </div>
         </div>
 
         <div className="card">
           <div className="card-header">
-            <h3>Customer Insights</h3>
+            <h3>Insights</h3>
           </div>
           <div className="insights-list">
             <div className="insight-item">
-              <div className="insight-icon peak">{Icons.clock}</div>
+              <div className="insight-icon peak">{Icons.chart}</div>
               <div className="insight-content">
-                <span className="insight-title">Peak Hours</span>
-                <span className="insight-value">12pm - 2pm, 6pm - 8pm</span>
+                <span className="insight-title">Total Orders</span>
+                <span className="insight-value">{orders.length} all time</span>
               </div>
             </div>
-            <div className="insight-item">
-              <div className="insight-icon location">{Icons.mapPin}</div>
-              <div className="insight-content">
-                <span className="insight-title">Best Location</span>
-                <span className="insight-value">Downtown Portland</span>
+            {bestTruck && (
+              <div className="insight-item">
+                <div className="insight-icon location">{Icons.truck}</div>
+                <div className="insight-content">
+                  <span className="insight-title">Best Performer Today</span>
+                  <span className="insight-value">{bestTruck.name}</span>
+                </div>
               </div>
-            </div>
+            )}
             <div className="insight-item">
               <div className="insight-icon rating">{Icons.star}</div>
               <div className="insight-content">
-                <span className="insight-title">Top Rated Item</span>
-                <span className="insight-value">Street Tacos (4.9)</span>
+                <span className="insight-title">Average Rating</span>
+                <span className="insight-value">
+                  {trucks.filter(t => t.average_rating).length > 0
+                    ? (trucks.filter(t => t.average_rating).reduce((sum, t) => sum + parseFloat(t.average_rating), 0) / trucks.filter(t => t.average_rating).length).toFixed(1)
+                    : 'N/A'}
+                </span>
               </div>
             </div>
           </div>
@@ -865,9 +1182,274 @@ const SettingsTab = () => {
 const OwnerDashboard = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { profile, loading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
-  if (loading) {
+  // Data state
+  const [trucks, setTrucks] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [selectedTruckId, setSelectedTruckId] = useState(null);
+
+  // Loading states
+  const [loadingTrucks, setLoadingTrucks] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingMenu, setLoadingMenu] = useState(false);
+
+  // Error state
+  const [error, setError] = useState(null);
+
+  // Fetch trucks for this owner
+  const fetchTrucks = useCallback(async () => {
+    if (!user?.id) return;
+    setLoadingTrucks(true);
+    try {
+      // Get trucks owned by this user
+      const { data: trucksData, error: trucksError } = await supabase
+        .from('food_trucks')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (trucksError) throw trucksError;
+
+      // For each truck, get its rating and today's orders
+      const trucksWithStats = await Promise.all((trucksData || []).map(async (truck) => {
+        // Get average rating
+        const { data: ratingData } = await supabase
+          .from('truck_ratings_summary')
+          .select('average_rating, review_count')
+          .eq('truck_id', truck.id)
+          .single();
+
+        // Get today's orders
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const { data: todayOrders } = await supabase
+          .from('orders')
+          .select('total')
+          .eq('truck_id', truck.id)
+          .gte('created_at', today.toISOString());
+
+        const todayRevenue = (todayOrders || []).reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+
+        return {
+          ...truck,
+          average_rating: ratingData?.average_rating || null,
+          review_count: ratingData?.review_count || 0,
+          today_orders: todayOrders?.length || 0,
+          today_revenue: todayRevenue,
+        };
+      }));
+
+      setTrucks(trucksWithStats);
+
+      // Auto-select first truck if none selected
+      if (trucksWithStats.length > 0 && !selectedTruckId) {
+        setSelectedTruckId(trucksWithStats[0].id);
+      }
+    } catch (err) {
+      console.error('Error fetching trucks:', err);
+      setError('Failed to load trucks');
+    } finally {
+      setLoadingTrucks(false);
+    }
+  }, [user?.id, selectedTruckId]);
+
+  // Fetch orders for owner's trucks
+  const fetchOrders = useCallback(async () => {
+    if (!user?.id || trucks.length === 0) {
+      setLoadingOrders(false);
+      return;
+    }
+    setLoadingOrders(true);
+    try {
+      const truckIds = trucks.map(t => t.id);
+
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items(count),
+          profiles:customer_id(name)
+        `)
+        .in('truck_id', truckIds)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (ordersError) throw ordersError;
+
+      const formattedOrders = (ordersData || []).map(order => ({
+        ...order,
+        customer_name: order.profiles?.name || 'Customer',
+        item_count: order.order_items?.[0]?.count || 0,
+      }));
+
+      setOrders(formattedOrders);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError('Failed to load orders');
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [user?.id, trucks]);
+
+  // Fetch menu items for selected truck
+  const fetchMenuItems = useCallback(async () => {
+    if (!selectedTruckId) {
+      setMenuItems([]);
+      return;
+    }
+    setLoadingMenu(true);
+    try {
+      const { data, error: menuError } = await supabase
+        .from('menu_items')
+        .select('*')
+        .eq('truck_id', selectedTruckId)
+        .order('display_order', { ascending: true });
+
+      if (menuError) throw menuError;
+      setMenuItems(data || []);
+    } catch (err) {
+      console.error('Error fetching menu items:', err);
+      setError('Failed to load menu items');
+    } finally {
+      setLoadingMenu(false);
+    }
+  }, [selectedTruckId]);
+
+  // Initial data fetch
+  useEffect(() => {
+    if (user?.id) {
+      fetchTrucks();
+    }
+  }, [user?.id, fetchTrucks]);
+
+  // Fetch orders when trucks are loaded
+  useEffect(() => {
+    if (trucks.length > 0) {
+      fetchOrders();
+    }
+  }, [trucks.length, fetchOrders]);
+
+  // Fetch menu items when selected truck changes
+  useEffect(() => {
+    fetchMenuItems();
+  }, [selectedTruckId, fetchMenuItems]);
+
+  // CRUD operations for trucks
+  const handleTruckCreate = async (truckData) => {
+    const slug = truckData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const { data, error } = await supabase
+      .from('food_trucks')
+      .insert([{
+        ...truckData,
+        owner_id: user.id,
+        slug: `${slug}-${Date.now()}`,
+        is_open: true,
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    setTrucks(prev => [{ ...data, today_orders: 0, today_revenue: 0 }, ...prev]);
+    if (!selectedTruckId) setSelectedTruckId(data.id);
+  };
+
+  const handleTruckUpdate = async (truckId, updates) => {
+    const { error } = await supabase
+      .from('food_trucks')
+      .update(updates)
+      .eq('id', truckId);
+
+    if (error) throw error;
+    setTrucks(prev => prev.map(t => t.id === truckId ? { ...t, ...updates } : t));
+  };
+
+  const handleTruckDelete = async (truckId) => {
+    const { error } = await supabase
+      .from('food_trucks')
+      .delete()
+      .eq('id', truckId);
+
+    if (error) throw error;
+    setTrucks(prev => prev.filter(t => t.id !== truckId));
+    if (selectedTruckId === truckId) {
+      const remaining = trucks.filter(t => t.id !== truckId);
+      setSelectedTruckId(remaining.length > 0 ? remaining[0].id : null);
+    }
+  };
+
+  // CRUD operations for menu items
+  const handleMenuItemCreate = async (itemData) => {
+    const { data, error } = await supabase
+      .from('menu_items')
+      .insert([{
+        ...itemData,
+        is_available: true,
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    setMenuItems(prev => [...prev, data]);
+  };
+
+  const handleMenuItemUpdate = async (itemId, updates) => {
+    const { error } = await supabase
+      .from('menu_items')
+      .update(updates)
+      .eq('id', itemId);
+
+    if (error) throw error;
+    setMenuItems(prev => prev.map(item => item.id === itemId ? { ...item, ...updates } : item));
+  };
+
+  const handleMenuItemDelete = async (itemId) => {
+    const { error } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('id', itemId);
+
+    if (error) throw error;
+    setMenuItems(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  // Order status update
+  const handleOrderStatusUpdate = async (orderId, newStatus) => {
+    const updates = { status: newStatus };
+    if (newStatus === 'completed') {
+      updates.completed_at = new Date().toISOString();
+    }
+
+    const { error } = await supabase
+      .from('orders')
+      .update(updates)
+      .eq('id', orderId);
+
+    if (error) throw error;
+    setOrders(prev => prev.map(order =>
+      order.id === orderId ? { ...order, ...updates } : order
+    ));
+  };
+
+  // Calculate stats for overview
+  const calculateStats = () => {
+    const todayOrders = trucks.reduce((sum, t) => sum + (t.today_orders || 0), 0);
+    const todayRevenue = trucks.reduce((sum, t) => sum + (t.today_revenue || 0), 0);
+    const avgRating = trucks.length > 0
+      ? trucks.filter(t => t.average_rating).reduce((sum, t) => sum + parseFloat(t.average_rating), 0) / trucks.filter(t => t.average_rating).length
+      : 0;
+    const totalCustomers = orders.length; // Simplified - could be unique customers
+
+    return [
+      { label: "Today's Orders", value: todayOrders.toString(), icon: Icons.orders, color: '#e11d48' },
+      { label: "Today's Revenue", value: `$${todayRevenue.toFixed(0)}`, icon: Icons.dollar, color: '#16a34a' },
+      { label: 'Avg Rating', value: avgRating ? avgRating.toFixed(1) : 'N/A', icon: Icons.star, color: '#f59e0b' },
+      { label: 'Total Orders', value: orders.length.toString(), icon: Icons.users, color: '#3b82f6' },
+    ];
+  };
+
+  if (authLoading) {
     return (
       <div className="owner-loading">
         <div className="loading-spinner"></div>
@@ -878,13 +1460,59 @@ const OwnerDashboard = ({ onBack }) => {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'overview': return <OverviewTab setActiveTab={setActiveTab} />;
-      case 'trucks': return <TrucksTab />;
-      case 'menu': return <MenuTab />;
-      case 'orders': return <OrdersTab />;
-      case 'analytics': return <AnalyticsTab />;
-      case 'settings': return <SettingsTab />;
-      default: return <OverviewTab setActiveTab={setActiveTab} />;
+      case 'overview':
+        return (
+          <OverviewTab
+            setActiveTab={setActiveTab}
+            trucks={trucks}
+            orders={orders}
+            stats={calculateStats()}
+          />
+        );
+      case 'trucks':
+        return (
+          <TrucksTab
+            trucks={trucks}
+            onTruckCreate={handleTruckCreate}
+            onTruckUpdate={handleTruckUpdate}
+            onTruckDelete={handleTruckDelete}
+            loading={loadingTrucks}
+          />
+        );
+      case 'menu':
+        return (
+          <MenuTab
+            menuItems={menuItems}
+            trucks={trucks}
+            selectedTruckId={selectedTruckId}
+            onTruckSelect={setSelectedTruckId}
+            onMenuItemCreate={handleMenuItemCreate}
+            onMenuItemUpdate={handleMenuItemUpdate}
+            onMenuItemDelete={handleMenuItemDelete}
+            loading={loadingMenu}
+          />
+        );
+      case 'orders':
+        return (
+          <OrdersTab
+            orders={orders}
+            onOrderStatusUpdate={handleOrderStatusUpdate}
+            loading={loadingOrders}
+          />
+        );
+      case 'analytics':
+        return <AnalyticsTab trucks={trucks} orders={orders} />;
+      case 'settings':
+        return <SettingsTab />;
+      default:
+        return (
+          <OverviewTab
+            setActiveTab={setActiveTab}
+            trucks={trucks}
+            orders={orders}
+            stats={calculateStats()}
+          />
+        );
     }
   };
 
@@ -898,6 +1526,12 @@ const OwnerDashboard = ({ onBack }) => {
         onBack={onBack}
       />
       <main className="owner-main">
+        {error && (
+          <div className="error-banner">
+            {Icons.alertCircle} {error}
+            <button onClick={() => setError(null)}>{Icons.x}</button>
+          </div>
+        )}
         {renderTab()}
       </main>
     </div>
