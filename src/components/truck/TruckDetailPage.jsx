@@ -22,6 +22,9 @@ const Icons = {
   x: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
   truck: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
   tag: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+  home: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  orders: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+  user: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
 };
 
 // Default menu items for trucks without menu
@@ -85,7 +88,7 @@ const TruckDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { addItem, openCart, itemCount } = useCart();
 
   // Core state
@@ -341,50 +344,96 @@ const TruckDetailPage = () => {
   });
 
   return (
-    <div className="app-view truck-detail-view-img">
-      {/* Sticky Header */}
-      <div className="detail-header-img">
-        <button className="detail-back-btn" onClick={handleBack}>
-          {Icons.chevronLeft}
-        </button>
-        <div className="detail-header-title">
-          <span>{truck.name}</span>
+    <div className="truck-detail-page">
+      {/* Left Sidebar */}
+      <aside className="truck-detail-sidebar">
+        <div className="sidebar-logo" onClick={() => navigate('/')}>
+          <img src="/logo/cravvr-logo.png" alt="Cravrr" />
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            className={`detail-fav-btn ${isFavorite ? 'active' : ''}`}
-            onClick={toggleFavorite}
-          >
-            {isFavorite ? Icons.heartFilled : Icons.heart}
-          </button>
-          <button
-            className="detail-fav-btn"
-            onClick={openCart}
-            style={{ position: 'relative' }}
-          >
-            {Icons.shoppingBag}
-            {itemCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-4px',
-                right: '-4px',
-                width: '18px',
-                height: '18px',
-                background: '#e11d48',
-                color: 'white',
-                fontSize: '0.7rem',
-                fontWeight: '600',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>{itemCount}</span>
-            )}
-          </button>
-        </div>
-      </div>
 
-      {/* Hero Image Section with Logo Overlay */}
+        <nav className="sidebar-nav">
+          <button className="nav-item" onClick={() => navigate('/')}>
+            {Icons.home}
+            <span>Home</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/favorites')}>
+            {Icons.heart}
+            <span>Favorites</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/orders')}>
+            {Icons.orders}
+            <span>Orders</span>
+          </button>
+        </nav>
+
+        <div className="sidebar-divider" />
+
+        <nav className="sidebar-nav">
+          {user ? (
+            <>
+              <button className="nav-item" onClick={() => navigate('/profile')}>
+                {Icons.user}
+                <span>Account</span>
+              </button>
+              <button className="nav-item signout" onClick={signOut}>
+                <span>Sign Out</span>
+              </button>
+            </>
+          ) : (
+            <button className="nav-item signin" onClick={() => navigate('/eat')}>
+              {Icons.user}
+              <span>Sign In</span>
+            </button>
+          )}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <div className="truck-detail-main">
+        <div className="app-view truck-detail-view-img">
+          {/* Sticky Header */}
+          <div className="detail-header-img">
+            <button className="detail-back-btn" onClick={handleBack}>
+              {Icons.chevronLeft}
+            </button>
+            <div className="detail-header-title">
+              <span>{truck.name}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className={`detail-fav-btn ${isFavorite ? 'active' : ''}`}
+                onClick={toggleFavorite}
+              >
+                {isFavorite ? Icons.heartFilled : Icons.heart}
+              </button>
+              <button
+                className="detail-fav-btn"
+                onClick={openCart}
+                style={{ position: 'relative' }}
+              >
+                {Icons.shoppingBag}
+                {itemCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    width: '18px',
+                    height: '18px',
+                    background: '#e11d48',
+                    color: 'white',
+                    fontSize: '0.7rem',
+                    fontWeight: '600',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>{itemCount}</span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Hero Image Section with Logo Overlay */}
       <div className="truck-detail-hero-img">
         <img src={truck.coverImage || truck.image} alt={truck.name} className="hero-cover-image" />
         <div className="hero-image-overlay"></div>
@@ -680,6 +729,8 @@ const TruckDetailPage = () => {
             {Icons.share}
             Share
           </button>
+        </div>
+      </div>
         </div>
       </div>
     </div>
