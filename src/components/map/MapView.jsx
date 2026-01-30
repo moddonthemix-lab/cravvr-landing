@@ -55,6 +55,16 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
   const [showList, setShowList] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState('prompt'); // 'prompt', 'loading', 'granted', 'denied'
+  const [isLargeDesktop, setIsLargeDesktop] = useState(window.innerWidth >= 1200);
+
+  // Listen for resize to toggle desktop mode
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLargeDesktop(window.innerWidth >= 1200);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Default to Portland
   const defaultCenter = [45.5152, -122.6784];
@@ -245,8 +255,8 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
         </div>
       </div>
 
-      {/* List Overlay */}
-      {showList && (
+      {/* List Overlay (mobile/tablet) */}
+      {showList && !isLargeDesktop && (
         <div className="map-list-overlay-leaflet">
           <div className="map-list-header">
             <h2>{trucks.length} Food Trucks</h2>
@@ -278,6 +288,42 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
                       {truck.isOpen ? 'Open' : 'Closed'}
                     </span>
                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sidebar List (always visible on large screens) */}
+      {isLargeDesktop && (
+        <div className="map-desktop-list">
+          <div className="desktop-list-header">
+            <h2>{trucks.length} Food Trucks Nearby</h2>
+            <p>Click a truck to view details</p>
+          </div>
+          <div className="desktop-list-content">
+            {trucks.map((truck) => (
+              <div
+                key={truck.id}
+                className="desktop-list-card"
+                onClick={() => onTruckClick(truck)}
+              >
+                <div className="desktop-card-image">
+                  <img src={truck.image} alt={truck.name} />
+                  {truck.featured && <span className="desktop-featured-badge">{Icons.star} Featured</span>}
+                  <span className={`desktop-status-badge ${truck.isOpen ? 'open' : 'closed'}`}>
+                    {truck.isOpen ? 'Open' : 'Closed'}
+                  </span>
+                </div>
+                <div className="desktop-card-info">
+                  <h3>{truck.name}</h3>
+                  <p className="desktop-cuisine">{truck.cuisine} • {truck.priceRange}</p>
+                  <div className="desktop-meta">
+                    <span className="desktop-rating">{Icons.star} {truck.rating}</span>
+                    <span className="desktop-distance">{truck.distance}</span>
+                  </div>
+                  <p className="desktop-delivery">{truck.deliveryTime} • ${truck.deliveryFee} delivery</p>
                 </div>
               </div>
             ))}
