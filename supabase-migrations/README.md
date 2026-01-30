@@ -16,6 +16,7 @@ This folder contains SQL migration scripts for the Cravvr database.
 |------|-------------|--------|
 | `001_add_orders.sql` | Adds orders and order_items tables with RLS | Pending |
 | `002_auto_profile_trigger.sql` | Auto-creates profile on user signup | Pending |
+| `003_add_admin_role.sql` | Adds admin role support to profiles | Pending |
 
 ## Initial Setup
 

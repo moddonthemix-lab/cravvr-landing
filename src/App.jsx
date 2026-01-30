@@ -4,6 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import AdminDashboard from './admin/AdminDashboard';
 import Header from './components/landing/Header';
+import OwnerDashboard from './components/owner/OwnerDashboard';
+import CustomerProfile from './components/customer/CustomerProfile';
 
 // SVG Icons
 const Icons = {
@@ -2571,6 +2573,18 @@ const App = () => {
 
   if (currentView === 'app') {
     return <AppDemo onBack={() => setCurrentView('landing')} />;
+  }
+
+  if (currentView === 'owner-dashboard') {
+    return <OwnerDashboard onBack={() => setCurrentView('landing')} />;
+  }
+
+  if (currentView === 'profile') {
+    return <CustomerProfile onBack={() => setCurrentView('landing')} />;
+  }
+
+  if (currentView === 'settings') {
+    return <CustomerProfile onBack={() => setCurrentView('landing')} />;
   }
 
   return <LandingPage setCurrentView={setCurrentView} />;

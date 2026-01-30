@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
         .select(`
           *,
           customers (phone, points, avatar_url),
-          owners (subscription_type)
+          owners (subscription_type),
+          admins (permissions, last_login)
         `)
         .eq('id', userId)
         .single();
@@ -30,8 +31,9 @@ export const AuthProvider = ({ children }) => {
         ...data,
         phone: data.customers?.phone || '',
         points: data.customers?.points || 0,
-        avatar_url: data.customers?.avatar_url || '',
+        avatar_url: data.customers?.avatar_url || data.avatar_url || '',
         subscription_type: data.owners?.subscription_type || '',
+        permissions: data.admins?.permissions || null,
       };
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -193,6 +195,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     isOwner: profile?.role === 'owner',
     isCustomer: profile?.role === 'customer',
+    isAdmin: profile?.role === 'admin',
   };
 
   return (
