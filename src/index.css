@@ -8945,3 +8945,8 @@ button {
   width: 12px;
   height: 12px;
 }
+
+.add-to-cart-btn.added {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}

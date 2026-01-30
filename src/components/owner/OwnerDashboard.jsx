@@ -1336,6 +1336,72 @@ const OwnerDashboard = ({ onBack }) => {
     fetchMenuItems();
   }, [selectedTruckId, fetchMenuItems]);
 
+  // Real-time subscription for orders
+  useEffect(() => {
+    if (trucks.length === 0) return;
+
+    const truckIds = trucks.map(t => t.id);
+
+    // Subscribe to orders changes for this owner's trucks
+    const subscription = supabase
+      .channel('owner-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+          filter: `truck_id=in.(${truckIds.join(',')})`,
+        },
+        async (payload) => {
+          // Fetch the complete order with customer info
+          const { data: newOrder, error } = await supabase
+            .from('orders')
+            .select(`
+              *,
+              order_items(count),
+              profiles:customer_id(name)
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (!error && newOrder) {
+            const formattedOrder = {
+              ...newOrder,
+              customer_name: newOrder.profiles?.name || 'Customer',
+              item_count: newOrder.order_items?.[0]?.count || 0,
+            };
+            setOrders(prev => [formattedOrder, ...prev]);
+            // Optionally show a notification
+            console.log('New order received:', formattedOrder.order_number);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `truck_id=in.(${truckIds.join(',')})`,
+        },
+        (payload) => {
+          setOrders(prev =>
+            prev.map(order =>
+              order.id === payload.new.id
+                ? { ...order, ...payload.new }
+                : order
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [trucks]);
+
   // CRUD operations for trucks
   const handleTruckCreate = async (truckData) => {
     const slug = truckData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');

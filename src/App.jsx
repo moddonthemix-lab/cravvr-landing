@@ -6,6 +6,9 @@ import AdminDashboard from './admin/AdminDashboard';
 import Header from './components/landing/Header';
 import OwnerDashboard from './components/owner/OwnerDashboard';
 import CustomerProfile from './components/customer/CustomerProfile';
+import CartDrawer, { CartButton } from './components/cart/Cart';
+import Checkout from './components/cart/Checkout';
+import { useCart } from './contexts/CartContext';
 import { supabase } from './lib/supabase';
 
 // SVG Icons
@@ -1598,6 +1601,31 @@ const EventsView = ({ events, trucks, onEventClick }) => {
 };
 
 const TruckDetailView = ({ truck, onBack, isFavorite, toggleFavorite }) => {
+  const { addItem, openCart, itemCount } = useCart();
+  const [addedItem, setAddedItem] = useState(null);
+
+  const handleAddToCart = (item) => {
+    // Convert mock item to cart-compatible format
+    const cartItem = {
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: parseFloat(item.price.replace('$', '')),
+      emoji: item.emoji || '🍽️',
+    };
+
+    const truckData = {
+      id: truck.id,
+      name: truck.name,
+    };
+
+    const success = addItem(cartItem, truckData);
+    if (success) {
+      setAddedItem(item.id);
+      setTimeout(() => setAddedItem(null), 1500);
+    }
+  };
+
   if (!truck) return null;
 
   return (
@@ -1715,12 +1743,26 @@ const TruckDetailView = ({ truck, onBack, isFavorite, toggleFavorite }) => {
                     <span className="menu-item-price">{item.price}</span>
                   </div>
                   <p className="menu-item-desc">{item.description}</p>
-                  <button className="add-to-cart-btn">
-                    Add to Order
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
+                  <button
+                    className={`add-to-cart-btn ${addedItem === item.id ? 'added' : ''}`}
+                    onClick={() => handleAddToCart(item)}
+                  >
+                    {addedItem === item.id ? (
+                      <>
+                        Added!
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </>
+                    ) : (
+                      <>
+                        Add to Order
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1897,6 +1939,8 @@ const AppDemo = ({ onBack }) => {
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [favorites, setFavorites] = useState([1, 3]); // Pre-selected favorites
+  const [showCheckout, setShowCheckout] = useState(false);
+  const { openCart, closeCart, itemCount } = useCart();
 
   const toggleFavorite = (id) => {
     setFavorites(prev =>
@@ -1919,6 +1963,31 @@ const AppDemo = ({ onBack }) => {
   const handleBackFromEvent = () => {
     setSelectedEvent(null);
   };
+
+  const handleCheckout = () => {
+    closeCart();
+    setShowCheckout(true);
+  };
+
+  const handleCheckoutBack = () => {
+    setShowCheckout(false);
+  };
+
+  const handleOrderComplete = () => {
+    setShowCheckout(false);
+  };
+
+  // Render checkout if active
+  if (showCheckout) {
+    return (
+      <div className="app-demo">
+        <Checkout
+          onBack={handleCheckoutBack}
+          onOrderComplete={handleOrderComplete}
+        />
+      </div>
+    );
+  }
 
   // Render truck detail if selected
   if (selectedTruck) {
@@ -2004,6 +2073,10 @@ const AppDemo = ({ onBack }) => {
       </div>
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Cart Components */}
+      <CartButton onClick={openCart} />
+      <CartDrawer onCheckout={handleCheckout} />
     </div>
   );
 };

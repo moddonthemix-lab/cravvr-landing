@@ -837,6 +837,37 @@ const CustomerProfile = ({ onBack }) => {
     }
   }, [user?.id, fetchOrders, fetchFavorites, fetchCheckIns]);
 
+  // Real-time subscription for order status updates
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const subscription = supabase
+      .channel('customer-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `customer_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setOrders(prev =>
+            prev.map(order =>
+              order.id === payload.new.id
+                ? { ...order, ...payload.new }
+                : order
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user?.id]);
+
   if (authLoading) {
     return (
       <div className="profile-loading">
