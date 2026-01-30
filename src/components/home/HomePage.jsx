@@ -242,8 +242,7 @@ const HomePage = () => {
       <header className="home-header">
         <div className="header-left">
           <div className="logo" onClick={() => navigate('/')}>
-            {Icons.logo}
-            <span className="logo-text">Cravvr</span>
+            <img src="/logo/cravvr-logo.png" alt="Cravrr" className="logo-image" />
           </div>
         </div>
 
@@ -479,8 +478,7 @@ const HomePage = () => {
       <footer className="home-footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <span className="footer-logo">{Icons.logo}</span>
-            <span className="footer-name">Cravvr</span>
+            <img src="/logo/cravvr-logo.png" alt="Cravrr" className="footer-logo-image" />
           </div>
           <div className="footer-links">
             <a href="/eat">About</a>

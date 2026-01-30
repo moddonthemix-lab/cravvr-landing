@@ -46,6 +46,11 @@
   background-clip: text;
 }
 
+.logo-image {
+  height: 36px;
+  width: auto;
+}
+
 .header-center {
   flex: 1;
   max-width: 600px;
@@ -886,6 +891,11 @@
   width: 24px;
   height: 24px;
   color: #e11d48;
+}
+
+.footer-logo-image {
+  height: 28px;
+  width: auto;
 }
 
 .footer-name {

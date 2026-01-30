@@ -40,8 +40,7 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
         <a href="#main" className="skip-link">Skip to main content</a>
         <div className="header-container">
           <a href="/" className="logo" onClick={(e) => { e.preventDefault(); setCurrentView('landing'); }}>
-            <span className="logo-icon">{Icons.truck}</span>
-            <span className="logo-text">Cravrr</span>
+            <img src="/logo/cravvr-logo.png" alt="Cravrr" className="logo-image" />
           </a>
 
           <nav className="desktop-nav">
