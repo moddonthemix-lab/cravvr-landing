@@ -10,6 +10,7 @@ import CustomerProfile from './components/customer/CustomerProfile';
 import CartDrawer, { CartButton } from './components/cart/Cart';
 import Checkout from './components/cart/Checkout';
 import HomePage from './components/home/HomePage';
+import TruckDetailPage from './components/truck/TruckDetailPage';
 import SocialPage from './pages/SocialPage';
 import { useCart } from './contexts/CartContext';
 import { supabase } from './lib/supabase';
@@ -2806,11 +2807,11 @@ const App = () => {
         {/* Landing/Marketing page at /eat */}
         <Route path="/eat" element={<LandingPageWrapper />} />
 
-        {/* Browse trucks (app demo) */}
-        <Route path="/browse" element={<AppDemoWrapper />} />
+        {/* Browse trucks - redirects to home since all trucks are shown there */}
+        <Route path="/browse" element={<HomePage />} />
 
-        {/* Truck detail page */}
-        <Route path="/truck/:id" element={<AppDemoWrapper />} />
+        {/* Truck detail page - production version */}
+        <Route path="/truck/:id" element={<TruckDetailPage />} />
 
         {/* User profile */}
         <Route path="/profile" element={<CustomerProfileWrapper />} />

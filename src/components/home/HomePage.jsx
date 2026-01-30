@@ -137,6 +137,11 @@ const HomePage = () => {
 
   const popularScrollRef = useRef(null);
   const nearbyScrollRef = useRef(null);
+  const allTrucksRef = useRef(null);
+
+  const scrollToAllTrucks = () => {
+    allTrucksRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   // Fetch real food trucks from Supabase
   useEffect(() => {
@@ -376,7 +381,7 @@ const HomePage = () => {
             <div className="section-header">
               <h2>Most Popular Food Trucks</h2>
               <div className="section-controls">
-                <button className="see-all" onClick={() => navigate('/browse')}>See All</button>
+                <button className="see-all" onClick={scrollToAllTrucks}>See All</button>
                 <div className="scroll-btns">
                   <button onClick={() => scrollSection(popularScrollRef, 'left')}>{Icons.chevronLeft}</button>
                   <button onClick={() => scrollSection(popularScrollRef, 'right')}>{Icons.chevronRight}</button>
@@ -410,7 +415,7 @@ const HomePage = () => {
             <div className="section-header">
               <h2>Open Now Near You</h2>
               <div className="section-controls">
-                <button className="see-all" onClick={() => navigate('/browse')}>See All</button>
+                <button className="see-all" onClick={scrollToAllTrucks}>See All</button>
                 <div className="scroll-btns">
                   <button onClick={() => scrollSection(nearbyScrollRef, 'left')}>{Icons.chevronLeft}</button>
                   <button onClick={() => scrollSection(nearbyScrollRef, 'right')}>{Icons.chevronRight}</button>
@@ -441,7 +446,7 @@ const HomePage = () => {
 
           {/* All Trucks Grid */}
           {filteredTrucks.length > 0 && (
-            <section className="trucks-grid-section">
+            <section className="trucks-grid-section" ref={allTrucksRef}>
               <div className="section-header">
                 <h2>All Food Trucks</h2>
                 <span className="truck-count">{filteredTrucks.length} trucks</span>
