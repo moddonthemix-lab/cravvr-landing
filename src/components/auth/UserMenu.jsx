@@ -42,7 +42,13 @@ const UserMenu = ({ onNavigate }) => {
         className="user-menu-trigger"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="user-avatar">{getInitials()}</div>
+        <div className="user-avatar">
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt={profile?.name || 'User'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+          ) : (
+            getInitials()
+          )}
+        </div>
         {Icons.chevronDown}
       </button>
 
