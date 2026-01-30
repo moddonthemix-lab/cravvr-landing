@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
@@ -7,16 +7,21 @@ import { supabase } from '../../lib/supabase';
 // Icons (matching the existing app icons)
 const Icons = {
   chevronLeft: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>,
+  chevronRight: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>,
   heart: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
   heartFilled: <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
   star: <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  starOutline: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   mapPin: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
   clock: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   target: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
   check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
-  megaphone: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 11l18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>,
   share: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
   shoppingBag: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
+  search: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  x: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  truck: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
+  tag: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
 };
 
 // Default menu items for trucks without menu
@@ -29,6 +34,7 @@ const defaultMenuItems = [
     image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80',
     popular: true,
     emoji: '🌟',
+    category: 'Mains',
   },
   {
     id: 'default-2',
@@ -38,6 +44,7 @@ const defaultMenuItems = [
     image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80',
     popular: false,
     emoji: '🍽️',
+    category: 'Mains',
   },
   {
     id: 'default-3',
@@ -45,13 +52,34 @@ const defaultMenuItems = [
     description: 'Today\'s special selection prepared by our chef.',
     price: '$14.99',
     image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
-    popular: false,
+    popular: true,
     emoji: '👨‍🍳',
+    category: 'Specials',
   },
 ];
 
 // Default features
 const defaultFeatures = ['Cash Accepted', 'Card Accepted', 'Mobile Pay', 'Outdoor Seating'];
+
+// Default deals/promotions
+const defaultDeals = [
+  { id: 1, title: 'First Order', description: 'Get $5 off orders $15+', code: 'FIRST5', emoji: '🎉' },
+  { id: 2, title: 'Free Pickup', description: '0% fees on all pickup orders', code: null, emoji: '🚶' },
+];
+
+// Helper function for relative time
+const formatRelativeTime = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffDays < 1) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return `${Math.floor(diffDays / 30)} months ago`;
+};
 
 const TruckDetailPage = () => {
   const { id } = useParams();
@@ -60,11 +88,21 @@ const TruckDetailPage = () => {
   const { user } = useAuth();
   const { addItem, openCart, itemCount } = useCart();
 
+  // Core state
   const [truck, setTruck] = useState(location.state?.truck || null);
   const [menuItems, setMenuItems] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(!location.state?.truck);
   const [isFavorite, setIsFavorite] = useState(false);
   const [addedItem, setAddedItem] = useState(null);
+
+  // New feature state
+  const [orderType, setOrderType] = useState('pickup');
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [menuSearchQuery, setMenuSearchQuery] = useState('');
+
+  // Refs for scrolling
+  const featuredScrollRef = useRef(null);
 
   // Fetch truck data if not passed via state
   useEffect(() => {
@@ -89,6 +127,7 @@ const TruckDetailPage = () => {
             name: data.name || 'Food Truck',
             image: data.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',
             coverImage: data.cover_image_url || data.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=1200&q=80',
+            logoUrl: data.logo_url || null,
             cuisine: data.cuisine_type || 'Food Truck',
             priceRange: data.price_range || '$$',
             description: data.description || 'Delicious food made fresh daily. Visit us to discover our amazing menu!',
@@ -99,8 +138,10 @@ const TruckDetailPage = () => {
             reviewCount: data.review_count || 0,
             isOpen: data.is_open !== false,
             deliveryTime: data.delivery_time || '15-30 min',
+            deliveryFee: data.delivery_fee || null,
             featured: data.featured || false,
             features: data.features || defaultFeatures,
+            promotions: data.promotions || null,
           });
         }
       } catch (err) {
@@ -133,10 +174,11 @@ const TruckDetailPage = () => {
             price: `$${item.price?.toFixed(2) || '0.00'}`,
             image: item.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80',
             popular: item.popular || false,
+            featured: item.featured || false,
             emoji: item.emoji || '🍽️',
+            category: item.category || 'Other',
           })));
         } else {
-          // Use default menu items if none exist
           setMenuItems(defaultMenuItems);
         }
       } catch (err) {
@@ -147,6 +189,30 @@ const TruckDetailPage = () => {
 
     if (id) {
       fetchMenuItems();
+    }
+  }, [id]);
+
+  // Fetch reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('truck_id', id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (!error && data) {
+          setReviews(data);
+        }
+      } catch (err) {
+        console.error('Error fetching reviews:', err);
+      }
+    };
+
+    if (id) {
+      fetchReviews();
     }
   }, [id]);
 
@@ -169,10 +235,7 @@ const TruckDetailPage = () => {
   }, [user, id]);
 
   const toggleFavorite = async () => {
-    if (!user) {
-      // Could show a login prompt here
-      return;
-    }
+    if (!user) return;
 
     if (isFavorite) {
       setIsFavorite(false);
@@ -227,9 +290,15 @@ const TruckDetailPage = () => {
         console.log('Share cancelled or failed');
       }
     } else {
-      // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
+    }
+  };
+
+  const scrollFeatured = (direction) => {
+    if (featuredScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -200 : 200;
+      featuredScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
@@ -257,8 +326,19 @@ const TruckDetailPage = () => {
     );
   }
 
-  // Ensure features is an array
+  // Derived data
   const features = Array.isArray(truck.features) ? truck.features : defaultFeatures;
+  const deals = truck.promotions || defaultDeals;
+  const featuredItems = menuItems.filter(item => item.popular || item.featured);
+  const categories = ['all', ...new Set(menuItems.filter(item => item.category).map(item => item.category))];
+
+  const filteredMenuItems = menuItems.filter(item => {
+    const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+    const matchesSearch = !menuSearchQuery ||
+      item.name.toLowerCase().includes(menuSearchQuery.toLowerCase()) ||
+      item.description?.toLowerCase().includes(menuSearchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="app-view truck-detail-view-img">
@@ -304,7 +384,7 @@ const TruckDetailPage = () => {
         </div>
       </div>
 
-      {/* Hero Image Section */}
+      {/* Hero Image Section with Logo Overlay */}
       <div className="truck-detail-hero-img">
         <img src={truck.coverImage || truck.image} alt={truck.name} className="hero-cover-image" />
         <div className="hero-image-overlay"></div>
@@ -316,6 +396,14 @@ const TruckDetailPage = () => {
         )}
         <div className="hero-delivery-badge">
           <span>{truck.deliveryTime || '15-25 min'}</span>
+        </div>
+        {/* Logo Overlay */}
+        <div className="store-logo-overlay">
+          <img
+            src={truck.logoUrl || truck.image}
+            alt={`${truck.name} logo`}
+            onError={(e) => { e.target.src = truck.image; }}
+          />
         </div>
       </div>
 
@@ -333,6 +421,33 @@ const TruckDetailPage = () => {
           </div>
           <p className="detail-cuisine">{truck.cuisine || 'Food Truck'} • {truck.priceRange || '$$'}</p>
           <p className="detail-description">{truck.description || 'Delicious food made fresh daily. Visit us to discover our amazing menu!'}</p>
+        </div>
+
+        {/* Order Type Toggle */}
+        <div className="order-type-section">
+          <div className="order-type-toggle-detail">
+            <button
+              className={`order-type-btn ${orderType === 'delivery' ? 'active' : ''}`}
+              onClick={() => setOrderType('delivery')}
+              disabled
+            >
+              <span className="order-type-icon">{Icons.truck}</span>
+              <div className="order-type-info">
+                <span className="order-type-label">Delivery</span>
+                <span className="order-type-detail">{truck.deliveryFee ? `$${truck.deliveryFee} fee` : 'Coming soon'}</span>
+              </div>
+            </button>
+            <button
+              className={`order-type-btn ${orderType === 'pickup' ? 'active' : ''}`}
+              onClick={() => setOrderType('pickup')}
+            >
+              <span className="order-type-icon">{Icons.mapPin}</span>
+              <div className="order-type-info">
+                <span className="order-type-label">Pickup</span>
+                <span className="order-type-detail">{truck.deliveryTime || '15-25 min'} • Free</span>
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Quick Info Cards */}
@@ -369,6 +484,52 @@ const TruckDetailPage = () => {
           </div>
         </div>
 
+        {/* Deals & Benefits Section */}
+        {deals.length > 0 && (
+          <div className="detail-section deals-section">
+            <h3>Deals & Benefits</h3>
+            <div className="deals-scroll">
+              {deals.map(deal => (
+                <div key={deal.id} className="deal-card">
+                  <span className="deal-emoji">{deal.emoji}</span>
+                  <div className="deal-content">
+                    <h4>{deal.title}</h4>
+                    <p>{deal.description}</p>
+                    {deal.code && <span className="deal-code">{deal.code}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Featured Items Carousel */}
+        {featuredItems.length > 0 && (
+          <div className="detail-section featured-items-section">
+            <div className="section-header-detail">
+              <h3>Featured Items</h3>
+              <div className="scroll-btns-detail">
+                <button onClick={() => scrollFeatured('left')}>{Icons.chevronLeft}</button>
+                <button onClick={() => scrollFeatured('right')}>{Icons.chevronRight}</button>
+              </div>
+            </div>
+            <div className="featured-items-scroll" ref={featuredScrollRef}>
+              {featuredItems.map(item => (
+                <div key={item.id} className="featured-item-card" onClick={() => handleAddToCart(item)}>
+                  <div className="featured-item-image">
+                    <img src={item.image} alt={item.name} />
+                    <span className="featured-add-btn">+</span>
+                  </div>
+                  <div className="featured-item-info">
+                    <h4>{item.name}</h4>
+                    <span className="featured-item-price">{item.price}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Features */}
         <div className="detail-section">
           <h3>Features & Dietary</h3>
@@ -385,47 +546,128 @@ const TruckDetailPage = () => {
         {/* Menu Section */}
         <div className="detail-section menu-section-img">
           <div className="section-header">
-            <h3>Menu {menuItems === defaultMenuItems ? '(Sample)' : 'Highlights'}</h3>
-            <span className="menu-count">{menuItems.length} items</span>
+            <h3>Menu {menuItems === defaultMenuItems ? '(Sample)' : ''}</h3>
+            <span className="menu-count">{filteredMenuItems.length} items</span>
           </div>
+
+          {/* Menu Search */}
+          <div className="menu-search">
+            <span className="search-icon">{Icons.search}</span>
+            <input
+              type="text"
+              placeholder={`Search ${truck.name}'s menu...`}
+              value={menuSearchQuery}
+              onChange={(e) => setMenuSearchQuery(e.target.value)}
+            />
+            {menuSearchQuery && (
+              <button className="search-clear" onClick={() => setMenuSearchQuery('')}>
+                {Icons.x}
+              </button>
+            )}
+          </div>
+
+          {/* Category Pills */}
+          {categories.length > 1 && (
+            <div className="menu-categories">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  className={`menu-category-pill ${activeCategory === cat ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(cat)}
+                >
+                  {cat === 'all' ? 'All' : cat}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Menu Items Grid */}
           <div className="menu-grid-img">
-            {menuItems.map(item => (
-              <div key={item.id} className="menu-item-card-img">
-                <div className="menu-item-image">
-                  <img src={item.image} alt={item.name} />
-                  {item.popular && <span className="popular-badge">Popular</span>}
-                </div>
-                <div className="menu-item-details">
-                  <div className="menu-item-header">
-                    <h4>{item.name}</h4>
-                    <span className="menu-item-price">{item.price}</span>
-                  </div>
-                  <p className="menu-item-desc">{item.description}</p>
-                  <button
-                    className={`add-to-cart-btn ${addedItem === item.id ? 'added' : ''}`}
-                    onClick={() => handleAddToCart(item)}
-                  >
-                    {addedItem === item.id ? (
-                      <>
-                        Added!
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </>
-                    ) : (
-                      <>
-                        Add to Order
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="12" y1="5" x2="12" y2="19"></line>
-                          <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                </div>
+            {filteredMenuItems.length === 0 ? (
+              <div className="no-menu-results">
+                <span>🔍</span>
+                <p>No items match your search</p>
+                <button onClick={() => { setMenuSearchQuery(''); setActiveCategory('all'); }}>Clear filters</button>
               </div>
-            ))}
+            ) : (
+              filteredMenuItems.map(item => (
+                <div key={item.id} className="menu-item-card-img">
+                  <div className="menu-item-image">
+                    <img src={item.image} alt={item.name} />
+                    {item.popular && <span className="popular-badge">Popular</span>}
+                  </div>
+                  <div className="menu-item-details">
+                    <div className="menu-item-header">
+                      <h4>{item.name}</h4>
+                      <span className="menu-item-price">{item.price}</span>
+                    </div>
+                    <p className="menu-item-desc">{item.description}</p>
+                    <button
+                      className={`add-to-cart-btn ${addedItem === item.id ? 'added' : ''}`}
+                      onClick={() => handleAddToCart(item)}
+                    >
+                      {addedItem === item.id ? (
+                        <>
+                          Added!
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </>
+                      ) : (
+                        <>
+                          Add to Order
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="detail-section reviews-section">
+          <div className="section-header-detail">
+            <h3>Reviews ({truck.reviewCount || reviews.length})</h3>
+          </div>
+
+          {reviews.length === 0 ? (
+            <div className="no-reviews">
+              <span className="no-reviews-emoji">📝</span>
+              <p>No reviews yet. Be the first to review!</p>
+            </div>
+          ) : (
+            <div className="reviews-list">
+              {reviews.map(review => (
+                <div key={review.id} className="review-card">
+                  <div className="review-header">
+                    <div className="reviewer-info">
+                      <div className="reviewer-avatar">
+                        {review.customer_name?.charAt(0) || 'C'}
+                      </div>
+                      <div>
+                        <span className="reviewer-name">{review.customer_name || 'Customer'}</span>
+                        <div className="review-rating">
+                          {[...Array(5)].map((_, i) => (
+                            <span key={i} className={`star-icon ${i < review.rating ? 'filled' : ''}`}>
+                              {i < review.rating ? Icons.star : Icons.starOutline}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="review-date">{formatRelativeTime(review.created_at)}</span>
+                  </div>
+                  {review.comment && <p className="review-comment">{review.comment}</p>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* CTA Buttons */}
