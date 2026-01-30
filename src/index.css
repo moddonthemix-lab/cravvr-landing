@@ -246,7 +246,9 @@ button {
 }
 
 .header-actions {
-  display: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .mobile-menu-btn {
