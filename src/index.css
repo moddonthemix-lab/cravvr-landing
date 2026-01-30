@@ -32,6 +32,16 @@
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
+/* Animation utilities */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
