@@ -32,8 +32,13 @@ const UserMenu = ({ onNavigate }) => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    setIsOpen(false);
+    try {
+      await signOut();
+      setIsOpen(false);
+    } catch (err) {
+      console.error('Logout failed:', err);
+      // Keep menu open on error so user can see something went wrong
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 
 // Create Auth Context
@@ -11,10 +11,13 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Ref to prevent double profile fetch on page refresh
+  const initialLoadComplete = useRef(false);
+
   // Fetch user profile from database
   const fetchProfile = async (userId) => {
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select(`
           *,
@@ -25,7 +28,15 @@ export const AuthProvider = ({ children }) => {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (fetchError) {
+        // Surface error to context instead of silent failure
+        setError(`Profile load failed: ${fetchError.message}`);
+        console.error('Error fetching profile:', fetchError);
+        return null;
+      }
+
+      // Clear any previous errors
+      setError(null);
 
       return {
         ...data,
@@ -36,6 +47,7 @@ export const AuthProvider = ({ children }) => {
         permissions: data.admins?.permissions || null,
       };
     } catch (err) {
+      setError(`Profile load failed: ${err.message}`);
       console.error('Error fetching profile:', err);
       return null;
     }
@@ -49,34 +61,43 @@ export const AuthProvider = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUser(session.user);
-          const profile = await fetchProfile(session.user.id);
-          setProfile(profile);
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
         }
+        // Mark initial load as complete AFTER profile fetch
+        initialLoadComplete.current = true;
+        setLoading(false);
       } catch (err) {
         console.error('Auth init error:', err);
-      } finally {
+        initialLoadComplete.current = true;
         setLoading(false);
       }
     };
 
     initAuth();
 
-    // Listen for auth changes
+    // Listen for auth changes (but skip initial session event to avoid double fetch)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Skip SIGNED_IN during initial load - initAuth handles it
       if (event === 'SIGNED_IN' && session?.user) {
-        setLoading(true); // Set loading while fetching profile
+        if (!initialLoadComplete.current) {
+          // Initial load in progress, skip to avoid double fetch
+          return;
+        }
+        setLoading(true);
         setUser(session.user);
-        const profile = await fetchProfile(session.user.id);
-        setProfile(profile);
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
         setLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
+        setError(null);
       } else if (event === 'USER_UPDATED' && session?.user) {
         setLoading(true);
         setUser(session.user);
-        const profile = await fetchProfile(session.user.id);
-        setProfile(profile);
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
         setLoading(false);
       }
     });

@@ -1240,14 +1240,11 @@ const SettingsPage = ({ adminEmail }) => {
             <input type="text" value={adminEmail} disabled className="disabled" />
           </div>
           <div className="form-group">
-            <label>Admin Emails</label>
-            <textarea
-              value={ADMIN_EMAILS.join('\n')}
-              disabled
-              className="disabled"
-              rows={3}
-            />
-            <span className="form-hint">Edit ADMIN_EMAILS in AdminDashboard.jsx to add admins</span>
+            <label>Admin Access</label>
+            <p className="form-info">
+              Admin access is managed via the database. Set <code>role = 'admin'</code> in the <code>profiles</code> table to grant admin access.
+            </p>
+            <span className="form-hint">Contact your database administrator to add or remove admins</span>
           </div>
         </div>
 
