@@ -1781,6 +1781,15 @@ const AdminDashboard = () => {
     userTypes: [],
   });
   const [loading, setLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
+  const [initialAuthDone, setInitialAuthDone] = useState(false);
+
+  // Track when initial auth check completes
+  useEffect(() => {
+    if (!authLoading && !initialAuthDone) {
+      setInitialAuthDone(true);
+    }
+  }, [authLoading, initialAuthDone]);
 
   // Fetch all dashboard data from real tables
   const fetchDashboardData = async () => {
@@ -1950,17 +1959,19 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (user && isAdmin) {
+    // Only fetch once when user becomes admin and we haven't fetched yet
+    if (user && isAdmin && !hasFetched) {
+      setHasFetched(true);
       fetchDashboardData();
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, hasFetched]);
 
   const handleLogout = async () => {
     await signOut();
   };
 
-  // Show loading while auth is initializing
-  if (authLoading) {
+  // Show loading only during INITIAL auth check (not on tab return)
+  if (authLoading && !initialAuthDone) {
     return (
       <div className="admin-login">
         <div className="login-card">
