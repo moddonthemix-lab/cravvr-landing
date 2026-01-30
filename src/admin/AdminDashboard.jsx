@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../components/auth/AuthContext';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import './AdminDashboard.css';
-
-// Hardcoded admin emails for production (add your admin emails here)
-const ADMIN_EMAILS = [
-  'admin@cravvr.com',
-  'nolan@cravvr.com',
-  // Add more admin emails as needed
-];
 
 // Icons
 const Icons = {
@@ -44,8 +38,9 @@ const Icons = {
 // Chart colors
 const CHART_COLORS = ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#fecdd3'];
 
-// Login Component with real Supabase auth
-const AdminLogin = ({ onLogin, onError }) => {
+// Login Component using AuthContext
+const AdminLogin = ({ onLoginSuccess }) => {
+  const { signIn, isAdmin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -57,26 +52,17 @@ const AdminLogin = ({ onLogin, onError }) => {
     setLoading(true);
 
     try {
-      // Sign in with Supabase
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Sign in using AuthContext
+      const { data, error: authError } = await signIn({ email, password });
 
       if (authError) throw authError;
 
-      // Check if user is an admin
-      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+      // The signIn will update context, and isAdmin will be determined by profile.role
+      // We need to wait a moment for the profile to load, then check admin status
+      // onLoginSuccess will be called if user is admin (checked in parent component)
 
-      if (!isAdmin) {
-        // Sign out non-admin users
-        await supabase.auth.signOut();
-        throw new Error('Access denied. You do not have admin privileges.');
-      }
-
-      onLogin({ ...data.user, isAdmin: true });
     } catch (err) {
-      setError(err.message || 'Invalid credentials');
+      setError(err?.message || err || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -1346,7 +1332,7 @@ const SettingsPage = ({ adminEmail }) => {
 
 // Main Admin Dashboard Component
 const AdminDashboard = () => {
-  const [user, setUser] = useState(null);
+  const { user, profile, isAdmin, loading: authLoading, signOut } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [stats, setStats] = useState({
@@ -1363,32 +1349,16 @@ const AdminDashboard = () => {
     userTypes: [],
   });
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
+  // Check if user is admin when profile loads
   useEffect(() => {
-    // Check for existing session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const isAdmin = ADMIN_EMAILS.includes(session.user.email?.toLowerCase());
-        if (isAdmin) {
-          setUser({ ...session.user, isAdmin: true });
-        } else {
-          // Sign out non-admin users
-          await supabase.auth.signOut();
-        }
+    if (!authLoading && user && profile) {
+      if (!isAdmin) {
+        setAccessDenied(true);
       }
-    };
-    checkSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    }
+  }, [authLoading, user, profile, isAdmin]);
 
   // Fetch all dashboard data from real tables
   const fetchDashboardData = async () => {
@@ -1558,18 +1528,58 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && isAdmin) {
       fetchDashboardData();
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    await signOut();
   };
 
+  // Show loading while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="admin-login">
+        <div className="login-card">
+          <div className="login-header">
+            <div className="login-logo">
+              <span className="logo-icon">C</span>
+              <span className="logo-text">Cravvr Admin</span>
+            </div>
+            <p>Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if user is logged in but not admin
+  if (accessDenied || (user && !isAdmin && profile)) {
+    return (
+      <div className="admin-login">
+        <div className="login-card">
+          <div className="login-header">
+            <div className="login-logo">
+              <span className="logo-icon">C</span>
+              <span className="logo-text">Cravvr Admin</span>
+            </div>
+            <p>Access Denied</p>
+          </div>
+          <div className="login-error">
+            You do not have admin privileges. Please contact support if you believe this is an error.
+          </div>
+          <button className="login-btn" onClick={handleLogout}>
+            Sign Out & Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login if not authenticated
   if (!user) {
-    return <AdminLogin onLogin={setUser} />;
+    return <AdminLogin onLoginSuccess={() => {}} />;
   }
 
   const navItems = [
@@ -1591,7 +1601,7 @@ const AdminDashboard = () => {
       case 'analytics':
         return <AnalyticsPage stats={stats} chartData={chartData} />;
       case 'settings':
-        return <SettingsPage adminEmail={user.email} />;
+        return <SettingsPage adminEmail={user?.email} />;
       default:
         return <DashboardOverview stats={stats} recentActivity={recentActivity} chartData={chartData} loading={loading} onRefresh={fetchDashboardData} />;
     }
@@ -1627,12 +1637,12 @@ const AdminDashboard = () => {
         <div className="sidebar-footer">
           <div className="user-info">
             <div className="user-avatar">
-              {user.email?.charAt(0).toUpperCase() || 'A'}
+              {profile?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'A'}
             </div>
             {!sidebarCollapsed && (
               <div className="user-details">
-                <span className="user-name">Admin</span>
-                <span className="user-email">{user.email}</span>
+                <span className="user-name">{profile?.name || 'Admin'}</span>
+                <span className="user-email">{user?.email}</span>
               </div>
             )}
           </div>

@@ -145,6 +145,22 @@
   height: 16px;
 }
 
+/* Profile Notice (for incomplete profiles) */
+.profile-notice {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 20px;
+  text-align: center;
+}
+
+.profile-notice p {
+  margin: 0;
+  color: #92400e;
+  font-size: 14px;
+}
+
 /* Points Banner */
 .points-banner {
   display: flex;

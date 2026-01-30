@@ -109,6 +109,17 @@ const ProfileHeader = ({ onBack, title }) => (
 // Account Overview Tab
 const AccountTab = ({ profile, setActiveTab }) => {
   const { signOut } = useAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await signOut();
+    } catch (err) {
+      console.error('Logout failed:', err);
+      setLoggingOut(false);
+    }
+  };
 
   const menuItems = [
     { icon: Icons.orders, label: 'Order History', tab: 'orders', badge: '3' },
@@ -166,9 +177,9 @@ const AccountTab = ({ profile, setActiveTab }) => {
         </div>
       </div>
 
-      <button className="logout-button" onClick={signOut}>
+      <button className="logout-button" onClick={handleLogout} disabled={loggingOut}>
         {Icons.logout}
-        <span>Log Out</span>
+        <span>{loggingOut ? 'Logging out...' : 'Log Out'}</span>
       </button>
 
       <p className="version-text">Cravrr v1.0.0</p>
@@ -660,7 +671,7 @@ const HelpTab = ({ onBack }) => (
 
 // Main Customer Profile Component
 const CustomerProfile = ({ onBack }) => {
-  const { profile, loading } = useAuth();
+  const { profile, loading, user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
 
   if (loading) {
@@ -668,6 +679,37 @@ const CustomerProfile = ({ onBack }) => {
       <div className="profile-loading">
         <div className="loading-spinner"></div>
         <p>Loading profile...</p>
+      </div>
+    );
+  }
+
+  // Handle case where profile doesn't exist (e.g., admin without profile record)
+  if (!profile && user) {
+    return (
+      <div className="customer-profile">
+        <header className="main-profile-header">
+          <button className="back-button" onClick={onBack}>
+            {Icons.chevronLeft}
+          </button>
+          <h1>Account</h1>
+          <div className="header-spacer"></div>
+        </header>
+        <div className="profile-content">
+          <div className="profile-hero">
+            <div className="profile-avatar-large">
+              {user.email?.charAt(0).toUpperCase() || '?'}
+            </div>
+            <h2 className="profile-name">{user.user_metadata?.name || 'User'}</h2>
+            <p className="profile-email">{user.email}</p>
+          </div>
+          <div className="profile-notice">
+            <p>Your profile is being set up. Some features may be limited.</p>
+          </div>
+          <button className="logout-button" onClick={signOut}>
+            {Icons.logout}
+            <span>Log Out</span>
+          </button>
+        </div>
       </div>
     );
   }
