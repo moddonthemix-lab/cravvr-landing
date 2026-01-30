@@ -33,6 +33,10 @@ const Icons = {
   refresh: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>,
   mail: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
   shield: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  waitlist: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="16" y2="18"/></svg>,
+  upload: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+  check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
+  loader: <svg className="animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>,
 };
 
 // Chart colors
@@ -310,6 +314,437 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
           </tbody>
         </table>
       </div>
+    </div>
+  );
+};
+
+// Waitlist Management Component
+const WaitlistManagement = () => {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedEntries, setSelectedEntries] = useState([]);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState(null);
+  const [stats, setStats] = useState({ total: 0, lovers: 0, trucks: 0, thisWeek: 0 });
+
+  // Fetch waitlist entries
+  const fetchWaitlist = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('waitlist')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setEntries(data || []);
+
+      // Calculate stats
+      const total = data?.length || 0;
+      const lovers = data?.filter(e => e.type === 'lover').length || 0;
+      const trucks = data?.filter(e => e.type === 'truck').length || 0;
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const thisWeek = data?.filter(e => new Date(e.created_at) > weekAgo).length || 0;
+      setStats({ total, lovers, trucks, thisWeek });
+    } catch (err) {
+      console.error('Error fetching waitlist:', err);
+      setEntries([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWaitlist();
+  }, []);
+
+  const filteredEntries = entries.filter(entry => {
+    const matchesSearch =
+      (entry.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (entry.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || entry.type === filterType;
+    const matchesStatus = filterStatus === 'all' || entry.status === filterStatus;
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const updates = { status: newStatus };
+      if (newStatus === 'invited') updates.invited_at = new Date().toISOString();
+      if (newStatus === 'converted') updates.converted_at = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('waitlist')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchWaitlist();
+    } catch (err) {
+      console.error('Error updating status:', err);
+      alert('Error updating status: ' + err.message);
+    }
+  };
+
+  const handleBulkStatusChange = async (newStatus) => {
+    if (selectedEntries.length === 0) return;
+
+    try {
+      const updates = { status: newStatus };
+      if (newStatus === 'invited') updates.invited_at = new Date().toISOString();
+      if (newStatus === 'converted') updates.converted_at = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('waitlist')
+        .update(updates)
+        .in('id', selectedEntries);
+
+      if (error) throw error;
+      setSelectedEntries([]);
+      fetchWaitlist();
+    } catch (err) {
+      console.error('Error bulk updating:', err);
+      alert('Error updating entries: ' + err.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this entry?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('waitlist')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchWaitlist();
+    } catch (err) {
+      console.error('Error deleting entry:', err);
+      alert('Error deleting entry: ' + err.message);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Name', 'Email', 'Type', 'Status', 'Signed Up', 'Invited At', 'Converted At'];
+    const rows = filteredEntries.map(e => [
+      e.name,
+      e.email,
+      e.type,
+      e.status,
+      new Date(e.created_at).toLocaleDateString(),
+      e.invited_at ? new Date(e.invited_at).toLocaleDateString() : '',
+      e.converted_at ? new Date(e.converted_at).toLocaleDateString() : ''
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${cell}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `waitlist-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCSV = async () => {
+    if (!importFile) return;
+
+    setImporting(true);
+    setImportResults(null);
+
+    try {
+      const text = await importFile.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+      const nameIdx = headers.findIndex(h => h === 'name' || h === 'full name');
+      const emailIdx = headers.findIndex(h => h === 'email' || h === 'email address');
+      const typeIdx = headers.findIndex(h => h === 'type' || h === 'user type');
+
+      if (emailIdx === -1) {
+        throw new Error('CSV must have an "email" column');
+      }
+
+      let imported = 0;
+      let skipped = 0;
+      let errors = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        const email = values[emailIdx];
+        const name = nameIdx >= 0 ? values[nameIdx] : email.split('@')[0];
+        let type = typeIdx >= 0 ? values[typeIdx]?.toLowerCase() : 'lover';
+
+        // Normalize type
+        if (type === 'food lover' || type === 'customer' || type === 'eater') type = 'lover';
+        if (type === 'truck owner' || type === 'owner' || type === 'truck') type = 'truck';
+        if (type !== 'lover' && type !== 'truck') type = 'lover';
+
+        if (!email || !email.includes('@')) {
+          skipped++;
+          continue;
+        }
+
+        try {
+          const { error } = await supabase
+            .from('waitlist')
+            .insert([{ name, email, type, status: 'pending' }]);
+
+          if (error) {
+            if (error.code === '23505') skipped++; // Duplicate
+            else errors++;
+          } else {
+            imported++;
+          }
+        } catch {
+          errors++;
+        }
+      }
+
+      setImportResults({ imported, skipped, errors });
+      fetchWaitlist();
+    } catch (err) {
+      console.error('Import error:', err);
+      alert('Error importing CSV: ' + err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedEntries.length === filteredEntries.length) {
+      setSelectedEntries([]);
+    } else {
+      setSelectedEntries(filteredEntries.map(e => e.id));
+    }
+  };
+
+  const toggleSelect = (id) => {
+    if (selectedEntries.includes(id)) {
+      setSelectedEntries(selectedEntries.filter(e => e !== id));
+    } else {
+      setSelectedEntries([...selectedEntries, id]);
+    }
+  };
+
+  return (
+    <div className="waitlist-management">
+      <div className="page-header">
+        <h1>Waitlist Management</h1>
+        <div className="header-actions">
+          <button className="btn-secondary" onClick={handleExportCSV}>
+            {Icons.download}
+            Export CSV
+          </button>
+          <button className="btn-primary" onClick={() => setShowImportModal(true)}>
+            {Icons.upload}
+            Import CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="stats-grid waitlist-stats">
+        <div className="stat-card">
+          <div className="stat-icon">{Icons.users}</div>
+          <div className="stat-content">
+            <span className="stat-value">{stats.total}</span>
+            <span className="stat-label">Total Signups</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ color: '#10b981' }}>{Icons.trendUp}</div>
+          <div className="stat-content">
+            <span className="stat-value">{stats.thisWeek}</span>
+            <span className="stat-label">This Week</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ color: '#f59e0b' }}>🍔</div>
+          <div className="stat-content">
+            <span className="stat-value">{stats.lovers}</span>
+            <span className="stat-label">Food Lovers</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ color: '#3b82f6' }}>🚚</div>
+          <div className="stat-content">
+            <span className="stat-value">{stats.trucks}</span>
+            <span className="stat-label">Truck Owners</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="filters-bar">
+        <div className="search-box">
+          {Icons.search}
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="filter-group">
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <option value="all">All Types</option>
+            <option value="lover">Food Lovers</option>
+            <option value="truck">Truck Owners</option>
+          </select>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="invited">Invited</option>
+            <option value="converted">Converted</option>
+          </select>
+        </div>
+        {selectedEntries.length > 0 && (
+          <div className="bulk-actions">
+            <span>{selectedEntries.length} selected</span>
+            <button className="btn-sm" onClick={() => handleBulkStatusChange('invited')}>
+              Mark Invited
+            </button>
+            <button className="btn-sm" onClick={() => handleBulkStatusChange('converted')}>
+              Mark Converted
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  checked={selectedEntries.length === filteredEntries.length && filteredEntries.length > 0}
+                  onChange={toggleSelectAll}
+                />
+              </th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Signed Up</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="loading-cell">
+                  Loading waitlist entries...
+                </td>
+              </tr>
+            ) : filteredEntries.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="empty-cell">
+                  No waitlist entries found.
+                </td>
+              </tr>
+            ) : (
+              filteredEntries.map((entry) => (
+                <tr key={entry.id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedEntries.includes(entry.id)}
+                      onChange={() => toggleSelect(entry.id)}
+                    />
+                  </td>
+                  <td>{entry.name}</td>
+                  <td>{entry.email}</td>
+                  <td>
+                    <span className={`badge badge-${entry.type}`}>
+                      {entry.type === 'lover' ? '🍔 Food Lover' : '🚚 Truck Owner'}
+                    </span>
+                  </td>
+                  <td>
+                    <select
+                      value={entry.status}
+                      onChange={(e) => handleStatusChange(entry.id, e.target.value)}
+                      className={`status-select status-${entry.status}`}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="invited">Invited</option>
+                      <option value="converted">Converted</option>
+                    </select>
+                  </td>
+                  <td>{new Date(entry.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <button className="btn-icon-only" onClick={() => handleDelete(entry.id)} title="Delete">
+                      {Icons.trash}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Import CSV</h2>
+              <button className="modal-close" onClick={() => setShowImportModal(false)}>
+                {Icons.x}
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Upload a CSV file with waitlist entries. Required column: <strong>email</strong>. Optional columns: <strong>name</strong>, <strong>type</strong>.</p>
+              <div className="file-upload">
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setImportFile(e.target.files[0])}
+                  id="csv-upload"
+                />
+                <label htmlFor="csv-upload" className="file-label">
+                  {Icons.upload}
+                  {importFile ? importFile.name : 'Choose CSV file'}
+                </label>
+              </div>
+              {importResults && (
+                <div className="import-results">
+                  <p>✅ Imported: <strong>{importResults.imported}</strong></p>
+                  <p>⏭️ Skipped (duplicates): <strong>{importResults.skipped}</strong></p>
+                  {importResults.errors > 0 && <p>❌ Errors: <strong>{importResults.errors}</strong></p>}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowImportModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleImportCSV}
+                disabled={!importFile || importing}
+              >
+                {importing ? (
+                  <>{Icons.loader} Importing...</>
+                ) : (
+                  <>Import</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1574,6 +2009,7 @@ const AdminDashboard = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard },
+    { id: 'waitlist', label: 'Waitlist', icon: Icons.waitlist },
     { id: 'users', label: 'Users', icon: Icons.users },
     { id: 'trucks', label: 'Food Trucks', icon: Icons.trucks },
     { id: 'analytics', label: 'Analytics', icon: Icons.analytics },
@@ -1584,6 +2020,8 @@ const AdminDashboard = () => {
     switch (currentPage) {
       case 'dashboard':
         return <DashboardOverview stats={stats} recentActivity={recentActivity} chartData={chartData} loading={loading} onRefresh={fetchDashboardData} />;
+      case 'waitlist':
+        return <WaitlistManagement />;
       case 'users':
         return <UsersManagement />;
       case 'trucks':

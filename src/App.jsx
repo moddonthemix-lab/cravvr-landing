@@ -6,6 +6,7 @@ import AdminDashboard from './admin/AdminDashboard';
 import Header from './components/landing/Header';
 import OwnerDashboard from './components/owner/OwnerDashboard';
 import CustomerProfile from './components/customer/CustomerProfile';
+import { supabase } from './lib/supabase';
 
 // SVG Icons
 const Icons = {
@@ -213,6 +214,31 @@ const Icons = {
       <rect x="14" y="3" width="7" height="7"></rect>
       <rect x="14" y="14" width="7" height="7"></rect>
       <rect x="3" y="14" width="7" height="7"></rect>
+    </svg>
+  ),
+  checkCircle: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+  ),
+  alertCircle: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+  ),
+  loader: (
+    <svg className="animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="2" x2="12" y2="6"></line>
+      <line x1="12" y1="18" x2="12" y2="22"></line>
+      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+      <line x1="2" y1="12" x2="6" y2="12"></line>
+      <line x1="18" y1="12" x2="22" y2="12"></line>
+      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
     </svg>
   )
 };
@@ -2178,6 +2204,52 @@ const LandingPage = ({ setCurrentView }) => {
   const [openFaq, setOpenFaq] = useState(0);
   const [heroRef, heroInView] = useInView();
 
+  // Waitlist form state
+  const [waitlistName, setWaitlistName] = useState('');
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+  const [waitlistError, setWaitlistError] = useState('');
+
+  // Handle waitlist form submission
+  const handleWaitlistSubmit = async (e) => {
+    e.preventDefault();
+    setWaitlistSubmitting(true);
+    setWaitlistError('');
+
+    try {
+      const { error } = await supabase
+        .from('waitlist')
+        .insert([
+          {
+            name: waitlistName,
+            email: waitlistEmail,
+            type: waitlistType,
+            status: 'pending'
+          }
+        ]);
+
+      if (error) {
+        if (error.code === '23505') {
+          // Unique constraint violation - email already exists
+          setWaitlistError('This email is already on the waitlist!');
+        } else {
+          setWaitlistError('Something went wrong. Please try again.');
+          console.error('Waitlist error:', error);
+        }
+      } else {
+        setWaitlistSuccess(true);
+        setWaitlistName('');
+        setWaitlistEmail('');
+      }
+    } catch (err) {
+      setWaitlistError('Something went wrong. Please try again.');
+      console.error('Waitlist error:', err);
+    } finally {
+      setWaitlistSubmitting(false);
+    }
+  };
+
   const statItems = [
     { value: '0%', label: 'Commission on pickup', icon: Icons.dollarSign },
     { value: '2.5K+', label: 'Trucks on waitlist', icon: Icons.truck },
@@ -2496,39 +2568,90 @@ const LandingPage = ({ setCurrentView }) => {
                 <p className="section-subtitle">Join 2,500+ trucks and eaters already on the waitlist. Get early access and exclusive perks.</p>
               </div>
               <div className="waitlist-form">
-                <div className="waitlist-toggle">
-                  <button
-                    className={`toggle-btn ${waitlistType === 'lover' ? 'active' : ''}`}
-                    onClick={() => setWaitlistType('lover')}
-                  >
-                    <span className="toggle-icon">🍔</span>
-                    I'm a Food Lover
-                  </button>
-                  <button
-                    className={`toggle-btn ${waitlistType === 'truck' ? 'active' : ''}`}
-                    onClick={() => setWaitlistType('truck')}
-                  >
-                    <span className="toggle-icon">🚚</span>
-                    I Run a Truck
-                  </button>
-                </div>
-                <form className="form-fields" onSubmit={(e) => e.preventDefault()}>
-                  <div className="form-row">
-                    <div className="form-field">
-                      <input type="text" id="name" placeholder=" " required />
-                      <label htmlFor="name">Your Name</label>
-                    </div>
-                    <div className="form-field">
-                      <input type="email" id="email" placeholder=" " required />
-                      <label htmlFor="email">Email Address</label>
-                    </div>
+                {waitlistSuccess ? (
+                  <div className="waitlist-success">
+                    <div className="success-icon">{Icons.checkCircle}</div>
+                    <h3>You're on the list!</h3>
+                    <p>Thanks for joining! We'll notify you when Cravrr launches in your area.</p>
+                    <button
+                      className="btn-ghost"
+                      onClick={() => setWaitlistSuccess(false)}
+                    >
+                      Add another email
+                    </button>
                   </div>
-                  <button type="submit" className="btn-primary btn-lg full-width">
-                    Get Early Access
-                    <span className="btn-icon">{Icons.arrowRight}</span>
-                  </button>
-                  <p className="form-disclaimer">No spam, ever. Unsubscribe anytime.</p>
-                </form>
+                ) : (
+                  <>
+                    <div className="waitlist-toggle">
+                      <button
+                        className={`toggle-btn ${waitlistType === 'lover' ? 'active' : ''}`}
+                        onClick={() => setWaitlistType('lover')}
+                      >
+                        <span className="toggle-icon">🍔</span>
+                        I'm a Food Lover
+                      </button>
+                      <button
+                        className={`toggle-btn ${waitlistType === 'truck' ? 'active' : ''}`}
+                        onClick={() => setWaitlistType('truck')}
+                      >
+                        <span className="toggle-icon">🚚</span>
+                        I Run a Truck
+                      </button>
+                    </div>
+                    <form className="form-fields" onSubmit={handleWaitlistSubmit}>
+                      {waitlistError && (
+                        <div className="form-error">
+                          <span className="error-icon">{Icons.alertCircle}</span>
+                          {waitlistError}
+                        </div>
+                      )}
+                      <div className="form-row">
+                        <div className="form-field">
+                          <input
+                            type="text"
+                            id="waitlist-name"
+                            placeholder=" "
+                            required
+                            value={waitlistName}
+                            onChange={(e) => setWaitlistName(e.target.value)}
+                            disabled={waitlistSubmitting}
+                          />
+                          <label htmlFor="waitlist-name">Your Name</label>
+                        </div>
+                        <div className="form-field">
+                          <input
+                            type="email"
+                            id="waitlist-email"
+                            placeholder=" "
+                            required
+                            value={waitlistEmail}
+                            onChange={(e) => setWaitlistEmail(e.target.value)}
+                            disabled={waitlistSubmitting}
+                          />
+                          <label htmlFor="waitlist-email">Email Address</label>
+                        </div>
+                      </div>
+                      <button
+                        type="submit"
+                        className="btn-primary btn-lg full-width"
+                        disabled={waitlistSubmitting}
+                      >
+                        {waitlistSubmitting ? (
+                          <>
+                            <span className="btn-spinner">{Icons.loader}</span>
+                            Joining...
+                          </>
+                        ) : (
+                          <>
+                            Get Early Access
+                            <span className="btn-icon">{Icons.arrowRight}</span>
+                          </>
+                        )}
+                      </button>
+                      <p className="form-disclaimer">No spam, ever. Unsubscribe anytime.</p>
+                    </form>
+                  </>
+                )}
               </div>
             </div>
           </div>
