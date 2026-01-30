@@ -10,6 +10,7 @@ import CustomerProfile from './components/customer/CustomerProfile';
 import CartDrawer, { CartButton } from './components/cart/Cart';
 import Checkout from './components/cart/Checkout';
 import HomePage from './components/home/HomePage';
+import SocialPage from './pages/SocialPage';
 import { useCart } from './contexts/CartContext';
 import { supabase } from './lib/supabase';
 
@@ -2821,6 +2822,9 @@ const App = () => {
 
         {/* Admin dashboard */}
         <Route path="/admin" element={<AdminDashboard />} />
+
+        {/* Social media graphics studio */}
+        <Route path="/social" element={<SocialPage />} />
 
         {/* Fallback to home */}
         <Route path="*" element={<HomePage />} />
