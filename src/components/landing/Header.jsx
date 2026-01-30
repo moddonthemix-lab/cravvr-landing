@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Icons } from '../common/Icons';
 import { useAuth } from '../auth/AuthContext';
 import AuthModal from '../auth/AuthModal';
 import UserMenu from '../auth/UserMenu';
 
 const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
+  const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const { isAuthenticated } = useAuth();
@@ -47,7 +49,7 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
             <a href="#how-it-works">How it Works</a>
             <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
-            <button onClick={() => setCurrentView('app')} className="nav-app-link">Try Demo</button>
+            <button onClick={() => navigate('/')} className="nav-app-link">Order Now</button>
           </nav>
 
           <div className="header-actions">
@@ -81,7 +83,7 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
             <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
             <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
-            <button onClick={() => { setCurrentView('app'); setMobileMenuOpen(false); }} className="nav-app-link">Try Demo</button>
+            <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="nav-app-link">Order Now</button>
           </nav>
 
           <div className="mobile-auth-section">

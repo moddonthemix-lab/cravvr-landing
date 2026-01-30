@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -8,6 +9,7 @@ import OwnerDashboard from './components/owner/OwnerDashboard';
 import CustomerProfile from './components/customer/CustomerProfile';
 import CartDrawer, { CartButton } from './components/cart/Cart';
 import Checkout from './components/cart/Checkout';
+import HomePage from './components/home/HomePage';
 import { useCart } from './contexts/CartContext';
 import { supabase } from './lib/supabase';
 
@@ -2386,13 +2388,13 @@ const LandingPage = ({ setCurrentView }) => {
                 Cravrr gives eaters a beautiful map-first experience and gives trucks the direct, low-fee revenue channel they deserve.
               </p>
               <div className="hero-actions">
-                <a href="#waitlist" className="btn-primary btn-lg">
-                  Join the Waitlist
+                <button onClick={() => setCurrentView('home')} className="btn-primary btn-lg">
+                  Start Ordering
                   <span className="btn-icon">{Icons.arrowRight}</span>
-                </a>
-                <button onClick={() => setCurrentView('app')} className="btn-ghost btn-lg">
-                  Try Demo
                 </button>
+                <a href="#waitlist" className="btn-ghost btn-lg">
+                  Join Waitlist
+                </a>
               </div>
               <div className="hero-social-proof">
                 <div className="avatar-stack">
@@ -2737,53 +2739,93 @@ const LandingPage = ({ setCurrentView }) => {
 };
 
 // ============================================
+// WRAPPER COMPONENTS FOR ROUTING
+// ============================================
+
+// Wrapper for LandingPage with navigate
+const LandingPageWrapper = () => {
+  const navigate = useNavigate();
+
+  const setCurrentView = (view) => {
+    switch (view) {
+      case 'home':
+        navigate('/');
+        break;
+      case 'app':
+        navigate('/browse');
+        break;
+      case 'owner-dashboard':
+        navigate('/owner');
+        break;
+      case 'profile':
+        navigate('/profile');
+        break;
+      case 'admin':
+        navigate('/admin');
+        break;
+      default:
+        navigate('/eat');
+    }
+  };
+
+  return <LandingPage setCurrentView={setCurrentView} />;
+};
+
+// Wrapper for AppDemo with navigate
+const AppDemoWrapper = () => {
+  const navigate = useNavigate();
+  return <AppDemo onBack={() => navigate('/')} />;
+};
+
+// Wrapper for OwnerDashboard with navigate
+const OwnerDashboardWrapper = () => {
+  const navigate = useNavigate();
+  return <OwnerDashboard onBack={() => navigate('/')} />;
+};
+
+// Wrapper for CustomerProfile with navigate
+const CustomerProfileWrapper = () => {
+  const navigate = useNavigate();
+  return <CustomerProfile onBack={() => navigate('/')} />;
+};
+
+// ============================================
 // MAIN APP
 // ============================================
 
 const App = () => {
-  const [currentView, setCurrentView] = useState(() => {
-    // Check if we're on the admin route
-    if (window.location.pathname === '/admin') {
-      return 'admin';
-    }
-    return 'landing';
-  });
+  return (
+    <>
+      <CartDrawer />
+      <Routes>
+        {/* New DoorDash-style home page */}
+        <Route path="/" element={<HomePage />} />
 
-  // Handle browser navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      if (window.location.pathname === '/admin') {
-        setCurrentView('admin');
-      } else {
-        setCurrentView('landing');
-      }
-    };
+        {/* Landing/Marketing page at /eat */}
+        <Route path="/eat" element={<LandingPageWrapper />} />
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+        {/* Browse trucks (app demo) */}
+        <Route path="/browse" element={<AppDemoWrapper />} />
 
-  if (currentView === 'admin') {
-    return <AdminDashboard />;
-  }
+        {/* Truck detail page */}
+        <Route path="/truck/:id" element={<AppDemoWrapper />} />
 
-  if (currentView === 'app') {
-    return <AppDemo onBack={() => setCurrentView('landing')} />;
-  }
+        {/* User profile */}
+        <Route path="/profile" element={<CustomerProfileWrapper />} />
+        <Route path="/orders" element={<CustomerProfileWrapper />} />
+        <Route path="/favorites" element={<CustomerProfileWrapper />} />
 
-  if (currentView === 'owner-dashboard') {
-    return <OwnerDashboard onBack={() => setCurrentView('landing')} />;
-  }
+        {/* Owner dashboard */}
+        <Route path="/owner" element={<OwnerDashboardWrapper />} />
 
-  if (currentView === 'profile') {
-    return <CustomerProfile onBack={() => setCurrentView('landing')} />;
-  }
+        {/* Admin dashboard */}
+        <Route path="/admin" element={<AdminDashboard />} />
 
-  if (currentView === 'settings') {
-    return <CustomerProfile onBack={() => setCurrentView('landing')} />;
-  }
-
-  return <LandingPage setCurrentView={setCurrentView} />;
+        {/* Fallback to home */}
+        <Route path="*" element={<HomePage />} />
+      </Routes>
+    </>
+  );
 };
 
 export default App;
