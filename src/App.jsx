@@ -13,6 +13,10 @@ import HomePage from './components/home/HomePage';
 import TruckDetailPage from './components/truck/TruckDetailPage';
 import SocialPage from './pages/SocialPage';
 import TabContainer from './components/app/TabContainer';
+import ResponsiveApp from './components/app/ResponsiveApp';
+import MapPage from './pages/MapPage';
+import DiscoverPage from './pages/DiscoverPage';
+import BoltPage from './pages/BoltPage';
 import { useCart } from './contexts/CartContext';
 import { supabase } from './lib/supabase';
 
@@ -2802,14 +2806,19 @@ const App = () => {
     <>
       <CartDrawer />
       <Routes>
-        {/* Main app with tabbed navigation (mobile) */}
-        <Route path="/" element={<TabContainer />} />
+        {/* Main app - responsive: TabContainer on mobile, HomePage on desktop */}
+        <Route path="/" element={<ResponsiveApp />} />
 
         {/* Landing/Marketing page at /eat */}
         <Route path="/eat" element={<LandingPageWrapper />} />
 
         {/* Browse trucks - alias to home */}
-        <Route path="/browse" element={<TabContainer />} />
+        <Route path="/browse" element={<ResponsiveApp />} />
+
+        {/* Feature pages with sidebar (desktop) */}
+        <Route path="/map" element={<MapPage />} />
+        <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/bolt" element={<BoltPage />} />
 
         {/* Truck detail page - production version */}
         <Route path="/truck/:id" element={<TruckDetailPage />} />
@@ -2829,7 +2838,7 @@ const App = () => {
         <Route path="/social" element={<SocialPage />} />
 
         {/* Fallback to home */}
-        <Route path="*" element={<TabContainer />} />
+        <Route path="*" element={<ResponsiveApp />} />
       </Routes>
     </>
   );

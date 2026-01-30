@@ -297,6 +297,20 @@
   padding: 8px 16px;
 }
 
+/* Bolt/Adventure nav item special styling */
+.nav-item.bolt-nav svg {
+  color: #f59e0b;
+}
+
+.nav-item.bolt-nav.active {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.nav-item.bolt-nav.active svg {
+  color: #f59e0b;
+}
+
 .sidebar-divider {
   height: 1px;
   background: #e5e7eb;
