@@ -1,11 +1,11 @@
-/* Bolt Page - Complete Redesign */
+/* Bolt Page - Brand-Aligned Redesign */
 
 .bolt-page {
   position: relative;
   min-height: calc(100vh - 80px);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  background: #fafafa;
 }
 
 /* Background */
@@ -13,21 +13,21 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
 }
 
 .bolt-bg-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 30%, #fbbf24 70%, #f59e0b 100%);
-  opacity: 0.15;
+  background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 50%, #fff 100%);
 }
 
 .bolt-bg-pattern {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle at 20% 50%, rgba(251, 191, 36, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 40% 80%, rgba(217, 119, 6, 0.08) 0%, transparent 50%);
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(225, 29, 72, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(225, 29, 72, 0.03) 0%, transparent 40%);
 }
 
 /* Loading */
@@ -37,14 +37,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 20px;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #fef3c7;
-  border-top-color: #f59e0b;
+  width: 48px;
+  height: 48px;
+  border: 3px solid #fecdd3;
+  border-top-color: #e11d48;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -54,8 +54,9 @@
 }
 
 .bolt-loading p {
-  color: #92400e;
-  font-size: 15px;
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 /* Content */
@@ -66,106 +67,113 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 20px 40px;
+  padding: 40px 24px 48px;
 }
 
 /* Header */
 .bolt-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .bolt-logo {
   position: relative;
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 20px;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
 }
 
 .bolt-logo-ring {
   position: absolute;
-  inset: 0;
-  border: 2px solid rgba(251, 191, 36, 0.3);
+  inset: -4px;
+  border: 2px solid rgba(225, 29, 72, 0.2);
   border-radius: 50%;
-  animation: pulse-ring 2s ease-in-out infinite;
+  animation: pulse-ring 2.5s ease-in-out infinite;
 }
 
 @keyframes pulse-ring {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.15); opacity: 0.6; }
+  0%, 100% { transform: scale(1); opacity: 0.2; }
+  50% { transform: scale(1.1); opacity: 0.4; }
 }
 
 .bolt-logo.spinning .bolt-logo-ring {
-  animation: spin 0.6s linear infinite;
-  border-top-color: #f59e0b;
+  animation: spin 0.5s linear infinite;
+  border-top-color: #e11d48;
   border-right-color: transparent;
   border-bottom-color: transparent;
   border-left-color: transparent;
+  border-width: 3px;
 }
 
 .bolt-logo-icon {
   position: absolute;
-  inset: 8px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  inset: 0;
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4);
+  box-shadow:
+    0 8px 24px rgba(225, 29, 72, 0.3),
+    0 0 0 4px rgba(225, 29, 72, 0.1);
 }
 
 .bolt-logo-icon svg {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .bolt-header h1 {
-  font-size: 36px;
+  font-size: 42px;
   font-weight: 800;
-  color: #92400e;
-  margin: 0 0 6px;
-  letter-spacing: -0.5px;
+  color: #0f172a;
+  margin: 0 0 8px;
+  letter-spacing: -1px;
 }
 
-.bolt-header p {
-  font-size: 15px;
-  color: #a16207;
+.bolt-header > p {
+  font-size: 17px;
+  color: #64748b;
   margin: 0;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 /* Usage Badge */
 .bolt-usage {
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 .usage-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: rgba(251, 191, 36, 0.15);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 10px 18px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 100px;
+  font-size: 14px;
   font-weight: 600;
-  color: #92400e;
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .usage-badge svg {
-  width: 14px;
-  height: 14px;
-  color: #f59e0b;
+  width: 16px;
+  height: 16px;
+  color: #e11d48;
 }
 
 .usage-badge.guest {
-  background: rgba(100, 116, 139, 0.1);
-  border-color: rgba(100, 116, 139, 0.2);
-  color: #475569;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
 }
 
 .usage-badge.guest svg {
-  color: #64748b;
+  color: #94a3b8;
 }
 
 /* Main Area */
@@ -175,7 +183,7 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 400px;
+  max-width: 100%;
 }
 
 /* Limit Reached State */
@@ -184,73 +192,80 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 40px 20px;
+  padding: 48px 32px;
   width: 100%;
+  max-width: 400px;
   background: white;
   border-radius: 24px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f5f9;
 }
 
 .limit-icon {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f1f5f9;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
   border-radius: 50%;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .limit-icon svg {
-  width: 32px;
-  height: 32px;
-  color: #64748b;
+  width: 36px;
+  height: 36px;
+  color: #e11d48;
 }
 
 .bolt-limit-reached h2 {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
-  color: #1e293b;
+  color: #0f172a;
   margin: 0 0 12px;
+  letter-spacing: -0.5px;
 }
 
 .bolt-limit-reached p {
-  font-size: 15px;
+  font-size: 16px;
   color: #64748b;
-  margin: 0 0 24px;
-  line-height: 1.5;
-  max-width: 280px;
+  margin: 0 0 28px;
+  line-height: 1.6;
+  max-width: 300px;
 }
 
 .limit-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  background: #fef3c7;
+  padding: 12px 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
 }
 
 .limit-info span {
   font-size: 14px;
   font-weight: 600;
-  color: #92400e;
+  color: #475569;
 }
 
 .bolt-btn.signup {
   background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
-  box-shadow: 0 4px 20px rgba(225, 29, 72, 0.3);
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.3);
 }
 
 .bolt-btn.signup:hover {
-  box-shadow: 0 6px 28px rgba(225, 29, 72, 0.4);
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.4);
+  transform: translateY(-2px);
 }
 
 .limit-subtext {
-  font-size: 14px;
+  font-size: 15px;
   color: #94a3b8;
-  margin-top: 16px !important;
+  margin-top: 20px !important;
   margin-bottom: 0 !important;
 }
 
@@ -262,9 +277,11 @@
   cursor: pointer;
   padding: 0;
   font-size: inherit;
+  transition: color 0.2s;
 }
 
 .link-btn:hover {
+  color: #be123c;
   text-decoration: underline;
 }
 
@@ -274,17 +291,21 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
+  max-width: 400px;
 }
 
 .bolt-card-preview {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 220px;
   background: white;
-  border-radius: 24px;
+  border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  margin-bottom: 28px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f5f9;
 }
 
 .preview-shimmer {
@@ -292,12 +313,12 @@
   inset: 0;
   background: linear-gradient(
     110deg,
-    #f5f5f5 25%,
-    #fafafa 37%,
-    #f5f5f5 63%
+    #f8fafc 25%,
+    #f1f5f9 37%,
+    #f8fafc 63%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 @keyframes shimmer {
@@ -312,28 +333,28 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .preview-icon {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fef3c7;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
   border-radius: 16px;
 }
 
 .preview-icon svg {
-  width: 28px;
-  height: 28px;
-  color: #f59e0b;
+  width: 32px;
+  height: 32px;
+  color: #e11d48;
 }
 
 .preview-content span {
-  font-size: 14px;
-  color: #94a3b8;
+  font-size: 16px;
+  color: #64748b;
   font-weight: 500;
 }
 
@@ -342,50 +363,53 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   padding: 18px 32px;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
   border: none;
-  border-radius: 16px;
+  border-radius: 14px;
   font-size: 17px;
   font-weight: 700;
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4);
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.3);
 }
 
 .bolt-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 28px rgba(251, 191, 36, 0.5);
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.4);
 }
 
 .bolt-btn:active {
   transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.3);
 }
 
 .bolt-btn.secondary {
   background: white;
-  color: #92400e;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  border: 2px solid #fef3c7;
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
 }
 
 .bolt-btn.secondary:hover {
-  background: #fef9c3;
-  border-color: #fde68a;
+  background: #f8fafc;
+  border-color: #d1d5db;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .bolt-btn-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .bolt-subtext {
-  margin-top: 16px;
-  font-size: 13px;
+  margin-top: 20px;
+  font-size: 14px;
   color: #94a3b8;
+  font-weight: 500;
 }
 
 /* Generating State */
@@ -394,63 +418,66 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 280px;
+  min-height: 300px;
+  padding: 40px;
 }
 
 .generating-cards {
   position: relative;
-  width: 200px;
-  height: 140px;
-  margin-bottom: 24px;
+  width: 220px;
+  height: 160px;
+  margin-bottom: 32px;
 }
 
 .gen-card {
   position: absolute;
-  width: 120px;
-  height: 90px;
+  width: 140px;
+  height: 100px;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
 }
 
 .gen-card.card-1 {
   left: 0;
-  top: 20px;
+  top: 30px;
   animation: shuffle1 0.6s ease-in-out infinite;
 }
 
 .gen-card.card-2 {
   left: 40px;
-  top: 10px;
+  top: 15px;
   animation: shuffle2 0.6s ease-in-out infinite;
 }
 
 .gen-card.card-3 {
   left: 80px;
   top: 0;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  background: linear-gradient(135deg, #e11d48, #be123c);
+  border: none;
   animation: shuffle3 0.6s ease-in-out infinite;
 }
 
 @keyframes shuffle1 {
-  0%, 100% { transform: translateX(0) rotate(-5deg); }
-  50% { transform: translateX(30px) rotate(0deg); }
+  0%, 100% { transform: translateX(0) rotate(-6deg); }
+  50% { transform: translateX(25px) rotate(0deg); }
 }
 
 @keyframes shuffle2 {
   0%, 100% { transform: translateX(0) rotate(0deg); }
-  50% { transform: translateX(-20px) rotate(-3deg); }
+  50% { transform: translateX(-15px) rotate(-3deg); }
 }
 
 @keyframes shuffle3 {
-  0%, 100% { transform: translateX(0) rotate(5deg); }
+  0%, 100% { transform: translateX(0) rotate(6deg); }
   50% { transform: translateX(-10px) rotate(0deg); }
 }
 
 .bolt-generating p {
-  font-size: 15px;
-  color: #92400e;
-  font-weight: 500;
+  font-size: 17px;
+  color: #374151;
+  font-weight: 600;
 }
 
 /* Result State */
@@ -459,27 +486,28 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
+  max-width: 400px;
 }
 
 .result-badge {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  border-radius: 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 12px rgba(251, 191, 36, 0.3);
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #e11d48, #be123c);
+  border-radius: 100px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
 }
 
 .badge-bolt svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   color: white;
 }
 
 .result-badge span:last-child {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: white;
   text-transform: uppercase;
@@ -490,21 +518,26 @@
 .result-card {
   width: 100%;
   background: white;
-  border-radius: 24px;
+  border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
 }
 
 .result-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.04),
+    0 16px 48px rgba(0, 0, 0, 0.12);
 }
 
 .result-card-image {
   position: relative;
-  height: 180px;
+  height: 200px;
   overflow: hidden;
 }
 
@@ -512,16 +545,21 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.result-card:hover .result-card-image img {
+  transform: scale(1.03);
 }
 
 .result-card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.5));
+  background: linear-gradient(transparent 40%, rgba(0, 0, 0, 0.6));
 }
 
 .result-card-content {
-  padding: 20px;
+  padding: 24px;
 }
 
 .result-card-header {
@@ -529,17 +567,20 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
+  gap: 12px;
 }
 
 .result-card-header h2 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
-  color: #1e293b;
+  color: #0f172a;
   margin: 0 0 4px;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
 }
 
 .result-cuisine {
-  font-size: 14px;
+  font-size: 15px;
   color: #64748b;
   margin: 0;
 }
@@ -548,95 +589,106 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
-  background: #fef3c7;
-  border-radius: 12px;
+  padding: 8px 12px;
+  background: #fef9c3;
+  border-radius: 10px;
+  flex-shrink: 0;
 }
 
 .rating-star svg {
-  width: 14px;
-  height: 14px;
-  color: #fbbf24;
+  width: 16px;
+  height: 16px;
+  color: #eab308;
 }
 
 .result-rating span:last-child {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  color: #92400e;
+  color: #854d0e;
 }
 
 .result-meta {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 14px;
   color: #64748b;
+  font-weight: 500;
 }
 
 .meta-icon svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
 }
 
 .meta-item.price {
   font-weight: 600;
-  color: #1e293b;
+  color: #374151;
 }
 
 .result-divider {
   height: 1px;
-  background: #f1f5f9;
-  margin-bottom: 16px;
+  background: #e5e7eb;
+  margin-bottom: 20px;
 }
 
 .result-picks {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .picks-label {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .picks-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pick-chip {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 14px 16px;
   background: #f8fafc;
   border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.pick-chip:hover {
+  background: #f1f5f9;
 }
 
 .pick-emoji {
-  font-size: 20px;
+  font-size: 24px;
+  line-height: 1;
 }
 
 .pick-name {
   flex: 1;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: #1e293b;
 }
 
 .pick-price {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #16a34a;
 }
@@ -646,26 +698,31 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px;
-  background: #fef9c3;
-  border-radius: 14px;
-  margin: 0 -20px -20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-radius: 12px;
+  margin: 0 -24px -24px;
+  transition: background 0.2s;
+}
+
+.result-card:hover .result-cta {
+  background: linear-gradient(135deg, #fee2e2, #fecdd3);
 }
 
 .result-cta span {
   font-size: 15px;
-  font-weight: 600;
-  color: #92400e;
+  font-weight: 700;
+  color: #be123c;
 }
 
 .cta-arrow svg {
   width: 18px;
   height: 18px;
-  color: #92400e;
+  color: #be123c;
 }
 
 .bolt-result .bolt-btn {
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 .bolt-btn.disabled {
@@ -675,14 +732,14 @@
 }
 
 .bolt-btn.secondary.disabled {
-  background: #f1f5f9;
+  background: #f8fafc;
   border-color: #e2e8f0;
   color: #94a3b8;
 }
 
 .result-limit-msg {
-  margin-top: 12px;
-  font-size: 14px;
+  margin-top: 16px;
+  font-size: 15px;
   color: #64748b;
 }
 
@@ -695,152 +752,235 @@
   }
 
   .bolt-content {
-    padding: 60px 40px;
-    justify-content: center;
+    padding: 20px 40px 32px;
+    justify-content: flex-start;
   }
 
   .bolt-header {
-    margin-bottom: 48px;
+    margin-bottom: 16px;
   }
 
   .bolt-logo {
-    width: 88px;
-    height: 88px;
-    margin-bottom: 24px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 10px;
   }
 
-  .bolt-logo-icon {
-    inset: 10px;
+  .bolt-logo-ring {
+    inset: -3px;
   }
 
   .bolt-logo-icon svg {
-    width: 36px;
-    height: 36px;
-  }
-
-  .bolt-header h1 {
-    font-size: 48px;
-  }
-
-  .bolt-header p {
-    font-size: 18px;
-  }
-
-  .bolt-usage {
-    margin-top: 20px;
-  }
-
-  .usage-badge {
-    padding: 10px 20px;
-    font-size: 14px;
-  }
-
-  .usage-badge svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .bolt-limit-reached {
-    padding: 48px 32px;
-    border-radius: 28px;
-  }
-
-  .limit-icon {
-    width: 88px;
-    height: 88px;
-  }
-
-  .limit-icon svg {
-    width: 40px;
-    height: 40px;
-  }
-
-  .bolt-limit-reached h2 {
-    font-size: 28px;
-  }
-
-  .bolt-limit-reached p {
-    font-size: 16px;
-    max-width: 320px;
-  }
-
-  .bolt-main {
-    max-width: 480px;
-  }
-
-  .bolt-card-preview {
-    height: 240px;
-    border-radius: 28px;
-  }
-
-  .preview-icon {
-    width: 72px;
-    height: 72px;
-    border-radius: 20px;
-  }
-
-  .preview-icon svg {
-    width: 36px;
-    height: 36px;
-  }
-
-  .preview-content span {
-    font-size: 16px;
-  }
-
-  .bolt-btn {
-    padding: 20px 40px;
-    font-size: 18px;
-    border-radius: 18px;
-  }
-
-  .bolt-btn-icon svg {
     width: 22px;
     height: 22px;
   }
 
-  .bolt-subtext {
+  .bolt-header h1 {
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+
+  .bolt-header > p {
     font-size: 14px;
   }
 
-  .generating-cards {
-    width: 260px;
-    height: 180px;
+  .bolt-usage {
+    margin-top: 10px;
   }
 
-  .gen-card {
-    width: 160px;
-    height: 120px;
+  .usage-badge {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .usage-badge svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .bolt-limit-reached {
+    padding: 32px 28px;
     border-radius: 20px;
   }
 
-  .result-card {
-    border-radius: 28px;
+  .limit-icon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
   }
 
-  .result-card-image {
-    height: 220px;
+  .limit-icon svg {
+    width: 28px;
+    height: 28px;
   }
 
-  .result-card-content {
+  .bolt-limit-reached h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .bolt-limit-reached p {
+    font-size: 14px;
+    max-width: 280px;
+    margin-bottom: 20px;
+  }
+
+  .bolt-initial,
+  .bolt-result,
+  .bolt-limit-reached {
+    max-width: 380px;
+  }
+
+  .bolt-card-preview {
+    height: 160px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+
+  .preview-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .preview-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .preview-content span {
+    font-size: 14px;
+  }
+
+  .bolt-btn {
+    padding: 14px 28px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+
+  .bolt-btn-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .bolt-subtext {
+    font-size: 13px;
+    margin-top: 14px;
+  }
+
+  .generating-cards {
+    width: 180px;
+    height: 120px;
+    margin-bottom: 20px;
+  }
+
+  .gen-card {
+    width: 110px;
+    height: 80px;
+    border-radius: 12px;
+  }
+
+  .bolt-generating {
+    min-height: 220px;
     padding: 24px;
   }
 
-  .result-card-header h2 {
-    font-size: 26px;
-  }
-
-  .result-cuisine {
+  .bolt-generating p {
     font-size: 15px;
   }
 
-  .result-rating {
+  .result-badge {
     padding: 8px 14px;
+    margin-bottom: 14px;
+  }
+
+  .badge-bolt svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .result-badge span:last-child {
+    font-size: 12px;
+  }
+
+  .result-card {
+    border-radius: 16px;
+  }
+
+  .result-card-image {
+    height: 160px;
+  }
+
+  .result-card-content {
+    padding: 18px;
+  }
+
+  .result-card-header {
+    margin-bottom: 12px;
+  }
+
+  .result-card-header h2 {
+    font-size: 20px;
+  }
+
+  .result-cuisine {
+    font-size: 14px;
+  }
+
+  .result-rating {
+    padding: 6px 10px;
+  }
+
+  .result-rating span:last-child {
+    font-size: 14px;
+  }
+
+  .result-meta {
+    margin-bottom: 14px;
+  }
+
+  .result-divider {
+    margin-bottom: 14px;
+  }
+
+  .result-picks {
+    margin-bottom: 14px;
+  }
+
+  .picks-label {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .pick-chip {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .pick-emoji {
+    font-size: 20px;
+  }
+
+  .pick-name {
+    font-size: 14px;
+  }
+
+  .pick-price {
+    font-size: 14px;
   }
 
   .result-cta {
-    padding: 16px;
-    margin: 0 -24px -24px;
+    padding: 12px;
+    margin: 0 -18px -18px;
+    border-radius: 0 0 16px 16px;
+  }
+
+  .result-cta span {
+    font-size: 14px;
+  }
+
+  .bolt-result .bolt-btn {
+    margin-top: 16px;
   }
 }
 
@@ -848,157 +988,231 @@
    LARGE DESKTOP (1200px+)
    ========================================== */
 @media (min-width: 1200px) {
-  .bolt-bg-gradient {
-    opacity: 0.12;
-  }
-
   .bolt-content {
-    padding: 80px 60px;
+    padding: 28px 48px 40px;
   }
 
   .bolt-header {
-    margin-bottom: 60px;
-  }
-
-  .bolt-logo {
-    width: 100px;
-    height: 100px;
-  }
-
-  .bolt-logo-icon {
-    inset: 12px;
-  }
-
-  .bolt-logo-icon svg {
-    width: 42px;
-    height: 42px;
-  }
-
-  .bolt-header h1 {
-    font-size: 56px;
-  }
-
-  .bolt-header p {
-    font-size: 20px;
-  }
-
-  .usage-badge {
-    padding: 12px 24px;
-    font-size: 15px;
-    border-radius: 24px;
-  }
-
-  .bolt-limit-reached {
-    padding: 56px 40px;
-    border-radius: 32px;
-  }
-
-  .limit-icon {
-    width: 100px;
-    height: 100px;
-    margin-bottom: 24px;
-  }
-
-  .limit-icon svg {
-    width: 48px;
-    height: 48px;
-  }
-
-  .bolt-limit-reached h2 {
-    font-size: 32px;
-    margin-bottom: 16px;
-  }
-
-  .bolt-limit-reached p {
-    font-size: 17px;
-    max-width: 360px;
-    margin-bottom: 32px;
-  }
-
-  .bolt-main {
-    max-width: 560px;
-  }
-
-  .bolt-card-preview {
-    height: 280px;
-    border-radius: 32px;
-  }
-
-  .preview-icon {
-    width: 80px;
-    height: 80px;
-  }
-
-  .preview-icon svg {
-    width: 40px;
-    height: 40px;
-  }
-
-  .bolt-btn {
-    padding: 22px 48px;
-    font-size: 19px;
-    border-radius: 20px;
-  }
-
-  .generating-cards {
-    width: 300px;
-    height: 200px;
-  }
-
-  .gen-card {
-    width: 180px;
-    height: 140px;
-  }
-
-  .result-badge {
-    padding: 10px 20px;
     margin-bottom: 20px;
   }
 
-  .result-card {
-    border-radius: 32px;
+  .bolt-logo {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 12px;
   }
 
-  .result-card-image {
-    height: 260px;
+  .bolt-logo-ring {
+    inset: -4px;
   }
 
-  .result-card-content {
+  .bolt-logo-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .bolt-header h1 {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+
+  .bolt-header > p {
+    font-size: 15px;
+  }
+
+  .bolt-usage {
+    margin-top: 12px;
+  }
+
+  .usage-badge {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .bolt-limit-reached {
+    padding: 36px 32px;
+    border-radius: 20px;
+  }
+
+  .limit-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 18px;
+  }
+
+  .limit-icon svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .bolt-limit-reached h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .bolt-limit-reached p {
+    font-size: 15px;
+    max-width: 300px;
+    margin-bottom: 24px;
+  }
+
+  .bolt-initial,
+  .bolt-result,
+  .bolt-limit-reached {
+    max-width: 420px;
+  }
+
+  .bolt-card-preview {
+    height: 180px;
+    border-radius: 18px;
+    margin-bottom: 24px;
+  }
+
+  .preview-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+  }
+
+  .preview-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .preview-content span {
+    font-size: 15px;
+  }
+
+  .bolt-btn {
+    padding: 16px 32px;
+    font-size: 16px;
+    border-radius: 14px;
+  }
+
+  .bolt-btn-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .bolt-subtext {
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
+  .generating-cards {
+    width: 200px;
+    height: 140px;
+    margin-bottom: 24px;
+  }
+
+  .gen-card {
+    width: 130px;
+    height: 95px;
+    border-radius: 14px;
+  }
+
+  .bolt-generating {
+    min-height: 240px;
     padding: 28px;
   }
 
-  .result-card-header h2 {
-    font-size: 30px;
-  }
-
-  .result-cuisine {
+  .bolt-generating p {
     font-size: 16px;
   }
 
+  .result-badge {
+    padding: 8px 16px;
+    margin-bottom: 16px;
+  }
+
+  .badge-bolt svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .result-badge span:last-child {
+    font-size: 13px;
+  }
+
+  .result-card {
+    border-radius: 18px;
+  }
+
+  .result-card-image {
+    height: 180px;
+  }
+
+  .result-card-content {
+    padding: 20px;
+  }
+
+  .result-card-header {
+    margin-bottom: 14px;
+  }
+
+  .result-card-header h2 {
+    font-size: 22px;
+  }
+
+  .result-cuisine {
+    font-size: 14px;
+  }
+
+  .result-rating {
+    padding: 6px 12px;
+  }
+
   .result-meta {
-    gap: 24px;
+    gap: 14px;
+    margin-bottom: 16px;
   }
 
   .meta-item {
     font-size: 14px;
   }
 
+  .result-divider {
+    margin-bottom: 16px;
+  }
+
+  .result-picks {
+    margin-bottom: 16px;
+  }
+
+  .picks-label {
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
   .pick-chip {
-    padding: 12px 16px;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .pick-emoji {
+    font-size: 22px;
   }
 
   .pick-name {
     font-size: 15px;
   }
 
+  .pick-price {
+    font-size: 15px;
+  }
+
   .result-cta {
-    padding: 18px;
-    margin: 0 -28px -28px;
-    border-radius: 0 0 32px 32px;
+    padding: 14px;
+    margin: 0 -20px -20px;
+    border-radius: 0 0 18px 18px;
   }
 
   .result-cta span {
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  .bolt-result .bolt-btn {
+    margin-top: 20px;
   }
 }
 
@@ -1007,27 +1221,53 @@
    ========================================== */
 @media (min-width: 1400px) {
   .bolt-content {
-    padding: 100px 80px;
+    padding: 32px 60px 48px;
+  }
+
+  .bolt-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 14px;
+  }
+
+  .bolt-logo-icon svg {
+    width: 30px;
+    height: 30px;
   }
 
   .bolt-header h1 {
-    font-size: 64px;
+    font-size: 32px;
   }
 
-  .bolt-header p {
-    font-size: 22px;
+  .bolt-header > p {
+    font-size: 16px;
   }
 
-  .bolt-main {
-    max-width: 640px;
+  .bolt-initial,
+  .bolt-result,
+  .bolt-limit-reached {
+    max-width: 480px;
   }
 
   .bolt-card-preview {
-    height: 320px;
+    height: 200px;
+    border-radius: 20px;
   }
 
   .result-card-image {
-    height: 300px;
+    height: 200px;
+  }
+
+  .result-card-content {
+    padding: 24px;
+  }
+
+  .result-card-header h2 {
+    font-size: 24px;
+  }
+
+  .result-cta {
+    margin: 0 -24px -24px;
   }
 }
 
@@ -1036,46 +1276,55 @@
    ========================================== */
 @media (max-width: 380px) {
   .bolt-content {
-    padding: 24px 16px 32px;
+    padding: 28px 16px 36px;
   }
 
   .bolt-logo {
-    width: 64px;
-    height: 64px;
-  }
-
-  .bolt-logo-icon {
-    inset: 6px;
+    width: 68px;
+    height: 68px;
   }
 
   .bolt-logo-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
   }
 
   .bolt-header h1 {
-    font-size: 28px;
+    font-size: 32px;
   }
 
-  .bolt-header p {
-    font-size: 14px;
+  .bolt-header > p {
+    font-size: 15px;
   }
 
   .bolt-card-preview {
-    height: 160px;
-    border-radius: 20px;
+    height: 180px;
+    border-radius: 16px;
   }
 
   .bolt-btn {
     padding: 16px 24px;
     font-size: 16px;
+    border-radius: 12px;
+  }
+
+  .result-card {
+    border-radius: 16px;
   }
 
   .result-card-image {
-    height: 150px;
+    height: 160px;
+  }
+
+  .result-card-content {
+    padding: 20px;
   }
 
   .result-card-header h2 {
-    font-size: 18px;
+    font-size: 20px;
+  }
+
+  .result-cta {
+    margin: 0 -20px -20px;
   }
 }
