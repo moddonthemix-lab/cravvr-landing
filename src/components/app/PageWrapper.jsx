@@ -85,7 +85,7 @@ const PageWrapper = ({ children, activeNav }) => {
             </button>
             <button className={`nav-item bolt-nav ${isActive('/bolt') ? 'active' : ''}`} onClick={() => navigate('/bolt')}>
               {Icons.bolt}
-              <span>Adventure</span>
+              <span>Bolt</span>
             </button>
           </nav>
 

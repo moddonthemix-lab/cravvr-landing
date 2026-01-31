@@ -305,7 +305,7 @@ const HomePage = ({ embedded = false }) => {
             </button>
             <button className="nav-item bolt-nav" onClick={() => navigate('/bolt')}>
               {Icons.bolt}
-              <span>Adventure</span>
+              <span>Bolt</span>
             </button>
           </nav>
 
