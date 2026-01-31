@@ -8,12 +8,12 @@ import { useAuth } from './AuthContext';
  * @param {Object} props
  * @param {React.ReactNode} props.children - The route content to render
  * @param {string} props.requiredRole - Optional role required ('customer', 'owner', 'admin')
- * @param {string} props.redirectTo - Where to redirect if not authorized (default: '/eat')
+ * @param {string} props.redirectTo - Where to redirect if not authorized (default: '/login')
  */
 const ProtectedRoute = ({
   children,
   requiredRole = null,
-  redirectTo = '/eat'
+  redirectTo = '/login'
 }) => {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
