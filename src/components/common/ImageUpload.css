@@ -23,13 +23,13 @@
 }
 
 .image-upload-area:hover:not(.disabled) {
-  border-color: #e11d48;
+  border-color: var(--primary);
   background: #fff1f2;
 }
 
 .image-upload-area.dragging {
-  border-color: #e11d48;
-  background: #ffe4e6;
+  border-color: var(--primary);
+  background: var(--primary-light);
   transform: scale(1.02);
 }
 
@@ -65,7 +65,7 @@
 }
 
 .image-upload-area:hover:not(.disabled) .upload-placeholder svg {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .upload-text {
@@ -92,7 +92,7 @@
 .upload-state svg {
   width: 40px;
   height: 40px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .upload-state span {
@@ -141,7 +141,7 @@
 }
 
 .remove-image-btn:hover {
-  background: #e11d48;
+  background: var(--primary);
   transform: scale(1.1);
 }
 

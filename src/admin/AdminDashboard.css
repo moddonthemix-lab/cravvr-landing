@@ -4,8 +4,8 @@
 
 /* CSS Variables */
 :root {
-  --admin-primary: #e11d48;
-  --admin-primary-hover: #be123c;
+  --admin-primary: var(--primary);
+  --admin-primary-hover: var(--primary-dark);
   --admin-bg: #f8fafc;
   --admin-sidebar-bg: #1e293b;
   --admin-sidebar-text: #94a3b8;
@@ -91,7 +91,7 @@
 }
 
 .login-error {
-  background: #fef2f2;
+  background: var(--primary-light);
   border: 1px solid #fecaca;
   color: var(--admin-danger);
   padding: 12px;
@@ -179,7 +179,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: #fef2f2;
+  background: var(--primary-light);
   border: 1px solid #fecaca;
   color: var(--admin-primary);
   border-radius: 6px;
@@ -677,7 +677,7 @@
 }
 
 .btn-danger:hover {
-  background: #fef2f2;
+  background: var(--primary-light);
   border-color: #f87171;
 }
 
@@ -706,7 +706,7 @@
 }
 
 .icon-btn.danger:hover {
-  background: #fef2f2;
+  background: var(--primary-light);
   color: var(--admin-danger);
 }
 
@@ -1814,7 +1814,7 @@
 
 .file-label:hover {
   border-color: var(--admin-primary);
-  background: #fef2f2;
+  background: var(--primary-light);
   color: var(--admin-primary);
 }
 

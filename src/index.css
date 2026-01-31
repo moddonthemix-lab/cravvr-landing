@@ -9,10 +9,10 @@
   --text: #0f172a;
   --text-secondary: #4b5563; /* Improved contrast from #64748b */
   --text-muted: #6b7280;
-  --primary: #e11d48;
-  --primary-light: #ffe4e6;
-  --primary-dark: #be123c;
-  --primary-gradient: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #fb7185 100%);
+  --primary: var(--primary);
+  --primary-light: var(--primary-light);
+  --primary-dark: var(--primary-dark);
+  --primary-gradient: linear-gradient(135deg, var(--primary) 0%, #f43f5e 50%, #fb7185 100%);
   --rating: #16a34a;
   --rating-light: #dcfce7;
   --border: #e2e8f0;
@@ -1755,7 +1755,7 @@ button {
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: #fef2f2;
+  background: var(--primary-light);
   border: 1px solid #fecaca;
   border-radius: var(--radius-md);
   color: #dc2626;
@@ -2569,7 +2569,7 @@ button {
 .map-background {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #ffe4e6 0%, #fce7f3 50%, #fae8ff 100%);
+  background: linear-gradient(135deg, var(--primary-light) 0%, #fce7f3 50%, #fae8ff 100%);
   overflow: hidden;
 }
 
@@ -7368,7 +7368,7 @@ button {
 }
 
 .status-pill.closed {
-  background: #fef2f2;
+  background: var(--primary-light);
   color: #dc2626;
 }
 
@@ -7872,7 +7872,7 @@ button {
 }
 
 .popup-status.closed {
-  background: #fef2f2;
+  background: var(--primary-light);
   color: #dc2626;
 }
 
@@ -8149,7 +8149,7 @@ button {
 }
 
 .list-status.closed {
-  background: #fef2f2;
+  background: var(--primary-light);
   color: #dc2626;
 }
 
@@ -9128,7 +9128,7 @@ button {
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  background: linear-gradient(135deg, #fef2f2, #fdf2f8);
+  background: linear-gradient(135deg, var(--primary-light), #fdf2f8);
   border-radius: 16px;
   min-width: 200px;
   border: 1px solid rgba(225, 29, 72, 0.1);
@@ -9526,6 +9526,131 @@ button {
   margin: 0;
 }
 
+/* Write Review Button */
+.write-review-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.write-review-btn svg {
+  width: 14px;
+  height: 14px;
+  color: #f59e0b;
+}
+
+.write-review-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.write-review-btn-empty {
+  margin-top: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.write-review-btn-empty:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+}
+
+/* Review Eligibility Notice */
+.review-eligibility-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.review-eligibility-notice span {
+  font-size: 20px;
+}
+
+.review-eligibility-notice p {
+  font-size: 14px;
+  color: #166534;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Menu Item Rating Display */
+.menu-item-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.menu-item-rating svg {
+  width: 14px;
+  height: 14px;
+  color: #fbbf24;
+}
+
+.menu-item-rating span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.menu-item-rating .rating-count {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+/* Menu Item Actions */
+.menu-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rate-item-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef3c7;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.rate-item-btn svg {
+  width: 18px;
+  height: 18px;
+  color: #f59e0b;
+}
+
+.rate-item-btn:hover {
+  background: #fde68a;
+  transform: scale(1.05);
+}
+
 /* Mobile Responsive Adjustments */
 @media (max-width: 480px) {
   .store-logo-overlay {
@@ -9625,16 +9750,16 @@ button {
 }
 
 .truck-detail-sidebar .nav-item.active {
-  background: #fef2f2;
-  color: #e11d48;
+  background: var(--primary-light);
+  color: var(--primary);
 }
 
 .truck-detail-sidebar .nav-item.active svg {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .truck-detail-sidebar .nav-item.signin {
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
 }
 

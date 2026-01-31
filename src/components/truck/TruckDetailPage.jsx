@@ -3,29 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { supabase } from '../../lib/supabase';
-
-// Icons (matching the existing app icons)
-const Icons = {
-  chevronLeft: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>,
-  chevronRight: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>,
-  heart: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
-  heartFilled: <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
-  star: <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-  starOutline: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-  mapPin: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
-  clock: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-  target: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-  check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
-  share: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
-  shoppingBag: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
-  search: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
-  x: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  truck: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
-  tag: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
-  home: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  orders: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
-  user: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-};
+import { Icons } from '../common/Icons';
+import { formatRelativeTime } from '../../utils/formatters';
+import ReviewModal from '../reviews/ReviewModal';
+import MenuItemRatingModal from '../reviews/MenuItemRatingModal';
 
 // Default menu items for trucks without menu
 const defaultMenuItems = [
@@ -70,20 +51,6 @@ const defaultDeals = [
   { id: 2, title: 'Free Pickup', description: '0% fees on all pickup orders', code: null, emoji: '🚶' },
 ];
 
-// Helper function for relative time
-const formatRelativeTime = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffDays < 1) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return `${Math.floor(diffDays / 30)} months ago`;
-};
-
 const TruckDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -103,6 +70,15 @@ const TruckDetailPage = () => {
   const [orderType, setOrderType] = useState('pickup');
   const [activeCategory, setActiveCategory] = useState('all');
   const [menuSearchQuery, setMenuSearchQuery] = useState('');
+
+  // Review state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [canReview, setCanReview] = useState(false);
+  const [existingReview, setExistingReview] = useState(null);
+  const [showItemRatingModal, setShowItemRatingModal] = useState(false);
+  const [selectedItemForRating, setSelectedItemForRating] = useState(null);
+  const [existingItemRating, setExistingItemRating] = useState(null);
+  const [orderedItemIds, setOrderedItemIds] = useState([]);
 
   // Refs for scrolling
   const featuredScrollRef = useRef(null);
@@ -237,6 +213,54 @@ const TruckDetailPage = () => {
     checkFavorite();
   }, [user, id]);
 
+  // Check if user can review (has completed order from this truck)
+  useEffect(() => {
+    const checkReviewEligibility = async () => {
+      if (!user || !id) {
+        setCanReview(false);
+        return;
+      }
+
+      // Check for completed orders
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('truck_id', id)
+        .eq('customer_id', user.id)
+        .eq('status', 'completed')
+        .limit(1);
+
+      setCanReview(orders && orders.length > 0);
+
+      // Check for existing review
+      const { data: review } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('truck_id', id)
+        .eq('customer_id', user.id)
+        .single();
+
+      if (review) {
+        setExistingReview(review);
+      }
+
+      // Get ordered menu items for this truck
+      const { data: orderedItems } = await supabase
+        .from('order_items')
+        .select('menu_item_id, orders!inner(customer_id, truck_id, status)')
+        .eq('orders.truck_id', id)
+        .eq('orders.customer_id', user.id)
+        .eq('orders.status', 'completed');
+
+      if (orderedItems) {
+        const itemIds = [...new Set(orderedItems.map(o => o.menu_item_id))];
+        setOrderedItemIds(itemIds);
+      }
+    };
+
+    checkReviewEligibility();
+  }, [user, id]);
+
   const toggleFavorite = async () => {
     if (!user) return;
 
@@ -302,6 +326,90 @@ const TruckDetailPage = () => {
     if (featuredScrollRef.current) {
       const scrollAmount = direction === 'left' ? -200 : 200;
       featuredScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const handleOpenReviewModal = () => {
+    if (!user) {
+      navigate('/eat');
+      return;
+    }
+    setShowReviewModal(true);
+  };
+
+  const handleOpenItemRating = async (item) => {
+    if (!user) {
+      navigate('/eat');
+      return;
+    }
+
+    // Check for existing rating
+    const { data: existingRating } = await supabase
+      .from('menu_item_reviews')
+      .select('*')
+      .eq('menu_item_id', item.id)
+      .eq('customer_id', user.id)
+      .single();
+
+    setSelectedItemForRating(item);
+    setExistingItemRating(existingRating || null);
+    setShowItemRatingModal(true);
+  };
+
+  const handleReviewSuccess = async () => {
+    // Refresh reviews
+    const { data } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('truck_id', id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (data) setReviews(data);
+
+    // Refresh truck data for updated rating
+    const { data: truckData } = await supabase
+      .from('food_trucks')
+      .select('rating, review_count')
+      .eq('id', id)
+      .single();
+
+    if (truckData && truck) {
+      setTruck({ ...truck, rating: truckData.rating, reviewCount: truckData.review_count });
+    }
+
+    // Update existing review state
+    const { data: review } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('truck_id', id)
+      .eq('customer_id', user.id)
+      .single();
+
+    setExistingReview(review || null);
+  };
+
+  const handleItemRatingSuccess = async () => {
+    // Refresh menu items to show updated ratings
+    const { data } = await supabase
+      .from('menu_items')
+      .select('*')
+      .eq('truck_id', id);
+
+    if (data && data.length > 0) {
+      setMenuItems(data.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description || 'A delicious menu item.',
+        price: `$${item.price?.toFixed(2) || '0.00'}`,
+        image: item.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80',
+        popular: item.popular || false,
+        featured: item.featured || false,
+        emoji: item.emoji || '🍽️',
+        category: item.category || 'Other',
+        averageRating: item.average_rating || 0,
+        reviewCount: item.review_count || 0,
+      })));
     }
   };
 
@@ -650,28 +758,46 @@ const TruckDetailPage = () => {
                       <h4>{item.name}</h4>
                       <span className="menu-item-price">{item.price}</span>
                     </div>
+                    {item.averageRating > 0 && (
+                      <div className="menu-item-rating">
+                        {Icons.star}
+                        <span>{item.averageRating.toFixed(1)}</span>
+                        <span className="rating-count">({item.reviewCount})</span>
+                      </div>
+                    )}
                     <p className="menu-item-desc">{item.description}</p>
-                    <button
-                      className={`add-to-cart-btn ${addedItem === item.id ? 'added' : ''}`}
-                      onClick={() => handleAddToCart(item)}
-                    >
-                      {addedItem === item.id ? (
-                        <>
-                          Added!
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        </>
-                      ) : (
-                        <>
-                          Add to Order
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                          </svg>
-                        </>
+                    <div className="menu-item-actions">
+                      <button
+                        className={`add-to-cart-btn ${addedItem === item.id ? 'added' : ''}`}
+                        onClick={() => handleAddToCart(item)}
+                      >
+                        {addedItem === item.id ? (
+                          <>
+                            Added!
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          </>
+                        ) : (
+                          <>
+                            Add to Order
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <line x1="12" y1="5" x2="12" y2="19"></line>
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                          </>
+                        )}
+                      </button>
+                      {orderedItemIds.includes(item.id) && (
+                        <button
+                          className="rate-item-btn"
+                          onClick={() => handleOpenItemRating(item)}
+                          title="Rate this item"
+                        >
+                          {Icons.star}
+                        </button>
                       )}
-                    </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -683,12 +809,30 @@ const TruckDetailPage = () => {
         <div className="detail-section reviews-section">
           <div className="section-header-detail">
             <h3>Reviews ({truck.reviewCount || reviews.length})</h3>
+            {canReview && (
+              <button className="write-review-btn" onClick={handleOpenReviewModal}>
+                {Icons.star}
+                {existingReview ? 'Edit Review' : 'Write a Review'}
+              </button>
+            )}
           </div>
+
+          {!canReview && user && (
+            <div className="review-eligibility-notice">
+              <span>🛒</span>
+              <p>Complete an order to leave a review</p>
+            </div>
+          )}
 
           {reviews.length === 0 ? (
             <div className="no-reviews">
               <span className="no-reviews-emoji">📝</span>
-              <p>No reviews yet. Be the first to review!</p>
+              <p>No reviews yet. {canReview ? 'Be the first to review!' : 'Order to be the first reviewer!'}</p>
+              {canReview && (
+                <button className="write-review-btn-empty" onClick={handleOpenReviewModal}>
+                  Write a Review
+                </button>
+              )}
             </div>
           ) : (
             <div className="reviews-list">
@@ -733,6 +877,30 @@ const TruckDetailPage = () => {
       </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        truck={truck}
+        userId={user?.id}
+        existingReview={existingReview}
+        onSuccess={handleReviewSuccess}
+      />
+
+      {/* Menu Item Rating Modal */}
+      <MenuItemRatingModal
+        isOpen={showItemRatingModal}
+        onClose={() => {
+          setShowItemRatingModal(false);
+          setSelectedItemForRating(null);
+          setExistingItemRating(null);
+        }}
+        item={selectedItemForRating}
+        userId={user?.id}
+        existingRating={existingItemRating}
+        onSuccess={handleItemRatingSuccess}
+      />
     </div>
   );
 };

@@ -34,13 +34,13 @@
 .logo svg {
   width: 32px;
   height: 32px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .logo-text {
   font-size: 1.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -69,7 +69,7 @@
 
 .search-bar:focus-within {
   background: white;
-  border-color: #e11d48;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
 }
 
@@ -115,7 +115,7 @@
 .location-icon svg {
   width: 16px;
   height: 16px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .location-text {
@@ -149,7 +149,7 @@
 
 .order-type-toggle .type-btn.active {
   background: white;
-  color: #e11d48;
+  color: var(--primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -188,7 +188,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fef2f2;
+  background: var(--primary-light);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -198,7 +198,7 @@
 .cart-btn svg {
   width: 22px;
   height: 22px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .cart-btn:hover {
@@ -211,7 +211,7 @@
   right: -2px;
   min-width: 18px;
   height: 18px;
-  background: #e11d48;
+  background: var(--primary);
   color: white;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -274,16 +274,16 @@
 }
 
 .nav-item.active {
-  background: #fef2f2;
-  color: #e11d48;
+  background: var(--primary-light);
+  color: var(--primary);
 }
 
 .nav-item.active svg {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .nav-item.signin {
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
 }
 
@@ -376,9 +376,9 @@
 }
 
 .category-pill.active {
-  background: #fef2f2;
-  border-color: #e11d48;
-  color: #e11d48;
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .cat-emoji {
@@ -404,7 +404,7 @@
 }
 
 .promo-card.primary {
-  background: linear-gradient(135deg, #fef2f2, #fff1f2);
+  background: linear-gradient(135deg, var(--primary-light), #fff1f2);
   border: 1px solid #fecdd3;
 }
 
@@ -420,7 +420,7 @@
 }
 
 .promo-card.primary h3 {
-  color: #be123c;
+  color: var(--primary-dark);
 }
 
 .promo-content p {
@@ -443,13 +443,13 @@
 }
 
 .promo-card.primary .promo-btn {
-  background: #e11d48;
+  background: var(--primary);
   color: white;
   border: none;
 }
 
 .promo-card.primary .promo-btn:hover {
-  background: #be123c;
+  background: var(--primary-dark);
 }
 
 .promo-btn.outline {
@@ -511,7 +511,7 @@
 .see-all {
   background: none;
   border: none;
-  color: #e11d48;
+  color: var(--primary);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -622,7 +622,7 @@
 }
 
 .favorite-btn.active svg {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .favorite-btn:hover {
@@ -645,7 +645,7 @@
   position: absolute;
   bottom: 10px;
   left: 10px;
-  background: #e11d48;
+  background: var(--primary);
   color: white;
   padding: 4px 10px;
   border-radius: 12px;
@@ -802,7 +802,7 @@
 
 .clear-filters {
   padding: 10px 24px;
-  background: #e11d48;
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 20px;
@@ -813,7 +813,7 @@
 }
 
 .clear-filters:hover {
-  background: #be123c;
+  background: var(--primary-dark);
 }
 
 /* Responsive */
@@ -931,7 +931,7 @@
 .footer-logo svg {
   width: 24px;
   height: 24px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .footer-logo-image {
@@ -976,5 +976,334 @@
   .footer-links {
     flex-wrap: wrap;
     justify-content: center;
+  }
+}
+
+/* ================================
+   MOBILE LAYOUT ADJUSTMENTS
+   Mobile nav styles are in /styles/navigation.css
+   ================================ */
+
+@media (max-width: 768px) {
+  /* Add padding to main content to account for bottom nav */
+  .home-main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Hide footer on mobile - bottom nav replaces it */
+  .home-footer {
+    display: none;
+  }
+}
+
+/* ================================
+   MOBILE HEADER IMPROVEMENTS
+   ================================ */
+
+.mobile-menu-btn {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-menu-btn svg {
+  width: 24px;
+  height: 24px;
+  color: #475569;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .home-header {
+    padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+
+  .header-right .notification-btn {
+    display: none;
+  }
+
+  .header-right .location-picker {
+    display: none;
+  }
+
+  .header-right .order-type-toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+
+  .header-left {
+    flex: 0 0 auto;
+  }
+
+  .header-right {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  .header-center {
+    order: 3;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .search-bar {
+    padding: 12px 16px;
+  }
+
+  .search-bar input {
+    font-size: 1rem;
+  }
+
+  .cart-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .logo-image {
+    height: 32px;
+  }
+}
+
+/* ================================
+   MOBILE CATEGORY PILLS
+   ================================ */
+
+@media (max-width: 640px) {
+  .categories-section {
+    margin: 0 -16px 20px;
+    padding: 0 16px;
+  }
+
+  .category-pill {
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+
+  .cat-emoji {
+    font-size: 1.25rem;
+  }
+}
+
+/* ================================
+   MOBILE PROMO CARDS
+   ================================ */
+
+@media (max-width: 640px) {
+  .promo-section {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .promo-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .promo-content h3 {
+    font-size: 1.125rem;
+  }
+
+  .promo-content p {
+    font-size: 0.8125rem;
+    margin-bottom: 12px;
+  }
+
+  .promo-btn {
+    padding: 10px 18px;
+    font-size: 0.8125rem;
+  }
+
+  .promo-image {
+    display: none;
+  }
+
+  .promo-emoji {
+    display: none;
+  }
+}
+
+/* ================================
+   MOBILE TRUCK CARDS
+   ================================ */
+
+@media (max-width: 640px) {
+  .trucks-section {
+    margin-bottom: 28px;
+  }
+
+  .section-header {
+    margin-bottom: 12px;
+  }
+
+  .section-header h2 {
+    font-size: 1.125rem;
+  }
+
+  .scroll-btns {
+    display: none;
+  }
+
+  .trucks-scroll {
+    margin: 0 -16px;
+    padding: 0 16px 8px;
+    gap: 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .truck-card {
+    flex: 0 0 280px;
+    max-width: 280px;
+    scroll-snap-align: start;
+  }
+
+  .truck-image-container {
+    height: 140px;
+  }
+
+  .truck-info {
+    padding: 12px;
+  }
+
+  .truck-name {
+    font-size: 0.9375rem;
+  }
+
+  .truck-meta {
+    font-size: 0.75rem;
+  }
+
+  .favorite-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Grid section */
+  .trucks-grid-section {
+    margin-top: 28px;
+  }
+
+  .trucks-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .trucks-grid .truck-card {
+    max-width: 100%;
+  }
+
+  .trucks-grid .truck-image-container {
+    height: 180px;
+  }
+}
+
+/* ================================
+   MOBILE WELCOME & NO RESULTS
+   ================================ */
+
+@media (max-width: 640px) {
+  .welcome-section {
+    margin-bottom: 16px;
+  }
+
+  .welcome-section h1 {
+    font-size: 1.375rem;
+  }
+
+  .no-results {
+    padding: 40px 20px;
+  }
+
+  .no-results-emoji {
+    font-size: 3rem;
+  }
+
+  .no-results h3 {
+    font-size: 1.125rem;
+  }
+
+  .clear-filters {
+    min-height: 44px;
+    padding: 12px 24px;
+  }
+}
+
+/* ================================
+   MOBILE SAFE AREAS
+   ================================ */
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .home-page {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ================================
+   MOBILE TOUCH IMPROVEMENTS
+   ================================ */
+
+@media (max-width: 768px) {
+  /* Ensure all interactive elements have proper touch targets */
+  .nav-item,
+  .category-pill,
+  .promo-btn,
+  .see-all,
+  .clear-filters {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Remove hover effects on touch devices */
+  @media (hover: none) {
+    .truck-card:hover {
+      transform: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .favorite-btn:hover {
+      transform: none;
+    }
+  }
+
+  /* Active states for touch */
+  .truck-card:active {
+    transform: scale(0.98);
+  }
+
+  .category-pill:active {
+    transform: scale(0.95);
+  }
+
+  .mobile-nav-item:active {
+    opacity: 0.7;
   }
 }

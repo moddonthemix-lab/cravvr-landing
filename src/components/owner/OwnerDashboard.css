@@ -3,9 +3,9 @@
    ============================================ */
 
 :root {
-  --owner-primary: #e11d48;
-  --owner-primary-light: #ffe4e6;
-  --owner-primary-dark: #be123c;
+  --owner-primary: var(--primary);
+  --owner-primary-light: var(--primary-light);
+  --owner-primary-dark: var(--primary-dark);
   --owner-bg: #f8fafc;
   --owner-sidebar-bg: #1e293b;
   --owner-sidebar-text: #94a3b8;
@@ -1666,7 +1666,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: #fef2f2;
+  background: var(--primary-light);
   border: 1px solid #fecaca;
   border-radius: 8px;
   color: #dc2626;

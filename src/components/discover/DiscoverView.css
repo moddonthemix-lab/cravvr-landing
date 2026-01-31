@@ -3,9 +3,42 @@
 .discover-view {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 80px);
-  background: linear-gradient(180deg, #fef2f2 0%, #ffffff 30%);
+  min-height: calc(100vh - 65px);
+  background: linear-gradient(180deg, var(--primary-light) 0%, #ffffff 30%);
   padding-bottom: 20px;
+}
+
+/* Mobile: Account for bottom nav */
+@media (max-width: 768px) {
+  .discover-view {
+    min-height: calc(100vh - 65px - 70px - env(safe-area-inset-bottom, 0px));
+    padding: 16px 16px 20px;
+  }
+
+  .discover-header {
+    padding: 12px 0;
+  }
+
+  .discover-title h1 {
+    font-size: 24px;
+  }
+
+  .discover-header p {
+    font-size: 13px;
+  }
+
+  .discover-stack {
+    min-height: 360px;
+    padding: 0;
+  }
+
+  .discover-card {
+    max-width: 100%;
+  }
+
+  .discover-actions {
+    padding: 16px 0;
+  }
 }
 
 /* Loading State */
@@ -22,7 +55,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #e5e7eb;
-  border-top-color: #e11d48;
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -54,7 +87,7 @@
   font-size: 28px;
   font-weight: 800;
   margin: 0;
-  background: linear-gradient(135deg, #e11d48, #9333ea);
+  background: linear-gradient(135deg, var(--primary), #9333ea);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -65,11 +98,11 @@
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: #fef2f2;
+  background: var(--primary-light);
   border-radius: 20px;
   font-size: 14px;
   font-weight: 700;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .liked-badge svg {
@@ -267,7 +300,7 @@
 .delivery-time svg {
   width: 14px;
   height: 14px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 /* Card Info */
@@ -333,7 +366,7 @@
 
 .distance {
   font-weight: 600;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .location {
@@ -483,7 +516,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #e11d48 0%, #9333ea 100%);
+  background: linear-gradient(90deg, var(--primary) 0%, #9333ea 100%);
   border-radius: 2px;
   transition: width 0.3s ease;
 }

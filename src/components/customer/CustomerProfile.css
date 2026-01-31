@@ -21,7 +21,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #e5e5e5;
-  border-top-color: #e11d48;
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -97,7 +97,7 @@
 .profile-avatar-large {
   width: 100px;
   height: 100px;
-  background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #f43f5e 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -167,7 +167,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #f43f5e 100%);
   margin: 0;
 }
 
@@ -216,7 +216,7 @@
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  color: #e11d48;
+  color: var(--primary);
   cursor: pointer;
   transition: transform 0.2s;
 }
@@ -320,14 +320,14 @@
   border-radius: 12px;
   font-size: 16px;
   font-weight: 500;
-  color: #e11d48;
+  color: var(--primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .logout-button:hover {
   background: #fff5f5;
-  border-color: #e11d48;
+  border-color: var(--primary);
 }
 
 .logout-button svg {
@@ -381,8 +381,8 @@
 }
 
 .filter-chip:hover {
-  border-color: #e11d48;
-  color: #e11d48;
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .filter-chip.active {
@@ -588,7 +588,7 @@
 }
 
 .favorite-heart.active {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .favorite-heart svg {
@@ -668,7 +668,7 @@
 
 /* Rewards Tab */
 .rewards-hero {
-  background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #f43f5e 100%);
   border-radius: 20px;
   padding: 32px 24px;
   text-align: center;
@@ -776,8 +776,8 @@
 .punch-reward {
   font-size: 13px;
   font-weight: 500;
-  color: #e11d48;
-  background: #ffe4e6;
+  color: var(--primary);
+  background: var(--primary-light);
   padding: 4px 10px;
   border-radius: 12px;
 }
@@ -804,8 +804,8 @@
 }
 
 .punch-circle.filled {
-  background: #e11d48;
-  border-color: #e11d48;
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
@@ -844,7 +844,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .earn-icon svg {
@@ -888,7 +888,7 @@
 }
 
 .address-card.default {
-  border: 2px solid #e11d48;
+  border: 2px solid var(--primary);
 }
 
 .address-icon {
@@ -924,7 +924,7 @@
 .default-badge {
   font-size: 11px;
   font-weight: 600;
-  background: #e11d48;
+  background: var(--primary);
   color: white;
   padding: 2px 8px;
   border-radius: 10px;
@@ -980,8 +980,8 @@
 
 .add-address-btn:hover,
 .add-payment-btn:hover {
-  border-color: #e11d48;
-  color: #e11d48;
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .add-address-btn svg,
@@ -1009,7 +1009,7 @@
 }
 
 .payment-card.default {
-  border: 2px solid #e11d48;
+  border: 2px solid var(--primary);
 }
 
 .card-icon {
@@ -1143,7 +1143,7 @@
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background: #e11d48;
+  background: var(--primary);
 }
 
 .toggle-switch input:checked + .toggle-slider::after {
@@ -1257,7 +1257,7 @@
 }
 
 .delete-account-btn:hover {
-  background: #fef2f2;
+  background: var(--primary-light);
 }
 
 .delete-warning {
@@ -1284,7 +1284,7 @@
 
 .help-search input:focus {
   outline: none;
-  border-color: #e11d48;
+  border-color: var(--primary);
 }
 
 .help-section {
@@ -1366,12 +1366,12 @@
 .contact-icon {
   width: 48px;
   height: 48px;
-  background: #ffe4e6;
+  background: var(--primary-light);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .contact-icon svg {
@@ -1385,19 +1385,146 @@
   color: #1a1a1a;
 }
 
-/* Responsive */
-@media (min-width: 768px) {
+/* Responsive - Full width on desktop */
+@media (min-width: 769px) {
   .customer-profile {
-    max-width: 600px;
-    margin: 0 auto;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
     min-height: 100vh;
+    max-width: none;
+    width: 100%;
+    background: white;
+  }
+
+  .tab-page {
+    min-height: 100vh;
+    background: white;
+  }
+
+  .tab-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 40px;
+  }
+
+  .profile-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .profile-hero {
+    background: white;
+    border-bottom: 1px solid #eee;
+    padding: 48px 20px;
+  }
+
+  .points-banner {
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 16px;
+    margin-top: 24px;
+  }
+
+  .menu-section {
+    max-width: 800px;
+    margin: 24px auto 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #eee;
+  }
+
+  .logout-button {
+    max-width: 800px;
+    margin: 24px auto;
+    width: 100%;
+  }
+
+  .main-profile-header,
+  .profile-header {
+    padding: 16px 40px;
+  }
+
+  /* Orders Tab - wider cards */
+  .orders-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+  }
+
+  .order-card {
+    padding: 20px;
+  }
+
+  /* Favorites Tab - larger grid */
+  .favorites-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .favorite-image {
+    height: 160px;
+  }
+
+  /* Rewards Tab */
+  .rewards-hero {
+    max-width: 600px;
+    margin: 0 auto 32px;
+  }
+
+  .punch-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .earn-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  /* Settings tabs - centered content */
+  .addresses-list,
+  .payment-list,
+  .settings-list,
+  .security-section,
+  .help-section {
+    max-width: 600px;
+  }
+
+  .add-address-btn,
+  .add-payment-btn {
+    max-width: 600px;
+  }
+
+  .danger-zone {
+    max-width: 600px;
+  }
+
+  .help-search {
+    max-width: 600px;
+  }
+
+  .contact-options {
+    max-width: 400px;
   }
 }
 
-@media (min-width: 1024px) {
-  .customer-profile {
-    max-width: 720px;
+@media (min-width: 1200px) {
+  .tab-content {
+    padding: 40px 60px;
+  }
+
+  .orders-list {
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  }
+
+  .favorites-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 24px;
+  }
+
+  .favorite-image {
+    height: 180px;
   }
 }
 
@@ -1444,11 +1571,11 @@
 .reward-ready {
   margin-top: 12px;
   padding: 8px 12px;
-  background: linear-gradient(135deg, #ffe4e6, #fecdd3);
+  background: linear-gradient(135deg, var(--primary-light), #fecdd3);
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #e11d48;
+  color: var(--primary);
   text-align: center;
 }
 

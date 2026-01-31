@@ -1,0 +1,79 @@
+/* StarRatingInput Component */
+
+.star-rating-input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.stars-container {
+  display: flex;
+  gap: 4px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #d1d5db;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-btn:disabled {
+  cursor: default;
+}
+
+.star-btn svg {
+  transition: transform 0.15s ease;
+}
+
+.star-btn:not(:disabled):hover svg {
+  transform: scale(1.15);
+}
+
+.star-btn.filled {
+  color: #fbbf24;
+}
+
+/* Sizes */
+.star-rating-input.sm .star-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.star-rating-input.md .star-btn svg {
+  width: 28px;
+  height: 28px;
+}
+
+.star-rating-input.lg .star-btn svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* Labels */
+.rating-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.rating-label.selected {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Readonly state */
+.star-rating-input.readonly .star-btn {
+  cursor: default;
+  padding: 2px;
+}
+
+.star-rating-input.readonly .stars-container {
+  gap: 2px;
+}

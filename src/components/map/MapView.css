@@ -3,8 +3,42 @@
 .map-view-leaflet {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 65px);
   background: #f8f8f8;
+}
+
+/* Mobile: Account for header + bottom nav */
+@media (max-width: 768px) {
+  .map-view-leaflet {
+    height: calc(100vh - 120px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    min-height: 400px;
+  }
+
+  .map-header-leaflet {
+    padding: 12px 16px;
+  }
+
+  .map-header-leaflet h1 {
+    font-size: 16px;
+  }
+
+  .map-legend-leaflet {
+    bottom: 12px;
+    left: 12px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .map-controls-leaflet {
+    right: 12px;
+    top: 12px;
+  }
+
+  .map-control-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
 }
 
 /* Location Prompt */
@@ -25,7 +59,7 @@
 .location-icon-wrapper {
   width: 80px;
   height: 80px;
-  background: #fef2f2;
+  background: var(--primary-light);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -37,7 +71,7 @@
 .location-icon svg {
   width: 36px;
   height: 36px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 @keyframes pulse-gentle {
@@ -76,7 +110,7 @@
 }
 
 .location-btn.primary {
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
   box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3);
 }
@@ -105,7 +139,7 @@
   width: 48px;
   height: 48px;
   border: 3px solid #e5e7eb;
-  border-top-color: #e11d48;
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto;
@@ -138,7 +172,7 @@
 .map-header-leaflet h1 svg {
   width: 20px;
   height: 20px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .map-list-toggle {
@@ -181,7 +215,7 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  border: 3px solid #e11d48;
+  border: 3px solid var(--primary);
   overflow: hidden;
   background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -256,7 +290,7 @@
   position: absolute;
   width: 16px;
   height: 16px;
-  background: #e11d48;
+  background: var(--primary);
   border: 3px solid white;
   border-radius: 50%;
   top: 50%;
@@ -301,13 +335,13 @@
 }
 
 .legend-marker.regular {
-  border-color: #e11d48;
+  border-color: var(--primary);
   background: white;
 }
 
 .legend-marker.user {
-  border-color: #e11d48;
-  background: #e11d48;
+  border-color: var(--primary);
+  background: var(--primary);
 }
 
 /* Map Controls */
@@ -447,7 +481,7 @@
 }
 
 .popup-status.closed {
-  background: #fef2f2;
+  background: var(--primary-light);
   color: #dc2626;
 }
 
@@ -613,7 +647,7 @@
 }
 
 .list-status.closed {
-  background: #fef2f2;
+  background: var(--primary-light);
   color: #dc2626;
 }
 

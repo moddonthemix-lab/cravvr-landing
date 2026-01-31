@@ -59,7 +59,7 @@
 .cart-title svg {
   width: 24px;
   height: 24px;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .cart-title h2 {
@@ -69,7 +69,7 @@
 }
 
 .cart-badge {
-  background: #e11d48;
+  background: var(--primary);
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
@@ -103,8 +103,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background: #fef2f2;
-  color: #e11d48;
+  background: var(--primary-light);
+  color: var(--primary);
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -231,7 +231,7 @@
 }
 
 .qty-btn:hover {
-  background: #e11d48;
+  background: var(--primary);
   color: white;
 }
 
@@ -262,8 +262,8 @@
 }
 
 .cart-item-remove:hover {
-  background: #fef2f2;
-  color: #e11d48;
+  background: var(--primary-light);
+  color: var(--primary);
 }
 
 .cart-item-remove svg {
@@ -302,7 +302,7 @@
 .cart-checkout-btn {
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
   border: none;
   border-radius: 12px;
@@ -331,7 +331,7 @@
 }
 
 .cart-clear-btn:hover {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 /* Floating Cart Button */
@@ -342,7 +342,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
   border: none;
   box-shadow: 0 4px 16px rgba(225, 29, 72, 0.4);

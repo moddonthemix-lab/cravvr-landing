@@ -47,7 +47,7 @@
   transform: translateX(-50%);
   width: 0;
   height: 3px;
-  background: #e11d48;
+  background: var(--primary);
   border-radius: 0 0 2px 2px;
   transition: width 0.2s ease;
 }
@@ -74,7 +74,7 @@
 
 /* Active state */
 .bottom-nav-item.active {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .bottom-nav-item:not(.bolt):hover {

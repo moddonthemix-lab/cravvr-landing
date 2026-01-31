@@ -80,10 +80,10 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: linear-gradient(135deg, #fef2f2, #fff);
+  background: linear-gradient(135deg, var(--primary-light), #fff);
   border-radius: 12px;
   border: 1px solid #fecdd3;
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .truck-banner svg {
@@ -92,7 +92,7 @@
 }
 
 .truck-banner strong {
-  color: #be123c;
+  color: var(--primary-dark);
 }
 
 /* Order Type Toggle */
@@ -125,13 +125,13 @@
 }
 
 .type-btn.active {
-  background: #fef2f2;
-  border-color: #e11d48;
-  color: #e11d48;
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .type-btn.active svg {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .type-btn:disabled {
@@ -144,7 +144,7 @@
   top: 8px;
   right: 8px;
   font-size: 0.625rem;
-  background: #e11d48;
+  background: var(--primary);
   color: white;
   padding: 2px 6px;
   border-radius: 10px;
@@ -170,7 +170,7 @@
 .item-qty {
   width: 32px;
   height: 32px;
-  background: #e11d48;
+  background: var(--primary);
   color: white;
   border-radius: 8px;
   display: flex;
@@ -211,7 +211,7 @@
 
 .notes-input:focus {
   outline: none;
-  border-color: #e11d48;
+  border-color: var(--primary);
 }
 
 /* Tip Options */
@@ -237,9 +237,9 @@
 }
 
 .tip-btn.active {
-  background: #fef2f2;
-  border-color: #e11d48;
-  color: #e11d48;
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .tip-amount {
@@ -264,7 +264,7 @@
 }
 
 .custom-tip:focus-within {
-  border-color: #e11d48;
+  border-color: var(--primary);
 }
 
 .custom-tip span {
@@ -304,12 +304,12 @@
 }
 
 .payment-option.selected {
-  background: #fef2f2;
-  border-color: #e11d48;
+  background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 .payment-option.selected svg {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 .check-icon {
@@ -364,7 +364,7 @@
 /* Checkout Error */
 .checkout-error {
   padding: 12px 16px;
-  background: #fef2f2;
+  background: var(--primary-light);
   border: 1px solid #fecaca;
   border-radius: 10px;
   color: #dc2626;
@@ -387,7 +387,7 @@
 .place-order-btn {
   width: 100%;
   padding: 18px;
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
   border: none;
   border-radius: 14px;
@@ -511,7 +511,7 @@
   width: 100%;
   max-width: 320px;
   padding: 16px;
-  background: linear-gradient(135deg, #e11d48, #be123c);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
   border: none;
   border-radius: 12px;
@@ -538,7 +538,7 @@
 }
 
 .order-success .btn-secondary:hover {
-  color: #e11d48;
+  color: var(--primary);
 }
 
 /* Mobile Responsive */
