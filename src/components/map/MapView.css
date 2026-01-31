@@ -398,6 +398,12 @@
   cursor: pointer;
 }
 
+.popup-content:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
 .popup-image {
   width: 100%;
   height: 100px;
@@ -544,6 +550,22 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Button reset for accessible card buttons */
+.map-list-card,
+.desktop-list-card {
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.map-list-card:focus-visible,
+.desktop-list-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .map-list-card {

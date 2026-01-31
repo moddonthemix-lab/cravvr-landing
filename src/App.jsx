@@ -1360,8 +1360,7 @@ const Footer = () => (
     <div className="footer-container">
       <div className="footer-brand">
         <a href="/" className="logo">
-          <span className="logo-icon">{Icons.truck}</span>
-          <span className="logo-text">Cravrr</span>
+          <img src="/logo/cravrr-logo-transparent.png" alt="Cravrr" className="footer-logo-image" />
         </a>
         <p>The map-first food truck platform that connects hungry eaters with amazing local trucks.</p>
         <div className="social-links">

@@ -414,7 +414,7 @@ const HomePage = ({ embedded = false }) => {
         <footer className="home-footer">
           <div className="footer-content">
             <div className="footer-brand">
-              <img src="/logo/cravvr-logo.png" alt="Cravrr" className="footer-logo-image" />
+              <img src="/logo/cravrr-logo-transparent.png" alt="Cravrr" className="footer-logo-image" />
             </div>
             <div className="footer-links">
               <a href="/eat">About</a>
