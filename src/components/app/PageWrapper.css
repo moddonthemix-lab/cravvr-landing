@@ -262,7 +262,7 @@
 /* Main Content */
 .page-main {
   flex: 1;
-  max-width: 1000px;
+  min-width: 0; /* Allow flex shrinking */
 }
 
 /* Mobile: hide sidebar, full-width content */

@@ -614,14 +614,17 @@
   }
 }
 
-/* Large desktop - centered layout with more breathing room */
+/* Large desktop - use available width */
 @media (min-width: 1200px) {
   .discover-view {
-    padding: 40px 60px 60px;
+    padding: 40px 80px 60px;
+    justify-content: flex-start;
   }
 
   .discover-header {
     padding: 0 0 32px;
+    width: 100%;
+    max-width: 600px;
   }
 
   .discover-title h1 {
@@ -635,19 +638,23 @@
 
   .discover-stack {
     min-height: 580px;
+    width: 100%;
+    max-width: 600px;
   }
 
   .discover-card {
-    max-width: 500px;
+    max-width: 100%;
+    width: 100%;
     border-radius: 32px;
   }
 
   .discover-card.next-card {
-    max-width: 500px;
+    max-width: 100%;
+    width: calc(100% - 40px);
   }
 
   .card-image-container {
-    height: 360px;
+    height: 380px;
   }
 
   .card-header h2 {
@@ -661,6 +668,8 @@
   .discover-actions {
     gap: 36px;
     padding: 32px;
+    width: 100%;
+    max-width: 600px;
   }
 
   .action-btn.nope,
@@ -681,7 +690,66 @@
   }
 
   .discover-progress {
-    max-width: 500px;
+    max-width: 600px;
+  }
+}
+
+/* Extra large desktop - even wider cards */
+@media (min-width: 1400px) {
+  .discover-view {
+    padding: 50px 100px 70px;
+  }
+
+  .discover-header {
+    max-width: 700px;
+  }
+
+  .discover-stack {
+    max-width: 700px;
+    min-height: 620px;
+  }
+
+  .card-image-container {
+    height: 420px;
+  }
+
+  .card-header h2 {
+    font-size: 30px;
+  }
+
+  .card-info {
+    padding: 32px;
+  }
+
+  .card-description {
+    font-size: 16px;
+    -webkit-line-clamp: 3;
+  }
+
+  .discover-actions {
+    max-width: 700px;
+    gap: 40px;
+    padding: 36px;
+  }
+
+  .action-btn.nope,
+  .action-btn.like {
+    width: 88px;
+    height: 88px;
+  }
+
+  .action-btn.info {
+    width: 70px;
+    height: 70px;
+  }
+
+  .action-btn svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .discover-progress {
+    max-width: 700px;
   }
 }
 
