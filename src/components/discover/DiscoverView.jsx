@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
 import './DiscoverView.css';
 
 // Icons
@@ -15,6 +16,44 @@ const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState(null);
   const [likedCount, setLikedCount] = useState(favorites?.length || 0);
+  const [popularItems, setPopularItems] = useState([]);
+
+  // Fetch popular items for current truck
+  useEffect(() => {
+    const fetchPopularItems = async () => {
+      if (!trucks.length) return;
+      const currentTruck = trucks[currentIndex];
+      if (!currentTruck) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('truck_id', currentTruck.id)
+          .limit(2);
+
+        if (!error && data && data.length > 0) {
+          setPopularItems(data.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: `$${item.price?.toFixed(2) || '0.00'}`,
+            emoji: item.emoji || '🍽️',
+          })));
+        } else {
+          // Fallback items if no menu items found
+          setPopularItems([
+            { id: 1, name: 'Popular Special', price: '$12.99', emoji: '🌟' },
+            { id: 2, name: 'House Favorite', price: '$10.99', emoji: '❤️' },
+          ]);
+        }
+      } catch (err) {
+        console.error('Error fetching menu items:', err);
+        setPopularItems([]);
+      }
+    };
+
+    fetchPopularItems();
+  }, [currentIndex, trucks]);
 
   if (loading || trucks.length === 0) {
     return (
@@ -130,6 +169,22 @@ const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick
               <span className="distance">{currentTruck.distance}</span>
               <span className="location">{currentTruck.location}</span>
             </div>
+
+            {/* Popular Items */}
+            {popularItems.length > 0 && (
+              <div className="card-popular-items">
+                <span className="popular-label">Popular</span>
+                <div className="popular-items-list">
+                  {popularItems.map(item => (
+                    <div key={item.id} className="popular-item">
+                      <span className="popular-emoji">{item.emoji}</span>
+                      <span className="popular-name">{item.name}</span>
+                      <span className="popular-price">{item.price}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

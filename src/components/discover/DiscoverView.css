@@ -340,6 +340,59 @@
   color: #64748b;
 }
 
+/* Popular Items */
+.card-popular-items {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.popular-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.popular-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popular-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.popular-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.popular-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popular-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
 /* Action Buttons */
 .discover-actions {
   display: flex;
