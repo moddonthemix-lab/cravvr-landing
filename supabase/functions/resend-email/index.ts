@@ -45,24 +45,20 @@ function isAuthHookPayload(payload: any): payload is AuthHookPayload {
   return payload?.user?.email && payload?.email_data?.email_action_type
 }
 
+// Supabase project URL for auth verification
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || 'https://coqwihsmmigktqqdnmis.supabase.co'
+
 // Build confirmation/reset URL from auth hook data
+// This goes through Supabase's auth verification endpoint
 function buildActionUrl(emailData: AuthHookPayload['email_data']): string {
   const { token_hash, redirect_to, email_action_type } = emailData
 
-  // Map action types to URL paths
-  const pathMap: Record<string, string> = {
-    recovery: '/reset-password',
-    signup: '/confirm',
-    magiclink: '/auth/callback',
-    invite: '/accept-invite',
-    email_change: '/confirm-email-change',
-  }
+  // The URL must go through Supabase's verification endpoint
+  // Format: {SUPABASE_URL}/auth/v1/verify?token={token_hash}&type={type}&redirect_to={redirect}
+  const finalRedirect = redirect_to || SITE_URL
+  const encodedRedirect = encodeURIComponent(finalRedirect)
 
-  const path = pathMap[email_action_type] || '/auth/callback'
-  const baseUrl = redirect_to || SITE_URL
-
-  // Construct the confirmation URL
-  return `${baseUrl}${path}?token_hash=${token_hash}&type=${email_action_type}`
+  return `${SUPABASE_URL}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${encodedRedirect}`
 }
 
 // Send email via SendGrid
