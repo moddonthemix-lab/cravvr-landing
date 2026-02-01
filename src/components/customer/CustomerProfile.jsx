@@ -136,9 +136,140 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEdit
   );
 };
 
+// Review Modal
+const ReviewModal = ({ isOpen, onClose, order, onSubmit }) => {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (rating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await onSubmit({ rating, comment, orderId: order.id, truckId: order.truck_id });
+      onClose();
+      setRating(0);
+      setComment('');
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      alert('Failed to submit review');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal review-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Rate Your Order</h2>
+          <button className="close-btn" onClick={onClose}>{Icons.x}</button>
+        </div>
+        <div className="review-truck-info">
+          <h3>{order?.truck_name}</h3>
+          <p>How was your experience?</p>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="rating-input">
+            {[1, 2, 3, 4, 5].map(star => (
+              <button
+                key={star}
+                type="button"
+                className={`star-btn ${star <= rating ? 'active' : ''}`}
+                onClick={() => setRating(star)}
+              >
+                {Icons.star}
+              </button>
+            ))}
+          </div>
+          <div className="form-group">
+            <label>Comment (Optional)</label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Share your thoughts about the food, service, etc."
+              rows={4}
+            />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? 'Submitting...' : 'Submit Review'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Track Order Modal
+const TrackOrderModal = ({ isOpen, onClose, order }) => {
+  if (!isOpen) return null;
+
+  const statusSteps = [
+    { key: 'pending', label: 'Order Placed', icon: Icons.check },
+    { key: 'confirmed', label: 'Confirmed', icon: Icons.check },
+    { key: 'preparing', label: 'Preparing', icon: Icons.clock },
+    { key: 'ready', label: 'Ready for Pickup', icon: Icons.truck },
+  ];
+
+  const currentIndex = statusSteps.findIndex(s => s.key === order?.status);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal track-order-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Track Your Order</h2>
+          <button className="close-btn" onClick={onClose}>{Icons.x}</button>
+        </div>
+        <div className="order-tracking-info">
+          <h3>{order?.truck_name}</h3>
+          <p className="order-number">Order #{order?.order_number}</p>
+          <p className="order-time">Placed {formatDate(order?.created_at)}</p>
+        </div>
+        <div className="tracking-steps">
+          {statusSteps.map((step, index) => (
+            <div key={step.key} className={`tracking-step ${index <= currentIndex ? 'completed' : ''} ${index === currentIndex ? 'current' : ''}`}>
+              <div className="step-icon">{step.icon}</div>
+              <div className="step-label">{step.label}</div>
+              {index < statusSteps.length - 1 && <div className="step-line" />}
+            </div>
+          ))}
+        </div>
+        <div className="order-items-summary">
+          <h4>Order Items:</h4>
+          {order?.items && order.items.length > 0 ? (
+            <ul>
+              {order.items.map((item, i) => (
+                <li key={i}>{item.name} x{item.quantity}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>{order?.item_count || 0} items</p>
+          )}
+        </div>
+        <div className="order-total-summary">
+          <strong>Total:</strong> ${parseFloat(order?.total || 0).toFixed(2)}
+        </div>
+        <button className="btn-primary full-width" onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+};
+
 // Orders Tab
-const OrdersTab = ({ onBack, orders, loading }) => {
+const OrdersTab = ({ onBack, orders, loading, onReorder, onReview }) => {
   const [filter, setFilter] = useState('all');
+  const [reviewingOrder, setReviewingOrder] = useState(null);
+  const [trackingOrder, setTrackingOrder] = useState(null);
 
   // Map database status to display status
   const getDisplayStatus = (status) => {
@@ -212,12 +343,12 @@ const OrdersTab = ({ onBack, orders, loading }) => {
                   <div className="order-actions">
                     {getDisplayStatus(order.status) === 'delivered' && (
                       <>
-                        <button className="order-btn secondary">
+                        <button className="order-btn secondary" onClick={() => onReorder(order)}>
                           {Icons.repeat}
                           Reorder
                         </button>
                         {!order.has_review && (
-                          <button className="order-btn primary">
+                          <button className="order-btn primary" onClick={() => setReviewingOrder(order)}>
                             {Icons.star}
                             Rate
                           </button>
@@ -225,7 +356,7 @@ const OrdersTab = ({ onBack, orders, loading }) => {
                       </>
                     )}
                     {getDisplayStatus(order.status) === 'preparing' && (
-                      <button className="order-btn primary">
+                      <button className="order-btn primary" onClick={() => setTrackingOrder(order)}>
                         {Icons.truck}
                         Track Order
                       </button>
@@ -252,6 +383,19 @@ const OrdersTab = ({ onBack, orders, loading }) => {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <ReviewModal
+        isOpen={reviewingOrder !== null}
+        onClose={() => setReviewingOrder(null)}
+        order={reviewingOrder}
+        onSubmit={onReview}
+      />
+      <TrackOrderModal
+        isOpen={trackingOrder !== null}
+        onClose={() => setTrackingOrder(null)}
+        order={trackingOrder}
+      />
     </div>
   );
 };
@@ -1445,6 +1589,51 @@ const CustomerProfile = ({ onBack }) => {
     }
   };
 
+  // Reorder functionality
+  const handleReorder = async (order) => {
+    try {
+      // TODO: Implement cart context to add items
+      // For now, just navigate to the truck page
+      alert(`Reordering from ${order.truck_name}. (Feature coming soon - will add items to cart)`);
+    } catch (err) {
+      console.error('Error reordering:', err);
+    }
+  };
+
+  // Submit review
+  const handleSubmitReview = async ({ rating, comment, orderId, truckId }) => {
+    try {
+      // Insert review
+      const { error: reviewError } = await supabase
+        .from('reviews')
+        .insert([{
+          customer_id: user.id,
+          truck_id: truckId,
+          order_id: orderId,
+          rating,
+          comment,
+        }]);
+
+      if (reviewError) throw reviewError;
+
+      // Mark order as reviewed
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({ has_review: true })
+        .eq('id', orderId);
+
+      if (orderError) throw orderError;
+
+      // Refresh orders to show review
+      fetchOrders();
+
+      alert('Thank you for your review!');
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      throw err;
+    }
+  };
+
   // Fetch data on mount
   useEffect(() => {
     if (user?.id) {
@@ -1551,6 +1740,8 @@ const CustomerProfile = ({ onBack }) => {
             onBack={handleTabBack}
             orders={orders}
             loading={loadingOrders}
+            onReorder={handleReorder}
+            onReview={handleSubmitReview}
           />
         );
       case 'favorites':
