@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS email_logs (
   sent_at TIMESTAMPTZ DEFAULT NOW(),
   status TEXT DEFAULT 'sent', -- 'sent', 'failed', 'bounced'
   error_message TEXT,
-  order_id UUID REFERENCES orders(id) ON DELETE SET NULL, -- Optional: link to order
+  order_id UUID, -- Optional: link to order (no FK constraint for flexibility)
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- Optional: link to user
   metadata JSONB -- Store any additional email data
 );
