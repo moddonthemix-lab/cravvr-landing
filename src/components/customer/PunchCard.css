@@ -1,0 +1,439 @@
+/* ============================================
+   REALISTIC PAPER PUNCH CARD STYLES
+   ============================================ */
+
+.paper-punch-card {
+  position: relative;
+  background: linear-gradient(135deg, #fefefe 0%, #f8f6f1 50%, #f5f3ee 100%);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  /* Paper texture effect */
+  background-image:
+    linear-gradient(135deg, #fefefe 0%, #f8f6f1 50%, #f5f3ee 100%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  border: 1px solid #e8e4dc;
+}
+
+.paper-punch-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.01) 2px,
+      rgba(0, 0, 0, 0.01) 4px
+    );
+  pointer-events: none;
+}
+
+.paper-punch-card.reward-ready {
+  animation: cardGlow 2s ease-in-out infinite;
+  border-color: var(--primary);
+}
+
+@keyframes cardGlow {
+  0%, 100% {
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.08),
+      0 4px 12px rgba(0, 0, 0, 0.05),
+      0 0 20px rgba(239, 68, 68, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.08),
+      0 4px 12px rgba(0, 0, 0, 0.05),
+      0 0 30px rgba(239, 68, 68, 0.25);
+  }
+}
+
+/* Perforated edges */
+.card-perforation {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.card-perforation.top {
+  top: 0;
+}
+
+.card-perforation.bottom {
+  bottom: 0;
+}
+
+.card-perforation::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    #d4d0c8 0px,
+    #d4d0c8 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* Card header */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #d4d0c8;
+}
+
+.card-logo {
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.card-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-brand {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.card-type {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8b8680;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* Truck name */
+.card-truck-name {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.truck-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #a09a94;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card-truck-name h3 {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d2a26;
+}
+
+/* Punch holes grid */
+.punch-holes-container {
+  background: linear-gradient(180deg, #f0ece4 0%, #e8e4dc 100%);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #d4d0c8;
+}
+
+.punch-holes-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.punch-hole {
+  position: relative;
+  aspect-ratio: 1;
+  background: white;
+  border-radius: 50%;
+  border: 2px dashed #c4c0b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.punch-hole .hole-number {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b4b0a8;
+}
+
+.punch-hole.punched {
+  background: linear-gradient(135deg, var(--primary) 0%, #dc2626 100%);
+  border: 2px solid var(--primary);
+  box-shadow:
+    0 2px 6px rgba(239, 68, 68, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.punch-hole.punched .hole-number {
+  display: none;
+}
+
+.punch-stamp {
+  position: absolute;
+  inset: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: stampIn 0.3s ease-out;
+}
+
+@keyframes stampIn {
+  0% {
+    transform: scale(1.5) rotate(-10deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.stamp-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+/* Progress section */
+.card-progress {
+  margin-bottom: 16px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #e8e4dc;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, #f43f5e 100%);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b6660;
+  text-align: center;
+  display: block;
+}
+
+.paper-punch-card.reward-ready .progress-text {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* Reward section */
+.card-reward-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #fef7f7 0%, #fef2f2 100%);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.reward-badge {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--primary) 0%, #dc2626 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.reward-badge svg {
+  width: 20px;
+  height: 20px;
+}
+
+.reward-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.reward-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #a09a94;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reward-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2d2a26;
+}
+
+.completed-badge {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+/* Claim button */
+.claim-reward-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--primary) 0%, #dc2626 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  margin-bottom: 12px;
+}
+
+.claim-reward-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.claim-reward-btn:active {
+  transform: translateY(0);
+}
+
+.claim-reward-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Card footer */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px dashed #d4d0c8;
+}
+
+.card-terms {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8b8680;
+}
+
+.card-id {
+  font-size: 10px;
+  font-weight: 600;
+  color: #b4b0a8;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (min-width: 769px) {
+  .paper-punch-card {
+    padding: 24px;
+  }
+
+  .card-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .card-brand {
+    font-size: 20px;
+  }
+
+  .card-truck-name h3 {
+    font-size: 18px;
+  }
+
+  .punch-holes-grid {
+    gap: 12px;
+  }
+
+  .punch-hole .hole-number {
+    font-size: 12px;
+  }
+}
+
+/* Empty state punch card preview */
+.empty-punch-card-preview {
+  background: linear-gradient(135deg, #fefefe 0%, #f8f6f1 50%, #f5f3ee 100%);
+  border: 2px dashed #d4d0c8;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+}
+
+.empty-punch-card-preview .preview-logo {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  opacity: 0.5;
+}
+
+.empty-punch-card-preview .preview-text {
+  font-size: 14px;
+  color: #8b8680;
+  margin: 0;
+}

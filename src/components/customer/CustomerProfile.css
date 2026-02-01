@@ -795,10 +795,11 @@
 .punch-cards {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
-.punch-card {
+/* Legacy punch card styles kept for backwards compatibility */
+.punch-card-legacy {
   background: white;
   border-radius: 16px;
   padding: 16px;
@@ -1553,8 +1554,8 @@
 
   .punch-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
   }
 
   .earn-methods {

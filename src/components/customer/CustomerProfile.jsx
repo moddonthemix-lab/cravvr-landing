@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { formatDate } from '../../utils/formatters';
+import PunchCard from './PunchCard';
 import './CustomerProfile.css';
 
 // Header Component
@@ -330,34 +331,21 @@ const RewardsTab = ({ onBack, points, checkIns, loading }) => {
           {loading ? (
             <div className="loading-state">{Icons.loader} Loading...</div>
           ) : punchCards.length === 0 ? (
-            <div className="empty-state">
-              <p>No punch cards yet. Check in at food trucks to start earning rewards!</p>
+            <div className="empty-punch-card-preview">
+              <img src="/logo/apple-touch-icon.png" alt="Cravrr" className="preview-logo" />
+              <p className="preview-text">No punch cards yet. Check in at food trucks to start earning rewards!</p>
             </div>
           ) : (
             <div className="punch-cards">
               {punchCards.map(card => (
-                <div className="punch-card" key={card.id}>
-                  <div className="punch-card-header">
-                    <h4>{card.truck}</h4>
-                    <span className="punch-reward">{card.reward}</span>
-                  </div>
-                  <div className="punch-progress">
-                    <div className="punch-circles">
-                      {Array.from({ length: card.total }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`punch-circle ${i < (card.punches % card.total) || (card.punches >= card.total && i < card.total) ? 'filled' : ''}`}
-                        >
-                          {(i < (card.punches % card.total) || (card.punches >= card.total && i < card.total)) && Icons.check}
-                        </div>
-                      ))}
-                    </div>
-                    <span className="punch-count">{card.punches % card.total}/{card.total}</span>
-                  </div>
-                  {card.punches >= card.total && (
-                    <div className="reward-ready">Reward ready to claim!</div>
-                  )}
-                </div>
+                <PunchCard
+                  key={card.id}
+                  truckName={card.truck}
+                  punches={card.punches}
+                  total={card.total}
+                  reward={card.reward}
+                  onClaim={() => alert(`Claiming reward from ${card.truck}! (Coming soon)`)}
+                />
               ))}
             </div>
           )}
