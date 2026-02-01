@@ -4,6 +4,8 @@
  * Helper functions for uploading and managing images in Supabase Storage
  */
 
+import { supabase } from './supabase';
+
 /**
  * Upload a truck image
  * @param {File} file - The image file to upload
@@ -46,12 +48,6 @@ export const uploadProfileImage = async (file, userId) => {
  * @returns {Promise<string>} The public URL of the uploaded image
  */
 export const uploadImage = async (file, bucket = 'images', folder = '') => {
-  const supabase = window.supabaseClient;
-
-  if (!supabase) {
-    throw new Error('Supabase client not initialized');
-  }
-
   // Validate file
   if (!file) {
     throw new Error('No file provided');
@@ -100,9 +96,7 @@ export const uploadImage = async (file, bucket = 'images', folder = '') => {
  * @returns {Promise<boolean>} True if deletion was successful
  */
 export const deleteImage = async (imageUrl, bucket = 'images') => {
-  const supabase = window.supabaseClient;
-
-  if (!supabase || !imageUrl) {
+  if (!imageUrl) {
     return false;
   }
 

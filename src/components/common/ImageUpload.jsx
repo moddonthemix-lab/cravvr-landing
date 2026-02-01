@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Icons } from './Icons';
+import { supabase } from '../../lib/supabase';
 import './ImageUpload.css';
 
 /**
@@ -69,12 +70,6 @@ const ImageUpload = ({
 
   // Upload image to Supabase Storage
   const uploadImage = async (file, bucketName, folderPath) => {
-    const supabase = window.supabaseClient;
-
-    if (!supabase) {
-      throw new Error('Supabase client not initialized');
-    }
-
     // Generate unique filename
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;

@@ -73,6 +73,7 @@ CREATE TABLE menu_items (
   name TEXT NOT NULL,
   description TEXT,
   price DECIMAL(10, 2),
+  image_url TEXT,
   emoji TEXT,
   category TEXT,
   is_available BOOLEAN DEFAULT true,

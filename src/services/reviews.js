@@ -13,8 +13,8 @@ export const transformReview = (review) => ({
   comment: review.comment,
   createdAt: review.created_at,
   updatedAt: review.updated_at,
-  customerName: review.profiles?.full_name || 'Anonymous',
-  customerAvatar: review.profiles?.avatar_url,
+  customerName: review.customers?.profiles?.name || 'Anonymous',
+  customerAvatar: review.customers?.avatar_url,
   _raw: review,
 });
 
@@ -26,7 +26,10 @@ export const fetchTruckReviews = async (truckId) => {
     .from('reviews')
     .select(`
       *,
-      profiles:customer_id (full_name, avatar_url)
+      customers!customer_id(
+        avatar_url,
+        profiles(name)
+      )
     `)
     .eq('truck_id', truckId)
     .order('created_at', { ascending: false });

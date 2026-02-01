@@ -1216,7 +1216,9 @@ const OwnerDashboard = () => {
         .select(`
           *,
           order_items(count),
-          profiles:customer_id(name)
+          customers!customer_id(
+            profiles(name)
+          )
         `)
         .in('truck_id', truckIds)
         .order('created_at', { ascending: false })
@@ -1226,7 +1228,7 @@ const OwnerDashboard = () => {
 
       const formattedOrders = (ordersData || []).map(order => ({
         ...order,
-        customer_name: order.profiles?.name || 'Customer',
+        customer_name: order.customers?.profiles?.name || 'Customer',
         item_count: order.order_items?.[0]?.count || 0,
       }));
 
@@ -1306,7 +1308,9 @@ const OwnerDashboard = () => {
             .select(`
               *,
               order_items(count),
-              profiles:customer_id(name)
+              customers!customer_id(
+                profiles(name)
+              )
             `)
             .eq('id', payload.new.id)
             .single();
@@ -1314,7 +1318,7 @@ const OwnerDashboard = () => {
           if (!error && newOrder) {
             const formattedOrder = {
               ...newOrder,
-              customer_name: newOrder.profiles?.name || 'Customer',
+              customer_name: newOrder.customers?.profiles?.name || 'Customer',
               item_count: newOrder.order_items?.[0]?.count || 0,
             };
             setOrders(prev => [formattedOrder, ...prev]);

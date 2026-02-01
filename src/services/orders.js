@@ -58,7 +58,10 @@ export const fetchTruckOrders = async (truckId, status = null) => {
     .from('orders')
     .select(`
       *,
-      profiles:customer_id (full_name, phone)
+      customers!customer_id(
+        phone,
+        profiles(name)
+      )
     `)
     .eq('truck_id', truckId)
     .order('created_at', { ascending: false });
