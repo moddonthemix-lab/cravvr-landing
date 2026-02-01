@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Truck is Approved! - Cravvr</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f7f7f7;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 48px 40px; text-align: center;">
+              <div style="width: 80px; height: 80px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 40px;">🎉</div>
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">Congratulations!</h1>
+              <p style="margin: 12px 0 0; color: rgba(255, 255, 255, 0.95); font-size: 18px;">Your truck has been approved</p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 48px 40px;">
+              <p style="margin: 0 0 24px; color: #666; font-size: 16px; line-height: 1.6;">
+                Hi {{ownerName}},
+              </p>
+
+              <p style="margin: 0 0 24px; color: #666; font-size: 16px; line-height: 1.6;">
+                Great news! <strong>{{truckName}}</strong> has been approved and is now live on Cravvr! 🚚✨
+              </p>
+
+              <p style="margin: 0 0 32px; color: #666; font-size: 16px; line-height: 1.6;">
+                You can now start receiving orders from hungry customers in your area. Here's what you can do next:
+              </p>
+
+              <!-- Next Steps -->
+              <table role="presentation" style="width: 100%; margin: 24px 0;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 28px; border-radius: 12px;">
+                    <h3 style="margin: 0 0 20px; color: #1a1a1a; font-size: 18px; font-weight: 600;">Getting Started</h3>
+                    <table role="presentation" style="width: 100%;">
+                      <tr>
+                        <td style="padding: 0 0 16px;">
+                          <div style="display: flex; align-items: flex-start;">
+                            <div style="width: 32px; height: 32px; background: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px; flex-shrink: 0; margin-right: 16px;">1</div>
+                            <div>
+                              <strong style="color: #1a1a1a; font-size: 15px; display: block; margin-bottom: 4px;">Complete your menu</strong>
+                              <span style="color: #666; font-size: 14px;">Add photos, descriptions, and prices for your items</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0 0 16px;">
+                          <div style="display: flex; align-items: flex-start;">
+                            <div style="width: 32px; height: 32px; background: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px; flex-shrink: 0; margin-right: 16px;">2</div>
+                            <div>
+                              <strong style="color: #1a1a1a; font-size: 15px; display: block; margin-bottom: 4px;">Set your location & hours</strong>
+                              <span style="color: #666; font-size: 14px;">Let customers know when and where to find you</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0;">
+                          <div style="display: flex; align-items: flex-start;">
+                            <div style="width: 32px; height: 32px; background: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px; flex-shrink: 0; margin-right: 16px;">3</div>
+                            <div>
+                              <strong style="color: #1a1a1a; font-size: 15px; display: block; margin-bottom: 4px;">Start accepting orders</strong>
+                              <span style="color: #666; font-size: 14px;">Monitor and manage orders from your dashboard</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" style="margin: 32px 0;">
+                <tr>
+                  <td style="text-align: center;">
+                    <a href="{{dashboardLink}}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 12px;">Go to Dashboard</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0; color: #666; font-size: 14px; line-height: 1.6;">
+                Need help? Check out our <a href="{{ownerGuideLink}}" style="color: #e11d48; text-decoration: none;">Owner's Guide</a> or contact our support team at <a href="mailto:support@cravvr.com" style="color: #e11d48; text-decoration: none;">support@cravvr.com</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f7f7f7; padding: 32px 40px; border-top: 1px solid #e5e5e5;">
+              <p style="margin: 0 0 16px; color: #999; font-size: 13px; text-align: center;">
+                Welcome to the Cravvr family! 🌮
+              </p>
+              <p style="margin: 0; color: #999; font-size: 13px; text-align: center;">
+                © {{year}} Cravvr. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
