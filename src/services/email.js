@@ -24,7 +24,7 @@ const TEMPLATES = {
 
 // Supabase Edge Function URL
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-const SEND_EMAIL_FUNCTION = `${SUPABASE_URL}/functions/v1/send-email`
+const SEND_EMAIL_FUNCTION = `${SUPABASE_URL}/functions/v1/resend-email`
 
 /**
  * Base function to send emails through SendGrid
