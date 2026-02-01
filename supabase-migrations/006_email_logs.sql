@@ -31,7 +31,7 @@ CREATE POLICY "Admins can view all email logs"
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.user_id = auth.uid()
+      WHERE profiles.id = auth.uid()
       AND profiles.role = 'admin'
     )
   );
