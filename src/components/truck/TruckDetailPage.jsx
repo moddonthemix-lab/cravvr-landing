@@ -85,6 +85,16 @@ const TruckDetailPage = () => {
   // Refs for scrolling
   const featuredScrollRef = useRef(null);
 
+  // Handle sign out with navigation
+  const handleSignOut = async () => {
+    try {
+      navigate('/', { replace: true });
+      await signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
+  };
+
   // Fetch truck data if not passed via state
   useEffect(() => {
     const fetchTruck = async () => {
@@ -485,7 +495,8 @@ const TruckDetailPage = () => {
                 {Icons.user}
                 <span>Account</span>
               </button>
-              <button className="nav-item signout" onClick={signOut}>
+              <button className="nav-item signout" onClick={handleSignOut}>
+                {Icons.logOut}
                 <span>Sign Out</span>
               </button>
             </>

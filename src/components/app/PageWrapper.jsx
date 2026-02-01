@@ -16,6 +16,16 @@ const PageWrapper = ({ children, activeNav }) => {
     return location.pathname === path;
   };
 
+  // Handle sign out with navigation
+  const handleSignOut = async () => {
+    try {
+      navigate('/', { replace: true });
+      await signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
+  };
+
   return (
     <div className="page-wrapper">
       {/* Header */}
@@ -97,7 +107,8 @@ const PageWrapper = ({ children, activeNav }) => {
                   {Icons.user}
                   <span>Account</span>
                 </button>
-                <button className="nav-item signout" onClick={signOut}>
+                <button className="nav-item signout" onClick={handleSignOut}>
+                  {Icons.logOut}
                   <span>Sign Out</span>
                 </button>
               </>

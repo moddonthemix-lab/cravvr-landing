@@ -33,6 +33,17 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
     return location.pathname === path;
   };
 
+  // Handle sign out with navigation to home
+  const handleSignOut = async () => {
+    try {
+      // Navigate first to prevent ProtectedRoute from reopening auth modal
+      navigate('/', { replace: true });
+      await signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
+  };
+
   if (hideNav) {
     return <div className="app-layout no-nav">{children}</div>;
   }
@@ -186,7 +197,7 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
                     <span>Admin</span>
                   </button>
                 )}
-                <button className="nav-item signout" onClick={signOut}>
+                <button className="nav-item signout" onClick={handleSignOut}>
                   {Icons.logOut}
                   <span>Sign Out</span>
                 </button>

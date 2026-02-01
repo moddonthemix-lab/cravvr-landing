@@ -53,6 +53,16 @@ const HomePage = ({ embedded = false }) => {
     navigate(`/truck/${truck.id}`, { state: { truck } });
   };
 
+  // Handle sign out with navigation
+  const handleSignOut = async () => {
+    try {
+      navigate('/', { replace: true });
+      await signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
+  };
+
   const filteredTrucks = trucks.filter(truck => {
     const matchesCategory = selectedCategory === 'all' ||
       truck.cuisine?.toLowerCase().includes(selectedCategory.toLowerCase());
@@ -173,7 +183,7 @@ const HomePage = ({ embedded = false }) => {
                     <span>Admin</span>
                   </button>
                 )}
-                <button className="nav-item signout" onClick={signOut}>
+                <button className="nav-item signout" onClick={handleSignOut}>
                   {Icons.logOut}
                   <span>Sign Out</span>
                 </button>

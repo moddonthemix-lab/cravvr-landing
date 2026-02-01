@@ -17,11 +17,12 @@ const ProtectedRoute = ({
   const location = useLocation();
 
   // Open auth modal when user is not authenticated
+  // But only if we're not already navigating away (e.g., during sign out)
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && location.pathname !== '/') {
       openAuth('login');
     }
-  }, [loading, user, openAuth]);
+  }, [loading, user, openAuth, location.pathname]);
 
   // Show loading state while checking auth
   if (loading) {
