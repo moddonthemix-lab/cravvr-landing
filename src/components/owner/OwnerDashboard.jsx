@@ -89,13 +89,11 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, onBack }) =
       <div className="sidebar-footer">
         <div className="user-info">
           <div className="user-avatar">
-<<<<<<< HEAD
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt={profile?.name || 'Owner'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : (
               profile?.name?.charAt(0) || 'O'
             )}
-=======
             {profile?.name?.charAt(0) || 'O'}
 >>>>>>> origin/main
           </div>
@@ -405,16 +403,6 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                   />
                 </div>
               </div>
-<<<<<<< HEAD
-              <ImageUpload
-                label="Truck Photo"
-                currentImage={formData.image_url}
-                onUpload={(url) => setFormData({ ...formData, image_url: url })}
-                bucket="images"
-                folder={editingTruck ? `trucks/${editingTruck.id}` : 'trucks/temp'}
-                disabled={saving}
-              />
-=======
               <div className="form-group">
                 <label>Image URL (optional)</label>
                 <input
@@ -502,9 +490,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
     category: '',
     description: '',
     emoji: '',
-<<<<<<< HEAD
-    image_url: '',
-=======
 >>>>>>> origin/main
   });
 
@@ -521,9 +506,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       category: '',
       description: '',
       emoji: '',
-<<<<<<< HEAD
-      image_url: '',
-=======
 >>>>>>> origin/main
     });
     setEditingItem(null);
@@ -536,9 +518,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       category: item.category || '',
       description: item.description || '',
       emoji: item.emoji || '',
-<<<<<<< HEAD
-      image_url: item.image_url || '',
-=======
 >>>>>>> origin/main
     });
     setEditingItem(item);
@@ -693,35 +672,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
                       </select>
                     </div>
                   </div>
-<<<<<<< HEAD
-                  <div className="form-group">
-                    <label>Description</label>
-                    <textarea
-                      placeholder="Describe this item..."
-                      rows={2}
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    ></textarea>
-                  </div>
-                  <ImageUpload
-                    label="Item Photo (optional)"
-                    currentImage={formData.image_url}
-                    onUpload={(url) => setFormData({ ...formData, image_url: url })}
-                    bucket="images"
-                    folder={selectedTruckId ? `menu-items/${selectedTruckId}` : 'menu-items/temp'}
-                    disabled={saving}
-                  />
-                  <div className="form-group" style={{ maxWidth: '120px' }}>
-                    <label>Emoji (fallback if no photo)</label>
-                    <input
-                      type="text"
-                      placeholder="🌮"
-                      value={formData.emoji}
-                      onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                      maxLength={4}
-                      style={{ textAlign: 'center', fontSize: '1.5rem' }}
-                    />
-=======
                   <div className="form-row">
                     <div className="form-group">
                       <label>Description</label>
@@ -769,11 +719,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
               {filteredItems.map(item => (
                 <div className={`menu-item-card ${!item.is_available ? 'unavailable' : ''}`} key={item.id}>
                   <div className="menu-item-image">
-<<<<<<< HEAD
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : item.emoji ? (
-=======
                     {item.emoji ? (
 >>>>>>> origin/main
                       <div className="menu-item-emoji">{item.emoji}</div>
@@ -1129,14 +1074,6 @@ const AnalyticsTab = ({ trucks, orders }) => {
 
 // Settings Tab
 const SettingsTab = () => {
-<<<<<<< HEAD
-  const { profile, updateProfile, user } = useAuth();
-  const [saving, setSaving] = useState(false);
-  const [profileData, setProfileData] = useState({
-    name: profile?.name || '',
-    avatar_url: profile?.avatar_url || '',
-  });
-=======
   const { profile, updateProfile } = useAuth();
   const [saving, setSaving] = useState(false);
 >>>>>>> origin/main
@@ -1144,17 +1081,6 @@ const SettingsTab = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-<<<<<<< HEAD
-    try {
-      await updateProfile(profileData);
-      alert('Profile updated successfully!');
-    } catch (err) {
-      console.error('Failed to save profile:', err);
-      alert('Failed to save profile changes');
-    } finally {
-      setSaving(false);
-    }
-=======
     // Save settings
     setTimeout(() => setSaving(false), 1000);
 >>>>>>> origin/main
@@ -1175,27 +1101,6 @@ const SettingsTab = () => {
             <h3>Profile Information</h3>
           </div>
           <form onSubmit={handleSubmit}>
-<<<<<<< HEAD
-            <ImageUpload
-              label="Profile Picture"
-              currentImage={profileData.avatar_url}
-              onUpload={(url) => setProfileData({ ...profileData, avatar_url: url })}
-              bucket="images"
-              folder={user?.id ? `profiles/${user.id}` : 'profiles/temp'}
-              disabled={saving}
-            />
-            <div className="form-group">
-              <label>Full Name</label>
-              <input
-                type="text"
-                value={profileData.name}
-                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input type="email" defaultValue={user?.email} disabled />
-=======
             <div className="form-group">
               <label>Full Name</label>
               <input type="text" defaultValue={profile?.name} />
