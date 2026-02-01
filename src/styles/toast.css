@@ -4,7 +4,7 @@
 
 .toast-container {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
   right: 20px;
   z-index: 9999;
   display: flex;
@@ -25,19 +25,19 @@
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border);
   opacity: 0;
-  transform: translateX(100%);
+  transform: translateY(-20px);
   transition: opacity var(--transition-slow), transform var(--transition-slow);
   pointer-events: auto;
 }
 
 .toast-visible {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
 }
 
 .toast-exiting {
   opacity: 0;
-  transform: translateX(100%);
+  transform: translateY(-20px);
 }
 
 .toast-icon {
@@ -122,7 +122,7 @@
 /* Mobile Adjustments */
 @media (max-width: 480px) {
   .toast-container {
-    bottom: 80px; /* Account for mobile navigation */
+    top: 12px;
     right: 12px;
     left: 12px;
     width: auto;
