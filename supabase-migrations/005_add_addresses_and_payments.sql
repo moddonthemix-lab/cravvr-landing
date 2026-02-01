@@ -32,10 +32,10 @@ CREATE TABLE IF NOT EXISTS payment_methods (
 );
 
 -- Add indexes
-CREATE INDEX idx_addresses_user_id ON addresses(user_id);
-CREATE INDEX idx_addresses_default ON addresses(user_id, is_default);
-CREATE INDEX idx_payment_methods_user_id ON payment_methods(user_id);
-CREATE INDEX idx_payment_methods_default ON payment_methods(user_id, is_default);
+CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON addresses(user_id);
+CREATE INDEX IF NOT EXISTS idx_addresses_default ON addresses(user_id, is_default);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_user_id ON payment_methods(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_default ON payment_methods(user_id, is_default);
 
 -- Enable RLS
 ALTER TABLE addresses ENABLE ROW LEVEL SECURITY;
