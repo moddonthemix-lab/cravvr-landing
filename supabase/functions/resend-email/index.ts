@@ -107,13 +107,25 @@ serve(async (req) => {
   }
 
   try {
-    const payload = await req.json()
+    const data = await req.json()
 
     // Check if this is a Supabase Auth Hook call
-    if (isAuthHookPayload(payload)) {
-      console.log('Processing Auth Hook:', payload.email_data.email_action_type)
+    if (isAuthHookPayload(data)) {
+      console.log('Processing Auth Hook:', data.email_data.email_action_type)
 
-      const { user, email_data } = payload
+      // If SendGrid is not configured, return success anyway to not block auth
+      if (!SENDGRID_API_KEY) {
+        console.warn('SENDGRID_API_KEY not set - skipping email, allowing auth to proceed')
+        return new Response(
+          JSON.stringify({ success: true, warning: 'Email skipped - SendGrid not configured' }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        )
+      }
+
+      const { user, email_data } = data
       const userName = user.user_metadata?.name || user.email.split('@')[0]
       const actionUrl = buildActionUrl(email_data)
 
@@ -157,7 +169,12 @@ serve(async (req) => {
           }
       }
 
-      await sendEmail(user.email, templateId, dynamicData)
+      try {
+        await sendEmail(user.email, templateId, dynamicData)
+      } catch (emailError) {
+        // Log error but don't block auth - return success anyway
+        console.error('Failed to send email, but allowing auth to proceed:', emailError)
+      }
 
       return new Response(
         JSON.stringify({ success: true }),
@@ -169,7 +186,7 @@ serve(async (req) => {
     }
 
     // Handle direct API calls (existing behavior)
-    const { to, templateId, dynamicData, subject }: EmailRequest = payload
+    const { to, templateId, dynamicData, subject }: EmailRequest = data
 
     if (!to || !templateId) {
       throw new Error('Missing required fields: to, templateId')
