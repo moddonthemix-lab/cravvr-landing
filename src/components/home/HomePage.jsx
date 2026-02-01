@@ -25,7 +25,7 @@ const categories = [
 
 const HomePage = ({ embedded = false }) => {
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, openAuth, isOwner, isAdmin } = useAuth();
   const { itemCount, openCart } = useCart();
   const { trucks: contextTrucks, loading } = useTrucks();
   const { favorites, toggleFavorite } = useFavorites();
@@ -161,12 +161,25 @@ const HomePage = ({ embedded = false }) => {
                   {Icons.user}
                   <span>Account</span>
                 </button>
+                {isOwner && (
+                  <button className="nav-item" onClick={() => navigate('/owner')}>
+                    {Icons.truck}
+                    <span>My Trucks</span>
+                  </button>
+                )}
+                {isAdmin && (
+                  <button className="nav-item" onClick={() => navigate('/admin')}>
+                    {Icons.settings}
+                    <span>Admin</span>
+                  </button>
+                )}
                 <button className="nav-item signout" onClick={signOut}>
+                  {Icons.logOut}
                   <span>Sign Out</span>
                 </button>
               </>
             ) : (
-              <button className="nav-item signin" onClick={() => navigate('/eat')}>
+              <button className="nav-item signin" onClick={() => openAuth('login')}>
                 {Icons.user}
                 <span>Sign In</span>
               </button>
