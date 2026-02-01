@@ -1765,7 +1765,6 @@ const SettingsPage = ({ adminEmail }) => {
 const AdminDashboard = () => {
   const { user, profile, isAdmin, loading: authLoading, signOut } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalTrucks: 0,
@@ -2018,11 +2017,11 @@ const AdminDashboard = () => {
   }
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard },
-    { id: 'waitlist', label: 'Waitlist', icon: Icons.waitlist },
-    { id: 'users', label: 'Users', icon: Icons.users },
-    { id: 'trucks', label: 'Food Trucks', icon: Icons.trucks },
-    { id: 'analytics', label: 'Analytics', icon: Icons.analytics },
+    { id: 'dashboard', label: 'Dashboard', icon: Icons.chart },
+    { id: 'waitlist', label: 'Waitlist', icon: Icons.users },
+    { id: 'users', label: 'Users', icon: Icons.user },
+    { id: 'trucks', label: 'Food Trucks', icon: Icons.truck },
+    { id: 'analytics', label: 'Analytics', icon: Icons.trendingUp },
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];
 
@@ -2046,67 +2045,31 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className={`admin-layout ${sidebarCollapsed ? 'collapsed' : ''}`}>
-      {/* Sidebar */}
-      <aside className="admin-sidebar">
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <span className="logo-icon">C</span>
-            {!sidebarCollapsed && <span className="logo-text">Cravvr</span>}
-          </div>
-          <button className="sidebar-toggle" onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
-            {Icons.menu}
-          </button>
+    <div className="admin-dashboard-content">
+      {/* Horizontal Tab Navigation */}
+      <div className="admin-tabs">
+        <div className="admin-tabs-header">
+          <h1 className="admin-title">Admin Dashboard</h1>
+          <span className="admin-badge">{Icons.shield} Admin</span>
         </div>
-
-        <nav className="sidebar-nav">
+        <nav className="admin-tabs-nav">
           {navItems.map((item) => (
             <button
               key={item.id}
-              className={`nav-item ${currentPage === item.id ? 'active' : ''}`}
+              className={`admin-tab ${currentPage === item.id ? 'active' : ''}`}
               onClick={() => setCurrentPage(item.id)}
             >
-              <span className="nav-icon">{item.icon}</span>
-              {!sidebarCollapsed && <span className="nav-label">{item.label}</span>}
+              <span className="tab-icon">{item.icon}</span>
+              <span className="tab-label">{item.label}</span>
             </button>
           ))}
         </nav>
+      </div>
 
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">
-              {profile?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'A'}
-            </div>
-            {!sidebarCollapsed && (
-              <div className="user-details">
-                <span className="user-name">{profile?.name || 'Admin'}</span>
-                <span className="user-email">{user?.email}</span>
-              </div>
-            )}
-          </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            {Icons.logout}
-            {!sidebarCollapsed && <span>Logout</span>}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="admin-main">
-        <header className="admin-header">
-          <div className="header-search">
-            {Icons.search}
-            <input type="text" placeholder="Search..." />
-          </div>
-          <div className="header-actions">
-            <span className="admin-badge">{Icons.shield} Admin</span>
-          </div>
-        </header>
-
-        <div className="admin-content">
-          {renderPage()}
-        </div>
-      </main>
+      {/* Tab Content */}
+      <div className="admin-tab-content">
+        {renderPage()}
+      </div>
     </div>
   );
 };

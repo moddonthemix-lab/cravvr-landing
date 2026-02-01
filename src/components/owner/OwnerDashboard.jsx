@@ -9,77 +9,6 @@ import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
 import './OwnerDashboard.css';
 
-// Sidebar Navigation
-const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, onBack }) => {
-  const { profile, signOut } = useAuth();
-
-  const navItems = [
-    { id: 'overview', label: 'Overview', icon: Icons.chart },
-    { id: 'trucks', label: 'My Trucks', icon: Icons.truck },
-    { id: 'menu', label: 'Menu', icon: Icons.menu },
-    { id: 'orders', label: 'Orders', icon: Icons.orders },
-    { id: 'analytics', label: 'Analytics', icon: Icons.trendingUp },
-    { id: 'settings', label: 'Settings', icon: Icons.settings },
-  ];
-
-  return (
-    <aside className={`owner-sidebar ${collapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-header">
-        <button className="back-btn" onClick={onBack}>
-          {Icons.chevronLeft}
-          {!collapsed && <span>Back to Site</span>}
-        </button>
-      </div>
-
-      <div className="sidebar-brand">
-        <div className="brand-icon">{Icons.truck}</div>
-        {!collapsed && <span className="brand-text">Owner Portal</span>}
-      </div>
-
-      <nav className="sidebar-nav">
-        {navItems.map(item => (
-          <button
-            key={item.id}
-            className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(item.id)}
-          >
-            <span className="nav-icon">{item.icon}</span>
-            {!collapsed && <span className="nav-label">{item.label}</span>}
-          </button>
-        ))}
-      </nav>
-
-      <div className="sidebar-footer">
-        <div className="user-info">
-          <div className="user-avatar">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt={profile?.name || 'Owner'} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-            ) : (
-              profile?.name?.charAt(0) || 'O'
-            )}
-          </div>
-          {!collapsed && (
-            <div className="user-details">
-              <span className="user-name">{profile?.name || 'Owner'}</span>
-              <span className="user-role">Truck Owner</span>
-            </div>
-          )}
-        </div>
-        <button className="logout-btn" onClick={async () => {
-          try {
-            await signOut();
-          } catch (err) {
-            console.error('Logout failed:', err);
-          }
-        }}>
-          {Icons.logout}
-          {!collapsed && <span>Log Out</span>}
-        </button>
-      </div>
-    </aside>
-  );
-};
-
 // Overview Tab
 const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
   const recentOrders = orders.slice(0, 3);
@@ -1197,9 +1126,8 @@ const SettingsTab = () => {
 };
 
 // Main Owner Dashboard Component
-const OwnerDashboard = ({ onBack }) => {
+const OwnerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, profile, loading: authLoading } = useAuth();
 
   // Data state
@@ -1600,16 +1528,38 @@ const OwnerDashboard = ({ onBack }) => {
     }
   };
 
+  const navItems = [
+    { id: 'overview', label: 'Overview', icon: Icons.chart },
+    { id: 'trucks', label: 'My Trucks', icon: Icons.truck },
+    { id: 'menu', label: 'Menu', icon: Icons.menu },
+    { id: 'orders', label: 'Orders', icon: Icons.orders },
+    { id: 'analytics', label: 'Analytics', icon: Icons.trendingUp },
+    { id: 'settings', label: 'Settings', icon: Icons.settings },
+  ];
+
   return (
-    <div className="owner-dashboard">
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        collapsed={sidebarCollapsed}
-        setCollapsed={setSidebarCollapsed}
-        onBack={onBack}
-      />
-      <main className="owner-main">
+    <div className="owner-dashboard-content">
+      {/* Horizontal Tab Navigation */}
+      <div className="owner-tabs">
+        <div className="owner-tabs-header">
+          <h1 className="owner-title">Owner Dashboard</h1>
+        </div>
+        <nav className="owner-tabs-nav">
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              className={`owner-tab ${activeTab === item.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(item.id)}
+            >
+              <span className="tab-icon">{item.icon}</span>
+              <span className="tab-label">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div className="owner-tab-content">
         {error && (
           <div className="error-banner">
             {Icons.alertCircle} {error}
@@ -1617,7 +1567,7 @@ const OwnerDashboard = ({ onBack }) => {
           </div>
         )}
         {renderTab()}
-      </main>
+      </div>
     </div>
   );
 };
