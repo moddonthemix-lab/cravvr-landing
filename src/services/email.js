@@ -15,11 +15,11 @@ import { supabase } from '../lib/supabase'
 
 // SendGrid Template IDs - UPDATE THESE WITH YOUR TEMPLATE IDS FROM SENDGRID
 const TEMPLATES = {
-  PASSWORD_RESET: 'd-xxxxxxxxxxxxxxxx', // Replace with your password reset template ID
-  WELCOME: 'd-xxxxxxxxxxxxxxxx',        // Replace with your welcome email template ID
-  ORDER_CONFIRMATION: 'd-xxxxxxxxxxxxxxxx', // Replace with your order confirmation template ID
-  ORDER_STATUS: 'd-xxxxxxxxxxxxxxxx',   // Replace with your order status template ID
-  TRUCK_APPROVED: 'd-xxxxxxxxxxxxxxxx', // Replace with your truck approved template ID
+  PASSWORD_RESET: 'd-96a2dce832614b8ba32791f5fc7caae2', // Replace with your password reset template ID
+  WELCOME: 'd-0c6102cbf62c455790db0cffceb98aed',        // Replace with your welcome email template ID
+  ORDER_CONFIRMATION: 'd-8a4299f845dc4bc5a61141d51d598248', // Replace with your order confirmation template ID
+  ORDER_STATUS: 'd-e3c21488399149f7ae94181a397ef88b',   // Replace with your order status template ID
+  TRUCK_APPROVED: 'd-afb62245593746f6944b34d32337e4dc', // Replace with your truck approved template ID
 }
 
 // Supabase Edge Function URL
