@@ -1,0 +1,1037 @@
+/* MapView - Interactive Leaflet Map */
+
+.map-view-leaflet {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 65px);
+  background: #f8f8f8;
+}
+
+/* Mobile: Account for header + bottom nav */
+@media (max-width: 768px) {
+  .map-view-leaflet {
+    height: calc(100vh - 120px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    min-height: 400px;
+  }
+
+  .map-header-leaflet {
+    padding: 12px 16px;
+  }
+
+  .map-header-leaflet h1 {
+    font-size: 16px;
+  }
+
+  .map-legend-leaflet {
+    bottom: 12px;
+    left: 12px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .map-controls-leaflet {
+    right: 12px;
+    top: 12px;
+  }
+
+  .map-control-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+}
+
+/* Location Prompt */
+.location-prompt {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 20px;
+}
+
+.location-prompt-content {
+  text-align: center;
+  max-width: 320px;
+}
+
+.location-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background: var(--primary-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+.location-icon svg {
+  width: 36px;
+  height: 36px;
+  color: var(--primary);
+}
+
+@keyframes pulse-gentle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.location-prompt-content h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #1e293b;
+}
+
+.location-prompt-content p {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.location-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.location-btn {
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.location-btn.primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3);
+}
+
+.location-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.4);
+}
+
+.location-btn.secondary {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #475569;
+}
+
+.location-btn.secondary:hover {
+  background: #f8fafc;
+}
+
+/* Loading State */
+.location-loading {
+  margin-bottom: 24px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #e5e7eb;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Map Header */
+.map-header-leaflet {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.map-header-leaflet h1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: #1e293b;
+}
+
+.map-header-leaflet h1 svg {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+}
+
+.map-list-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-list-toggle:hover {
+  background: #e2e8f0;
+}
+
+.map-list-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Map Container */
+.leaflet-map-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+/* Custom Truck Markers */
+.custom-truck-marker {
+  background: none !important;
+  border: none !important;
+}
+
+.leaflet-marker-content {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid var(--primary);
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+  position: relative;
+}
+
+.leaflet-marker-content:hover {
+  transform: scale(1.1);
+}
+
+.leaflet-marker-content.featured {
+  border-color: #f59e0b;
+}
+
+.leaflet-marker-content.closed {
+  border-color: #9ca3af;
+  filter: grayscale(30%);
+}
+
+.marker-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.marker-star {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: #f59e0b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: white;
+}
+
+/* User Location Marker */
+.user-location-marker {
+  background: none !important;
+  border: none !important;
+}
+
+.user-marker-pulse {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: rgba(225, 29, 72, 0.2);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulse 2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+.user-marker-dot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--primary);
+  border: 3px solid white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.4);
+}
+
+/* Map Legend */
+.map-legend-leaflet {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.legend-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid;
+}
+
+.legend-marker.featured {
+  border-color: #f59e0b;
+  background: white;
+}
+
+.legend-marker.regular {
+  border-color: var(--primary);
+  background: white;
+}
+
+.legend-marker.user {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+/* Map Controls */
+.map-controls-leaflet {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 1000;
+}
+
+.map-control-btn {
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.map-control-btn:hover {
+  background: #f8fafc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.map-control-btn svg {
+  width: 20px;
+  height: 20px;
+  color: #475569;
+}
+
+/* Popup Styling */
+.leaflet-popup-content-wrapper {
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  overflow: hidden;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  width: 220px !important;
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+.popup-content {
+  cursor: pointer;
+}
+
+.popup-content:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.popup-image {
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+  position: relative;
+}
+
+.popup-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popup-featured {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #f59e0b;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.popup-info {
+  padding: 12px;
+}
+
+.popup-info h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #1e293b;
+}
+
+.popup-cuisine {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 0 8px;
+}
+
+.popup-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.popup-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.popup-rating svg {
+  width: 14px;
+  height: 14px;
+  color: #fbbf24;
+}
+
+.popup-distance {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.popup-status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.popup-status.open {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.popup-status.closed {
+  background: var(--primary-light);
+  color: #dc2626;
+}
+
+/* List Overlay */
+.map-list-overlay-leaflet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8f8f8;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.map-list-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: #1e293b;
+}
+
+.close-list-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.close-list-btn:hover {
+  background: #e2e8f0;
+}
+
+.close-list-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.map-list-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Button reset for accessible card buttons */
+.map-list-card,
+.desktop-list-card {
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.map-list-card:focus-visible,
+.desktop-list-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.map-list-card {
+  display: flex;
+  gap: 14px;
+  background: white;
+  border-radius: 16px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.map-list-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.list-card-image {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.list-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.list-featured-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: #f59e0b;
+  color: white;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.list-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-card-info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #1e293b;
+}
+
+.list-cuisine {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 0 8px;
+}
+
+.list-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.list-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.list-rating svg {
+  width: 14px;
+  height: 14px;
+  color: #fbbf24;
+}
+
+.list-distance {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.list-status {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.list-status.open {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.list-status.closed {
+  background: var(--primary-light);
+  color: #dc2626;
+}
+
+/* Desktop adjustments */
+@media (min-width: 769px) {
+  .map-view-leaflet {
+    height: calc(100vh - 65px);
+  }
+
+  /* Location prompt - center with larger content */
+  .location-prompt-content {
+    max-width: 400px;
+  }
+
+  .location-icon-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+
+  .location-icon svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .location-prompt-content h2 {
+    font-size: 28px;
+  }
+
+  .location-prompt-content p {
+    font-size: 16px;
+  }
+
+  .location-buttons {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .location-btn {
+    padding: 16px 32px;
+    font-size: 16px;
+  }
+
+  /* Header - more spacious */
+  .map-header-leaflet {
+    padding: 20px 32px;
+  }
+
+  .map-header-leaflet h1 {
+    font-size: 22px;
+    gap: 10px;
+  }
+
+  .map-header-leaflet h1 svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .map-list-toggle {
+    padding: 10px 18px;
+    font-size: 15px;
+    gap: 8px;
+  }
+
+  .map-list-toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Map Legend - larger */
+  .map-legend-leaflet {
+    bottom: 24px;
+    left: 24px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    gap: 10px;
+  }
+
+  .legend-item {
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .legend-marker {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Map Controls - larger */
+  .map-controls-leaflet {
+    right: 24px;
+    top: 24px;
+  }
+
+  .map-control-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+
+  .map-control-btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Popup styling - wider */
+  .leaflet-popup-content {
+    width: 280px !important;
+  }
+
+  .popup-image {
+    height: 130px;
+  }
+
+  .popup-info {
+    padding: 16px;
+  }
+
+  .popup-info h4 {
+    font-size: 17px;
+  }
+
+  .popup-cuisine {
+    font-size: 13px;
+  }
+
+  .popup-rating {
+    font-size: 14px;
+  }
+
+  /* List Overlay - as sidebar on desktop */
+  .map-list-overlay-leaflet {
+    left: auto;
+    width: 380px;
+    border-left: 1px solid #e5e7eb;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .map-list-header {
+    padding: 20px 24px;
+  }
+
+  .map-list-header h2 {
+    font-size: 20px;
+  }
+
+  .map-list-content {
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .map-list-card {
+    gap: 16px;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .list-card-image {
+    width: 90px;
+    height: 90px;
+    border-radius: 14px;
+  }
+
+  .list-card-info h3 {
+    font-size: 16px;
+  }
+
+  .list-cuisine {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .list-rating {
+    font-size: 14px;
+  }
+
+  .list-distance {
+    font-size: 13px;
+  }
+}
+
+/* Large desktop - split view always visible */
+@media (min-width: 1200px) {
+  .map-view-leaflet {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    grid-template-rows: auto 1fr;
+  }
+
+  .map-header-leaflet {
+    grid-column: 1 / -1;
+  }
+
+  .map-list-toggle {
+    display: none; /* List always visible on large screens */
+  }
+
+  .leaflet-map-wrapper {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+/* Desktop Sidebar List - always visible on 1200px+ */
+.map-desktop-list {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .map-desktop-list {
+    display: flex;
+    flex-direction: column;
+    grid-column: 2;
+    grid-row: 2;
+    background: white;
+    border-left: 1px solid #e5e7eb;
+    overflow: hidden;
+  }
+
+  .desktop-list-header {
+    padding: 24px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .desktop-list-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px;
+  }
+
+  .desktop-list-header p {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .desktop-list-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .desktop-list-card {
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+
+  .desktop-list-card:hover {
+    background: white;
+    border-color: #e5e7eb;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .desktop-card-image {
+    position: relative;
+    height: 120px;
+    overflow: hidden;
+  }
+
+  .desktop-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .desktop-featured-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: rgba(251, 191, 36, 0.95);
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+  }
+
+  .desktop-featured-badge svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .desktop-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .desktop-status-badge.open {
+    background: rgba(22, 163, 74, 0.95);
+    color: white;
+  }
+
+  .desktop-status-badge.closed {
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+  }
+
+  .desktop-card-info {
+    padding: 16px;
+  }
+
+  .desktop-card-info h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px;
+  }
+
+  .desktop-cuisine {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0 0 10px;
+  }
+
+  .desktop-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+
+  .desktop-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .desktop-rating svg {
+    width: 14px;
+    height: 14px;
+    color: #fbbf24;
+  }
+
+  .desktop-distance {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .desktop-delivery {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 0;
+  }
+}

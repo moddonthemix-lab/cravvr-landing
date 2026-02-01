@@ -11,8 +11,23 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Auth modal state (centralized for entire app)
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login', 'signup', 'forgot'
+
   // Ref to prevent double profile fetch on page refresh
   const initialLoadComplete = useRef(false);
+
+  // Open auth modal from anywhere in the app
+  const openAuth = (mode = 'login') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
+  };
+
+  // Close auth modal
+  const closeAuth = () => {
+    setShowAuthModal(false);
+  };
 
   // Fetch user profile from database
   const fetchProfile = async (userId) => {
@@ -271,6 +286,11 @@ export const AuthProvider = ({ children }) => {
     isOwner: profile?.role === 'owner',
     isCustomer: profile?.role === 'customer',
     isAdmin: profile?.role === 'admin',
+    // Auth modal controls (centralized)
+    showAuthModal,
+    authMode,
+    openAuth,
+    closeAuth,
   };
 
   return (

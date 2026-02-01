@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useConfirm } from './ConfirmContext';
 
 const CartContext = createContext({});
 
 export const CartProvider = ({ children }) => {
+  const { confirm } = useConfirm();
   const [items, setItems] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [currentTruckId, setCurrentTruckId] = useState(null);
@@ -33,12 +35,16 @@ export const CartProvider = ({ children }) => {
   }, [items, currentTruckId, currentTruckName]);
 
   // Add item to cart
-  const addItem = useCallback((item, truck) => {
+  const addItem = useCallback(async (item, truck) => {
     // If cart has items from a different truck, ask to clear
     if (currentTruckId && currentTruckId !== truck.id && items.length > 0) {
-      const confirmed = window.confirm(
-        `Your cart contains items from ${currentTruckName}. Would you like to clear it and add items from ${truck.name}?`
-      );
+      const confirmed = await confirm({
+        title: 'Clear cart?',
+        message: `Your cart contains items from ${currentTruckName}. Would you like to clear it and add items from ${truck.name}?`,
+        confirmText: 'Clear & Add',
+        cancelText: 'Keep Current',
+        variant: 'default',
+      });
       if (!confirmed) return false;
       setItems([]);
     }
@@ -62,7 +68,7 @@ export const CartProvider = ({ children }) => {
     });
 
     return true;
-  }, [currentTruckId, currentTruckName, items.length]);
+  }, [currentTruckId, currentTruckName, items.length, confirm]);
 
   // Remove item from cart
   const removeItem = useCallback((itemId) => {

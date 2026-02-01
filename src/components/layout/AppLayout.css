@@ -1,0 +1,350 @@
+/* ================================
+   UNIFIED APP LAYOUT
+   Responsive layout with sidebar (desktop) and bottom nav (mobile)
+   ================================ */
+
+/* Base Layout */
+.app-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.app-layout.no-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================================
+   DESKTOP LAYOUT
+   ================================ */
+.app-layout.desktop {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop Header */
+.app-layout.desktop .app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 100;
+}
+
+.header-left .logo {
+  cursor: pointer;
+}
+
+.header-left .logo-image {
+  height: 32px;
+  width: auto;
+}
+
+.header-center {
+  flex: 1;
+  max-width: 480px;
+  margin: 0 24px;
+}
+
+.header-center .search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  gap: 8px;
+}
+
+.header-center .search-icon {
+  color: var(--text-muted);
+}
+
+.header-center .search-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.header-center input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+}
+
+.header-center input::placeholder {
+  color: var(--text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.location-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.location-picker .location-icon svg {
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+}
+
+.icon-btn,
+.cart-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.icon-btn:hover,
+.cart-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.icon-btn svg,
+.cart-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cart-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  background: var(--primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* Desktop Body */
+.app-layout.desktop .app-body {
+  display: flex;
+  padding-top: 64px;
+  min-height: calc(100vh - 64px);
+}
+
+/* Desktop Sidebar */
+.app-layout.desktop .app-sidebar {
+  position: fixed;
+  left: 0;
+  top: 64px;
+  bottom: 0;
+  width: 220px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+.app-sidebar .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+  width: 100%;
+}
+
+.app-sidebar .nav-item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.app-sidebar .nav-item:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app-sidebar .nav-item.active {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.app-sidebar .nav-item.bolt-nav.active {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(251, 191, 36, 0.1));
+  color: #d97706;
+}
+
+.app-sidebar .nav-item.bolt-nav svg {
+  color: #eab308;
+}
+
+.app-sidebar .nav-item.signout {
+  color: var(--text-muted);
+}
+
+.app-sidebar .nav-item.signout:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+/* Desktop Main Content */
+.app-layout.desktop .app-main {
+  flex: 1;
+  margin-left: 220px;
+  min-height: calc(100vh - 64px);
+}
+
+/* ================================
+   MOBILE LAYOUT
+   ================================ */
+.app-layout.mobile {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 80px;
+}
+
+.app-layout.mobile .app-main {
+  flex: 1;
+  min-height: calc(100vh - 80px);
+  min-height: calc(100dvh - 80px);
+}
+
+/* Mobile Bottom Nav */
+.app-layout.mobile .mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: 100;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 56px;
+}
+
+.mobile-nav-item .nav-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.mobile-nav-item .nav-label {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item.active {
+  color: var(--primary);
+}
+
+.mobile-nav-item.active .nav-icon svg {
+  color: var(--primary);
+}
+
+/* Bolt button (center, elevated) */
+.mobile-nav-item.bolt {
+  position: relative;
+  background: linear-gradient(135deg, #eab308, #f59e0b);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  margin-top: -20px;
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.4);
+}
+
+.mobile-nav-item.bolt .nav-icon svg {
+  color: white;
+  width: 28px;
+  height: 28px;
+}
+
+.mobile-nav-item.bolt:active {
+  transform: scale(0.95);
+}
+
+/* ================================
+   RESPONSIVE BREAKPOINTS
+   ================================ */
+@media (max-width: 1024px) {
+  .app-layout.desktop .app-sidebar {
+    width: 180px;
+  }
+
+  .app-layout.desktop .app-main {
+    margin-left: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Switch to mobile layout handled by JS */
+}

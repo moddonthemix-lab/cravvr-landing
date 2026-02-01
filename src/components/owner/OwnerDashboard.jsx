@@ -3,48 +3,11 @@ import { useAuth } from '../auth/AuthContext';
 import { supabase } from '../../lib/supabase';
 import ImageUpload from '../common/ImageUpload';
 import { uploadTruckImage, uploadMenuItemImage } from '../../lib/storage';
+import { Icons } from '../common/Icons';
+import { formatRelativeTime } from '../../utils/formatters';
+import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import './OwnerDashboard.css';
-
-// Icons
-const Icons = {
-  truck: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
-  menu: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
-  orders: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
-  chart: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
-  settings: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
-  plus: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-  edit: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
-  trash: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
-  star: <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-  dollar: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-  users: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-  mapPin: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
-  clock: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-  check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
-  x: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  chevronLeft: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>,
-  image: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
-  trendingUp: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
-  eye: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
-  logout: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
-  loader: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/></svg>,
-  alertCircle: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
-};
-
-// Helper to format relative time
-const formatRelativeTime = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} hr ago`;
-  return `${diffDays} days ago`;
-};
 
 // Sidebar Navigation
 const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, onBack }) => {
@@ -224,6 +187,7 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
 
 // Trucks Management Tab
 const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loading }) => {
+  const { confirm } = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editingTruck, setEditingTruck] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -286,9 +250,15 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
   };
 
   const handleDelete = async (truckId) => {
-    if (!window.confirm('Are you sure you want to delete this truck? This cannot be undone.')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: 'Delete Truck',
+      message: 'Are you sure you want to delete this truck? This cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
     try {
       await onTruckDelete(truckId);
     } catch (err) {
@@ -401,15 +371,14 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                   />
                 </div>
               </div>
-              <div className="form-group">
-                <label>Image URL (optional)</label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                />
-              </div>
+              <ImageUpload
+                label="Truck Photo"
+                currentImage={formData.image_url}
+                onUpload={(url) => setFormData({ ...formData, image_url: url })}
+                bucket="images"
+                folder={editingTruck ? `trucks/${editingTruck.id}` : 'trucks/temp'}
+                disabled={saving}
+              />
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
                   Cancel
@@ -477,6 +446,8 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
 
 // Menu Management Tab
 const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItemCreate, onMenuItemUpdate, onMenuItemDelete, loading }) => {
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -524,7 +495,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
   const handleSave = async (e) => {
     e.preventDefault();
     if (!selectedTruckId) {
-      alert('Please select a truck first');
+      showToast('Please select a truck first', 'error');
       return;
     }
     setSaving(true);
@@ -549,9 +520,15 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
   };
 
   const handleDelete = async (itemId) => {
-    if (!window.confirm('Are you sure you want to delete this menu item?')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: 'Delete Menu Item',
+      message: 'Are you sure you want to delete this menu item?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
     try {
       await onMenuItemDelete(itemId);
     } catch (err) {
@@ -669,27 +646,33 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
                       </select>
                     </div>
                   </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Description</label>
-                      <textarea
-                        placeholder="Describe this item..."
-                        rows={2}
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      ></textarea>
-                    </div>
-                    <div className="form-group" style={{ flex: '0 0 80px' }}>
-                      <label>Emoji</label>
-                      <input
-                        type="text"
-                        placeholder="🌮"
-                        value={formData.emoji}
-                        onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                        maxLength={4}
-                        style={{ textAlign: 'center', fontSize: '1.5rem' }}
-                      />
-                    </div>
+                  <div className="form-group">
+                    <label>Description</label>
+                    <textarea
+                      placeholder="Describe this item..."
+                      rows={2}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    ></textarea>
+                  </div>
+                  <ImageUpload
+                    label="Item Photo (optional)"
+                    currentImage={formData.image_url}
+                    onUpload={(url) => setFormData({ ...formData, image_url: url })}
+                    bucket="images"
+                    folder={selectedTruckId ? `menu-items/${selectedTruckId}` : 'menu-items/temp'}
+                    disabled={saving}
+                  />
+                  <div className="form-group" style={{ maxWidth: '120px' }}>
+                    <label>Emoji (fallback if no photo)</label>
+                    <input
+                      type="text"
+                      placeholder="🌮"
+                      value={formData.emoji}
+                      onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
+                      maxLength={4}
+                      style={{ textAlign: 'center', fontSize: '1.5rem' }}
+                    />
                   </div>
                   <div className="form-actions">
                     <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
@@ -715,7 +698,9 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
               {filteredItems.map(item => (
                 <div className={`menu-item-card ${!item.is_available ? 'unavailable' : ''}`} key={item.id}>
                   <div className="menu-item-image">
-                    {item.emoji ? (
+                    {item.image_url ? (
+                      <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : item.emoji ? (
                       <div className="menu-item-emoji">{item.emoji}</div>
                     ) : (
                       <div className="menu-item-placeholder">{Icons.menu}</div>
@@ -866,7 +851,7 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
                     <td>{order.customer_name || 'Customer'}</td>
                     <td>{order.item_count || 0} items</td>
                     <td className="order-total-cell">${parseFloat(order.total).toFixed(2)}</td>
-                    <td className="order-time-cell">{formatRelativeTime(order.created_at)}</td>
+                    <td className="order-time-cell">{formatRelativeTime(order.created_at, 'minutes')}</td>
                     <td>
                       <span className="status-pill" style={{ background: `${statusColors[order.status]}20`, color: statusColors[order.status] }}>
                         {statusLabels[order.status] || order.status}
@@ -1069,14 +1054,26 @@ const AnalyticsTab = ({ trucks, orders }) => {
 
 // Settings Tab
 const SettingsTab = () => {
-  const { profile, updateProfile } = useAuth();
+  const { showToast } = useToast();
+  const { profile, updateProfile, user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: profile?.name || '',
+    avatar_url: profile?.avatar_url || '',
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    // Save settings
-    setTimeout(() => setSaving(false), 1000);
+    try {
+      await updateProfile(profileData);
+      showToast('Profile updated successfully!', 'success');
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+      showToast('Failed to save profile changes', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -1094,13 +1091,25 @@ const SettingsTab = () => {
             <h3>Profile Information</h3>
           </div>
           <form onSubmit={handleSubmit}>
+            <ImageUpload
+              label="Profile Picture"
+              currentImage={profileData.avatar_url}
+              onUpload={(url) => setProfileData({ ...profileData, avatar_url: url })}
+              bucket="images"
+              folder={user?.id ? `profiles/${user.id}` : 'profiles/temp'}
+              disabled={saving}
+            />
             <div className="form-group">
               <label>Full Name</label>
-              <input type="text" defaultValue={profile?.name} />
+              <input
+                type="text"
+                value={profileData.name}
+                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+              />
             </div>
             <div className="form-group">
               <label>Email</label>
-              <input type="email" defaultValue={profile?.email} disabled />
+              <input type="email" defaultValue={user?.email} disabled />
             </div>
             <div className="form-group">
               <label>Phone</label>

@@ -1,0 +1,51 @@
+/* Tab Container */
+
+.tab-container {
+  min-height: 100vh;
+  background: #f8f8f8;
+}
+
+.tab-content {
+  padding-bottom: 80px; /* Space for bottom nav */
+}
+
+/* Coming Soon placeholder */
+.coming-soon-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  padding: 20px;
+}
+
+.coming-soon-content {
+  text-align: center;
+  max-width: 300px;
+}
+
+.coming-soon-emoji {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.coming-soon-content h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #1e293b;
+}
+
+.coming-soon-content p {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Desktop: hide bottom nav padding */
+@media (min-width: 769px) {
+  .tab-content {
+    padding-bottom: 0;
+  }
+}

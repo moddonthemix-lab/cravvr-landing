@@ -1,0 +1,145 @@
+/* Bottom Navigation - Mobile Tab Bar */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 8px 0;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 1000;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.bottom-nav-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Active indicator line */
+.bottom-nav-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 0 0 2px 2px;
+  transition: width 0.2s ease;
+}
+
+.bottom-nav-item.active::after {
+  width: 24px;
+}
+
+.bottom-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.bottom-nav-label {
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+/* Active state */
+.bottom-nav-item.active {
+  color: var(--primary);
+}
+
+.bottom-nav-item:not(.bolt):hover {
+  color: #1e293b;
+}
+
+/* Bolt button - special center styling */
+.bottom-nav-item.bolt {
+  position: relative;
+  padding: 0;
+}
+
+.bottom-nav-item.bolt::after {
+  display: none;
+}
+
+.bottom-nav-item.bolt .bolt-icon {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -20px;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bottom-nav-item.bolt .bolt-icon svg {
+  width: 26px;
+  height: 26px;
+  color: white;
+}
+
+.bottom-nav-item.bolt:hover .bolt-icon {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.5);
+}
+
+.bottom-nav-item.bolt.active .bolt-icon {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* Hide on desktop */
+@media (min-width: 769px) {
+  .bottom-nav {
+    display: none;
+  }
+}
+
+/* Smaller screens - tighter spacing */
+@media (max-width: 380px) {
+  .bottom-nav-item {
+    padding: 8px 10px;
+  }
+
+  .bottom-nav-item.bolt .bolt-icon {
+    width: 46px;
+    height: 46px;
+    margin-top: -16px;
+  }
+
+  .bottom-nav-item.bolt .bolt-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+}
