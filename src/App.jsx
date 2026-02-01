@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import AdminDashboard from './admin/AdminDashboard';
 import LandingPage from './components/landing/LandingPage';
 import CartDrawer from './components/cart/Cart';
 import TruckDetailPage from './components/truck/TruckDetailPage';
@@ -13,7 +12,7 @@ import LoginPage from './pages/LoginPage';
 import ProtectedRoute, { RequireOwner, RequireAdmin } from './components/auth/ProtectedRoute';
 import AuthModal from './components/auth/AuthModal';
 import { useAuth } from './components/auth/AuthContext';
-import { OwnerDashboardWrapper, CustomerProfileWrapper } from './components/wrappers';
+import { OwnerDashboardWrapper, AdminDashboardWrapper, CustomerProfileWrapper } from './components/wrappers';
 
 // Wrapper for LandingPage with navigate
 const LandingPageWrapper = () => {
@@ -92,7 +91,7 @@ const App = () => {
         {/* Admin dashboard - requires admin role */}
         <Route path="/admin" element={
           <RequireAdmin>
-            <AdminDashboard />
+            <AdminDashboardWrapper />
           </RequireAdmin>
         } />
 
