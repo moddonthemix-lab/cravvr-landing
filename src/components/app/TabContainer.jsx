@@ -18,7 +18,7 @@ const TabContainer = () => {
   const [activeTab, setActiveTab] = useState('explore');
 
   const handleToggleFavorite = (truckId) => {
-    toggleFavorite(truckId, navigate);
+    toggleFavorite(truckId);
   };
 
   const handleTruckClick = (truck) => {

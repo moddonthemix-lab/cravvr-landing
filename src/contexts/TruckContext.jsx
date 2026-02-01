@@ -1,28 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { transformTruck } from '../services/trucks';
 
 const TruckContext = createContext({});
-
-// Transform raw Supabase truck data to app format
-const transformTruck = (truck) => ({
-  id: truck.id,
-  name: truck.name,
-  image: truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',
-  cuisine: truck.cuisine_type || 'Food Truck',
-  priceRange: truck.price_range || '$$',
-  description: truck.description || 'Delicious food made fresh daily.',
-  location: truck.current_location || 'Portland, OR',
-  distance: '1.0 mi',
-  rating: truck.rating || 4.5,
-  isOpen: truck.is_open !== false,
-  deliveryTime: truck.delivery_time || '15-25 min',
-  deliveryFee: truck.delivery_fee || 2.99,
-  featured: truck.featured || false,
-  lat: truck.latitude,
-  lng: truck.longitude,
-  // Preserve raw data for cases that need additional fields
-  _raw: truck,
-});
 
 export const TruckProvider = ({ children }) => {
   const [trucks, setTrucks] = useState([]);

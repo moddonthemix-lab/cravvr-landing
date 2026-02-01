@@ -18,7 +18,7 @@ import './AppLayout.css';
 const AppLayout = ({ children, activeNav, hideNav = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, openAuth } = useAuth();
   const { itemCount, openCart } = useCart();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -170,7 +170,7 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
                 </button>
               </>
             ) : (
-              <button className="nav-item signin" onClick={() => navigate('/eat')}>
+              <button className="nav-item signin" onClick={() => openAuth('login')}>
                 {Icons.user}
                 <span>Sign In</span>
               </button>

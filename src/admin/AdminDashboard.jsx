@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../components/auth/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { useConfirm } from '../contexts/ConfirmContext';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -290,6 +292,8 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
 
 // Waitlist Management Component
 const WaitlistManagement = () => {
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -359,7 +363,7 @@ const WaitlistManagement = () => {
       fetchWaitlist();
     } catch (err) {
       console.error('Error updating status:', err);
-      alert('Error updating status: ' + err.message);
+      showToast('Error updating status: ' + err.message, 'error');
     }
   };
 
@@ -381,12 +385,19 @@ const WaitlistManagement = () => {
       fetchWaitlist();
     } catch (err) {
       console.error('Error bulk updating:', err);
-      alert('Error updating entries: ' + err.message);
+      showToast('Error updating entries: ' + err.message, 'error');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this entry?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Entry',
+      message: 'Are you sure you want to delete this entry?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -398,7 +409,7 @@ const WaitlistManagement = () => {
       fetchWaitlist();
     } catch (err) {
       console.error('Error deleting entry:', err);
-      alert('Error deleting entry: ' + err.message);
+      showToast('Error deleting entry: ' + err.message, 'error');
     }
   };
 
@@ -483,7 +494,7 @@ const WaitlistManagement = () => {
       fetchWaitlist();
     } catch (err) {
       console.error('Import error:', err);
-      alert('Error importing CSV: ' + err.message);
+      showToast('Error importing CSV: ' + err.message, 'error');
     } finally {
       setImporting(false);
     }
@@ -721,6 +732,8 @@ const WaitlistManagement = () => {
 
 // Users Management Component with Email Invite
 const UsersManagement = () => {
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -785,7 +798,7 @@ const UsersManagement = () => {
 
   const handleInviteUser = async () => {
     if (!inviteEmail || !inviteName) {
-      alert('Please enter both name and email');
+      showToast('Please enter both name and email', 'error');
       return;
     }
 
@@ -820,7 +833,7 @@ const UsersManagement = () => {
 
     } catch (err) {
       console.error('Error inviting user:', err);
-      alert('Error sending invitation: ' + err.message);
+      showToast('Error sending invitation: ' + err.message, 'error');
     } finally {
       setInviting(false);
     }
@@ -863,26 +876,33 @@ const UsersManagement = () => {
       setSelectedUser(null);
     } catch (err) {
       console.error('Error saving user:', err);
-      alert('Error saving user: ' + err.message);
+      showToast('Error saving user: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user? This will remove their profile and all associated data.')) {
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', userId);
+    const confirmed = await confirm({
+      title: 'Delete User',
+      message: 'Are you sure you want to delete this user? This will remove their profile and all associated data.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
 
-        if (error) throw error;
-        setUsers(users.filter(u => u.id !== userId));
-      } catch (err) {
-        console.error('Error deleting user:', err);
-        alert('Error deleting user: ' + err.message);
-      }
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+      setUsers(users.filter(u => u.id !== userId));
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      showToast('Error deleting user: ' + err.message, 'error');
     }
   };
 
@@ -1179,6 +1199,8 @@ const UsersManagement = () => {
 
 // Food Trucks Management Component
 const TrucksManagement = () => {
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1261,26 +1283,33 @@ const TrucksManagement = () => {
       setSelectedTruck(null);
     } catch (err) {
       console.error('Error saving truck:', err);
-      alert('Error saving truck: ' + err.message);
+      showToast('Error saving truck: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteTruck = async (truckId) => {
-    if (window.confirm('Are you sure you want to delete this food truck? This will also delete all menu items and reviews.')) {
-      try {
-        const { error } = await supabase
-          .from('food_trucks')
-          .delete()
-          .eq('id', truckId);
+    const confirmed = await confirm({
+      title: 'Delete Food Truck',
+      message: 'Are you sure you want to delete this food truck? This will also delete all menu items and reviews.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
 
-        if (error) throw error;
-        setTrucks(trucks.filter(t => t.id !== truckId));
-      } catch (err) {
-        console.error('Error deleting truck:', err);
-        alert('Error deleting truck: ' + err.message);
-      }
+    try {
+      const { error } = await supabase
+        .from('food_trucks')
+        .delete()
+        .eq('id', truckId);
+
+      if (error) throw error;
+      setTrucks(trucks.filter(t => t.id !== truckId));
+    } catch (err) {
+      console.error('Error deleting truck:', err);
+      showToast('Error deleting truck: ' + err.message, 'error');
     }
   };
 

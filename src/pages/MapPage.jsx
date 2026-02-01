@@ -11,7 +11,7 @@ const MapPage = () => {
   const { favorites, toggleFavorite } = useFavorites();
 
   const handleToggleFavorite = (truckId) => {
-    toggleFavorite(truckId, navigate);
+    toggleFavorite(truckId);
   };
 
   const handleTruckClick = (truck) => {

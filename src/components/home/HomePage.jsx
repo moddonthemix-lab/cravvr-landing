@@ -5,9 +5,10 @@ import { useCart } from '../../contexts/CartContext';
 import { useTrucks } from '../../contexts/TruckContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { Icons } from '../common/Icons';
+import { mockTrucks } from '../../data/mockData';
 import './HomePage.css';
 
-// Food Categories with emojis
+// Food Categories with emojis (specific to HomePage filter UI)
 const categories = [
   { id: 'all', name: 'All', emoji: '🍽️' },
   { id: 'tacos', name: 'Tacos', emoji: '🌮' },
@@ -20,88 +21,6 @@ const categories = [
   { id: 'desserts', name: 'Desserts', emoji: '🍩' },
   { id: 'healthy', name: 'Healthy', emoji: '🥗' },
   { id: 'vegan', name: 'Vegan', emoji: '🌱' },
-];
-
-// Mock data for initial render (will be replaced by real data)
-const mockTrucks = [
-  {
-    id: 1,
-    name: "Taco Loco",
-    image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80",
-    cuisine: "Mexican",
-    location: "Downtown Portland",
-    distance: "0.5 mi",
-    rating: 4.8,
-    reviewCount: 328,
-    isOpen: true,
-    deliveryTime: "15-25 min",
-    featured: true,
-  },
-  {
-    id: 2,
-    name: "Burger Joint",
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
-    cuisine: "American",
-    location: "Pearl District",
-    distance: "1.2 mi",
-    rating: 4.6,
-    reviewCount: 195,
-    isOpen: true,
-    deliveryTime: "20-30 min",
-    featured: false,
-  },
-  {
-    id: 3,
-    name: "Thai Street",
-    image: "https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=800&q=80",
-    cuisine: "Thai",
-    location: "Southeast Portland",
-    distance: "2.1 mi",
-    rating: 4.9,
-    reviewCount: 456,
-    isOpen: false,
-    deliveryTime: "25-40 min",
-    featured: true,
-  },
-  {
-    id: 4,
-    name: "Slice Mobile",
-    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80",
-    cuisine: "Italian",
-    location: "Northwest Portland",
-    distance: "1.8 mi",
-    rating: 4.7,
-    reviewCount: 312,
-    isOpen: true,
-    deliveryTime: "20-35 min",
-    featured: true,
-  },
-  {
-    id: 5,
-    name: "Morning Brew",
-    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80",
-    cuisine: "Coffee & Breakfast",
-    location: "Downtown Portland",
-    distance: "0.3 mi",
-    rating: 4.5,
-    reviewCount: 187,
-    isOpen: true,
-    deliveryTime: "10-20 min",
-    featured: false,
-  },
-  {
-    id: 6,
-    name: "Catch of the Day",
-    image: "https://images.unsplash.com/photo-1579631542720-3a87824fff86?auto=format&fit=crop&w=800&q=80",
-    cuisine: "Seafood",
-    location: "Waterfront",
-    distance: "3.2 mi",
-    rating: 4.9,
-    reviewCount: 267,
-    isOpen: true,
-    deliveryTime: "30-45 min",
-    featured: false,
-  },
 ];
 
 const HomePage = ({ embedded = false }) => {
@@ -127,7 +46,7 @@ const HomePage = ({ embedded = false }) => {
   };
 
   const handleToggleFavorite = (truckId) => {
-    toggleFavorite(truckId, navigate);
+    toggleFavorite(truckId);
   };
 
   const handleTruckClick = (truck) => {

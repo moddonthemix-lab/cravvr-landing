@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useToast } from '../../contexts/ToastContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { formatRelativeTime } from '../../utils/formatters';
@@ -57,6 +58,7 @@ const TruckDetailPage = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { addItem, openCart, itemCount } = useCart();
+  const { showToast } = useToast();
 
   // Core state
   const [truck, setTruck] = useState(location.state?.truck || null);
@@ -318,7 +320,7 @@ const TruckDetailPage = () => {
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      showToast('Link copied to clipboard!', 'success');
     }
   };
 

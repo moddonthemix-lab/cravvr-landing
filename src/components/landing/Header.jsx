@@ -1,25 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icons } from '../common/Icons';
 import { useAuth } from '../auth/AuthContext';
-import AuthModal from '../auth/AuthModal';
 import UserMenu from '../auth/UserMenu';
 
 const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
   const navigate = useNavigate();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, openAuth } = useAuth();
 
   const openLogin = () => {
-    setAuthMode('login');
-    setShowAuthModal(true);
+    openAuth('login');
     setMobileMenuOpen(false);
   };
 
   const openSignup = () => {
-    setAuthMode('signup');
-    setShowAuthModal(true);
+    openAuth('signup');
     setMobileMenuOpen(false);
   };
 
@@ -103,13 +98,6 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
           </div>
         </div>
       </header>
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        initialMode={authMode}
-      />
     </>
   );
 };

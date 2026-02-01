@@ -5,6 +5,8 @@ import ImageUpload from '../common/ImageUpload';
 import { uploadTruckImage, uploadMenuItemImage } from '../../lib/storage';
 import { Icons } from '../common/Icons';
 import { formatRelativeTime } from '../../utils/formatters';
+import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import './OwnerDashboard.css';
 
 // Sidebar Navigation
@@ -185,6 +187,7 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
 
 // Trucks Management Tab
 const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loading }) => {
+  const { confirm } = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editingTruck, setEditingTruck] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -247,9 +250,15 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
   };
 
   const handleDelete = async (truckId) => {
-    if (!window.confirm('Are you sure you want to delete this truck? This cannot be undone.')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: 'Delete Truck',
+      message: 'Are you sure you want to delete this truck? This cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
     try {
       await onTruckDelete(truckId);
     } catch (err) {
@@ -437,6 +446,8 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
 
 // Menu Management Tab
 const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItemCreate, onMenuItemUpdate, onMenuItemDelete, loading }) => {
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -484,7 +495,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
   const handleSave = async (e) => {
     e.preventDefault();
     if (!selectedTruckId) {
-      alert('Please select a truck first');
+      showToast('Please select a truck first', 'error');
       return;
     }
     setSaving(true);
@@ -509,9 +520,15 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
   };
 
   const handleDelete = async (itemId) => {
-    if (!window.confirm('Are you sure you want to delete this menu item?')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: 'Delete Menu Item',
+      message: 'Are you sure you want to delete this menu item?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
     try {
       await onMenuItemDelete(itemId);
     } catch (err) {
@@ -1037,6 +1054,7 @@ const AnalyticsTab = ({ trucks, orders }) => {
 
 // Settings Tab
 const SettingsTab = () => {
+  const { showToast } = useToast();
   const { profile, updateProfile, user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -1049,10 +1067,10 @@ const SettingsTab = () => {
     setSaving(true);
     try {
       await updateProfile(profileData);
-      alert('Profile updated successfully!');
+      showToast('Profile updated successfully!', 'success');
     } catch (err) {
       console.error('Failed to save profile:', err);
-      alert('Failed to save profile changes');
+      showToast('Failed to save profile changes', 'error');
     } finally {
       setSaving(false);
     }

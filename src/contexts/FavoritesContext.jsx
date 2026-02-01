@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthContext';
 import { supabase } from '../lib/supabase';
 
 const FavoritesContext = createContext({});
 
 export const FavoritesProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, openAuth } = useAuth();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -50,12 +49,10 @@ export const FavoritesProvider = ({ children }) => {
   }, [favorites]);
 
   // Toggle favorite status for a truck
-  const toggleFavorite = useCallback(async (truckId, navigate) => {
+  const toggleFavorite = useCallback(async (truckId) => {
     if (!user) {
-      // Redirect to sign in if not authenticated
-      if (navigate) {
-        navigate('/eat');
-      }
+      // Open auth modal if not authenticated
+      openAuth('login');
       return false;
     }
 
@@ -96,7 +93,7 @@ export const FavoritesProvider = ({ children }) => {
       setError(err.message || 'Failed to update favorite');
       return false;
     }
-  }, [user, favorites]);
+  }, [user, favorites, openAuth]);
 
   // Refresh favorites from database
   const refresh = useCallback(async () => {

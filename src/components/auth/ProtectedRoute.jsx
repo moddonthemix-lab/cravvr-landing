@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
@@ -8,15 +8,20 @@ import { useAuth } from './AuthContext';
  * @param {Object} props
  * @param {React.ReactNode} props.children - The route content to render
  * @param {string} props.requiredRole - Optional role required ('customer', 'owner', 'admin')
- * @param {string} props.redirectTo - Where to redirect if not authorized (default: '/login')
  */
 const ProtectedRoute = ({
   children,
   requiredRole = null,
-  redirectTo = '/login'
 }) => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, openAuth } = useAuth();
   const location = useLocation();
+
+  // Open auth modal when user is not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      openAuth('login');
+    }
+  }, [loading, user, openAuth]);
 
   // Show loading state while checking auth
   if (loading) {
@@ -27,10 +32,10 @@ const ProtectedRoute = ({
     );
   }
 
-  // Not logged in - redirect to sign in
+  // Not logged in - redirect to home (modal will open via useEffect)
   if (!user) {
     // Save the attempted URL to redirect back after login
-    return <Navigate to={redirectTo} state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   // Check role requirement if specified
@@ -52,7 +57,7 @@ const ProtectedRoute = ({
     }
 
     if (requiredRole === 'customer' && !['customer', 'owner', 'admin'].includes(userRole)) {
-      return <Navigate to={redirectTo} replace />;
+      return <Navigate to="/" replace />;
     }
   }
 
