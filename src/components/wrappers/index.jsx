@@ -1,7 +1,6 @@
 /**
- * Route wrapper components that add navigation functionality to pages
+ * Route wrapper components that add AppLayout integration for consistent navigation
  */
-import { useNavigate } from 'react-router-dom';
 import OwnerDashboard from '../owner/OwnerDashboard';
 import CustomerProfile from '../customer/CustomerProfile';
 import AdminDashboard from '../../admin/AdminDashboard';
@@ -32,9 +31,13 @@ export const AdminDashboardWrapper = () => {
 };
 
 /**
- * Wrapper for CustomerProfile with navigation
+ * Wrapper for CustomerProfile with AppLayout integration
+ * Profile page now uses the main app layout for consistent navigation on desktop
  */
 export const CustomerProfileWrapper = () => {
-  const navigate = useNavigate();
-  return <CustomerProfile onBack={() => navigate('/')} />;
+  return (
+    <AppLayout activeNav="/profile">
+      <CustomerProfile />
+    </AppLayout>
+  );
 };

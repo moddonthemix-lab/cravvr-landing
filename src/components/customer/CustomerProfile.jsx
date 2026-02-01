@@ -18,7 +18,7 @@ const ProfileHeader = ({ onBack, title }) => (
 );
 
 // Account Overview Tab
-const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEditProfile }) => {
+const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEditProfile, showDesktopTitle }) => {
   const { signOut } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -45,6 +45,15 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEdit
 
   return (
     <div className="profile-content">
+      {showDesktopTitle && (
+        <div className="profile-desktop-title">
+          <h1>My Account</h1>
+          <button className="desktop-settings-btn" onClick={() => setActiveTab('notifications')}>
+            {Icons.bell}
+            <span>Notifications</span>
+          </button>
+        </div>
+      )}
       <div className="profile-hero">
         <div className="profile-avatar-large">
           {profile?.name?.charAt(0) || 'U'}
@@ -1447,6 +1456,14 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 // Main Customer Profile Component
 const CustomerProfile = ({ onBack }) => {
   const { profile, loading: authLoading, user, signOut } = useAuth();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  // Track window size for responsive header display
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'account');
@@ -1711,15 +1728,22 @@ const CustomerProfile = ({ onBack }) => {
 
   // Handle case where profile doesn't exist (e.g., admin without profile record)
   if (!profile && user) {
+    const showFallbackHeader = isMobile || onBack;
     return (
       <div className="customer-profile">
-        <header className="main-profile-header">
-          <button className="back-button" onClick={onBack}>
-            {Icons.chevronLeft}
-          </button>
-          <h1>Account</h1>
-          <div className="header-spacer"></div>
-        </header>
+        {showFallbackHeader && (
+          <header className="main-profile-header">
+            {onBack ? (
+              <button className="back-button" onClick={onBack}>
+                {Icons.chevronLeft}
+              </button>
+            ) : (
+              <div className="header-spacer"></div>
+            )}
+            <h1>Account</h1>
+            <div className="header-spacer"></div>
+          </header>
+        )}
         <div className="profile-content">
           <div className="profile-hero">
             <div className="profile-avatar-large">
@@ -1758,6 +1782,7 @@ const CustomerProfile = ({ onBack }) => {
             ordersCount={orders.length}
             favoritesCount={favorites.length}
             onEditProfile={() => setShowEditProfile(true)}
+            showDesktopTitle={!isMobile && !onBack}
           />
         );
       case 'orders':
@@ -1807,18 +1832,26 @@ const CustomerProfile = ({ onBack }) => {
             ordersCount={orders.length}
             favoritesCount={favorites.length}
             onEditProfile={() => setShowEditProfile(true)}
+            showDesktopTitle={!isMobile && !onBack}
           />
         );
     }
   };
 
+  // Show main header only on mobile when using AppLayout (no onBack provided on desktop)
+  const showMainHeader = activeTab === 'account' && (isMobile || onBack);
+
   return (
     <div className="customer-profile">
-      {activeTab === 'account' && (
+      {showMainHeader && (
         <header className="main-profile-header">
-          <button className="back-button" onClick={onBack}>
-            {Icons.chevronLeft}
-          </button>
+          {onBack ? (
+            <button className="back-button" onClick={onBack}>
+              {Icons.chevronLeft}
+            </button>
+          ) : (
+            <div className="header-spacer"></div>
+          )}
           <h1>Account</h1>
           <button className="settings-button" onClick={() => handleTabChange('notifications')}>
             {Icons.bell}
