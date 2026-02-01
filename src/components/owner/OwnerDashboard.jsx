@@ -94,8 +94,6 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, onBack }) =
             ) : (
               profile?.name?.charAt(0) || 'O'
             )}
-            {profile?.name?.charAt(0) || 'O'}
->>>>>>> origin/main
           </div>
           {!collapsed && (
             <div className="user-details">
@@ -412,7 +410,6 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                 />
               </div>
->>>>>>> origin/main
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
                   Cancel
@@ -490,7 +487,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
     category: '',
     description: '',
     emoji: '',
->>>>>>> origin/main
+    image_url: '',
   });
 
   const categories = ['all', ...new Set(menuItems.filter(item => item.category).map(item => item.category))];
@@ -506,7 +503,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       category: '',
       description: '',
       emoji: '',
->>>>>>> origin/main
+      image_url: '',
     });
     setEditingItem(null);
   };
@@ -518,7 +515,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       category: item.category || '',
       description: item.description || '',
       emoji: item.emoji || '',
->>>>>>> origin/main
+      image_url: item.image_url || '',
     });
     setEditingItem(item);
     setShowForm(true);
@@ -693,7 +690,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
                         style={{ textAlign: 'center', fontSize: '1.5rem' }}
                       />
                     </div>
->>>>>>> origin/main
                   </div>
                   <div className="form-actions">
                     <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
@@ -720,7 +716,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
                 <div className={`menu-item-card ${!item.is_available ? 'unavailable' : ''}`} key={item.id}>
                   <div className="menu-item-image">
                     {item.emoji ? (
->>>>>>> origin/main
                       <div className="menu-item-emoji">{item.emoji}</div>
                     ) : (
                       <div className="menu-item-placeholder">{Icons.menu}</div>
@@ -1076,14 +1071,12 @@ const AnalyticsTab = ({ trucks, orders }) => {
 const SettingsTab = () => {
   const { profile, updateProfile } = useAuth();
   const [saving, setSaving] = useState(false);
->>>>>>> origin/main
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     // Save settings
     setTimeout(() => setSaving(false), 1000);
->>>>>>> origin/main
   };
 
   return (
@@ -1108,7 +1101,6 @@ const SettingsTab = () => {
             <div className="form-group">
               <label>Email</label>
               <input type="email" defaultValue={profile?.email} disabled />
->>>>>>> origin/main
             </div>
             <div className="form-group">
               <label>Phone</label>
