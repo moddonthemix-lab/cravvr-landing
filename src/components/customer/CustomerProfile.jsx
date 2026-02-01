@@ -28,6 +28,7 @@ const Icons = {
   shield: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   repeat: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>,
   loader: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/></svg>,
+  trash: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
 };
 
 // Helper to format date
@@ -55,7 +56,7 @@ const ProfileHeader = ({ onBack, title }) => (
 );
 
 // Account Overview Tab
-const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount }) => {
+const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEditProfile }) => {
   const { signOut } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -88,7 +89,7 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount }) => {
         </div>
         <h2 className="profile-name">{profile?.name || 'User'}</h2>
         <p className="profile-email">{profile?.email}</p>
-        <button className="edit-profile-btn">
+        <button className="edit-profile-btn" onClick={onEditProfile}>
           {Icons.edit}
           <span>Edit Profile</span>
         </button>
@@ -422,76 +423,513 @@ const RewardsTab = ({ onBack, points, checkIns, loading }) => {
   );
 };
 
+// Address Modal
+const AddressModal = ({ isOpen, onClose, address, onSave, userId }) => {
+  const [formData, setFormData] = useState({
+    label: '',
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    is_default: false,
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (address) {
+      setFormData(address);
+    } else {
+      setFormData({
+        label: '',
+        address_line1: '',
+        address_line2: '',
+        city: '',
+        state: '',
+        zip_code: '',
+        is_default: false,
+      });
+    }
+  }, [address]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (address) {
+        // Update existing
+        const { error } = await supabase
+          .from('addresses')
+          .update(formData)
+          .eq('id', address.id);
+        if (error) throw error;
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('addresses')
+          .insert([{ ...formData, user_id: userId }]);
+        if (error) throw error;
+      }
+      await onSave();
+      onClose();
+    } catch (err) {
+      console.error('Error saving address:', err);
+      alert('Failed to save address');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal address-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{address ? 'Edit Address' : 'Add New Address'}</h2>
+          <button className="close-btn" onClick={onClose}>{Icons.x}</button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Label</label>
+            <select value={formData.label} onChange={(e) => setFormData({ ...formData, label: e.target.value })} required>
+              <option value="">Select label</option>
+              <option value="Home">Home</option>
+              <option value="Work">Work</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Address Line 1</label>
+            <input
+              type="text"
+              value={formData.address_line1}
+              onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
+              placeholder="123 Main St"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Address Line 2 (Optional)</label>
+            <input
+              type="text"
+              value={formData.address_line2}
+              onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
+              placeholder="Apt 4B"
+            />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>City</label>
+              <input
+                type="text"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>State</label>
+              <input
+                type="text"
+                value={formData.state}
+                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                placeholder="OR"
+                maxLength={2}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>ZIP Code</label>
+              <input
+                type="text"
+                value={formData.zip_code}
+                onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+                placeholder="97201"
+                required
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={formData.is_default}
+                onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
+              />
+              <span>Set as default address</span>
+            </label>
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Address'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Addresses Tab
-const AddressesTab = ({ onBack }) => {
-  const addresses = [
-    { id: 1, label: 'Home', address: '123 Main St, Portland, OR 97201', isDefault: true },
-    { id: 2, label: 'Work', address: '456 Business Ave, Portland, OR 97204', isDefault: false },
-  ];
+const AddressesTab = ({ onBack, userId }) => {
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+
+  const fetchAddresses = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', userId)
+        .order('is_default', { ascending: false });
+
+      if (error) throw error;
+      setAddresses(data || []);
+    } catch (err) {
+      console.error('Error fetching addresses:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+  }, [userId]);
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this address?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('addresses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchAddresses();
+    } catch (err) {
+      console.error('Error deleting address:', err);
+    }
+  };
+
+  const openEditModal = (address) => {
+    setEditingAddress(address);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingAddress(null);
+  };
 
   return (
     <div className="tab-page">
       <ProfileHeader onBack={onBack} title="Saved Addresses" />
 
       <div className="tab-content">
-        <div className="addresses-list">
-          {addresses.map(addr => (
-            <div className={`address-card ${addr.isDefault ? 'default' : ''}`} key={addr.id}>
-              <div className="address-icon">{Icons.mapPin}</div>
-              <div className="address-info">
-                <div className="address-label">
-                  {addr.label}
-                  {addr.isDefault && <span className="default-badge">Default</span>}
+        {loading ? (
+          <div className="loading-state">{Icons.loader} Loading addresses...</div>
+        ) : addresses.length === 0 ? (
+          <div className="empty-state">
+            <p>No saved addresses yet. Add one to speed up checkout!</p>
+          </div>
+        ) : (
+          <div className="addresses-list">
+            {addresses.map(addr => (
+              <div className={`address-card ${addr.is_default ? 'default' : ''}`} key={addr.id}>
+                <div className="address-icon">{Icons.mapPin}</div>
+                <div className="address-info">
+                  <div className="address-label">
+                    {addr.label}
+                    {addr.is_default && <span className="default-badge">Default</span>}
+                  </div>
+                  <p className="address-text">
+                    {addr.address_line1}
+                    {addr.address_line2 && `, ${addr.address_line2}`}
+                    <br />
+                    {addr.city}, {addr.state} {addr.zip_code}
+                  </p>
                 </div>
-                <p className="address-text">{addr.address}</p>
+                <div className="address-actions">
+                  <button className="address-edit" onClick={() => openEditModal(addr)}>{Icons.edit}</button>
+                  <button className="address-delete" onClick={() => handleDelete(addr.id)}>{Icons.trash}</button>
+                </div>
               </div>
-              <button className="address-edit">{Icons.edit}</button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        <button className="add-address-btn">
+        <button className="add-address-btn" onClick={() => setShowModal(true)}>
           {Icons.plus}
           Add New Address
         </button>
+      </div>
+
+      <AddressModal
+        isOpen={showModal}
+        onClose={closeModal}
+        address={editingAddress}
+        onSave={fetchAddresses}
+        userId={userId}
+      />
+    </div>
+  );
+};
+
+// Payment Method Modal
+const PaymentModal = ({ isOpen, onClose, payment, onSave, userId }) => {
+  const [formData, setFormData] = useState({
+    card_type: '',
+    last_four: '',
+    expiry_month: '',
+    expiry_year: '',
+    cardholder_name: '',
+    is_default: false,
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (payment) {
+      setFormData(payment);
+    } else {
+      setFormData({
+        card_type: '',
+        last_four: '',
+        expiry_month: '',
+        expiry_year: '',
+        cardholder_name: '',
+        is_default: false,
+      });
+    }
+  }, [payment]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const data = {
+        ...formData,
+        expiry_month: parseInt(formData.expiry_month),
+        expiry_year: parseInt(formData.expiry_year),
+      };
+
+      if (payment) {
+        // Update existing
+        const { error } = await supabase
+          .from('payment_methods')
+          .update(data)
+          .eq('id', payment.id);
+        if (error) throw error;
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('payment_methods')
+          .insert([{ ...data, user_id: userId }]);
+        if (error) throw error;
+      }
+      await onSave();
+      onClose();
+    } catch (err) {
+      console.error('Error saving payment method:', err);
+      alert('Failed to save payment method');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 15 }, (_, i) => currentYear + i);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal payment-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{payment ? 'Edit Payment Method' : 'Add Payment Method'}</h2>
+          <button className="close-btn" onClick={onClose}>{Icons.x}</button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Cardholder Name</label>
+            <input
+              type="text"
+              value={formData.cardholder_name}
+              onChange={(e) => setFormData({ ...formData, cardholder_name: e.target.value })}
+              placeholder="John Doe"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Card Type</label>
+            <select value={formData.card_type} onChange={(e) => setFormData({ ...formData, card_type: e.target.value })} required>
+              <option value="">Select card type</option>
+              <option value="Visa">Visa</option>
+              <option value="Mastercard">Mastercard</option>
+              <option value="Amex">American Express</option>
+              <option value="Discover">Discover</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Last 4 Digits</label>
+            <input
+              type="text"
+              value={formData.last_four}
+              onChange={(e) => setFormData({ ...formData, last_four: e.target.value.replace(/\D/g, '') })}
+              placeholder="4242"
+              maxLength={4}
+              required
+            />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Expiry Month</label>
+              <select value={formData.expiry_month} onChange={(e) => setFormData({ ...formData, expiry_month: e.target.value })} required>
+                <option value="">Month</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                  <option key={month} value={month}>{month.toString().padStart(2, '0')}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Expiry Year</label>
+              <select value={formData.expiry_year} onChange={(e) => setFormData({ ...formData, expiry_year: e.target.value })} required>
+                <option value="">Year</option>
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={formData.is_default}
+                onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
+              />
+              <span>Set as default payment method</span>
+            </label>
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Card'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
 };
 
 // Payment Tab
-const PaymentTab = ({ onBack }) => {
-  const cards = [
-    { id: 1, type: 'Visa', last4: '4242', expiry: '12/25', isDefault: true },
-    { id: 2, type: 'Mastercard', last4: '8888', expiry: '06/26', isDefault: false },
-  ];
+const PaymentTab = ({ onBack, userId }) => {
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingCard, setEditingCard] = useState(null);
+
+  const fetchCards = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('user_id', userId)
+        .order('is_default', { ascending: false });
+
+      if (error) throw error;
+      setCards(data || []);
+    } catch (err) {
+      console.error('Error fetching payment methods:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCards();
+  }, [userId]);
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to remove this payment method?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('payment_methods')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchCards();
+    } catch (err) {
+      console.error('Error deleting payment method:', err);
+    }
+  };
+
+  const openEditModal = (card) => {
+    setEditingCard(card);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingCard(null);
+  };
 
   return (
     <div className="tab-page">
       <ProfileHeader onBack={onBack} title="Payment Methods" />
 
       <div className="tab-content">
-        <div className="payment-list">
-          {cards.map(card => (
-            <div className={`payment-card ${card.isDefault ? 'default' : ''}`} key={card.id}>
-              <div className="card-icon">{Icons.creditCard}</div>
-              <div className="card-info">
-                <div className="card-type">
-                  {card.type} •••• {card.last4}
-                  {card.isDefault && <span className="default-badge">Default</span>}
+        {loading ? (
+          <div className="loading-state">{Icons.loader} Loading payment methods...</div>
+        ) : cards.length === 0 ? (
+          <div className="empty-state">
+            <p>No payment methods saved. Add one for faster checkout!</p>
+          </div>
+        ) : (
+          <div className="payment-list">
+            {cards.map(card => (
+              <div className={`payment-card ${card.is_default ? 'default' : ''}`} key={card.id}>
+                <div className="card-icon">{Icons.creditCard}</div>
+                <div className="card-info">
+                  <div className="card-type">
+                    {card.card_type} •••• {card.last_four}
+                    {card.is_default && <span className="default-badge">Default</span>}
+                  </div>
+                  <span className="card-expiry">
+                    Expires {card.expiry_month.toString().padStart(2, '0')}/{card.expiry_year}
+                  </span>
                 </div>
-                <span className="card-expiry">Expires {card.expiry}</span>
+                <div className="card-actions">
+                  <button className="card-edit" onClick={() => openEditModal(card)}>{Icons.edit}</button>
+                  <button className="card-delete" onClick={() => handleDelete(card.id)}>{Icons.trash}</button>
+                </div>
               </div>
-              <button className="card-edit">{Icons.edit}</button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        <button className="add-payment-btn">
+        <button className="add-payment-btn" onClick={() => setShowModal(true)}>
           {Icons.plus}
           Add Payment Method
         </button>
       </div>
+
+      <PaymentModal
+        isOpen={showModal}
+        onClose={closeModal}
+        payment={editingCard}
+        onSave={fetchCards}
+        userId={userId}
+      />
     </div>
   );
 };
@@ -596,8 +1034,172 @@ const NotificationsTab = ({ onBack }) => {
   );
 };
 
+// Edit Profile Modal
+const EditProfileModal = ({ isOpen, onClose, profile, onSave }) => {
+  const [formData, setFormData] = useState({
+    name: profile?.name || '',
+    phone: profile?.phone || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || '',
+        phone: profile.phone || '',
+      });
+    }
+  }, [profile]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave(formData);
+      onClose();
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal edit-profile-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Edit Profile</h2>
+          <button className="close-btn" onClick={onClose}>{Icons.x}</button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Full Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Phone Number</label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="(555) 123-4567"
+            />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Change Password Modal
+const ChangePasswordModal = ({ isOpen, onClose }) => {
+  const [formData, setFormData] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (formData.newPassword !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: formData.newPassword,
+      });
+
+      if (error) throw error;
+
+      setSuccess('Password updated successfully!');
+      setTimeout(() => {
+        onClose();
+        setFormData({ newPassword: '', confirmPassword: '' });
+        setSuccess('');
+      }, 2000);
+    } catch (err) {
+      setError(err.message || 'Failed to update password');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal change-password-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Change Password</h2>
+          <button className="close-btn" onClick={onClose}>{Icons.x}</button>
+        </div>
+        {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>New Password</label>
+            <input
+              type="password"
+              value={formData.newPassword}
+              onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+              placeholder="Enter new password"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Confirm New Password</label>
+            <input
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              placeholder="Confirm new password"
+              required
+            />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? 'Updating...' : 'Update Password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Security Tab
-const SecurityTab = ({ onBack }) => (
+const SecurityTab = ({ onBack, onChangePassword }) => (
   <div className="tab-page">
     <ProfileHeader onBack={onBack} title="Privacy & Security" />
 
@@ -605,7 +1207,7 @@ const SecurityTab = ({ onBack }) => (
       <div className="security-section">
         <h3>Account Security</h3>
         <div className="security-list">
-          <button className="security-item">
+          <button className="security-item" onClick={onChangePassword}>
             <span className="security-icon">{Icons.edit}</span>
             <span className="security-label">Change Password</span>
             {Icons.chevronRight}
@@ -695,8 +1297,12 @@ const HelpTab = ({ onBack }) => (
 
 // Main Customer Profile Component
 const CustomerProfile = ({ onBack }) => {
-  const { profile, loading: authLoading, user, signOut } = useAuth();
+  const { profile, loading: authLoading, user, signOut, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
+
+  // Modal states
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   // Data state
   const [orders, setOrders] = useState([]);
@@ -815,7 +1421,7 @@ const CustomerProfile = ({ onBack }) => {
   // Remove from favorites
   const handleRemoveFavorite = async (truckId) => {
     try {
-      const { error } = await supabase
+      const { error} = await supabase
         .from('favorites')
         .delete()
         .eq('customer_id', user.id)
@@ -825,6 +1431,17 @@ const CustomerProfile = ({ onBack }) => {
       setFavorites(prev => prev.filter(f => f.id !== truckId));
     } catch (err) {
       console.error('Error removing favorite:', err);
+    }
+  };
+
+  // Save profile updates
+  const handleSaveProfile = async (updatedData) => {
+    try {
+      await updateProfile(updatedData);
+      // Profile will be updated via AuthContext
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      throw err;
     }
   };
 
@@ -925,6 +1542,7 @@ const CustomerProfile = ({ onBack }) => {
             setActiveTab={setActiveTab}
             ordersCount={orders.length}
             favoritesCount={favorites.length}
+            onEditProfile={() => setShowEditProfile(true)}
           />
         );
       case 'orders':
@@ -954,13 +1572,13 @@ const CustomerProfile = ({ onBack }) => {
           />
         );
       case 'addresses':
-        return <AddressesTab onBack={handleTabBack} />;
+        return <AddressesTab onBack={handleTabBack} userId={user?.id} />;
       case 'payment':
-        return <PaymentTab onBack={handleTabBack} />;
+        return <PaymentTab onBack={handleTabBack} userId={user?.id} />;
       case 'notifications':
         return <NotificationsTab onBack={handleTabBack} />;
       case 'security':
-        return <SecurityTab onBack={handleTabBack} />;
+        return <SecurityTab onBack={handleTabBack} onChangePassword={() => setShowChangePassword(true)} />;
       case 'help':
         return <HelpTab onBack={handleTabBack} />;
       default:
@@ -989,6 +1607,18 @@ const CustomerProfile = ({ onBack }) => {
         </header>
       )}
       {renderTab()}
+
+      {/* Modals */}
+      <EditProfileModal
+        isOpen={showEditProfile}
+        onClose={() => setShowEditProfile(false)}
+        profile={profile}
+        onSave={handleSaveProfile}
+      />
+      <ChangePasswordModal
+        isOpen={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+      />
     </div>
   );
 };
