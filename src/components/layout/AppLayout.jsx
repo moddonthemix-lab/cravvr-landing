@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useToast } from '../../contexts/ToastContext';
 import { Icons } from '../common/Icons';
+import NotificationBell from '../common/NotificationBell';
 import './AppLayout.css';
 
 /**
@@ -20,6 +22,7 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
   const location = useLocation();
   const { user, signOut, openAuth, isOwner, isAdmin } = useAuth();
   const { itemCount, openCart } = useCart();
+  const { showToast } = useToast();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -39,8 +42,10 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
       // Navigate first to prevent ProtectedRoute from reopening auth modal
       navigate('/', { replace: true });
       await signOut();
+      showToast('You have been signed out', 'info');
     } catch (err) {
       console.error('Sign out failed:', err);
+      showToast('Sign out failed', 'error');
     }
   };
 
@@ -131,9 +136,7 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
             <span className="location-icon">{Icons.mapPin}</span>
             <span className="location-text">Portland, OR</span>
           </div>
-          <button className="icon-btn" aria-label="Notifications">
-            {Icons.bell}
-          </button>
+          <NotificationBell />
           <button className="cart-btn" onClick={openCart} aria-label="Cart">
             {Icons.shoppingBag}
             {itemCount > 0 && <span className="cart-count">{itemCount}</span>}

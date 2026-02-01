@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useConfirm } from './ConfirmContext';
+import { useToast } from './ToastContext';
 
 const CartContext = createContext({});
 
 export const CartProvider = ({ children }) => {
   const { confirm } = useConfirm();
+  const { showToast } = useToast();
   const [items, setItems] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [currentTruckId, setCurrentTruckId] = useState(null);
@@ -47,6 +49,7 @@ export const CartProvider = ({ children }) => {
       });
       if (!confirmed) return false;
       setItems([]);
+      showToast(`Cart cleared. Now ordering from ${truck.name}`, 'info');
     }
 
     setCurrentTruckId(truck.id);
@@ -67,13 +70,20 @@ export const CartProvider = ({ children }) => {
       return [...prev, { ...item, quantity: 1 }];
     });
 
+    showToast(`${item.name} added to cart`, 'success');
     return true;
-  }, [currentTruckId, currentTruckName, items.length, confirm]);
+  }, [currentTruckId, currentTruckName, items.length, confirm, showToast]);
 
   // Remove item from cart
   const removeItem = useCallback((itemId) => {
-    setItems(prev => prev.filter(i => i.id !== itemId));
-  }, []);
+    setItems(prev => {
+      const item = prev.find(i => i.id === itemId);
+      if (item) {
+        showToast(`${item.name} removed from cart`, 'info');
+      }
+      return prev.filter(i => i.id !== itemId);
+    });
+  }, [showToast]);
 
   // Update item quantity
   const updateQuantity = useCallback((itemId, quantity) => {
@@ -105,11 +115,14 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   // Clear cart
-  const clearCart = useCallback(() => {
+  const clearCart = useCallback((silent = false) => {
     setItems([]);
     setCurrentTruckId(null);
     setCurrentTruckName('');
-  }, []);
+    if (!silent) {
+      showToast('Cart cleared', 'info');
+    }
+  }, [showToast]);
 
   // Calculate subtotal
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../../contexts/ToastContext';
 import { Icons } from '../common/Icons';
 import StarRatingInput from '../common/StarRatingInput';
 import './ReviewModal.css';
 
 const ReviewModal = ({ isOpen, onClose, truck, userId, existingReview, onSuccess }) => {
+  const { showToast } = useToast();
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [comment, setComment] = useState(existingReview?.comment || '');
   const [loading, setLoading] = useState(false);
@@ -65,6 +67,12 @@ const ReviewModal = ({ isOpen, onClose, truck, userId, existingReview, onSuccess
       await updateTruckRating(truck.id);
 
       setSuccess(true);
+      showToast(
+        existingReview
+          ? 'Review updated! Thanks for your feedback.'
+          : 'Review submitted! Thanks for your feedback.',
+        'success'
+      );
       setTimeout(() => {
         onSuccess?.();
         onClose();
@@ -73,6 +81,7 @@ const ReviewModal = ({ isOpen, onClose, truck, userId, existingReview, onSuccess
     } catch (err) {
       console.error('Error submitting review:', err);
       setError('Failed to submit review. Please try again.');
+      showToast('Failed to submit review', 'error');
     } finally {
       setLoading(false);
     }

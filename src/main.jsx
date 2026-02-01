@@ -10,6 +10,7 @@ import { TruckProvider } from './contexts/TruckContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConfirmProvider } from './contexts/ConfirmContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import './index.css';
 import './styles/auth.css';
 import './styles/navigation.css';
@@ -24,14 +25,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ConfirmProvider>
           <BrowserRouter>
             <AuthProvider>
-              <TruckProvider>
-                <FavoritesProvider>
-                  <CartProvider>
-                    <App />
-                    <ToastContainer />
-                  </CartProvider>
-                </FavoritesProvider>
-              </TruckProvider>
+              <NotificationProvider>
+                <TruckProvider>
+                  <FavoritesProvider>
+                    <CartProvider>
+                      <App />
+                      <ToastContainer />
+                    </CartProvider>
+                  </FavoritesProvider>
+                </TruckProvider>
+              </NotificationProvider>
             </AuthProvider>
           </BrowserRouter>
         </ConfirmProvider>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { formatDate } from '../../utils/formatters';
@@ -1351,6 +1352,7 @@ const EditProfileModal = ({ isOpen, onClose, profile, onSave }) => {
 
 // Change Password Modal
 const ChangePasswordModal = ({ isOpen, onClose }) => {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     newPassword: '',
     confirmPassword: '',
@@ -1383,13 +1385,16 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       if (error) throw error;
 
       setSuccess('Password updated successfully!');
+      showToast('Password updated successfully!', 'success');
       setTimeout(() => {
         onClose();
         setFormData({ newPassword: '', confirmPassword: '' });
         setSuccess('');
       }, 2000);
     } catch (err) {
-      setError(err.message || 'Failed to update password');
+      const errorMsg = err.message || 'Failed to update password';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setSaving(false);
     }
@@ -1444,6 +1449,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 // Main Customer Profile Component
 const CustomerProfile = ({ onBack }) => {
   const { profile, loading: authLoading, user, signOut } = useAuth();
+  const { showToast } = useToast();
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
 
   // Track window size for responsive header display
@@ -1491,8 +1497,12 @@ const CustomerProfile = ({ onBack }) => {
       .update(updatedData)
       .eq('user_id', user.id);
 
-    if (error) throw error;
+    if (error) {
+      showToast('Failed to update profile', 'error');
+      throw error;
+    }
 
+    showToast('Profile updated successfully', 'success');
     // Refresh profile data (AuthContext will handle this automatically)
     window.location.reload(); // Simple refresh for now
   };
@@ -1538,9 +1548,10 @@ const CustomerProfile = ({ onBack }) => {
 
       // Refresh orders
       fetchOrders();
-      alert('Thank you for your review!');
+      showToast('Thank you for your review!', 'success');
     } catch (err) {
       console.error('Error submitting review:', err);
+      showToast('Failed to submit review', 'error');
       throw err;
     }
   };
@@ -1660,8 +1671,10 @@ const CustomerProfile = ({ onBack }) => {
 
       if (error) throw error;
       setFavorites(prev => prev.filter(f => f.id !== truckId));
+      showToast('Removed from favorites', 'info');
     } catch (err) {
       console.error('Error removing favorite:', err);
+      showToast('Failed to remove favorite', 'error');
     }
   };
 

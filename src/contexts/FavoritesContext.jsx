@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/auth/AuthContext';
+import { useToast } from './ToastContext';
 import { supabase } from '../lib/supabase';
 
 const FavoritesContext = createContext({});
 
 export const FavoritesProvider = ({ children }) => {
   const { user, openAuth } = useAuth();
+  const { showToast } = useToast();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -74,12 +76,14 @@ export const FavoritesProvider = ({ children }) => {
           .eq('truck_id', truckId);
 
         if (deleteError) throw deleteError;
+        showToast('Removed from favorites', 'info');
       } else {
         const { error: insertError } = await supabase
           .from('favorites')
           .insert({ customer_id: user.id, truck_id: truckId });
 
         if (insertError) throw insertError;
+        showToast('Added to favorites', 'success');
       }
       return true;
     } catch (err) {
@@ -90,10 +94,12 @@ export const FavoritesProvider = ({ children }) => {
       } else {
         setFavorites(prev => prev.filter(id => id !== truckId));
       }
-      setError(err.message || 'Failed to update favorite');
+      const errorMsg = err.message || 'Failed to update favorite';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
       return false;
     }
-  }, [user, favorites, openAuth]);
+  }, [user, favorites, openAuth, showToast]);
 
   // Refresh favorites from database
   const refresh = useCallback(async () => {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { Icons } from '../common/Icons';
 
 // Auth Modal Component - handles both login and signup
@@ -16,6 +17,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [success, setSuccess] = useState('');
 
   const { signIn, signUp, resetPassword } = useAuth();
+  const { showToast } = useToast();
 
   // Reset form state
   const resetForm = () => {
@@ -45,8 +47,10 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
 
     if (error) {
       setError(error?.message || error || 'An error occurred');
+      showToast(error?.message || error || 'Sign in failed', 'error');
     } else {
       resetForm();
+      showToast('Welcome back!', 'success');
       onClose();
     }
 
@@ -77,8 +81,10 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
 
     if (error) {
       setError(error?.message || error || 'An error occurred');
+      showToast(error?.message || error || 'Sign up failed', 'error');
     } else {
       setSuccess('Check your email for a confirmation link!');
+      showToast('Account created! Check your email to confirm.', 'success');
       // Don't close modal - let user see the success message
     }
 
@@ -95,8 +101,10 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
 
     if (error) {
       setError(error?.message || error || 'An error occurred');
+      showToast(error?.message || error || 'Password reset failed', 'error');
     } else {
       setSuccess('Password reset email sent! Check your inbox.');
+      showToast('Password reset email sent!', 'success');
     }
 
     setLoading(false);

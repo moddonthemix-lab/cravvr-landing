@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useToast } from '../../contexts/ToastContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import './Checkout.css';
@@ -8,6 +9,7 @@ import './Checkout.css';
 const Checkout = ({ onBack, onOrderComplete }) => {
   const { user, profile } = useAuth();
   const { items, subtotal, tax, total, currentTruckId, currentTruckName, clearCart } = useCart();
+  const { showToast } = useToast();
 
   const [orderType, setOrderType] = useState('pickup');
   const [notes, setNotes] = useState('');
@@ -79,11 +81,14 @@ const Checkout = ({ onBack, onOrderComplete }) => {
       // Success!
       setOrderNumber(orderData.order_number);
       setOrderComplete(true);
-      clearCart();
+      clearCart(true); // Silent clear to avoid duplicate toast
+      showToast(`Order #${orderData.order_number} placed successfully!`, 'success');
 
     } catch (err) {
       console.error('Order submission error:', err);
-      setError(err.message || 'Failed to submit order. Please try again.');
+      const errorMsg = err.message || 'Failed to submit order. Please try again.';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     } finally {
       setSubmitting(false);
     }
