@@ -331,8 +331,9 @@ button {
 }
 
 .mobile-nav.open {
-  max-height: 400px;
+  max-height: 600px;
   padding: 16px 20px 24px;
+  overflow: visible;
 }
 
 .mobile-nav nav {

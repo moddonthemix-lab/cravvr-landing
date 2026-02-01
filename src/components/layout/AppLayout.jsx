@@ -18,7 +18,7 @@ import './AppLayout.css';
 const AppLayout = ({ children, activeNav, hideNav = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut, openAuth } = useAuth();
+  const { user, signOut, openAuth, isOwner, isAdmin } = useAuth();
   const { itemCount, openCart } = useCart();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -70,13 +70,23 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
             <span className="nav-icon">{Icons.heart}</span>
             <span className="nav-label">Discover</span>
           </button>
-          <button
-            className={`mobile-nav-item ${isActive('/profile') ? 'active' : ''}`}
-            onClick={() => navigate('/profile')}
-          >
-            <span className="nav-icon">{Icons.user}</span>
-            <span className="nav-label">Account</span>
-          </button>
+          {isOwner ? (
+            <button
+              className={`mobile-nav-item ${isActive('/owner') ? 'active' : ''}`}
+              onClick={() => navigate('/owner')}
+            >
+              <span className="nav-icon">{Icons.truck}</span>
+              <span className="nav-label">My Trucks</span>
+            </button>
+          ) : (
+            <button
+              className={`mobile-nav-item ${isActive('/profile') ? 'active' : ''}`}
+              onClick={() => navigate('/profile')}
+            >
+              <span className="nav-icon">{Icons.user}</span>
+              <span className="nav-label">Account</span>
+            </button>
+          )}
         </nav>
       </div>
     );
@@ -164,8 +174,20 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
                   {Icons.user}
                   <span>Account</span>
                 </button>
+                {isOwner && (
+                  <button className={`nav-item ${isActive('/owner') ? 'active' : ''}`} onClick={() => navigate('/owner')}>
+                    {Icons.truck}
+                    <span>My Trucks</span>
+                  </button>
+                )}
+                {isAdmin && (
+                  <button className={`nav-item ${isActive('/admin') ? 'active' : ''}`} onClick={() => navigate('/admin')}>
+                    {Icons.settings}
+                    <span>Admin</span>
+                  </button>
+                )}
                 <button className="nav-item signout" onClick={signOut}>
-                  {Icons.logout}
+                  {Icons.logOut}
                   <span>Sign Out</span>
                 </button>
               </>
