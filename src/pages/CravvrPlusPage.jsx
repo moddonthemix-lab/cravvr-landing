@@ -201,7 +201,7 @@ const CravvrPlusPage = () => {
                   <span className="chrome-dot"></span>
                   <div className="chrome-url">
                     {Icons.lock}
-                    <span>yourtruck.cravvr.com</span>
+                    <span>tacolocoexpress.cravvr.com</span>
                   </div>
                 </div>
                 <div className="browser-screen">
@@ -211,9 +211,26 @@ const CravvrPlusPage = () => {
                     className="screen-image"
                   />
                   <div className="screen-overlay">
-                    <div className="overlay-logo">Taco Loco Express</div>
-                    <div className="overlay-tagline">Authentic Mexican Street Food</div>
-                    <button className="overlay-cta">View Menu</button>
+                    <div className="site-nav">
+                      <span>Menu</span>
+                      <span>Location</span>
+                      <span>About</span>
+                    </div>
+                    <div className="site-hero-content">
+                      <div className="site-badge">Open Now</div>
+                      <div className="site-logo">Taco Loco Express</div>
+                      <div className="site-tagline">Authentic Mexican Street Food</div>
+                      <div className="site-rating">
+                        {Icons.star}
+                        <span>4.9</span>
+                        <span className="rating-count">(127 reviews)</span>
+                      </div>
+                      <button className="site-cta">Order Now</button>
+                    </div>
+                    <div className="site-footer-hint">
+                      <span>{Icons.mapPin} 0.3 mi away</span>
+                      <span>{Icons.clock} Closes at 9pm</span>
+                    </div>
                   </div>
                 </div>
               </div>
