@@ -5,6 +5,7 @@ import CartDrawer from './components/cart/Cart';
 import TruckDetailPage from './components/truck/TruckDetailPage';
 import SocialPage from './pages/SocialPage';
 import WaitlistPage from './pages/WaitlistPage';
+import CravvrPlusPage from './pages/CravvrPlusPage';
 import ResponsiveApp from './components/app/ResponsiveApp';
 import MapPage from './pages/MapPage';
 import DiscoverPage from './pages/DiscoverPage';
@@ -101,6 +102,10 @@ const App = () => {
 
         {/* Waitlist signup questionnaire */}
         <Route path="/waitlist" element={<WaitlistPage />} />
+
+        {/* Cravvr Plus premium landing page */}
+        <Route path="/plus" element={<CravvrPlusPage />} />
+        <Route path="/CravvrPlus" element={<CravvrPlusPage />} />
 
         {/* Fallback to home */}
         <Route path="*" element={<ResponsiveApp />} />
