@@ -149,10 +149,12 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
         <p>Swipe right to save, left to skip</p>
       </div>
 
-      {/* Card Stack */}
-      <div className="discover-stack">
-        <div className="card-container">
-          {trucks.length > 0 && trucks.map((truck, index) => (
+      {/* Card + Actions Container */}
+      <div className="discover-content">
+        {/* Card Stack */}
+        <div className="discover-stack">
+          <div className="card-container">
+            {trucks.length > 0 && trucks.map((truck, index) => (
             <TinderCard
               ref={childRefs[index]}
               key={truck.id}
@@ -284,33 +286,34 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
                 Start Over
               </button>
             </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="discover-actions">
-        <button
-          className={`action-btn nope ${!canSwipe ? 'disabled' : ''}`}
-          onClick={() => swipe('left')}
-          disabled={!canSwipe}
-        >
-          {Icons.xBold}
-        </button>
-        <button
-          className="action-btn info"
-          onClick={() => currentIndex >= 0 && onTruckClick(trucks[currentIndex])}
-          disabled={currentIndex < 0}
-        >
-          {Icons.infoBold}
-        </button>
-        <button
-          className={`action-btn like ${!canSwipe ? 'disabled' : ''}`}
-          onClick={() => swipe('right')}
-          disabled={!canSwipe}
-        >
-          {Icons.heartFilled}
-        </button>
+        {/* Action Buttons */}
+        <div className="discover-actions">
+          <button
+            className={`action-btn nope ${!canSwipe ? 'disabled' : ''}`}
+            onClick={() => swipe('left')}
+            disabled={!canSwipe}
+          >
+            {Icons.xBold}
+          </button>
+          <button
+            className="action-btn info"
+            onClick={() => currentIndex >= 0 && onTruckClick(trucks[currentIndex])}
+            disabled={currentIndex < 0}
+          >
+            {Icons.infoBold}
+          </button>
+          <button
+            className={`action-btn like ${!canSwipe ? 'disabled' : ''}`}
+            onClick={() => swipe('right')}
+            disabled={!canSwipe}
+          >
+            {Icons.heartFilled}
+          </button>
+        </div>
       </div>
 
       {/* Progress Indicator */}
