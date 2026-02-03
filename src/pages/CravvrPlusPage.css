@@ -45,6 +45,62 @@
   pointer-events: none;
 }
 
+/* Fix hero layout for Plus page */
+.plus-hero .hero-device {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 480px;
+}
+
+@media (min-width: 1024px) {
+  .plus-hero .hero-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 60px;
+  }
+
+  .plus-hero .hero-text {
+    flex: 1;
+    text-align: left;
+  }
+
+  .plus-hero .hero-device {
+    flex: 0 0 480px;
+    width: 480px;
+  }
+
+  .plus-hero .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .plus-hero .hero-social-proof {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1023px) {
+  .plus-hero .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .plus-hero .hero-device {
+    max-width: 400px;
+    margin-top: 40px;
+  }
+
+  .plus-hero .hero-actions {
+    justify-content: center;
+  }
+
+  .plus-hero .hero-social-proof {
+    justify-content: center;
+  }
+}
+
 /* Hero Price Badges */
 .plus-badge-row {
   display: flex;
@@ -102,8 +158,7 @@
 .plus-mockup {
   position: relative;
   width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 .mockup-glow {
@@ -349,10 +404,6 @@
   .mockup-phone {
     display: none;
   }
-
-  .plus-mockup {
-    max-width: 320px;
-  }
 }
 
 /* ===================================
@@ -492,15 +543,8 @@
 }
 
 .plus-hero .hero-content.animate-in .hero-device {
-  animation: fadeInUp 0.8s ease 0.3s forwards;
+  animation: fadeInUp 0.8s ease 0.2s forwards;
   opacity: 0;
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 1023px) {
-  .plus-mockup {
-    margin-top: 40px;
-  }
 }
 
 @media (max-width: 767px) {
