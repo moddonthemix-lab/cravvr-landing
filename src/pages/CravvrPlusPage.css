@@ -21,6 +21,7 @@
 .plus-hero {
   background: linear-gradient(180deg, #fff 0%, var(--bg) 100%);
   position: relative;
+  overflow: visible;
 }
 
 .plus-hero::before {
@@ -50,24 +51,32 @@
   flex: 0 0 auto;
   width: 100%;
   max-width: 480px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.plus-hero .plus-website-preview {
+  width: 100%;
 }
 
 @media (min-width: 1024px) {
   .plus-hero .hero-content {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     gap: 60px;
+    padding-top: 20px;
   }
 
   .plus-hero .hero-text {
     flex: 1;
     text-align: left;
+    padding-top: 40px;
   }
 
   .plus-hero .hero-device {
-    flex: 0 0 480px;
-    width: 480px;
+    flex: 0 0 500px;
+    width: 500px;
   }
 
   .plus-hero .hero-actions {
@@ -162,12 +171,11 @@
 
 .preview-glow {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 140%;
-  height: 140%;
-  background: radial-gradient(ellipse at center, rgba(225, 29, 72, 0.12) 0%, transparent 70%);
+  top: 0;
+  left: -20%;
+  right: -20%;
+  bottom: -20%;
+  background: radial-gradient(ellipse at center, rgba(225, 29, 72, 0.1) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -179,8 +187,8 @@
   overflow: hidden;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 32px 64px -16px rgba(0, 0, 0, 0.5),
-    0 0 80px rgba(225, 29, 72, 0.15);
+    0 25px 50px -12px rgba(0, 0, 0, 0.4),
+    0 0 60px rgba(225, 29, 72, 0.12);
   z-index: 1;
 }
 
