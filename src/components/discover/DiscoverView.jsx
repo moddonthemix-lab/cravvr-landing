@@ -1,50 +1,123 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import TinderCard from 'react-tinder-card';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import './DiscoverView.css';
 
 const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [swipeDirection, setSwipeDirection] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(trucks.length - 1);
+  const [lastDirection, setLastDirection] = useState(null);
   const [likedCount, setLikedCount] = useState(favorites?.length || 0);
-  const [popularItems, setPopularItems] = useState([]);
+  const [popularItemsMap, setPopularItemsMap] = useState({});
+  const [swipeProgress, setSwipeProgress] = useState({ direction: null, progress: 0 });
 
-  // Fetch popular items for current truck
+  // Create refs for each card to enable programmatic swiping
+  const currentIndexRef = useRef(currentIndex);
+  const childRefs = useMemo(
+    () => Array(trucks.length).fill(0).map(() => React.createRef()),
+    [trucks.length]
+  );
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  // Reset index when trucks change
+  useEffect(() => {
+    setCurrentIndex(trucks.length - 1);
+  }, [trucks.length]);
+
+  // Fetch popular items for visible trucks (current and a few behind)
   useEffect(() => {
     const fetchPopularItems = async () => {
       if (!trucks.length) return;
-      const currentTruck = trucks[currentIndex];
-      if (!currentTruck) return;
 
-      try {
-        const { data, error } = await supabase
-          .from('menu_items')
-          .select('*')
-          .eq('truck_id', currentTruck.id)
-          .limit(2);
-
-        if (!error && data && data.length > 0) {
-          setPopularItems(data.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: `$${item.price?.toFixed(2) || '0.00'}`,
-            emoji: item.emoji || '🍽️',
-          })));
-        } else {
-          // Fallback items if no menu items found
-          setPopularItems([
-            { id: 1, name: 'Popular Special', price: '$12.99', emoji: '🌟' },
-            { id: 2, name: 'House Favorite', price: '$10.99', emoji: '❤️' },
-          ]);
+      // Get items for current and next few trucks
+      const indicesToFetch = [];
+      for (let i = currentIndex; i >= Math.max(0, currentIndex - 3); i--) {
+        if (trucks[i] && !popularItemsMap[trucks[i].id]) {
+          indicesToFetch.push(i);
         }
-      } catch (err) {
-        console.error('Error fetching menu items:', err);
-        setPopularItems([]);
+      }
+
+      for (const idx of indicesToFetch) {
+        const truck = trucks[idx];
+        try {
+          const { data, error } = await supabase
+            .from('menu_items')
+            .select('*')
+            .eq('truck_id', truck.id)
+            .limit(2);
+
+          if (!error && data && data.length > 0) {
+            setPopularItemsMap(prev => ({
+              ...prev,
+              [truck.id]: data.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: `$${item.price?.toFixed(2) || '0.00'}`,
+                emoji: item.emoji || '🍽️',
+              }))
+            }));
+          } else {
+            setPopularItemsMap(prev => ({
+              ...prev,
+              [truck.id]: [
+                { id: 1, name: 'Popular Special', price: '$12.99', emoji: '🌟' },
+                { id: 2, name: 'House Favorite', price: '$10.99', emoji: '❤️' },
+              ]
+            }));
+          }
+        } catch (err) {
+          console.error('Error fetching menu items:', err);
+        }
       }
     };
 
     fetchPopularItems();
   }, [currentIndex, trucks]);
+
+  const updateCurrentIndex = (val) => {
+    setCurrentIndex(val);
+    currentIndexRef.current = val;
+  };
+
+  const canSwipe = currentIndex >= 0;
+
+  const swiped = (direction, truck, index) => {
+    setLastDirection(direction);
+    setSwipeProgress({ direction: null, progress: 0 });
+
+    if (direction === 'right') {
+      toggleFavorite(truck.id);
+      setLikedCount(prev => prev + 1);
+    }
+
+    updateCurrentIndex(index - 1);
+  };
+
+  const outOfFrame = (name, idx) => {
+    // Card has left the screen
+    if (currentIndexRef.current >= idx && childRefs[idx].current) {
+      childRefs[idx].current.restoreCard();
+    }
+  };
+
+  const swipe = async (dir) => {
+    if (canSwipe && currentIndex < trucks.length && childRefs[currentIndex]?.current) {
+      await childRefs[currentIndex].current.swipe(dir);
+    }
+  };
+
+  // Handle card drag for visual feedback
+  const handleCardDrag = (direction, xMovement) => {
+    const progress = Math.min(Math.abs(xMovement) / 100, 1);
+    setSwipeProgress({
+      direction: xMovement > 0 ? 'right' : 'left',
+      progress
+    });
+  };
 
   if (loading || trucks.length === 0) {
     return (
@@ -57,23 +130,8 @@ const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick
     );
   }
 
-  const currentTruck = trucks[currentIndex];
-  const nextTruck = trucks[(currentIndex + 1) % trucks.length];
-
-  const handleSwipe = (direction) => {
-    setSwipeDirection(direction);
-
-    setTimeout(() => {
-      if (direction === 'right') {
-        toggleFavorite(currentTruck.id);
-        setLikedCount(prev => prev + 1);
-      }
-      setSwipeDirection(null);
-      setCurrentIndex((prev) => (prev + 1) % trucks.length);
-    }, 400);
-  };
-
-  const progressPercent = ((currentIndex + 1) / trucks.length) * 100;
+  const canGoBack = currentIndex < trucks.length - 1;
+  const progressPercent = ((trucks.length - currentIndex) / trucks.length) * 100;
 
   return (
     <div className="discover-view">
@@ -86,119 +144,189 @@ const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick
             {likedCount}
           </span>
         </div>
-        <p>Swipe right to save your favorites</p>
+        <p>Swipe right to save, left to skip</p>
       </div>
 
       {/* Card Stack */}
       <div className="discover-stack">
-        {/* Next Card (behind) */}
-        {nextTruck && (
-          <div className="discover-card next-card">
-            <div className="card-image-container">
-              <img src={nextTruck.image} alt={nextTruck.name} />
-            </div>
-          </div>
-        )}
-
-        {/* Current Card */}
-        <div className={`discover-card ${swipeDirection ? `swipe-${swipeDirection}` : ''}`}>
-          {/* Swipe Indicators */}
-          <div className={`swipe-indicator like ${swipeDirection === 'right' ? 'show' : ''}`}>
-            <span className="indicator-icon">{Icons.heartFilled}</span>
-            <span>LIKE</span>
-          </div>
-          <div className={`swipe-indicator nope ${swipeDirection === 'left' ? 'show' : ''}`}>
-            <span className="indicator-icon">{Icons.x}</span>
-            <span>NOPE</span>
-          </div>
-
-          {/* Card Image */}
-          <div className="card-image-container">
-            <img src={currentTruck.image} alt={currentTruck.name} />
-            <div className="card-image-overlay"></div>
-
-            {/* Status Badges */}
-            <div className="card-badges">
-              {currentTruck.featured && (
-                <span className="badge featured">
-                  {Icons.star} Featured
-                </span>
-              )}
-              <span className={`badge status ${currentTruck.isOpen ? 'open' : 'closed'}`}>
-                {currentTruck.isOpen ? 'Open Now' : 'Closed'}
-              </span>
-            </div>
-
-            {/* Delivery Info */}
-            <div className="card-delivery-info">
-              <span className="delivery-time">
-                {Icons.clock}
-                {currentTruck.deliveryTime}
-              </span>
-              <span className="delivery-fee">${currentTruck.deliveryFee} fee</span>
-            </div>
-          </div>
-
-          {/* Card Info */}
-          <div className="card-info">
-            <div className="card-header">
-              <div>
-                <h2>{currentTruck.name}</h2>
-                <p className="card-cuisine">{currentTruck.cuisine} • {currentTruck.priceRange}</p>
-              </div>
-              <div className="card-rating">
-                {Icons.star}
-                <span>{currentTruck.rating}</span>
-              </div>
-            </div>
-
-            <p className="card-description">
-              {currentTruck.description || `Delicious ${currentTruck.cuisine} food made fresh daily.`}
-            </p>
-
-            <div className="card-location">
-              <span className="distance">{currentTruck.distance}</span>
-              <span className="location">{currentTruck.location}</span>
-            </div>
-
-            {/* Popular Items */}
-            {popularItems.length > 0 && (
-              <div className="card-popular-items">
-                <span className="popular-label">Popular</span>
-                <div className="popular-items-list">
-                  {popularItems.map(item => (
-                    <div key={item.id} className="popular-item">
-                      <span className="popular-emoji">{item.emoji}</span>
-                      <span className="popular-name">{item.name}</span>
-                      <span className="popular-price">{item.price}</span>
+        <div className="card-container">
+          {trucks.map((truck, index) => (
+            <TinderCard
+              ref={childRefs[index]}
+              key={truck.id}
+              className="swipe-card"
+              onSwipe={(dir) => swiped(dir, truck, index)}
+              onCardLeftScreen={() => outOfFrame(truck.name, index)}
+              preventSwipe={['up', 'down']}
+              swipeRequirementType="position"
+              swipeThreshold={100}
+            >
+              <div
+                className={`discover-card ${index === currentIndex ? 'active' : ''}`}
+                style={{
+                  zIndex: trucks.length - index,
+                  transform: index < currentIndex
+                    ? `scale(${1 - (currentIndex - index) * 0.05}) translateY(${(currentIndex - index) * 8}px)`
+                    : 'none',
+                  opacity: index < currentIndex - 2 ? 0 : 1
+                }}
+              >
+                {/* Swipe Indicators - Show based on drag progress */}
+                {index === currentIndex && (
+                  <>
+                    <div
+                      className={`swipe-indicator like ${swipeProgress.direction === 'right' ? 'show' : ''}`}
+                      style={{
+                        opacity: swipeProgress.direction === 'right' ? swipeProgress.progress : 0,
+                        transform: `scale(${0.8 + (swipeProgress.direction === 'right' ? swipeProgress.progress * 0.4 : 0)}) rotate(-15deg)`
+                      }}
+                    >
+                      <span className="indicator-icon">{Icons.heartFilled}</span>
+                      <span>LIKE</span>
                     </div>
-                  ))}
+                    <div
+                      className={`swipe-indicator nope ${swipeProgress.direction === 'left' ? 'show' : ''}`}
+                      style={{
+                        opacity: swipeProgress.direction === 'left' ? swipeProgress.progress : 0,
+                        transform: `scale(${0.8 + (swipeProgress.direction === 'left' ? swipeProgress.progress * 0.4 : 0)}) rotate(15deg)`
+                      }}
+                    >
+                      <span className="indicator-icon">{Icons.x}</span>
+                      <span>NOPE</span>
+                    </div>
+                  </>
+                )}
+
+                {/* Card Image */}
+                <div className="card-image-container">
+                  <img src={truck.image} alt={truck.name} draggable={false} />
+                  <div className="card-image-overlay"></div>
+
+                  {/* Status Badges */}
+                  <div className="card-badges">
+                    {truck.featured && (
+                      <span className="badge featured">
+                        {Icons.star} Featured
+                      </span>
+                    )}
+                    <span className={`badge status ${truck.isOpen ? 'open' : 'closed'}`}>
+                      {truck.isOpen ? 'Open Now' : 'Closed'}
+                    </span>
+                  </div>
+
+                  {/* Delivery Info */}
+                  <div className="card-delivery-info">
+                    <span className="delivery-time">
+                      {Icons.clock}
+                      {truck.deliveryTime}
+                    </span>
+                    <span className="delivery-fee">${truck.deliveryFee} fee</span>
+                  </div>
+                </div>
+
+                {/* Card Info */}
+                <div className="card-info">
+                  <div className="card-header">
+                    <div>
+                      <h2>{truck.name}</h2>
+                      <p className="card-cuisine">{truck.cuisine} • {truck.priceRange}</p>
+                    </div>
+                    <div className="card-rating">
+                      {Icons.star}
+                      <span>{truck.rating}</span>
+                    </div>
+                  </div>
+
+                  <p className="card-description">
+                    {truck.description || `Delicious ${truck.cuisine} food made fresh daily.`}
+                  </p>
+
+                  <div className="card-location">
+                    <span className="distance">{truck.distance}</span>
+                    <span className="location">{truck.location}</span>
+                  </div>
+
+                  {/* Popular Items */}
+                  {popularItemsMap[truck.id]?.length > 0 && (
+                    <div className="card-popular-items">
+                      <span className="popular-label">Popular</span>
+                      <div className="popular-items-list">
+                        {popularItemsMap[truck.id].map(item => (
+                          <div key={item.id} className="popular-item">
+                            <span className="popular-emoji">{item.emoji}</span>
+                            <span className="popular-name">{item.name}</span>
+                            <span className="popular-price">{item.price}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
+            </TinderCard>
+          ))}
+
+          {/* Empty state when all cards swiped */}
+          {currentIndex < 0 && (
+            <div className="discover-empty">
+              <div className="empty-icon">🎉</div>
+              <h3>You've seen them all!</h3>
+              <p>Check back later for more food trucks</p>
+              <button
+                className="reset-btn"
+                onClick={() => {
+                  setCurrentIndex(trucks.length - 1);
+                  setLikedCount(favorites?.length || 0);
+                }}
+              >
+                Start Over
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Action Buttons */}
       <div className="discover-actions">
-        <button className="action-btn nope" onClick={() => handleSwipe('left')}>
+        <button
+          className={`action-btn nope ${!canSwipe ? 'disabled' : ''}`}
+          onClick={() => swipe('left')}
+          disabled={!canSwipe}
+        >
           {Icons.x}
         </button>
-        <button className="action-btn info" onClick={() => onTruckClick(currentTruck)}>
+        <button
+          className="action-btn info"
+          onClick={() => currentIndex >= 0 && onTruckClick(trucks[currentIndex])}
+          disabled={currentIndex < 0}
+        >
           {Icons.info}
         </button>
-        <button className="action-btn like" onClick={() => handleSwipe('right')}>
+        <button
+          className={`action-btn like ${!canSwipe ? 'disabled' : ''}`}
+          onClick={() => swipe('right')}
+          disabled={!canSwipe}
+        >
           {Icons.heart}
         </button>
       </div>
 
-      {/* Progress Bar */}
+      {/* Progress Indicator */}
       <div className="discover-progress">
-        <span className="progress-text">{currentIndex + 1} / {trucks.length}</span>
-        <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
+        <div className="progress-dots">
+          {trucks.slice(Math.max(0, currentIndex - 2), currentIndex + 3).map((truck, i) => {
+            const actualIndex = Math.max(0, currentIndex - 2) + i;
+            return (
+              <span
+                key={truck.id}
+                className={`progress-dot ${actualIndex === currentIndex ? 'active' : ''} ${actualIndex > currentIndex ? 'upcoming' : 'passed'}`}
+              />
+            );
+          })}
         </div>
+        <span className="progress-text">
+          {Math.max(0, trucks.length - currentIndex - 1)} of {trucks.length} explored
+        </span>
       </div>
     </div>
   );

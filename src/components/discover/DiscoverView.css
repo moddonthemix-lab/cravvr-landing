@@ -1,4 +1,4 @@
-/* DiscoverView - Swipe Card Interface */
+/* DiscoverView - Swipeable Card Interface */
 
 .discover-view {
   display: flex;
@@ -6,6 +6,7 @@
   min-height: calc(100vh - 65px);
   background: linear-gradient(180deg, var(--primary-light) 0%, #ffffff 30%);
   padding-bottom: 20px;
+  overflow: hidden;
 }
 
 /* Mobile: Account for bottom nav */
@@ -116,7 +117,7 @@
   margin: 0;
 }
 
-/* Card Stack */
+/* Card Stack Container */
 .discover-stack {
   flex: 1;
   position: relative;
@@ -127,104 +128,94 @@
   min-height: 440px;
 }
 
-/* Cards */
-.discover-card {
+.card-container {
   position: relative;
   width: 100%;
   max-width: 360px;
+  height: 520px;
+}
+
+/* Swipeable Card Wrapper (from react-tinder-card) */
+.swipe-card {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* Cards */
+.discover-card {
+  position: absolute;
+  width: 100%;
+  height: 100%;
   background: white;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  z-index: 2;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.discover-card.next-card {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.92);
-  z-index: 1;
-  opacity: 0.7;
-  width: calc(100% - 40px);
-  max-width: 360px;
+.discover-card.active {
+  cursor: grab;
 }
 
-/* Swipe Animations */
-@keyframes swipeLeft {
-  to {
-    transform: translateX(-150%) rotate(-20deg);
-    opacity: 0;
-  }
+.discover-card.active:active {
+  cursor: grabbing;
 }
 
-@keyframes swipeRight {
-  to {
-    transform: translateX(150%) rotate(20deg);
-    opacity: 0;
-  }
-}
-
-.discover-card.swipe-left {
-  animation: swipeLeft 0.4s ease forwards;
-}
-
-.discover-card.swipe-right {
-  animation: swipeRight 0.4s ease forwards;
-}
-
-/* Swipe Indicators */
+/* Swipe Indicators - Dynamic based on drag */
 .swipe-indicator {
   position: absolute;
-  top: 60px;
-  padding: 12px 24px;
+  top: 50px;
+  padding: 14px 28px;
   border-radius: 12px;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 800;
+  letter-spacing: 2px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  opacity: 0;
-  transform: scale(0.8) rotate(-12deg);
-  transition: all 0.2s ease;
+  gap: 10px;
   z-index: 20;
+  pointer-events: none;
+  transition: none;
 }
 
 .swipe-indicator.like {
-  right: 20px;
-  background: #dcfce7;
-  color: #16a34a;
-  border: 3px solid #16a34a;
+  right: 24px;
+  background: rgba(34, 197, 94, 0.95);
+  color: white;
+  border: 4px solid white;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
 }
 
 .swipe-indicator.nope {
-  left: 20px;
-  background: #fee2e2;
-  color: #dc2626;
-  border: 3px solid #dc2626;
-}
-
-.swipe-indicator.show {
-  opacity: 1;
-  transform: scale(1) rotate(-12deg);
+  left: 24px;
+  background: rgba(239, 68, 68, 0.95);
+  color: white;
+  border: 4px solid white;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
 }
 
 .indicator-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 /* Card Image */
 .card-image-container {
   position: relative;
-  height: 260px;
+  height: 240px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .card-image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  pointer-events: none;
 }
 
 .card-image-overlay {
@@ -234,6 +225,7 @@
   right: 0;
   height: 100px;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  pointer-events: none;
 }
 
 /* Card Badges */
@@ -243,6 +235,7 @@
   left: 16px;
   display: flex;
   gap: 8px;
+  z-index: 5;
 }
 
 .badge {
@@ -253,6 +246,7 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  backdrop-filter: blur(8px);
 }
 
 .badge svg {
@@ -261,17 +255,17 @@
 }
 
 .badge.featured {
-  background: rgba(251, 191, 36, 0.9);
+  background: rgba(251, 191, 36, 0.95);
   color: white;
 }
 
 .badge.status.open {
-  background: rgba(22, 163, 74, 0.9);
+  background: rgba(22, 163, 74, 0.95);
   color: white;
 }
 
 .badge.status.closed {
-  background: rgba(220, 38, 38, 0.9);
+  background: rgba(220, 38, 38, 0.95);
   color: white;
 }
 
@@ -282,6 +276,7 @@
   left: 16px;
   display: flex;
   gap: 12px;
+  z-index: 5;
 }
 
 .delivery-time,
@@ -295,6 +290,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #1e293b;
+  backdrop-filter: blur(8px);
 }
 
 .delivery-time svg {
@@ -306,6 +302,10 @@
 /* Card Info */
 .card-info {
   padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .card-header {
@@ -338,6 +338,7 @@
   font-size: 15px;
   font-weight: 700;
   color: #92400e;
+  flex-shrink: 0;
 }
 
 .card-rating svg {
@@ -375,7 +376,7 @@
 
 /* Popular Items */
 .card-popular-items {
-  margin-top: 12px;
+  margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid #f1f5f9;
 }
@@ -426,6 +427,63 @@
   color: #16a34a;
 }
 
+/* Empty State */
+.discover-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.discover-empty h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+
+.discover-empty p {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0 0 24px;
+}
+
+.reset-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.3);
+}
+
+.reset-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(var(--primary-rgb), 0.4);
+}
+
 /* Action Buttons */
 .discover-actions {
   display: flex;
@@ -450,6 +508,12 @@
   height: 24px;
 }
 
+.action-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
 .action-btn.nope {
   width: 64px;
   height: 64px;
@@ -459,10 +523,14 @@
   box-shadow: 0 4px 16px rgba(220, 38, 38, 0.15);
 }
 
-.action-btn.nope:hover {
+.action-btn.nope:not(.disabled):hover {
   background: #fee2e2;
   transform: scale(1.1);
   box-shadow: 0 6px 24px rgba(220, 38, 38, 0.25);
+}
+
+.action-btn.nope:not(.disabled):active {
+  transform: scale(0.95);
 }
 
 .action-btn.like {
@@ -474,10 +542,14 @@
   box-shadow: 0 4px 16px rgba(22, 163, 74, 0.15);
 }
 
-.action-btn.like:hover {
+.action-btn.like:not(.disabled):hover {
   background: #dcfce7;
   transform: scale(1.1);
   box-shadow: 0 6px 24px rgba(22, 163, 74, 0.25);
+}
+
+.action-btn.like:not(.disabled):active {
+  transform: scale(0.95);
 }
 
 .action-btn.info {
@@ -488,40 +560,57 @@
   color: #64748b;
 }
 
-.action-btn.info:hover {
+.action-btn.info:not([disabled]):hover {
   background: #f8fafc;
   transform: scale(1.1);
 }
 
-/* Progress Bar */
+/* Progress Indicator */
 .discover-progress {
   padding: 0 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.progress-dot.active {
+  width: 12px;
+  height: 12px;
+  background: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.progress-dot.passed {
+  background: var(--primary);
+  opacity: 0.5;
+}
+
+.progress-dot.upcoming {
+  background: #e5e7eb;
 }
 
 .progress-text {
-  display: block;
-  text-align: center;
   font-size: 12px;
   font-weight: 500;
   color: #94a3b8;
-  margin-bottom: 8px;
 }
 
-.progress-track {
-  height: 4px;
-  background: #e5e7eb;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-/* Desktop */
+/* Desktop Styles */
 @media (min-width: 769px) {
   .discover-view {
     min-height: calc(100vh - 65px);
@@ -530,7 +619,6 @@
     justify-content: center;
   }
 
-  /* Header */
   .discover-header {
     padding: 16px 0 12px;
   }
@@ -553,40 +641,37 @@
     font-size: 14px;
   }
 
-  /* Card Stack */
   .discover-stack {
     min-height: auto;
     padding: 0;
     flex: none;
   }
 
-  .discover-card {
+  .card-container {
     max-width: 360px;
+    height: 480px;
+  }
+
+  .discover-card {
     border-radius: 20px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
   }
 
-  .discover-card.next-card {
-    max-width: 360px;
-  }
-
   .card-image-container {
-    height: 180px;
+    height: 200px;
   }
 
-  /* Swipe Indicators */
   .swipe-indicator {
-    padding: 10px 20px;
-    font-size: 18px;
+    padding: 12px 24px;
+    font-size: 20px;
     border-radius: 10px;
   }
 
   .indicator-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
   }
 
-  /* Card Badges */
   .card-badges {
     top: 12px;
     left: 12px;
@@ -604,7 +689,6 @@
     height: 12px;
   }
 
-  /* Delivery Info */
   .card-delivery-info {
     bottom: 12px;
     left: 12px;
@@ -623,7 +707,6 @@
     height: 12px;
   }
 
-  /* Card Info */
   .card-info {
     padding: 16px;
   }
@@ -663,7 +746,6 @@
     gap: 8px;
   }
 
-  /* Action Buttons */
   .discover-actions {
     gap: 20px;
     padding: 16px;
@@ -685,7 +767,6 @@
     height: 24px;
   }
 
-  /* Progress Bar */
   .discover-progress {
     padding: 0 0 16px;
     max-width: 360px;
@@ -694,15 +775,10 @@
 
   .progress-text {
     font-size: 12px;
-    margin-bottom: 8px;
-  }
-
-  .progress-track {
-    height: 4px;
   }
 }
 
-/* Large desktop - use available width */
+/* Large desktop */
 @media (min-width: 1200px) {
   .discover-view {
     padding: 20px 48px 32px;
@@ -730,19 +806,18 @@
     max-width: 400px;
   }
 
-  .discover-card {
+  .card-container {
     max-width: 100%;
     width: 100%;
+    height: 520px;
+  }
+
+  .discover-card {
     border-radius: 22px;
   }
 
-  .discover-card.next-card {
-    max-width: 100%;
-    width: calc(100% - 30px);
-  }
-
   .card-image-container {
-    height: 200px;
+    height: 220px;
   }
 
   .card-header h2 {
@@ -786,7 +861,7 @@
   }
 }
 
-/* Extra large desktop - even wider cards */
+/* Extra large desktop */
 @media (min-width: 1400px) {
   .discover-view {
     padding: 24px 60px 40px;
@@ -810,8 +885,12 @@
     min-height: auto;
   }
 
+  .card-container {
+    height: 560px;
+  }
+
   .card-image-container {
-    height: 220px;
+    height: 240px;
   }
 
   .card-header h2 {
@@ -860,8 +939,12 @@
     min-height: 380px;
   }
 
+  .card-container {
+    height: 460px;
+  }
+
   .card-image-container {
-    height: 200px;
+    height: 180px;
   }
 
   .action-btn.nope,
