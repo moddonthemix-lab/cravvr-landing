@@ -489,11 +489,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
-  padding: 8px 24px 16px;
-  margin-top: -20px;
-  position: relative;
-  z-index: 10;
+  gap: 24px;
+  padding: 20px 24px;
+  background: transparent;
 }
 
 .action-btn {
@@ -503,30 +501,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.action-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.action-btn:not(.disabled):hover::before {
-  opacity: 1;
+  transition: all 0.2s ease;
 }
 
 .action-btn svg {
-  width: 28px;
-  height: 28px;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.15s ease;
+  width: 26px;
+  height: 26px;
 }
 
 .action-btn.disabled {
@@ -537,58 +517,36 @@
 
 /* Nope Button - Orange/Coral like Tinder */
 .action-btn.nope {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
-  border: 3px solid #ff6b6b;
-  color: #ff6b6b;
-  box-shadow:
-    0 4px 12px rgba(255, 107, 107, 0.25),
-    0 1px 3px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.action-btn.nope::before {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+  width: 56px;
+  height: 56px;
+  background: white;
+  border: none;
+  color: #fd5068;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .action-btn.nope:not(.disabled):hover {
-  transform: scale(1.12);
-  border-color: #ff6b6b;
-  color: white;
-  box-shadow:
-    0 8px 24px rgba(255, 107, 107, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(253, 80, 104, 0.35);
 }
 
 .action-btn.nope:not(.disabled):active {
   transform: scale(0.95);
 }
 
-/* Like Button - Green/Teal */
+/* Like Button - Green */
 .action-btn.like {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-  border: 3px solid #22c55e;
-  color: #22c55e;
-  box-shadow:
-    0 4px 12px rgba(34, 197, 94, 0.25),
-    0 1px 3px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.action-btn.like::before {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  width: 56px;
+  height: 56px;
+  background: white;
+  border: none;
+  color: #21d07c;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .action-btn.like:not(.disabled):hover {
-  transform: scale(1.12);
-  border-color: #22c55e;
-  color: white;
-  box-shadow:
-    0 8px 24px rgba(34, 197, 94, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(33, 208, 124, 0.35);
 }
 
 .action-btn.like:not(.disabled):active {
@@ -597,14 +555,12 @@
 
 /* Info Button - Blue accent */
 .action-btn.info {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 2px solid #3b82f6;
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: none;
   color: #3b82f6;
-  box-shadow:
-    0 2px 8px rgba(59, 130, 246, 0.15),
-    0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
 }
 
 .action-btn.info svg {
@@ -612,16 +568,9 @@
   height: 22px;
 }
 
-.action-btn.info::before {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-}
-
 .action-btn.info:not([disabled]):hover {
-  transform: scale(1.1);
-  color: white;
-  box-shadow:
-    0 6px 16px rgba(59, 130, 246, 0.35),
-    0 2px 4px rgba(0, 0, 0, 0.08);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
 
 .action-btn.info:not([disabled]):active {
@@ -810,20 +759,19 @@
   }
 
   .discover-actions {
-    gap: 14px;
-    padding: 8px 20px 12px;
-    margin-top: -16px;
+    gap: 20px;
+    padding: 16px 20px;
   }
 
   .action-btn.nope,
   .action-btn.like {
-    width: 54px;
-    height: 54px;
+    width: 52px;
+    height: 52px;
   }
 
   .action-btn.info {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
   }
 
   .action-btn svg {
@@ -902,22 +850,21 @@
   }
 
   .discover-actions {
-    gap: 18px;
-    padding: 8px 24px 16px;
-    margin-top: -20px;
+    gap: 24px;
+    padding: 20px 24px;
     width: 100%;
     max-width: 400px;
   }
 
   .action-btn.nope,
   .action-btn.like {
-    width: 58px;
-    height: 58px;
+    width: 56px;
+    height: 56px;
   }
 
   .action-btn.info {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
   }
 
   .action-btn svg {
@@ -982,25 +929,24 @@
 
   .discover-actions {
     max-width: 440px;
-    gap: 20px;
-    padding: 8px 28px 20px;
-    margin-top: -24px;
+    gap: 28px;
+    padding: 24px;
   }
 
   .action-btn.nope,
   .action-btn.like {
-    width: 64px;
-    height: 64px;
+    width: 60px;
+    height: 60px;
   }
 
   .action-btn.info {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
   }
 
   .action-btn svg {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
   }
 
   .action-btn.info svg {
@@ -1028,25 +974,24 @@
   }
 
   .discover-actions {
-    gap: 12px;
-    padding: 6px 16px 12px;
-    margin-top: -12px;
+    gap: 16px;
+    padding: 12px 16px;
   }
 
   .action-btn.nope,
   .action-btn.like {
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
   }
 
   .action-btn.info {
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
   }
 
   .action-btn svg {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
   }
 
   .action-btn.info svg {

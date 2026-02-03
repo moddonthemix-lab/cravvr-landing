@@ -295,21 +295,21 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
           onClick={() => swipe('left')}
           disabled={!canSwipe}
         >
-          {Icons.x}
+          {Icons.xBold}
         </button>
         <button
           className="action-btn info"
           onClick={() => currentIndex >= 0 && onTruckClick(trucks[currentIndex])}
           disabled={currentIndex < 0}
         >
-          {Icons.info}
+          {Icons.infoBold}
         </button>
         <button
           className={`action-btn like ${!canSwipe ? 'disabled' : ''}`}
           onClick={() => swipe('right')}
           disabled={!canSwipe}
         >
-          {Icons.heart}
+          {Icons.heartFilled}
         </button>
       </div>
 
