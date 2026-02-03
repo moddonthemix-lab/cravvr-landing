@@ -484,13 +484,16 @@
   box-shadow: 0 6px 24px rgba(var(--primary-rgb), 0.4);
 }
 
-/* Action Buttons */
+/* Action Buttons - Tinder Style */
 .discover-actions {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
-  padding: 20px;
+  gap: 16px;
+  padding: 8px 24px 16px;
+  margin-top: -20px;
+  position: relative;
+  z-index: 10;
 }
 
 .action-btn {
@@ -500,69 +503,129 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.action-btn:not(.disabled):hover::before {
+  opacity: 1;
 }
 
 .action-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.15s ease;
 }
 
 .action-btn.disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
   transform: none !important;
 }
 
+/* Nope Button - Orange/Coral like Tinder */
 .action-btn.nope {
-  width: 64px;
-  height: 64px;
-  background: white;
-  border: 2px solid #fee2e2;
-  color: #dc2626;
-  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.15);
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+  border: 3px solid #ff6b6b;
+  color: #ff6b6b;
+  box-shadow:
+    0 4px 12px rgba(255, 107, 107, 0.25),
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.action-btn.nope::before {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
 }
 
 .action-btn.nope:not(.disabled):hover {
-  background: #fee2e2;
-  transform: scale(1.1);
-  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.25);
+  transform: scale(1.12);
+  border-color: #ff6b6b;
+  color: white;
+  box-shadow:
+    0 8px 24px rgba(255, 107, 107, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .action-btn.nope:not(.disabled):active {
   transform: scale(0.95);
 }
 
+/* Like Button - Green/Teal */
 .action-btn.like {
-  width: 64px;
-  height: 64px;
-  background: white;
-  border: 2px solid #dcfce7;
-  color: #16a34a;
-  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.15);
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border: 3px solid #22c55e;
+  color: #22c55e;
+  box-shadow:
+    0 4px 12px rgba(34, 197, 94, 0.25),
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.action-btn.like::before {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
 }
 
 .action-btn.like:not(.disabled):hover {
-  background: #dcfce7;
-  transform: scale(1.1);
-  box-shadow: 0 6px 24px rgba(22, 163, 74, 0.25);
+  transform: scale(1.12);
+  border-color: #22c55e;
+  color: white;
+  box-shadow:
+    0 8px 24px rgba(34, 197, 94, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .action-btn.like:not(.disabled):active {
   transform: scale(0.95);
 }
 
+/* Info Button - Blue accent */
 .action-btn.info {
-  width: 52px;
-  height: 52px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  color: #64748b;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #3b82f6;
+  color: #3b82f6;
+  box-shadow:
+    0 2px 8px rgba(59, 130, 246, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.action-btn.info svg {
+  width: 22px;
+  height: 22px;
+}
+
+.action-btn.info::before {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 }
 
 .action-btn.info:not([disabled]):hover {
-  background: #f8fafc;
   transform: scale(1.1);
+  color: white;
+  box-shadow:
+    0 6px 16px rgba(59, 130, 246, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.action-btn.info:not([disabled]):active {
+  transform: scale(0.95);
 }
 
 /* Progress Indicator */
@@ -747,24 +810,30 @@
   }
 
   .discover-actions {
-    gap: 20px;
-    padding: 16px;
+    gap: 14px;
+    padding: 8px 20px 12px;
+    margin-top: -16px;
   }
 
   .action-btn.nope,
   .action-btn.like {
-    width: 56px;
-    height: 56px;
+    width: 54px;
+    height: 54px;
   }
 
   .action-btn.info {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
   }
 
   .action-btn svg {
     width: 24px;
     height: 24px;
+  }
+
+  .action-btn.info svg {
+    width: 20px;
+    height: 20px;
   }
 
   .discover-progress {
@@ -833,27 +902,32 @@
   }
 
   .discover-actions {
-    gap: 24px;
-    padding: 20px;
+    gap: 18px;
+    padding: 8px 24px 16px;
+    margin-top: -20px;
     width: 100%;
     max-width: 400px;
   }
 
   .action-btn.nope,
   .action-btn.like {
-    width: 60px;
-    height: 60px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    width: 58px;
+    height: 58px;
   }
 
   .action-btn.info {
-    width: 50px;
-    height: 50px;
+    width: 46px;
+    height: 46px;
   }
 
   .action-btn svg {
     width: 26px;
     height: 26px;
+  }
+
+  .action-btn.info svg {
+    width: 22px;
+    height: 22px;
   }
 
   .discover-progress {
@@ -908,8 +982,9 @@
 
   .discover-actions {
     max-width: 440px;
-    gap: 28px;
-    padding: 24px;
+    gap: 20px;
+    padding: 8px 28px 20px;
+    margin-top: -24px;
   }
 
   .action-btn.nope,
@@ -919,13 +994,18 @@
   }
 
   .action-btn.info {
-    width: 54px;
-    height: 54px;
+    width: 50px;
+    height: 50px;
   }
 
   .action-btn svg {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .action-btn.info svg {
+    width: 24px;
+    height: 24px;
   }
 
   .discover-progress {
@@ -947,14 +1027,30 @@
     height: 180px;
   }
 
+  .discover-actions {
+    gap: 12px;
+    padding: 6px 16px 12px;
+    margin-top: -12px;
+  }
+
   .action-btn.nope,
   .action-btn.like {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
   }
 
   .action-btn.info {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .action-btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .action-btn.info svg {
+    width: 18px;
+    height: 18px;
   }
 }
