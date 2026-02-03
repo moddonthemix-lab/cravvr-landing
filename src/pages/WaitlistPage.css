@@ -1,0 +1,535 @@
+/* Waitlist Page - Immersive Questionnaire */
+
+.waitlist-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fff1f2 50%, #fef2f2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+}
+
+/* Progress Bar */
+.waitlist-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(225, 29, 72, 0.1);
+  z-index: 100;
+}
+
+.waitlist-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #e11d48, #f43f5e);
+  transition: width 0.5s ease;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Container */
+.waitlist-container {
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+}
+
+/* Back Button */
+.waitlist-back-btn {
+  position: absolute;
+  top: -60px;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.waitlist-back-btn:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.waitlist-back-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Step Animation */
+.waitlist-step {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Logo */
+.waitlist-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.waitlist-logo .logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #e11d48, #f43f5e);
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.waitlist-logo .logo-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Title & Subtitle */
+.waitlist-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+
+.waitlist-subtitle {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0 0 32px;
+}
+
+/* Question */
+.waitlist-question h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 20px;
+}
+
+/* User Type Selection */
+.user-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.user-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: #f8fafc;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-type-btn:hover {
+  background: #fff;
+  border-color: #e2e8f0;
+}
+
+.user-type-btn.selected {
+  background: #fef2f2;
+  border-color: #e11d48;
+}
+
+.type-emoji {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.type-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.type-desc {
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* Step Content */
+.step-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.step-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+
+.step-subtitle {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0 0 32px;
+}
+
+/* Input */
+.waitlist-input-wrapper {
+  margin-bottom: 24px;
+}
+
+.waitlist-input {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 18px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  outline: none;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.waitlist-input:focus {
+  border-color: #e11d48;
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+}
+
+.waitlist-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Location Button */
+.location-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #e11d48, #f43f5e);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.location-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3);
+}
+
+.location-btn:disabled {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+.location-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.location-spinner svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.location-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.location-divider::before,
+.location-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* Cuisine Grid */
+.cuisine-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.cuisine-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  background: #f8fafc;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cuisine-btn:hover {
+  background: #fff;
+  border-color: #e2e8f0;
+}
+
+.cuisine-btn.selected {
+  background: #fef2f2;
+  border-color: #e11d48;
+}
+
+.cuisine-emoji {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.cuisine-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+/* Cuisine Select Grid (Single Select for Truck Owners) */
+.cuisine-select-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.cuisine-select-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  background: #f8fafc;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cuisine-select-btn:hover {
+  background: #fff;
+  border-color: #e2e8f0;
+}
+
+.cuisine-select-btn.selected {
+  background: #fef2f2;
+  border-color: #e11d48;
+}
+
+/* Next Button */
+.waitlist-next-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: #1e293b;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.waitlist-next-btn:hover:not(:disabled) {
+  background: #0f172a;
+  transform: translateY(-2px);
+}
+
+.waitlist-next-btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.waitlist-next-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.waitlist-next-btn.submit {
+  background: linear-gradient(135deg, #e11d48, #f43f5e);
+}
+
+.waitlist-next-btn.submit:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3);
+}
+
+.btn-spinner svg {
+  animation: spin 1s linear infinite;
+}
+
+/* Error */
+.waitlist-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Success State */
+.waitlist-success {
+  background: white;
+  border-radius: 24px;
+  padding: 48px 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.waitlist-success .success-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+}
+
+.waitlist-success h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+
+.waitlist-success p {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0 0 32px;
+  line-height: 1.6;
+}
+
+.success-details {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.success-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.success-detail:not(:last-child) {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-label {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.waitlist-home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  background: #1e293b;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.waitlist-home-btn:hover {
+  background: #0f172a;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  .waitlist-step,
+  .waitlist-success {
+    padding: 32px 24px;
+    border-radius: 20px;
+  }
+
+  .waitlist-title {
+    font-size: 24px;
+  }
+
+  .step-title {
+    font-size: 20px;
+  }
+
+  .step-icon {
+    font-size: 40px;
+  }
+
+  .cuisine-grid,
+  .cuisine-select-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .cuisine-btn,
+  .cuisine-select-btn {
+    padding: 12px 6px;
+  }
+
+  .cuisine-emoji {
+    font-size: 20px;
+  }
+
+  .cuisine-label {
+    font-size: 12px;
+  }
+
+  .waitlist-back-btn {
+    top: -50px;
+  }
+}

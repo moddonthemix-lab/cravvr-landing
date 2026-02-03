@@ -4,6 +4,7 @@ import LandingPage from './components/landing/LandingPage';
 import CartDrawer from './components/cart/Cart';
 import TruckDetailPage from './components/truck/TruckDetailPage';
 import SocialPage from './pages/SocialPage';
+import WaitlistPage from './pages/WaitlistPage';
 import ResponsiveApp from './components/app/ResponsiveApp';
 import MapPage from './pages/MapPage';
 import DiscoverPage from './pages/DiscoverPage';
@@ -97,6 +98,9 @@ const App = () => {
 
         {/* Social media graphics studio */}
         <Route path="/social" element={<SocialPage />} />
+
+        {/* Waitlist signup questionnaire */}
+        <Route path="/waitlist" element={<WaitlistPage />} />
 
         {/* Fallback to home */}
         <Route path="*" element={<ResponsiveApp />} />
