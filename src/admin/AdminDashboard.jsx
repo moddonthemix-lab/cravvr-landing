@@ -1712,13 +1712,40 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
     maintenanceMode: false,
   });
   const [creatingTestUser, setCreatingTestUser] = useState(false);
+  const [creatingTestOrder, setCreatingTestOrder] = useState(false);
+  const [customers, setCustomers] = useState([]);
+  const [trucks, setTrucks] = useState([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [selectedTruckId, setSelectedTruckId] = useState('');
+
+  // Fetch customers and trucks for test order creation
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch customers
+      const { data: customerData } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .eq('role', 'customer')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (customerData) setCustomers(customerData);
+
+      // Fetch trucks
+      const { data: truckData } = await supabase
+        .from('food_trucks')
+        .select('id, name')
+        .order('name');
+      if (truckData) setTrucks(truckData);
+    };
+    fetchData();
+  }, []);
 
   const handleCreateTestCustomer = async () => {
     setCreatingTestUser(true);
     try {
       // Create a test customer via Supabase
       const testEmail = `test.customer.${Date.now()}@cravvr.local`;
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: testEmail,
         password: 'TestCustomer123!',
         options: {
@@ -1737,6 +1764,85 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
       showToast('Error creating test customer: ' + err.message, 'error');
     } finally {
       setCreatingTestUser(false);
+    }
+  };
+
+  const handleCreateTestOrder = async () => {
+    if (!selectedCustomerId || !selectedTruckId) {
+      showToast('Please select both a customer and a truck', 'error');
+      return;
+    }
+
+    setCreatingTestOrder(true);
+    try {
+      // Fetch menu items for the selected truck
+      const { data: menuItems, error: menuError } = await supabase
+        .from('menu_items')
+        .select('id, name, price')
+        .eq('truck_id', selectedTruckId)
+        .eq('is_available', true)
+        .limit(3);
+
+      if (menuError) throw menuError;
+
+      if (!menuItems || menuItems.length === 0) {
+        showToast('No menu items found for this truck. Add some menu items first.', 'error');
+        setCreatingTestOrder(false);
+        return;
+      }
+
+      // Calculate order totals
+      const subtotal = menuItems.reduce((sum, item) => sum + (parseFloat(item.price) || 9.99), 0);
+      const tax = subtotal * 0.0825; // 8.25% tax
+      const total = subtotal + tax;
+
+      // Create the order with 'completed' status
+      const orderNumber = `TEST-${Date.now()}`;
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          customer_id: selectedCustomerId,
+          truck_id: selectedTruckId,
+          order_number: orderNumber,
+          status: 'completed',
+          order_type: 'pickup',
+          subtotal: subtotal.toFixed(2),
+          tax: tax.toFixed(2),
+          total: total.toFixed(2),
+          completed_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = menuItems.map(item => ({
+        order_id: order.id,
+        menu_item_id: item.id,
+        name: item.name,
+        price: parseFloat(item.price) || 9.99,
+        quantity: 1,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      const truckName = trucks.find(t => t.id === selectedTruckId)?.name || 'Unknown Truck';
+      const customerName = customers.find(c => c.id === selectedCustomerId)?.name || 'Unknown Customer';
+
+      showToast(
+        `Test order created!\nOrder #${orderNumber}\nCustomer: ${customerName}\nTruck: ${truckName}\nItems: ${menuItems.length}\nTotal: $${total.toFixed(2)}`,
+        'success'
+      );
+    } catch (err) {
+      console.error('Error creating test order:', err);
+      showToast('Error creating test order: ' + err.message, 'error');
+    } finally {
+      setCreatingTestOrder(false);
     }
   };
 
@@ -1870,6 +1976,46 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
               {creatingTestUser ? 'Creating...' : 'Create Test Customer'}
             </button>
             <span className="form-hint">Creates a test customer account for local testing</span>
+          </div>
+
+          <div className="form-group" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+            <label>Create Test Order (Completed)</label>
+            <p className="form-hint" style={{ marginBottom: '12px' }}>
+              Create a completed order so the customer can write reviews
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <select
+                value={selectedCustomerId}
+                onChange={(e) => setSelectedCustomerId(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)' }}
+              >
+                <option value="">Select Customer...</option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>{c.name || c.email}</option>
+                ))}
+              </select>
+              <select
+                value={selectedTruckId}
+                onChange={(e) => setSelectedTruckId(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)' }}
+              >
+                <option value="">Select Truck...</option>
+                {trucks.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              <button
+                className="btn-primary"
+                onClick={handleCreateTestOrder}
+                disabled={creatingTestOrder || !selectedCustomerId || !selectedTruckId}
+                style={{ marginTop: '4px' }}
+              >
+                {creatingTestOrder ? 'Creating Order...' : 'Create Completed Order'}
+              </button>
+            </div>
+            <span className="form-hint" style={{ marginTop: '8px', display: 'block' }}>
+              This creates an order with status "completed" including menu items from the selected truck
+            </span>
           </div>
         </div>
       </div>
