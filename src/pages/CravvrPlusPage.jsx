@@ -194,54 +194,66 @@ const CravvrPlusPage = () => {
               </div>
             </div>
             <div className="hero-device">
-              <div className="plus-mockup">
-                <div className="mockup-glow"></div>
-                <div className="mockup-browser">
-                  <div className="browser-bar">
-                    <div className="browser-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
+              <div className="plus-website-preview">
+                <div className="preview-glow"></div>
+                <div className="preview-window">
+                  <div className="preview-toolbar">
+                    <div className="toolbar-dots">
+                      <span className="dot red"></span>
+                      <span className="dot yellow"></span>
+                      <span className="dot green"></span>
                     </div>
-                    <div className="browser-url">
-                      <span className="url-lock">{Icons.lock}</span>
-                      yourtruck.cravvr.com
+                    <div className="toolbar-url">
+                      <span className="url-icon">{Icons.lock}</span>
+                      <span>yourtruck.cravvr.com</span>
+                    </div>
+                    <div className="toolbar-actions">
+                      <span>{Icons.refresh}</span>
                     </div>
                   </div>
-                  <div className="browser-content">
-                    <div className="mockup-hero-img">
-                      <div className="mockup-hero-overlay">
-                        <div className="mockup-truck-name"></div>
-                        <div className="mockup-truck-tagline"></div>
+                  <div className="preview-content">
+                    <div className="preview-header">
+                      <div className="preview-logo"></div>
+                      <div className="preview-nav">
+                        <span></span>
+                        <span></span>
+                        <span></span>
                       </div>
                     </div>
-                    <div className="mockup-body">
-                      <div className="mockup-nav-pills">
-                        <span className="active"></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                    <div className="preview-hero-banner">
+                      <div className="banner-content">
+                        <div className="banner-title">Taco Loco Express</div>
+                        <div className="banner-subtitle">Authentic Mexican Street Food</div>
+                        <div className="banner-cta">View Menu</div>
                       </div>
-                      <div className="mockup-section">
-                        <div className="mockup-section-title"></div>
-                        <div className="mockup-cards">
-                          <div className="mockup-card"></div>
-                          <div className="mockup-card"></div>
-                          <div className="mockup-card"></div>
+                    </div>
+                    <div className="preview-body">
+                      <div className="preview-section-header">
+                        <span>Popular Items</span>
+                      </div>
+                      <div className="preview-menu-grid">
+                        <div className="preview-menu-item">
+                          <div className="menu-item-img"></div>
+                          <div className="menu-item-info">
+                            <div className="menu-item-name"></div>
+                            <div className="menu-item-price"></div>
+                          </div>
+                        </div>
+                        <div className="preview-menu-item">
+                          <div className="menu-item-img"></div>
+                          <div className="menu-item-info">
+                            <div className="menu-item-name"></div>
+                            <div className="menu-item-price"></div>
+                          </div>
+                        </div>
+                        <div className="preview-menu-item">
+                          <div className="menu-item-img"></div>
+                          <div className="menu-item-info">
+                            <div className="menu-item-name"></div>
+                            <div className="menu-item-price"></div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="mockup-phone">
-                  <div className="phone-frame">
-                    <div className="phone-notch"></div>
-                    <div className="phone-content">
-                      <div className="phone-header-bar"></div>
-                      <div className="phone-hero"></div>
-                      <div className="phone-menu-item"></div>
-                      <div className="phone-menu-item"></div>
-                      <div className="phone-cta"></div>
                     </div>
                   </div>
                 </div>
