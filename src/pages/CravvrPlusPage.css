@@ -412,13 +412,25 @@
 }
 
 .plus-price-card {
-  max-width: 520px;
+  max-width: 700px;
   width: 100%;
   position: relative;
-  padding: 48px 40px 40px !important;
+  padding: 56px 56px 48px !important;
   margin: 0 auto;
   border: 2px solid var(--primary) !important;
   box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+}
+
+@media (min-width: 768px) {
+  .plus-price-card {
+    padding: 56px 72px 56px !important;
+  }
+
+  .plus-price-card .price-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 32px;
+  }
 }
 
 .plus-price-card .price-badge-featured {
@@ -446,18 +458,39 @@
 
 .plus-price-display {
   text-align: center;
-  padding: 28px 24px;
-  margin-bottom: 28px;
+  padding: 32px 24px;
+  margin-bottom: 32px;
   background: linear-gradient(135deg, var(--bg) 0%, rgba(225, 29, 72, 0.03) 100%);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
 }
 
+@media (min-width: 640px) {
+  .plus-price-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 40px 48px;
+  }
+
+  .plus-price-divider {
+    padding: 0;
+    width: 1px;
+    height: 60px;
+    background: var(--border);
+  }
+
+  .plus-price-divider span {
+    display: none;
+  }
+}
+
 .plus-price-row {
   display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .plus-price-amount {
@@ -479,7 +512,7 @@
 }
 
 .plus-price-label {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text-secondary);
   font-weight: 500;
 }
