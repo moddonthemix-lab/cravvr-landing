@@ -1300,7 +1300,7 @@
 
 .trucks-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 20px;
 }
 
@@ -1309,28 +1309,35 @@
   border-radius: 12px;
   border: 1px solid var(--admin-border);
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.truck-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .truck-card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 20px;
-  border-bottom: 1px solid var(--admin-border);
+  padding: 16px 20px;
+  background: linear-gradient(to right, #fef2f2, #fff);
 }
 
 .truck-avatar {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   background: linear-gradient(135deg, var(--admin-primary) 0%, #f43f5e 100%);
   color: white;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   flex-shrink: 0;
+  text-transform: uppercase;
 }
 
 .truck-info {
@@ -1342,23 +1349,30 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--admin-text);
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
+  text-transform: capitalize;
 }
 
 .truck-cuisine {
   font-size: 13px;
   color: var(--admin-text-muted);
+  text-transform: capitalize;
 }
 
 .truck-card-body {
-  padding: 16px 20px;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .truck-stat {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--admin-border);
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .truck-stat:last-child {
@@ -1367,13 +1381,17 @@
 
 .truck-stat .stat-label {
   font-size: 13px;
-  color: var(--admin-text-muted);
+  color: #64748b;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
 .truck-stat .stat-value {
   font-size: 13px;
   font-weight: 600;
-  color: var(--admin-text);
+  color: #1e293b;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 .truck-stat .stat-value.rating {
@@ -1390,13 +1408,18 @@
 
 .truck-card-footer {
   display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid var(--admin-border);
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
 }
 
 .truck-card-footer button {
   flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
 }
 
 /* ============================================
