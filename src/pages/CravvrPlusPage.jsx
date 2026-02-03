@@ -194,67 +194,26 @@ const CravvrPlusPage = () => {
               </div>
             </div>
             <div className="hero-device">
-              <div className="plus-website-preview">
-                <div className="preview-glow"></div>
-                <div className="preview-window">
-                  <div className="preview-toolbar">
-                    <div className="toolbar-dots">
-                      <span className="dot red"></span>
-                      <span className="dot yellow"></span>
-                      <span className="dot green"></span>
-                    </div>
-                    <div className="toolbar-url">
-                      <span className="url-icon">{Icons.lock}</span>
-                      <span>yourtruck.cravvr.com</span>
-                    </div>
-                    <div className="toolbar-actions">
-                      <span>{Icons.refresh}</span>
-                    </div>
+              <div className="browser-mockup">
+                <div className="browser-chrome">
+                  <span className="chrome-dot"></span>
+                  <span className="chrome-dot"></span>
+                  <span className="chrome-dot"></span>
+                  <div className="chrome-url">
+                    {Icons.lock}
+                    <span>yourtruck.cravvr.com</span>
                   </div>
-                  <div className="preview-content">
-                    <div className="preview-header">
-                      <div className="preview-logo"></div>
-                      <div className="preview-nav">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                    <div className="preview-hero-banner">
-                      <div className="banner-content">
-                        <div className="banner-title">Taco Loco Express</div>
-                        <div className="banner-subtitle">Authentic Mexican Street Food</div>
-                        <div className="banner-cta">View Menu</div>
-                      </div>
-                    </div>
-                    <div className="preview-body">
-                      <div className="preview-section-header">
-                        <span>Popular Items</span>
-                      </div>
-                      <div className="preview-menu-grid">
-                        <div className="preview-menu-item">
-                          <div className="menu-item-img"></div>
-                          <div className="menu-item-info">
-                            <div className="menu-item-name"></div>
-                            <div className="menu-item-price"></div>
-                          </div>
-                        </div>
-                        <div className="preview-menu-item">
-                          <div className="menu-item-img"></div>
-                          <div className="menu-item-info">
-                            <div className="menu-item-name"></div>
-                            <div className="menu-item-price"></div>
-                          </div>
-                        </div>
-                        <div className="preview-menu-item">
-                          <div className="menu-item-img"></div>
-                          <div className="menu-item-info">
-                            <div className="menu-item-name"></div>
-                            <div className="menu-item-price"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                </div>
+                <div className="browser-screen">
+                  <img
+                    src="https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?auto=format&fit=crop&w=800&q=80"
+                    alt="Food truck website preview"
+                    className="screen-image"
+                  />
+                  <div className="screen-overlay">
+                    <div className="overlay-logo">Taco Loco Express</div>
+                    <div className="overlay-tagline">Authentic Mexican Street Food</div>
+                    <button className="overlay-cta">View Menu</button>
                   </div>
                 </div>
               </div>
