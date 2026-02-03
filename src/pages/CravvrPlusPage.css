@@ -50,9 +50,7 @@
 .plus-hero .hero-device {
   flex: 0 0 auto;
   width: 100%;
-  max-width: 480px;
-  display: flex;
-  align-items: flex-start;
+  max-width: 520px;
 }
 
 .plus-hero .browser-mockup {
@@ -63,20 +61,18 @@
   .plus-hero .hero-content {
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
-    gap: 60px;
-    padding-top: 20px;
+    align-items: center;
+    gap: 80px;
   }
 
   .plus-hero .hero-text {
     flex: 1;
     text-align: left;
-    padding-top: 40px;
   }
 
   .plus-hero .hero-device {
-    flex: 0 0 500px;
-    width: 500px;
+    flex: 0 0 520px;
+    width: 520px;
   }
 
   .plus-hero .hero-actions {
