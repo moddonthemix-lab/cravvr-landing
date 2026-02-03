@@ -124,7 +124,7 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
             <div className="stat-icon">{stat.icon}</div>
             <div className="stat-content">
               <span className="stat-label">{stat.label}</span>
-              <span className="stat-value">{loading ? '...' : stat.value}</span>
+              <span className="stat-value" style={loading ? { opacity: 0.6 } : {}}>{stat.value}</span>
               <span className="stat-change neutral">{stat.change}</span>
             </div>
           </div>
@@ -1212,23 +1212,36 @@ const TrucksManagement = () => {
   const fetchTrucks = async () => {
     setLoading(true);
     try {
+      // Fetch trucks with owner profiles via a simpler join
       const { data, error } = await supabase
         .from('food_trucks')
         .select(`
           *,
-          owners:owner_id (
-            id,
-            profiles:id (name, email)
-          )
+          owner_id
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      // Fetch owner profiles separately to avoid ambiguous join
+      const ownerIds = [...new Set((data || []).map(t => t.owner_id).filter(Boolean))];
+      let ownerProfiles = {};
+
+      if (ownerIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .in('id', ownerIds);
+
+        (profiles || []).forEach(p => {
+          ownerProfiles[p.id] = p;
+        });
+      }
+
       const flattenedTrucks = (data || []).map(truck => ({
         ...truck,
-        owner_name: truck.owners?.profiles?.name || 'Unknown',
-        owner_email: truck.owners?.profiles?.email || '',
+        owner_name: ownerProfiles[truck.owner_id]?.name || 'Unknown',
+        owner_email: ownerProfiles[truck.owner_id]?.email || '',
       }));
 
       setTrucks(flattenedTrucks);
@@ -1789,35 +1802,62 @@ const AdminDashboard = () => {
     }
   }, [authLoading, initialAuthDone]);
 
-  // Fetch all dashboard data from real tables
+  // Fetch all dashboard data from real tables - OPTIMIZED
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // Fetch total users count
-      const { count: usersCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
+      // Run all independent queries in parallel for speed
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      const oneYearAgo = subDays(new Date(), 365).toISOString();
 
-      // Fetch users by role for pie chart
-      const { data: userRoles } = await supabase
-        .from('profiles')
-        .select('role');
+      const [
+        usersResult,
+        trucksResult,
+        reviewsResult,
+        checkInsResult,
+        recentCheckInsResult,
+        recentReviewsResult,
+        checkInsLast30Result,
+        reviewsLast30Result,
+        usersWithDatesResult
+      ] = await Promise.all([
+        // Total counts
+        supabase.from('profiles').select('id, role', { count: 'exact' }),
+        supabase.from('food_trucks').select('id, cuisine', { count: 'exact' }),
+        supabase.from('reviews').select('*', { count: 'exact', head: true }),
+        supabase.from('check_ins').select('*', { count: 'exact', head: true }),
+        // Recent activity (simplified queries to avoid ambiguous joins)
+        supabase.from('check_ins')
+          .select('id, customer_id, truck_id, points_earned, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5),
+        supabase.from('reviews')
+          .select('id, customer_id, truck_id, rating, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5),
+        // All check-ins in last 30 days (for daily aggregation)
+        supabase.from('check_ins')
+          .select('created_at')
+          .gte('created_at', thirtyDaysAgo),
+        // All reviews in last 30 days (for daily aggregation)
+        supabase.from('reviews')
+          .select('created_at')
+          .gte('created_at', thirtyDaysAgo),
+        // Users with dates for growth chart
+        supabase.from('profiles')
+          .select('created_at')
+          .gte('created_at', oneYearAgo)
+      ]);
 
-      const customerCount = (userRoles || []).filter(u => u.role === 'customer').length;
-      const ownerCount = (userRoles || []).filter(u => u.role === 'owner').length;
+      // Process user roles
+      const userRoles = usersResult.data || [];
+      const customerCount = userRoles.filter(u => u.role === 'customer').length;
+      const ownerCount = userRoles.filter(u => u.role === 'owner').length;
 
-      // Fetch food trucks count
-      const { count: trucksCount } = await supabase
-        .from('food_trucks')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch trucks by cuisine for pie chart
-      const { data: trucksCuisine } = await supabase
-        .from('food_trucks')
-        .select('cuisine');
-
+      // Process cuisine breakdown
+      const trucksCuisine = trucksResult.data || [];
       const cuisineCounts = {};
-      (trucksCuisine || []).forEach(t => {
+      trucksCuisine.forEach(t => {
         const cuisine = t.cuisine || 'Other';
         cuisineCounts[cuisine] = (cuisineCounts[cuisine] || 0) + 1;
       });
@@ -1826,112 +1866,110 @@ const AdminDashboard = () => {
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
-      // Fetch reviews count
-      const { count: reviewsCount } = await supabase
-        .from('reviews')
-        .select('*', { count: 'exact', head: true });
+      // Get customer and truck names for recent activity
+      const recentCheckIns = recentCheckInsResult.data || [];
+      const recentReviews = recentReviewsResult.data || [];
 
-      // Fetch check-ins count
-      const { count: checkInsCount } = await supabase
-        .from('check_ins')
-        .select('*', { count: 'exact', head: true });
+      // Collect IDs for batch lookup
+      const customerIds = [...new Set([
+        ...recentCheckIns.map(c => c.customer_id),
+        ...recentReviews.map(r => r.customer_id)
+      ].filter(Boolean))];
+      const truckIds = [...new Set([
+        ...recentCheckIns.map(c => c.truck_id),
+        ...recentReviews.map(r => r.truck_id)
+      ].filter(Boolean))];
 
-      // Fetch recent check-ins
-      const { data: recentCheckIns } = await supabase
-        .from('check_ins')
-        .select(`
-          *,
-          customers:customer_id (
-            profiles:id (name)
-          ),
-          food_trucks:truck_id (name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // Batch fetch names
+      const [profilesResult, trucksNamesResult] = await Promise.all([
+        customerIds.length > 0
+          ? supabase.from('profiles').select('id, name').in('id', customerIds)
+          : Promise.resolve({ data: [] }),
+        truckIds.length > 0
+          ? supabase.from('food_trucks').select('id, name').in('id', truckIds)
+          : Promise.resolve({ data: [] })
+      ]);
 
-      // Fetch recent reviews
-      const { data: recentReviews } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          customers:customer_id (
-            profiles:id (name)
-          ),
-          food_trucks:truck_id (name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      const profilesMap = {};
+      (profilesResult.data || []).forEach(p => { profilesMap[p.id] = p.name; });
+      const trucksMap = {};
+      (trucksNamesResult.data || []).forEach(t => { trucksMap[t.id] = t.name; });
 
-      // Combine and sort recent activity
+      // Build recent activity
       const activity = [
-        ...(recentCheckIns || []).map(ci => ({
+        ...recentCheckIns.map(ci => ({
           id: ci.id,
-          customer_name: ci.customers?.profiles?.name || 'Guest',
-          truck_name: ci.food_trucks?.name || 'Unknown',
+          customer_name: profilesMap[ci.customer_id] || 'Guest',
+          truck_name: trucksMap[ci.truck_id] || 'Unknown',
           points: ci.points_earned || 10,
           created_at: ci.created_at,
           type: 'check_in'
         })),
-        ...(recentReviews || []).map(r => ({
+        ...recentReviews.map(r => ({
           id: r.id,
-          customer_name: r.customers?.profiles?.name || 'Guest',
-          truck_name: r.food_trucks?.name || 'Unknown',
+          customer_name: profilesMap[r.customer_id] || 'Guest',
+          truck_name: trucksMap[r.truck_id] || 'Unknown',
           rating: r.rating,
           created_at: r.created_at,
           type: 'review'
         }))
       ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
 
-      // Generate daily activity for last 30 days
+      // Aggregate daily activity from fetched data (no more 30 queries!)
+      const checkInsLast30 = checkInsLast30Result.data || [];
+      const reviewsLast30 = reviewsLast30Result.data || [];
+
       const dailyActivity = [];
       for (let i = 29; i >= 0; i--) {
         const date = subDays(new Date(), i);
-        const dateStr = format(date, 'yyyy-MM-dd');
         const displayDate = format(date, 'MMM dd');
+        const dayStart = startOfDay(date);
+        const dayEnd = endOfDay(date);
 
-        // Count check-ins for this day
-        const { count: dayCheckIns } = await supabase
-          .from('check_ins')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', startOfDay(date).toISOString())
-          .lte('created_at', endOfDay(date).toISOString());
+        const dayCheckIns = checkInsLast30.filter(c => {
+          const d = new Date(c.created_at);
+          return d >= dayStart && d <= dayEnd;
+        }).length;
 
-        // Count reviews for this day
-        const { count: dayReviews } = await supabase
-          .from('reviews')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', startOfDay(date).toISOString())
-          .lte('created_at', endOfDay(date).toISOString());
+        const dayReviews = reviewsLast30.filter(r => {
+          const d = new Date(r.created_at);
+          return d >= dayStart && d <= dayEnd;
+        }).length;
 
         dailyActivity.push({
           date: displayDate,
-          checkIns: dayCheckIns || 0,
-          reviews: dayReviews || 0,
+          checkIns: dayCheckIns,
+          reviews: dayReviews,
         });
       }
 
-      // User growth by month (simplified - just show total at each month)
+      // Aggregate user growth from fetched data (no more 12 queries!)
+      const usersWithDates = usersWithDatesResult.data || [];
       const userGrowth = [];
       for (let i = 11; i >= 0; i--) {
         const date = subDays(new Date(), i * 30);
         const monthStr = format(date, 'MMM');
+        const endDate = endOfDay(date);
 
-        const { count } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .lte('created_at', endOfDay(date).toISOString());
+        // Count users created up to this point
+        const usersUpToDate = usersWithDates.filter(u =>
+          new Date(u.created_at) <= endDate
+        ).length;
+
+        // Add base count for users created before our range
+        const baseCount = (usersResult.count || 0) - usersWithDates.length;
 
         userGrowth.push({
           month: monthStr,
-          users: count || 0,
+          users: baseCount + usersUpToDate,
         });
       }
 
       setStats({
-        totalUsers: usersCount || 0,
-        totalTrucks: trucksCount || 0,
-        totalReviews: reviewsCount || 0,
-        totalCheckIns: checkInsCount || 0,
+        totalUsers: usersResult.count || 0,
+        totalTrucks: trucksResult.count || 0,
+        totalReviews: reviewsResult.count || 0,
+        totalCheckIns: checkInsResult.count || 0,
       });
 
       setRecentActivity(activity);

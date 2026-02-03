@@ -140,15 +140,18 @@ serve(async (req) => {
             name: userName,
             resetLink: actionUrl,
             actionUrl: actionUrl,
+            link: actionUrl,
           }
           break
 
         case 'signup':
+        case 'email':
           templateId = TEMPLATES.CONFIRM_SIGNUP
           dynamicData = {
             name: userName,
             confirmLink: actionUrl,
             actionUrl: actionUrl,
+            link: actionUrl,
           }
           break
 
@@ -158,22 +161,57 @@ serve(async (req) => {
             name: userName,
             magicLink: actionUrl,
             actionUrl: actionUrl,
+            link: actionUrl,
+          }
+          break
+
+        case 'invite':
+          templateId = TEMPLATES.WELCOME
+          dynamicData = {
+            name: userName,
+            inviteLink: actionUrl,
+            actionUrl: actionUrl,
+            link: actionUrl,
+          }
+          break
+
+        case 'email_change':
+          templateId = TEMPLATES.CONFIRM_SIGNUP
+          dynamicData = {
+            name: userName,
+            confirmLink: actionUrl,
+            actionUrl: actionUrl,
+            link: actionUrl,
           }
           break
 
         default:
+          console.log('Unknown email_action_type:', email_data.email_action_type)
           templateId = TEMPLATES.WELCOME
           dynamicData = {
             name: userName,
             actionUrl: actionUrl,
+            link: actionUrl,
           }
       }
 
+      console.log('Sending email:', {
+        to: user.email,
+        templateId,
+        actionType: email_data.email_action_type
+      })
+
       try {
         await sendEmail(user.email, templateId, dynamicData)
+        console.log('Email sent successfully to:', user.email)
       } catch (emailError) {
-        // Log error but don't block auth - return success anyway
-        console.error('Failed to send email, but allowing auth to proceed:', emailError)
+        // Log error details but don't block auth
+        console.error('Failed to send email:', {
+          error: emailError.message,
+          to: user.email,
+          templateId,
+          actionType: email_data.email_action_type
+        })
       }
 
       return new Response(

@@ -23,7 +23,7 @@ const TEMPLATES = {
 }
 
 // Supabase Edge Function URL
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_URL = 'https://coqwihsmmigktqqdnmis.supabase.co'
 const SEND_EMAIL_FUNCTION = `${SUPABASE_URL}/functions/v1/resend-email`
 
 /**
