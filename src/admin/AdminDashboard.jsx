@@ -1364,49 +1364,61 @@ const TrucksManagement = () => {
           Loading food trucks...
         </div>
       ) : filteredTrucks.length > 0 ? (
-        <div className="trucks-grid">
-          {filteredTrucks.map((truck) => (
-            <div key={truck.id} className="truck-card">
-              <div className="truck-card-header">
-                <div className="truck-avatar">{(truck.name || '?').charAt(0)}</div>
-                <div className="truck-info">
-                  <h3>{truck.name || 'Unnamed'}</h3>
-                  <span className="truck-cuisine">{truck.cuisine || 'Various'}</span>
-                </div>
-                <span className={`status-badge ${truck.is_open ? 'active' : 'inactive'}`}>
-                  {truck.is_open ? 'Open' : 'Closed'}
-                </span>
-              </div>
-              <div className="truck-card-body">
-                <div className="truck-stat">
-                  <span className="stat-label">Owner</span>
-                  <span className="stat-value">{truck.owner_name || 'Unknown'}</span>
-                </div>
-                <div className="truck-stat">
-                  <span className="stat-label">Location</span>
-                  <span className="stat-value">{truck.location || 'Not set'}</span>
-                </div>
-                <div className="truck-stat">
-                  <span className="stat-label">Price Range</span>
-                  <span className="stat-value">{truck.price_range || '$'}</span>
-                </div>
-                <div className="truck-stat">
-                  <span className="stat-label">Hours</span>
-                  <span className="stat-value">{truck.hours || 'Not set'}</span>
-                </div>
-              </div>
-              <div className="truck-card-footer">
-                <button className="btn-secondary btn-sm" onClick={() => handleViewTruck(truck)}>View</button>
-                <button className="btn-primary btn-sm" onClick={() => handleEditTruck(truck)}>Edit</button>
-                <button
-                  className={`btn-sm ${truck.is_open ? 'btn-danger' : 'btn-secondary'}`}
-                  onClick={() => handleToggleOpen(truck.id, truck.is_open)}
-                >
-                  {truck.is_open ? 'Close' : 'Open'}
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="trucks-table-container">
+          <table className="trucks-table">
+            <thead>
+              <tr>
+                <th>Truck</th>
+                <th>Owner</th>
+                <th>Location</th>
+                <th>Price</th>
+                <th>Hours</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTrucks.map((truck) => (
+                <tr key={truck.id}>
+                  <td>
+                    <div className="truck-cell">
+                      <div className="truck-avatar-sm">{(truck.name || '?').charAt(0).toUpperCase()}</div>
+                      <div className="truck-cell-info">
+                        <span className="truck-cell-name">{truck.name || 'Unnamed'}</span>
+                        <span className="truck-cell-cuisine">{truck.cuisine || 'Various'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{truck.owner_name || 'Unknown'}</td>
+                  <td>{truck.location || '—'}</td>
+                  <td>{truck.price_range || '$'}</td>
+                  <td>{truck.hours || '—'}</td>
+                  <td>
+                    <span className={`status-pill ${truck.is_open ? 'open' : 'closed'}`}>
+                      {truck.is_open ? 'Open' : 'Closed'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="table-actions">
+                      <button className="action-btn" onClick={() => handleViewTruck(truck)} title="View">
+                        {Icons.eye}
+                      </button>
+                      <button className="action-btn" onClick={() => handleEditTruck(truck)} title="Edit">
+                        {Icons.edit}
+                      </button>
+                      <button
+                        className={`action-btn ${truck.is_open ? 'danger' : ''}`}
+                        onClick={() => handleToggleOpen(truck.id, truck.is_open)}
+                        title={truck.is_open ? 'Close truck' : 'Open truck'}
+                      >
+                        {truck.is_open ? Icons.x : Icons.check}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '60px', color: '#64748b', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
