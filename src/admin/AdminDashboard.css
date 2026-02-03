@@ -1797,6 +1797,28 @@
   color: #15803d;
 }
 
+/* Type select in table */
+.type-select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border);
+  font-size: 13px;
+  cursor: pointer;
+  background: white;
+}
+
+.type-select.type-lover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+.type-select.type-truck {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
 /* Type badges */
 .badge {
   display: inline-flex;

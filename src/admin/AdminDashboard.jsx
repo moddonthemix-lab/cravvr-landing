@@ -367,6 +367,22 @@ const WaitlistManagement = () => {
     }
   };
 
+  const handleTypeChange = async (id, newType) => {
+    try {
+      const { error } = await supabase
+        .from('waitlist')
+        .update({ type: newType })
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchWaitlist();
+      showToast('User type updated', 'success');
+    } catch (err) {
+      console.error('Error updating type:', err);
+      showToast('Error updating type: ' + err.message, 'error');
+    }
+  };
+
   const handleBulkStatusChange = async (newStatus) => {
     if (selectedEntries.length === 0) return;
 
@@ -647,9 +663,14 @@ const WaitlistManagement = () => {
                   <td>{entry.name}</td>
                   <td>{entry.email}</td>
                   <td>
-                    <span className={`badge badge-${entry.type}`}>
-                      {entry.type === 'lover' ? '🍔 Food Lover' : '🚚 Truck Owner'}
-                    </span>
+                    <select
+                      value={entry.type}
+                      onChange={(e) => handleTypeChange(entry.id, e.target.value)}
+                      className={`type-select type-${entry.type}`}
+                    >
+                      <option value="lover">🍔 Food Lover</option>
+                      <option value="truck">🚚 Truck Owner</option>
+                    </select>
                   </td>
                   <td>
                     <select
