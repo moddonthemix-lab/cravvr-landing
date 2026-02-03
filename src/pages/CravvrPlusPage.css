@@ -408,7 +408,16 @@
 .plus-pricing-grid {
   display: flex;
   justify-content: center;
+  align-items: center;
   margin-top: 48px;
+  width: 100%;
+}
+
+/* Ensure the pricing section container centers content */
+#pricing .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .plus-price-card {
