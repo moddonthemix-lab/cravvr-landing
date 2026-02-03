@@ -15,6 +15,18 @@ export const AuthProvider = ({ children }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login', 'signup', 'forgot'
 
+  // Admin impersonation state (View As feature)
+  const [viewingAs, setViewingAs] = useState(null);
+  const [originalProfile, setOriginalProfile] = useState(null);
+
+  // Dev settings (stored in localStorage)
+  const [devSettings, setDevSettings] = useState(() => {
+    const saved = localStorage.getItem('cravvr_dev_settings');
+    return saved ? JSON.parse(saved) : {
+      skipReviewOrderRequirement: false,
+    };
+  });
+
   // Ref to prevent double profile fetch on page refresh
   const initialLoadComplete = useRef(false);
 
@@ -271,9 +283,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Admin impersonation - View As feature
+  const startViewingAs = async (targetUser) => {
+    if (!profile || profile.role !== 'admin') {
+      console.error('Only admins can use View As');
+      return;
+    }
+
+    // Save original profile
+    setOriginalProfile(profile);
+
+    // Fetch target user's profile
+    const targetProfile = await fetchProfile(targetUser.id);
+    if (targetProfile) {
+      setViewingAs({
+        ...targetProfile,
+        email: targetUser.email,
+      });
+    }
+  };
+
+  const stopViewingAs = () => {
+    setViewingAs(null);
+    setOriginalProfile(null);
+  };
+
+  // Update dev settings
+  const updateDevSettings = (newSettings) => {
+    const updated = { ...devSettings, ...newSettings };
+    setDevSettings(updated);
+    localStorage.setItem('cravvr_dev_settings', JSON.stringify(updated));
+  };
+
+  // Get the effective profile (impersonated or real)
+  const effectiveProfile = viewingAs || profile;
+  const effectiveUser = viewingAs ? { id: viewingAs.id, email: viewingAs.email } : user;
+
   const value = {
-    user,
-    profile,
+    user: effectiveUser,
+    profile: effectiveProfile,
+    realUser: user,
+    realProfile: profile,
     loading,
     error,
     signUp,
@@ -283,14 +333,22 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     refreshProfile,
     isAuthenticated: !!user,
-    isOwner: profile?.role === 'owner',
-    isCustomer: profile?.role === 'customer',
-    isAdmin: profile?.role === 'admin',
+    isOwner: effectiveProfile?.role === 'owner',
+    isCustomer: effectiveProfile?.role === 'customer',
+    isAdmin: profile?.role === 'admin', // Always check real profile for admin
     // Auth modal controls (centralized)
     showAuthModal,
     authMode,
     openAuth,
     closeAuth,
+    // Admin impersonation (View As)
+    viewingAs,
+    startViewingAs,
+    stopViewingAs,
+    isViewingAs: !!viewingAs,
+    // Dev settings
+    devSettings,
+    updateDevSettings,
   };
 
   return (

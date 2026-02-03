@@ -13,6 +13,7 @@ import BoltPage from './pages/BoltPage';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute, { RequireOwner, RequireAdmin } from './components/auth/ProtectedRoute';
 import AuthModal from './components/auth/AuthModal';
+import ViewAsBanner from './components/admin/ViewAsBanner';
 import { useAuth } from './components/auth/AuthContext';
 import { OwnerDashboardWrapper, AdminDashboardWrapper, CustomerProfileWrapper } from './components/wrappers';
 
@@ -50,6 +51,7 @@ const App = () => {
 
   return (
     <>
+      <ViewAsBanner />
       <CartDrawer />
       <AuthModal isOpen={showAuthModal} onClose={closeAuth} initialMode={authMode} />
       <Routes>

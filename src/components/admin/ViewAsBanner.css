@@ -1,0 +1,73 @@
+.view-as-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  color: white;
+  padding: 10px 16px;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+.view-as-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.view-as-icon {
+  display: flex;
+  align-items: center;
+}
+
+.view-as-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.view-as-text {
+  flex: 1;
+  text-align: center;
+}
+
+.view-as-text strong {
+  font-weight: 600;
+}
+
+.view-as-exit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-as-exit:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.view-as-exit svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Add padding to body when banner is shown */
+body:has(.view-as-banner) {
+  padding-top: 44px;
+}
+
+body:has(.view-as-banner) .site-header {
+  top: 44px;
+}

@@ -752,7 +752,7 @@ const WaitlistManagement = () => {
 };
 
 // Users Management Component with Email Invite
-const UsersManagement = () => {
+const UsersManagement = ({ onViewAs }) => {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
   const [users, setUsers] = useState([]);
@@ -1012,6 +1012,11 @@ const UsersManagement = () => {
                       <button className="icon-btn" onClick={() => handleEditUser(user)} title="Edit">
                         {Icons.edit}
                       </button>
+                      {user.role === 'customer' && (
+                        <button className="icon-btn view-as" onClick={() => onViewAs?.(user)} title="View As Customer">
+                          {Icons.user}
+                        </button>
+                      )}
                       <button className="icon-btn danger" onClick={() => handleDeleteUser(user.id)} title="Delete">
                         {Icons.trash}
                       </button>
@@ -1693,7 +1698,8 @@ const AnalyticsPage = ({ stats, chartData }) => {
 };
 
 // Settings Component
-const SettingsPage = ({ adminEmail }) => {
+const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
+  const { showToast } = useToast();
   const [settings, setSettings] = useState({
     siteName: 'Cravvr',
     siteDescription: 'The map-first food truck app',
@@ -1705,6 +1711,34 @@ const SettingsPage = ({ adminEmail }) => {
     enableNotifications: true,
     maintenanceMode: false,
   });
+  const [creatingTestUser, setCreatingTestUser] = useState(false);
+
+  const handleCreateTestCustomer = async () => {
+    setCreatingTestUser(true);
+    try {
+      // Create a test customer via Supabase
+      const testEmail = `test.customer.${Date.now()}@cravvr.local`;
+      const { data, error } = await supabase.auth.signUp({
+        email: testEmail,
+        password: 'TestCustomer123!',
+        options: {
+          data: {
+            name: 'Test Customer',
+            role: 'customer',
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      showToast(`Test customer created!\nEmail: ${testEmail}\nPassword: TestCustomer123!`, 'success');
+    } catch (err) {
+      console.error('Error creating test customer:', err);
+      showToast('Error creating test customer: ' + err.message, 'error');
+    } finally {
+      setCreatingTestUser(false);
+    }
+  };
 
   return (
     <div className="settings-page">
@@ -1802,6 +1836,42 @@ const SettingsPage = ({ adminEmail }) => {
             </label>
           </div>
         </div>
+
+        <div className="settings-card dev-settings">
+          <h3>
+            {Icons.code}
+            Developer Settings
+          </h3>
+          <p className="form-hint" style={{ marginBottom: '16px' }}>
+            These settings are for local development and testing only.
+          </p>
+
+          <div className="toggle-group">
+            <label className="toggle-label">
+              <span>Skip Order Requirement for Reviews</span>
+              <input
+                type="checkbox"
+                checked={devSettings?.skipReviewOrderRequirement || false}
+                onChange={(e) => onUpdateDevSettings?.({ skipReviewOrderRequirement: e.target.checked })}
+              />
+              <span className="toggle-switch"></span>
+            </label>
+            <span className="form-hint">Allow users to write reviews without completing an order first</span>
+          </div>
+
+          <div className="form-group" style={{ marginTop: '24px' }}>
+            <label>Test User Management</label>
+            <button
+              className="btn-secondary"
+              onClick={handleCreateTestCustomer}
+              disabled={creatingTestUser}
+              style={{ marginTop: '8px' }}
+            >
+              {creatingTestUser ? 'Creating...' : 'Create Test Customer'}
+            </button>
+            <span className="form-hint">Creates a test customer account for local testing</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1809,7 +1879,7 @@ const SettingsPage = ({ adminEmail }) => {
 
 // Main Admin Dashboard Component
 const AdminDashboard = () => {
-  const { user, profile, isAdmin, loading: authLoading, signOut } = useAuth();
+  const { user, profile, isAdmin, loading: authLoading, signOut, startViewingAs, devSettings, updateDevSettings } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -2096,6 +2166,12 @@ const AdminDashboard = () => {
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];
 
+  const handleViewAs = async (targetUser) => {
+    await startViewingAs(targetUser);
+    // Navigate to home page to view as customer
+    window.location.href = '/';
+  };
+
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
@@ -2103,13 +2179,13 @@ const AdminDashboard = () => {
       case 'waitlist':
         return <WaitlistManagement />;
       case 'users':
-        return <UsersManagement />;
+        return <UsersManagement onViewAs={handleViewAs} />;
       case 'trucks':
         return <TrucksManagement />;
       case 'analytics':
         return <AnalyticsPage stats={stats} chartData={chartData} />;
       case 'settings':
-        return <SettingsPage adminEmail={user?.email} />;
+        return <SettingsPage adminEmail={user?.email} devSettings={devSettings} onUpdateDevSettings={updateDevSettings} />;
       default:
         return <DashboardOverview stats={stats} recentActivity={recentActivity} chartData={chartData} loading={loading} onRefresh={fetchDashboardData} />;
     }

@@ -56,7 +56,7 @@ const TruckDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, devSettings } = useAuth();
   const { addItem, openCart, itemCount } = useCart();
   const { showToast } = useToast();
 
@@ -225,7 +225,7 @@ const TruckDetailPage = () => {
     checkFavorite();
   }, [user, id]);
 
-  // Check if user can review (has completed order from this truck)
+  // Check if user can review (has completed order from this truck, or dev setting enabled)
   useEffect(() => {
     const checkReviewEligibility = async () => {
       if (!user || !id) {
@@ -233,16 +233,21 @@ const TruckDetailPage = () => {
         return;
       }
 
-      // Check for completed orders
-      const { data: orders } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('truck_id', id)
-        .eq('customer_id', user.id)
-        .eq('status', 'completed')
-        .limit(1);
+      // Dev setting: skip order requirement for reviews
+      if (devSettings?.skipReviewOrderRequirement) {
+        setCanReview(true);
+      } else {
+        // Check for completed orders
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('truck_id', id)
+          .eq('customer_id', user.id)
+          .eq('status', 'completed')
+          .limit(1);
 
-      setCanReview(orders && orders.length > 0);
+        setCanReview(orders && orders.length > 0);
+      }
 
       // Check for existing review
       const { data: review } = await supabase
@@ -271,7 +276,7 @@ const TruckDetailPage = () => {
     };
 
     checkReviewEligibility();
-  }, [user, id]);
+  }, [user, id, devSettings?.skipReviewOrderRequirement]);
 
   const toggleFavorite = async () => {
     if (!user) return;
