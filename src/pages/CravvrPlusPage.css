@@ -406,11 +406,10 @@
    =================================== */
 
 .plus-pricing-grid {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 48px;
+  display: block;
+  margin: 48px auto 0;
   width: 100%;
+  max-width: 700px;
 }
 
 /* Ensure the pricing section container centers content */
@@ -418,6 +417,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+#pricing .section-header-center {
+  width: 100%;
 }
 
 .plus-price-card {
