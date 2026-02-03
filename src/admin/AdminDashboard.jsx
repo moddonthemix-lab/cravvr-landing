@@ -1880,7 +1880,7 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
 
       if (error) throw error;
 
-      showToast(`Test customer created!\nEmail: ${testEmail}\nPassword: TestCustomer123!`, 'success');
+      showToast(`Test customer created!\nEmail: ${testEmail}\n\nNote: Confirm user in Supabase Auth → Users to enable login`, 'success');
     } catch (err) {
       console.error('Error creating test customer:', err);
       showToast('Error creating test customer: ' + err.message, 'error');
@@ -2097,7 +2097,7 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
             >
               {creatingTestUser ? 'Creating...' : 'Create Test Customer'}
             </button>
-            <span className="form-hint">Creates a test customer account for local testing</span>
+            <span className="form-hint">Creates a test customer. Confirm in Supabase Auth to enable login.</span>
           </div>
 
           <div className="form-group" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
