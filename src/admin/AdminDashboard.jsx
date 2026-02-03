@@ -1843,13 +1843,13 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
   // Fetch customers and trucks for test order creation
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch customers
+      // Fetch customers (including admins for testing)
       const { data: customerData } = await supabase
         .from('profiles')
-        .select('id, name, email')
-        .eq('role', 'customer')
+        .select('id, name, email, role')
+        .in('role', ['customer', 'admin'])
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(30);
       if (customerData) setCustomers(customerData);
 
       // Fetch trucks
@@ -2113,7 +2113,9 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
               >
                 <option value="">Select Customer...</option>
                 {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.name || c.email}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name || c.email} {c.role === 'admin' ? '(Admin)' : ''}
+                  </option>
                 ))}
               </select>
               <select
