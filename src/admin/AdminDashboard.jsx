@@ -1697,6 +1697,128 @@ const AnalyticsPage = ({ stats, chartData }) => {
   );
 };
 
+// Orders Management Component
+const OrdersManagement = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            profiles:customer_id(name, email),
+            food_trucks:truck_id(name),
+            order_items(name, quantity, price)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+        setOrders(data || []);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return '#22c55e';
+      case 'pending': return '#f59e0b';
+      case 'preparing': return '#3b82f6';
+      case 'ready': return '#8b5cf6';
+      case 'cancelled': return '#ef4444';
+      default: return '#64748b';
+    }
+  };
+
+  return (
+    <div className="orders-management">
+      <div className="page-header">
+        <h1>Orders Management</h1>
+        <span className="count-badge">{orders.length} orders</span>
+      </div>
+
+      <div className="table-card">
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+            Loading orders...
+          </div>
+        ) : orders.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+            No orders found. Create a test order in Settings → Developer Settings.
+          </div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Truck</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td>
+                    <code style={{ fontSize: '12px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>
+                      {order.order_number}
+                    </code>
+                  </td>
+                  <td>
+                    <div className="user-info">
+                      <span className="user-name">{order.profiles?.name || 'Unknown'}</span>
+                      <span className="user-email" style={{ fontSize: '11px', color: '#64748b' }}>
+                        {order.profiles?.email}
+                      </span>
+                    </div>
+                  </td>
+                  <td>{order.food_trucks?.name || 'Unknown Truck'}</td>
+                  <td>
+                    <span title={order.order_items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}>
+                      {order.order_items?.length || 0} items
+                    </span>
+                  </td>
+                  <td>${parseFloat(order.total || 0).toFixed(2)}</td>
+                  <td>
+                    <span
+                      className="status-badge"
+                      style={{
+                        background: `${getStatusColor(order.status)}20`,
+                        color: getStatusColor(order.status),
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                      }}
+                    >
+                      {order.status}
+                    </span>
+                  </td>
+                  <td style={{ fontSize: '12px', color: '#64748b' }}>
+                    {order.created_at ? format(new Date(order.created_at), 'MMM dd, yyyy HH:mm') : 'N/A'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Settings Component
 const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
   const { showToast } = useToast();
@@ -2308,6 +2430,7 @@ const AdminDashboard = () => {
     { id: 'waitlist', label: 'Waitlist', icon: Icons.users },
     { id: 'users', label: 'Users', icon: Icons.user },
     { id: 'trucks', label: 'Food Trucks', icon: Icons.truck },
+    { id: 'orders', label: 'Orders', icon: Icons.shoppingBag },
     { id: 'analytics', label: 'Analytics', icon: Icons.trendingUp },
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];
@@ -2328,6 +2451,8 @@ const AdminDashboard = () => {
         return <UsersManagement onViewAs={handleViewAs} />;
       case 'trucks':
         return <TrucksManagement />;
+      case 'orders':
+        return <OrdersManagement />;
       case 'analytics':
         return <AnalyticsPage stats={stats} chartData={chartData} />;
       case 'settings':
