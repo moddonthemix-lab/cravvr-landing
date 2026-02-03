@@ -405,11 +405,12 @@
    PRICING SECTION - Plus Version
    =================================== */
 
-.plus-pricing-grid {
-  display: block;
-  margin: 48px auto 0;
-  width: 100%;
-  max-width: 700px;
+.pricing-grid.plus-pricing-grid {
+  display: block !important;
+  grid-template-columns: none !important;
+  margin: 48px auto 0 !important;
+  width: 100% !important;
+  max-width: 700px !important;
 }
 
 /* Ensure the pricing section container centers content */
