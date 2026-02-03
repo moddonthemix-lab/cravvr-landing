@@ -4,8 +4,8 @@ import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import './DiscoverView.css';
 
-const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick }) => {
-  const [currentIndex, setCurrentIndex] = useState(trucks.length - 1);
+const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruckClick }) => {
+  const [currentIndex, setCurrentIndex] = useState(-1);
   const [lastDirection, setLastDirection] = useState(null);
   const [likedCount, setLikedCount] = useState(favorites?.length || 0);
   const [popularItemsMap, setPopularItemsMap] = useState({});
@@ -14,7 +14,7 @@ const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick
   // Create refs for each card to enable programmatic swiping
   const currentIndexRef = useRef(currentIndex);
   const childRefs = useMemo(
-    () => Array(trucks.length).fill(0).map(() => React.createRef()),
+    () => trucks.length > 0 ? Array(trucks.length).fill(0).map(() => React.createRef()) : [],
     [trucks.length]
   );
 
@@ -25,7 +25,9 @@ const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick
 
   // Reset index when trucks change
   useEffect(() => {
-    setCurrentIndex(trucks.length - 1);
+    if (trucks.length > 0) {
+      setCurrentIndex(trucks.length - 1);
+    }
   }, [trucks.length]);
 
   // Fetch popular items for visible trucks (current and a few behind)
@@ -150,7 +152,7 @@ const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick
       {/* Card Stack */}
       <div className="discover-stack">
         <div className="card-container">
-          {trucks.map((truck, index) => (
+          {trucks.length > 0 && trucks.map((truck, index) => (
             <TinderCard
               ref={childRefs[index]}
               key={truck.id}
@@ -314,7 +316,7 @@ const DiscoverView = ({ trucks, loading, favorites, toggleFavorite, onTruckClick
       {/* Progress Indicator */}
       <div className="discover-progress">
         <div className="progress-dots">
-          {trucks.slice(Math.max(0, currentIndex - 2), currentIndex + 3).map((truck, i) => {
+          {currentIndex >= 0 && trucks.slice(Math.max(0, currentIndex - 2), Math.min(trucks.length, currentIndex + 3)).map((truck, i) => {
             const actualIndex = Math.max(0, currentIndex - 2) + i;
             return (
               <span
