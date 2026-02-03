@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { DeviceFrameset } from 'react-device-frameset';
+import 'react-device-frameset/styles/marvel-devices.min.css';
 import { useInView } from '../../hooks/useInView';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
@@ -137,11 +139,10 @@ const valueProps = [
 // ============================================
 
 const PhoneMockup = () => (
-  <div className="phone-mockup">
+  <div className="phone-mockup-wrapper">
     <div className="phone-glow"></div>
-    <div className="phone-frame">
-      <div className="phone-notch"></div>
-      <div className="phone-screen">
+    <DeviceFrameset device="iPhone X" color="black" zoom={0.75}>
+      <div className="phone-screen-content">
         <div className="mock-header">
           <span className="mock-menu">{Icons.menu}</span>
           <span className="mock-title">Browse</span>
@@ -177,6 +178,19 @@ const PhoneMockup = () => (
             </div>
           </div>
         </div>
+        <div className="mock-card">
+          <div className="mock-card-img second">
+            <div className="mock-rating">★ 4.9</div>
+          </div>
+          <div className="mock-card-body">
+            <div className="mock-card-title">Seoul BBQ</div>
+            <div className="mock-card-meta">Korean • BBQ</div>
+            <div className="mock-card-row">
+              <span>📍 0.5 mi away</span>
+              <span>Open now</span>
+            </div>
+          </div>
+        </div>
         <div className="mock-bottom-nav">
           <div className="mock-nav-item active">
             <span>🏠</span>
@@ -199,7 +213,7 @@ const PhoneMockup = () => (
           </div>
         </div>
       </div>
-    </div>
+    </DeviceFrameset>
   </div>
 );
 
