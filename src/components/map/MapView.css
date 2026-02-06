@@ -553,90 +553,126 @@
 }
 
 /* Button reset for accessible card buttons */
-.map-list-card,
-.desktop-list-card {
-  border: none;
+/* Unified truck list card */
+.truck-list-card {
+  display: flex;
+  gap: 14px;
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 14px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   font: inherit;
   color: inherit;
   text-align: left;
   width: 100%;
 }
 
-.map-list-card:focus-visible,
-.desktop-list-card:focus-visible {
+.truck-list-card:hover {
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.truck-list-card:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
-.map-list-card {
-  display: flex;
-  gap: 14px;
-  background: white;
-  border-radius: 16px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.map-list-card:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.list-card-image {
-  width: 80px;
-  height: 80px;
+.tlc-image {
+  width: 72px;
+  height: 72px;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   position: relative;
 }
 
-.list-card-image img {
+.tlc-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.list-featured-badge {
+.tlc-featured {
   position: absolute;
   top: 4px;
   left: 4px;
-  background: #f59e0b;
+  background: rgba(245, 158, 11, 0.92);
   color: white;
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
-.list-card-info {
+.tlc-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
 }
 
-.list-card-info h3 {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0 0 4px;
-  color: #1e293b;
-}
-
-.list-cuisine {
-  font-size: 12px;
-  color: #64748b;
-  margin: 0 0 8px;
-}
-
-.list-meta {
+.tlc-top {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.list-rating {
+.tlc-name {
+  font-size: 15px;
+  font-weight: 650;
+  margin: 0;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+.tlc-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.tlc-status.open {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.tlc-status.closed {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.tlc-cuisine {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.tlc-dot {
+  color: #cbd5e1;
+  margin: 0 1px;
+}
+
+.tlc-bottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.tlc-rating {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -645,32 +681,27 @@
   color: #1e293b;
 }
 
-.list-rating svg {
-  width: 14px;
-  height: 14px;
+.tlc-rating svg {
+  width: 13px;
+  height: 13px;
   color: #fbbf24;
 }
 
-.list-distance {
+.tlc-location {
+  display: flex;
+  align-items: center;
+  gap: 3px;
   font-size: 12px;
-  color: #64748b;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.list-status {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 12px;
-}
-
-.list-status.open {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.list-status.closed {
-  background: var(--primary-light);
-  color: #dc2626;
+.tlc-location svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 /* Desktop adjustments */
@@ -915,123 +946,24 @@
     gap: 12px;
   }
 
-  .desktop-list-card {
-    display: flex;
-    flex-direction: column;
+  .truck-list-card {
+    padding: 14px;
     background: #f8fafc;
-    border-radius: 16px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
+    border-color: transparent;
   }
 
-  .desktop-list-card:hover {
+  .truck-list-card:hover {
     background: white;
-    border-color: #e5e7eb;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    border-color: #e2e8f0;
   }
 
-  .desktop-card-image {
-    position: relative;
-    height: 120px;
-    overflow: hidden;
+  .tlc-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
   }
 
-  .desktop-card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .desktop-featured-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
-    background: rgba(251, 191, 36, 0.95);
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 600;
-    color: white;
-  }
-
-  .desktop-featured-badge svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  .desktop-status-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .desktop-status-badge.open {
-    background: rgba(22, 163, 74, 0.95);
-    color: white;
-  }
-
-  .desktop-status-badge.closed {
-    background: rgba(220, 38, 38, 0.9);
-    color: white;
-  }
-
-  .desktop-card-info {
-    padding: 16px;
-  }
-
-  .desktop-card-info h3 {
+  .tlc-name {
     font-size: 16px;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 4px;
-  }
-
-  .desktop-cuisine {
-    font-size: 13px;
-    color: #64748b;
-    margin: 0 0 10px;
-  }
-
-  .desktop-meta {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 8px;
-  }
-
-  .desktop-rating {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1e293b;
-  }
-
-  .desktop-rating svg {
-    width: 14px;
-    height: 14px;
-    color: #fbbf24;
-  }
-
-  .desktop-distance {
-    font-size: 13px;
-    color: #64748b;
-  }
-
-  .desktop-delivery {
-    font-size: 12px;
-    color: #94a3b8;
-    margin: 0;
   }
 }

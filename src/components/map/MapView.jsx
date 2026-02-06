@@ -56,59 +56,31 @@ const getTruckPositions = (center, count) => {
 
 // Shared truck card component with accessibility
 const TruckListCard = ({ truck, onClick, variant = 'mobile' }) => {
-  const isMobile = variant === 'mobile';
-  const cardClass = isMobile ? 'map-list-card' : 'desktop-list-card';
-
-  if (isMobile) {
-    return (
-      <button
-        type="button"
-        className={cardClass}
-        onClick={onClick}
-        aria-label={`View ${truck.name}, ${truck.cuisine}, ${truck.isOpen ? 'Open now' : 'Closed'}`}
-      >
-        <div className="list-card-image">
-          <img src={truck.image} alt="" aria-hidden="true" />
-          {truck.featured && <span className="list-featured-badge">Featured</span>}
-        </div>
-        <div className="list-card-info">
-          <h3>{truck.name}</h3>
-          <p className="list-cuisine">{truck.cuisine} • {truck.priceRange}</p>
-          <div className="list-meta">
-            <span className="list-rating">{Icons.star} {truck.rating}</span>
-            <span className="list-distance">{truck.distance}</span>
-            <span className={`list-status ${truck.isOpen ? 'open' : 'closed'}`}>
-              {truck.isOpen ? 'Open' : 'Closed'}
-            </span>
-          </div>
-        </div>
-      </button>
-    );
-  }
-
-  // Desktop variant
   return (
     <button
       type="button"
-      className={cardClass}
+      className="truck-list-card"
       onClick={onClick}
       aria-label={`View ${truck.name}, ${truck.cuisine}, ${truck.isOpen ? 'Open now' : 'Closed'}`}
     >
-      <div className="desktop-card-image">
+      <div className="tlc-image">
         <img src={truck.image} alt="" aria-hidden="true" />
-        {truck.featured && <span className="desktop-featured-badge">{Icons.star} Featured</span>}
-        <span className={`desktop-status-badge ${truck.isOpen ? 'open' : 'closed'}`}>
-          {truck.isOpen ? 'Open' : 'Closed'}
-        </span>
+        {truck.featured && <span className="tlc-featured">Featured</span>}
       </div>
-      <div className="desktop-card-info">
-        <h3>{truck.name}</h3>
-        <p className="desktop-cuisine">{truck.cuisine} • {truck.priceRange}</p>
-        <div className="desktop-meta">
-          <span className="desktop-rating">{Icons.star} {truck.rating}</span>
-          <span className="desktop-distance">{truck.distance}</span>
+      <div className="tlc-body">
+        <div className="tlc-top">
+          <h3 className="tlc-name">{truck.name}</h3>
+          <span className={`tlc-status ${truck.isOpen ? 'open' : 'closed'}`}>
+            {truck.isOpen ? 'Open' : 'Closed'}
+          </span>
         </div>
-        <p className="desktop-delivery">{truck.deliveryTime} • ${truck.deliveryFee} delivery</p>
+        <p className="tlc-cuisine">{truck.cuisine} <span className="tlc-dot">&middot;</span> {truck.priceRange}</p>
+        <div className="tlc-bottom">
+          <span className="tlc-rating">{Icons.star} {truck.rating}</span>
+          {truck.location && truck.location !== 'Portland, OR' && (
+            <span className="tlc-location">{Icons.mapPin || '📍'} {truck.location.split(',')[0]}</span>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -142,7 +114,6 @@ const MobileTruckList = ({ trucks, onTruckClick, onClose }) => (
             onTruckClick(truck);
             onClose();
           }}
-          variant="mobile"
         />
       ))}
     </div>
@@ -162,7 +133,6 @@ const DesktopTruckList = ({ trucks, onTruckClick }) => (
           key={truck.id}
           truck={truck}
           onClick={() => onTruckClick(truck)}
-          variant="desktop"
         />
       ))}
     </div>
