@@ -114,6 +114,101 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
   );
 };
 
+// Default hours structure
+const getDefaultHours = () => ({
+  monday: { open: '11:00', close: '22:00', closed: false },
+  tuesday: { open: '11:00', close: '22:00', closed: false },
+  wednesday: { open: '11:00', close: '22:00', closed: false },
+  thursday: { open: '11:00', close: '22:00', closed: false },
+  friday: { open: '11:00', close: '22:00', closed: false },
+  saturday: { open: '11:00', close: '22:00', closed: false },
+  sunday: { open: '11:00', close: '22:00', closed: false },
+});
+
+// Parse hours from database format
+const parseHours = (hoursString) => {
+  if (!hoursString) return getDefaultHours();
+
+  try {
+    const parsed = JSON.parse(hoursString);
+    return { ...getDefaultHours(), ...parsed };
+  } catch (e) {
+    // If it's old format (text), return default
+    return getDefaultHours();
+  }
+};
+
+// Hours Input Component
+const HoursInput = ({ hours, onChange }) => {
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  // Generate time options (every 30 minutes)
+  const timeOptions = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m of ['00', '30']) {
+      const hour = h.toString().padStart(2, '0');
+      timeOptions.push(`${hour}:${m}`);
+    }
+  }
+
+  const handleDayChange = (day, field, value) => {
+    onChange({
+      ...hours,
+      [day]: {
+        ...hours[day],
+        [field]: value,
+      },
+    });
+  };
+
+  return (
+    <div className="hours-input-container">
+      <label className="form-label">Hours of Operation</label>
+      <div className="hours-grid">
+        {days.map((day, idx) => (
+          <div key={day} className="hours-row">
+            <div className="day-label">{dayLabels[idx]}</div>
+            <div className="hours-controls">
+              <label className="hours-toggle">
+                <input
+                  type="checkbox"
+                  checked={!hours[day].closed}
+                  onChange={(e) => handleDayChange(day, 'closed', !e.target.checked)}
+                />
+                <span>{hours[day].closed ? 'Closed' : 'Open'}</span>
+              </label>
+              {!hours[day].closed && (
+                <>
+                  <select
+                    value={hours[day].open}
+                    onChange={(e) => handleDayChange(day, 'open', e.target.value)}
+                    className="time-select"
+                  >
+                    {timeOptions.map(time => (
+                      <option key={`open-${time}`} value={time}>{time}</option>
+                    ))}
+                  </select>
+                  <span className="time-separator">to</span>
+                  <select
+                    value={hours[day].close}
+                    onChange={(e) => handleDayChange(day, 'close', e.target.value)}
+                    className="time-select"
+                  >
+                    {timeOptions.map(time => (
+                      <option key={`close-${time}`} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Trucks Management Tab
 const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loading }) => {
   const { confirm } = useConfirm();
@@ -126,7 +221,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
     price_range: '$',
     description: '',
     location: '',
-    hours: '',
+    hours: getDefaultHours(),
     phone: '',
     image_url: '',
   });
@@ -138,7 +233,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
       price_range: '$',
       description: '',
       location: '',
-      hours: '',
+      hours: getDefaultHours(),
       phone: '',
       image_url: '',
     });
@@ -152,7 +247,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
       price_range: truck.price_range || '$',
       description: truck.description || '',
       location: truck.location || '',
-      hours: truck.hours || '',
+      hours: parseHours(truck.hours),
       phone: truck.phone || '',
       image_url: truck.image_url || '',
     });
@@ -164,10 +259,16 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
     e.preventDefault();
     setSaving(true);
     try {
+      // Convert hours object to JSON string for database storage
+      const dataToSave = {
+        ...formData,
+        hours: JSON.stringify(formData.hours),
+      };
+
       if (editingTruck) {
-        await onTruckUpdate(editingTruck.id, formData);
+        await onTruckUpdate(editingTruck.id, dataToSave);
       } else {
-        await onTruckCreate(formData);
+        await onTruckCreate(dataToSave);
       }
       setShowForm(false);
       resetForm();
@@ -280,25 +381,18 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                   required
                 />
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Opening Hours</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., 11am - 10pm"
-                    value={formData.hours}
-                    onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Phone</label>
-                  <input
-                    type="tel"
-                    placeholder="Contact number"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
+              <HoursInput
+                hours={formData.hours}
+                onChange={(hours) => setFormData({ ...formData, hours })}
+              />
+              <div className="form-group">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  placeholder="Contact number"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
               </div>
               <ImageUpload
                 label="Truck Photo"
