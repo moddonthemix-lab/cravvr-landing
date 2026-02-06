@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useFavorites } from '../../contexts/FavoritesContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { formatRelativeTime } from '../../utils/formatters';
@@ -59,13 +60,13 @@ const TruckDetailPage = () => {
   const { user, signOut, devSettings } = useAuth();
   const { addItem, openCart, itemCount } = useCart();
   const { showToast } = useToast();
+  const { isFavorite, toggleFavorite: toggleFavoriteContext } = useFavorites();
 
   // Core state
   const [truck, setTruck] = useState(location.state?.truck || null);
   const [menuItems, setMenuItems] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(!location.state?.truck);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [addedItem, setAddedItem] = useState(null);
 
   // New feature state
@@ -207,23 +208,8 @@ const TruckDetailPage = () => {
     }
   }, [id]);
 
-  // Check if truck is favorited
-  useEffect(() => {
-    const checkFavorite = async () => {
-      if (!user || !id) return;
-
-      const { data } = await supabase
-        .from('favorites')
-        .select('id')
-        .eq('customer_id', user.id)
-        .eq('truck_id', id)
-        .single();
-
-      setIsFavorite(!!data);
-    };
-
-    checkFavorite();
-  }, [user, id]);
+  // Favorite status is now handled by FavoritesContext
+  // No need for local state management
 
   // Check if user can review (has completed order from this truck, or dev setting enabled)
   useEffect(() => {
@@ -278,16 +264,13 @@ const TruckDetailPage = () => {
     checkReviewEligibility();
   }, [user, id, devSettings?.skipReviewOrderRequirement]);
 
-  const toggleFavorite = async () => {
-    if (!user) return;
-
-    if (isFavorite) {
-      setIsFavorite(false);
-      await supabase.from('favorites').delete().eq('customer_id', user.id).eq('truck_id', id);
-    } else {
-      setIsFavorite(true);
-      await supabase.from('favorites').insert({ customer_id: user.id, truck_id: id });
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      navigate('/eat');
+      return;
     }
+
+    await toggleFavoriteContext(id);
   };
 
   const handleAddToCart = (item) => {
@@ -527,10 +510,10 @@ const TruckDetailPage = () => {
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                className={`detail-fav-btn ${isFavorite ? 'active' : ''}`}
-                onClick={toggleFavorite}
+                className={`detail-fav-btn ${isFavorite(id) ? 'active' : ''}`}
+                onClick={handleToggleFavorite}
               >
-                {isFavorite ? Icons.heartFilled : Icons.heart}
+                {isFavorite(id) ? Icons.heartFilled : Icons.heart}
               </button>
               <button
                 className="detail-fav-btn"
@@ -561,7 +544,18 @@ const TruckDetailPage = () => {
 
           {/* Hero Image Section with Logo Overlay */}
       <div className="truck-detail-hero-img">
-        <img src={truck.coverImage || truck.image} alt={truck.name} className="hero-cover-image" />
+        <img
+          src={truck.coverImage || truck.image}
+          alt={truck.name}
+          className="hero-cover-image"
+          onError={(e) => {
+            if (e.target.src !== truck.image) {
+              e.target.src = truck.image;
+            } else {
+              e.target.src = 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=1200&q=80';
+            }
+          }}
+        />
         <div className="hero-image-overlay"></div>
         {truck.featured && (
           <div className="hero-featured-badge">
