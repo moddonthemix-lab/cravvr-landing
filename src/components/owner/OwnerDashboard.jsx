@@ -143,12 +143,22 @@ const HoursInput = ({ hours, onChange }) => {
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  // Generate time options (every 30 minutes)
+  // Convert 24hr to 12hr for display
+  const to12hr = (time24) => {
+    if (!time24) return '';
+    const [h, m] = time24.split(':');
+    const hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${hour12}:${m} ${ampm}`;
+  };
+
+  // Generate time options (every 30 minutes) - store 24hr, display 12hr
   const timeOptions = [];
   for (let h = 0; h < 24; h++) {
     for (let m of ['00', '30']) {
-      const hour = h.toString().padStart(2, '0');
-      timeOptions.push(`${hour}:${m}`);
+      const value = `${h.toString().padStart(2, '0')}:${m}`;
+      timeOptions.push({ value, label: to12hr(value) });
     }
   }
 
@@ -185,8 +195,8 @@ const HoursInput = ({ hours, onChange }) => {
                     onChange={(e) => handleDayChange(day, 'open', e.target.value)}
                     className="time-select"
                   >
-                    {timeOptions.map(time => (
-                      <option key={`open-${time}`} value={time}>{time}</option>
+                    {timeOptions.map(t => (
+                      <option key={`open-${t.value}`} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                   <span className="time-separator">to</span>
@@ -195,8 +205,8 @@ const HoursInput = ({ hours, onChange }) => {
                     onChange={(e) => handleDayChange(day, 'close', e.target.value)}
                     className="time-select"
                   >
-                    {timeOptions.map(time => (
-                      <option key={`close-${time}`} value={time}>{time}</option>
+                    {timeOptions.map(t => (
+                      <option key={`close-${t.value}`} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                 </>
@@ -205,6 +215,95 @@ const HoursInput = ({ hours, onChange }) => {
           </div>
         ))}
       </div>
+    </div>
+  );
+};
+
+// Geocode an address using Nominatim (OpenStreetMap)
+const geocodeAddress = async (address) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=5&addressdetails=1`
+    );
+    const results = await response.json();
+    return results.map(r => ({
+      display_name: r.display_name,
+      lat: parseFloat(r.lat),
+      lng: parseFloat(r.lon),
+    }));
+  } catch (err) {
+    console.error('Geocoding failed:', err);
+    return [];
+  }
+};
+
+// Location input with geocoding autocomplete
+const LocationInput = ({ value, coordinates, onChange }) => {
+  const [query, setQuery] = useState(value || '');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = React.useRef(null);
+
+  useEffect(() => {
+    setQuery(value || '');
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    onChange({ location: val, coordinates: null });
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (val.length >= 3) {
+      debounceRef.current = setTimeout(async () => {
+        setSearching(true);
+        const results = await geocodeAddress(val);
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
+        setSearching(false);
+      }, 400);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelect = (suggestion) => {
+    setQuery(suggestion.display_name);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    onChange({
+      location: suggestion.display_name,
+      coordinates: { lat: suggestion.lat, lng: suggestion.lng },
+    });
+  };
+
+  return (
+    <div className="location-input-wrapper">
+      <input
+        type="text"
+        placeholder="Search for an address..."
+        value={query}
+        onChange={handleInputChange}
+        onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        required
+      />
+      {searching && <span className="location-searching">Searching...</span>}
+      {coordinates && (
+        <span className="location-confirmed">Location set</span>
+      )}
+      {showSuggestions && (
+        <ul className="location-suggestions">
+          {suggestions.map((s, i) => (
+            <li key={i} onMouseDown={() => handleSelect(s)}>
+              {s.display_name}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
@@ -221,6 +320,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
     price_range: '$',
     description: '',
     location: '',
+    coordinates: null,
     hours: getDefaultHours(),
     phone: '',
     image_url: '',
@@ -233,6 +333,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
       price_range: '$',
       description: '',
       location: '',
+      coordinates: null,
       hours: getDefaultHours(),
       phone: '',
       image_url: '',
@@ -247,6 +348,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
       price_range: truck.price_range || '$',
       description: truck.description || '',
       location: truck.location || '',
+      coordinates: truck.coordinates || null,
       hours: parseHours(truck.hours),
       phone: truck.phone || '',
       image_url: truck.image_url || '',
@@ -259,9 +361,19 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
     e.preventDefault();
     setSaving(true);
     try {
+      // If no coordinates yet, try to geocode the location before saving
+      let coords = formData.coordinates;
+      if (!coords && formData.location) {
+        const results = await geocodeAddress(formData.location);
+        if (results.length > 0) {
+          coords = { lat: results[0].lat, lng: results[0].lng };
+        }
+      }
+
       // Convert hours object to JSON string for database storage
       const dataToSave = {
         ...formData,
+        coordinates: coords,
         hours: JSON.stringify(formData.hours),
       };
 
@@ -373,12 +485,12 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
               </div>
               <div className="form-group">
                 <label>Location</label>
-                <input
-                  type="text"
-                  placeholder="Current location or address"
+                <LocationInput
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  required
+                  coordinates={formData.coordinates}
+                  onChange={({ location, coordinates }) =>
+                    setFormData({ ...formData, location, coordinates })
+                  }
                 />
               </div>
               <HoursInput
@@ -435,21 +547,25 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                 </div>
                 <div className="truck-stats-row">
                   <div className="mini-stat">
-                    <span className="mini-stat-value">{truck.today_orders || 0}</span>
-                    <span className="mini-stat-label">Orders</span>
+                    <span className="mini-stat-value">{truck.total_orders || 0}</span>
+                    <span className="mini-stat-label">Total Orders</span>
+                  </div>
+                  <div className="mini-stat">
+                    <span className="mini-stat-value">${truck.total_revenue?.toFixed(2) || '0.00'}</span>
+                    <span className="mini-stat-label">Total Revenue</span>
                   </div>
                   <div className="mini-stat">
                     <span className="mini-stat-value">${truck.today_revenue?.toFixed(2) || '0.00'}</span>
-                    <span className="mini-stat-label">Revenue</span>
+                    <span className="mini-stat-label">Today</span>
                   </div>
                 </div>
               </div>
               <div className="truck-actions">
-                <button className="btn-icon" onClick={() => openEditForm(truck)}>
-                  {Icons.edit}
+                <button className="btn-action edit" onClick={() => openEditForm(truck)}>
+                  {Icons.edit} Edit
                 </button>
-                <button className="btn-icon danger" onClick={() => handleDelete(truck.id)}>
-                  {Icons.trash}
+                <button className="btn-action danger" onClick={() => handleDelete(truck.id)}>
+                  {Icons.trash} Delete
                 </button>
               </div>
             </div>
@@ -1266,11 +1382,20 @@ const OwnerDashboard = () => {
         today.setHours(0, 0, 0, 0);
         const { data: todayOrders } = await supabase
           .from('orders')
-          .select('total')
+          .select('total, status')
           .eq('truck_id', truck.id)
-          .gte('created_at', today.toISOString());
+          .gte('created_at', today.toISOString())
+          .neq('status', 'cancelled');
+
+        // Get all-time orders for total revenue
+        const { data: allOrders } = await supabase
+          .from('orders')
+          .select('total, status')
+          .eq('truck_id', truck.id)
+          .neq('status', 'cancelled');
 
         const todayRevenue = (todayOrders || []).reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+        const totalRevenue = (allOrders || []).reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
 
         return {
           ...truck,
@@ -1278,6 +1403,8 @@ const OwnerDashboard = () => {
           review_count: ratingData?.review_count || 0,
           today_orders: todayOrders?.length || 0,
           today_revenue: todayRevenue,
+          total_orders: allOrders?.length || 0,
+          total_revenue: totalRevenue,
         };
       }));
 

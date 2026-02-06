@@ -20,8 +20,8 @@ export const transformTruck = (truck) => ({
   deliveryTime: truck.delivery_time || '15-25 min',
   deliveryFee: truck.delivery_fee || 2.99,
   featured: truck.featured || false,
-  lat: truck.latitude,
-  lng: truck.longitude,
+  lat: truck.coordinates?.lat || truck.latitude,
+  lng: truck.coordinates?.lng || truck.longitude,
   ownerId: truck.owner_id,
   _raw: truck,
 });
