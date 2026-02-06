@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { Icons } from '../common/Icons';
+import useUserLocation from '../../hooks/useUserLocation';
 import './PageWrapper.css';
 
 const PageWrapper = ({ children, activeNav }) => {
@@ -10,6 +11,7 @@ const PageWrapper = ({ children, activeNav }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { itemCount, openCart } = useCart();
+  const userCity = useUserLocation();
 
   const isActive = (path) => {
     if (activeNav) return activeNav === path;
@@ -51,7 +53,7 @@ const PageWrapper = ({ children, activeNav }) => {
         <div className="header-right">
           <div className="location-picker">
             <span className="location-icon">{Icons.mapPin}</span>
-            <span className="location-text">Portland, OR</span>
+            <span className="location-text">{userCity}</span>
           </div>
           <button className="icon-btn">
             {Icons.bell}

@@ -6,6 +6,7 @@ import { useTrucks } from '../../contexts/TruckContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { Icons } from '../common/Icons';
 import { mockTrucks } from '../../data/mockData';
+import useUserLocation from '../../hooks/useUserLocation';
 import './HomePage.css';
 
 // Food Categories with emojis (specific to HomePage filter UI)
@@ -29,6 +30,7 @@ const HomePage = ({ embedded = false }) => {
   const { itemCount, openCart } = useCart();
   const { trucks: contextTrucks, loading } = useTrucks();
   const { favorites, toggleFavorite } = useFavorites();
+  const userCity = useUserLocation();
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,7 +110,7 @@ const HomePage = ({ embedded = false }) => {
         <div className="header-right">
           <div className="location-picker">
             <span className="location-icon">{Icons.mapPin}</span>
-            <span className="location-text">Portland, OR</span>
+            <span className="location-text">{userCity}</span>
           </div>
 
           <div className="order-type-toggle">

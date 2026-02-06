@@ -5,6 +5,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Icons } from '../common/Icons';
 import NotificationBell from '../common/NotificationBell';
+import useUserLocation from '../../hooks/useUserLocation';
 import './AppLayout.css';
 
 /**
@@ -23,6 +24,7 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
   const { user, signOut, openAuth, isOwner, isAdmin } = useAuth();
   const { itemCount, openCart } = useCart();
   const { showToast } = useToast();
+  const userCity = useUserLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -134,7 +136,7 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
         <div className="header-right">
           <div className="location-picker">
             <span className="location-icon">{Icons.mapPin}</span>
-            <span className="location-text">Portland, OR</span>
+            <span className="location-text">{userCity}</span>
           </div>
           <NotificationBell />
           <button className="cart-btn" onClick={openCart} aria-label="Cart">
