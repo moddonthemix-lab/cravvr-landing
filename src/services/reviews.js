@@ -102,7 +102,7 @@ export const deleteTruckReview = async (reviewId, truckId) => {
  */
 export const fetchUserMenuItemRating = async (itemId, userId) => {
   const { data, error } = await supabase
-    .from('menu_item_reviews')
+    .from('menu_item_ratings')
     .select('*')
     .eq('menu_item_id', itemId)
     .eq('customer_id', userId)
@@ -115,14 +115,13 @@ export const fetchUserMenuItemRating = async (itemId, userId) => {
 /**
  * Submit or update a menu item rating
  */
-export const submitMenuItemRating = async ({ itemId, userId, rating, comment }) => {
+export const submitMenuItemRating = async ({ itemId, userId, rating }) => {
   const { error } = await supabase
-    .from('menu_item_reviews')
+    .from('menu_item_ratings')
     .upsert({
       menu_item_id: itemId,
       customer_id: userId,
-      rating,
-      comment: comment?.trim() || null
+      rating
     }, {
       onConflict: 'menu_item_id,customer_id'
     });

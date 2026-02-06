@@ -171,11 +171,11 @@ const TruckDetailPage = () => {
             category: item.category || 'Other',
           })));
         } else {
-          setMenuItems(defaultMenuItems);
+          setMenuItems([]);
         }
       } catch (err) {
         console.error('Error fetching menu items:', err);
-        setMenuItems(defaultMenuItems);
+        setMenuItems([]);
       }
     };
 
@@ -715,7 +715,7 @@ const TruckDetailPage = () => {
         {/* Menu Section */}
         <div className="detail-section menu-section-img">
           <div className="section-header">
-            <h3>Menu {menuItems === defaultMenuItems ? '(Sample)' : ''}</h3>
+            <h3>Menu</h3>
             <span className="menu-count">{filteredMenuItems.length} items</span>
           </div>
 
@@ -753,11 +753,19 @@ const TruckDetailPage = () => {
           {/* Menu Items Grid */}
           <div className="menu-grid-img">
             {filteredMenuItems.length === 0 ? (
-              <div className="no-menu-results">
-                <span>🔍</span>
-                <p>No items match your search</p>
-                <button onClick={() => { setMenuSearchQuery(''); setActiveCategory('all'); }}>Clear filters</button>
-              </div>
+              menuItems.length === 0 ? (
+                <div className="no-menu-results">
+                  <span>📋</span>
+                  <p>Menu not available yet</p>
+                  <p style={{ fontSize: '14px', color: '#9ca3af' }}>This truck hasn't added their menu items yet. Check back soon!</p>
+                </div>
+              ) : (
+                <div className="no-menu-results">
+                  <span>🔍</span>
+                  <p>No items match your search</p>
+                  <button onClick={() => { setMenuSearchQuery(''); setActiveCategory('all'); }}>Clear filters</button>
+                </div>
+              )
             ) : (
               filteredMenuItems.map(item => (
                 <div key={item.id} className="menu-item-card-img">

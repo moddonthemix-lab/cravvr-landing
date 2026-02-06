@@ -40,9 +40,11 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
         className={`bottom-nav-item ${activeTab === 'events' ? 'active' : ''}`}
         onClick={() => setActiveTab('events')}
         disabled
+        title="Coming Soon"
       >
         <span className="bottom-nav-icon">{Icons.calendar}</span>
         <span className="bottom-nav-label">Events</span>
+        <span className="coming-soon-dot" style={{ position: 'absolute', top: 4, right: '50%', transform: 'translateX(12px)', width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }}></span>
       </button>
     </nav>
   );

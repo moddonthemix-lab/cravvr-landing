@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { formatDate } from '../../utils/formatters';
 import PunchCard from './PunchCard';
+import { useCart } from '../../contexts/CartContext';
 import './CustomerProfile.css';
 
 // Header Component
@@ -113,22 +114,31 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEdit
 const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) => {
   const [filter, setFilter] = useState('all');
 
-  // Map database status to display status
+  // Map database status to display label
   const getDisplayStatus = (status) => {
     switch (status) {
-      case 'completed': return 'delivered';
-      case 'pending':
-      case 'confirmed':
-      case 'preparing':
-      case 'ready': return 'preparing';
-      case 'cancelled': return 'cancelled';
+      case 'pending': return 'Order Received';
+      case 'confirmed': return 'Confirmed';
+      case 'preparing': return 'Being Prepared';
+      case 'ready': return 'Ready for Pickup';
+      case 'completed': return 'Completed';
+      case 'cancelled': return 'Cancelled';
       default: return status;
+    }
+  };
+
+  // Group statuses for filter tabs
+  const getFilterGroup = (status) => {
+    switch (status) {
+      case 'completed': return 'completed';
+      case 'cancelled': return 'cancelled';
+      default: return 'active';
     }
   };
 
   const filteredOrders = filter === 'all'
     ? orders
-    : orders.filter(o => getDisplayStatus(o.status) === filter);
+    : orders.filter(o => getFilterGroup(o.status) === filter);
 
   return (
     <div className="tab-page">
@@ -136,13 +146,17 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
 
       <div className="tab-content">
         <div className="orders-filters">
-          {['all', 'preparing', 'delivered'].map(f => (
+          {[
+            { key: 'all', label: 'All Orders' },
+            { key: 'active', label: 'Active' },
+            { key: 'completed', label: 'Completed' },
+          ].map(f => (
             <button
-              key={f}
-              className={`filter-chip ${filter === f ? 'active' : ''}`}
-              onClick={() => setFilter(f)}
+              key={f.key}
+              className={`filter-chip ${filter === f.key ? 'active' : ''}`}
+              onClick={() => setFilter(f.key)}
             >
-              {f === 'all' ? 'All Orders' : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f.label}
             </button>
           ))}
         </div>
@@ -167,7 +181,7 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
                     <h4>{order.truck_name || 'Food Truck'}</h4>
                     <span className="order-date">{formatDate(order.created_at)}</span>
                   </div>
-                  <span className={`order-status ${getDisplayStatus(order.status)}`}>
+                  <span className={`order-status ${order.status}`}>
                     {getDisplayStatus(order.status)}
                   </span>
                 </div>
@@ -183,7 +197,7 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
                 <div className="order-footer">
                   <span className="order-total">${parseFloat(order.total).toFixed(2)}</span>
                   <div className="order-actions">
-                    {getDisplayStatus(order.status) === 'delivered' && (
+                    {order.status === 'completed' && (
                       <>
                         <button className="order-btn secondary" onClick={() => onReorder(order)}>
                           {Icons.repeat}
@@ -197,7 +211,7 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
                         )}
                       </>
                     )}
-                    {getDisplayStatus(order.status) === 'preparing' && (
+                    {getFilterGroup(order.status) === 'active' && (
                       <button className="order-btn primary" onClick={() => onTrack(order)}>
                         {Icons.truck}
                         Track Order
@@ -230,7 +244,7 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
 };
 
 // Favorites Tab
-const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite }) => (
+const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite, onViewMenu }) => (
   <div className="tab-page">
     <ProfileHeader onBack={onBack} title="Favorites" />
 
@@ -272,7 +286,7 @@ const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite }) => (
                   <span>{truck.average_rating || 'N/A'}</span>
                 </div>
               </div>
-              <button className="view-menu-btn">View Menu</button>
+              <button className="view-menu-btn" onClick={() => onViewMenu(truck.id)}>View Menu</button>
             </div>
           ))}
         </div>
@@ -282,7 +296,7 @@ const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite }) => (
 );
 
 // Rewards Tab
-const RewardsTab = ({ onBack, points, checkIns, loading }) => {
+const RewardsTab = ({ onBack, points, checkIns, loading, onClaimReward }) => {
   // Group check-ins by truck for punch cards
   const punchCards = Object.values(
     (checkIns || []).reduce((acc, checkIn) => {
@@ -345,7 +359,7 @@ const RewardsTab = ({ onBack, points, checkIns, loading }) => {
                   punches={card.punches}
                   total={card.total}
                   reward={card.reward}
-                  onClaim={() => alert(`Claiming reward from ${card.truck}! (Coming soon)`)}
+                  onClaim={() => onClaimReward(card.id)}
                 />
               ))}
             </div>
@@ -1450,6 +1464,8 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 const CustomerProfile = ({ onBack }) => {
   const { profile, loading: authLoading, user, signOut } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
+  const { addItem, openCart } = useCart();
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
 
   // Track window size for responsive header display
@@ -1508,9 +1524,20 @@ const CustomerProfile = ({ onBack }) => {
   };
 
   // Handle order actions
-  const handleReorder = (order) => {
-    alert(`Reorder functionality coming soon! Order ID: ${order.id}`);
-    // TODO: Add items to cart and navigate to checkout
+  const handleReorder = async (order) => {
+    if (!order.items || order.items.length === 0) {
+      showToast('No items found for this order', 'error');
+      return;
+    }
+    const truck = { id: order.truck_id, name: order.truck_name };
+    for (const item of order.items) {
+      await addItem(
+        { id: item.menu_item_id, name: item.name, price: parseFloat(item.price) },
+        truck
+      );
+    }
+    showToast(`${order.items.length} item(s) added to cart`, 'success');
+    openCart();
   };
 
   const handleReview = (order) => {
@@ -1566,7 +1593,7 @@ const CustomerProfile = ({ onBack }) => {
         .select(`
           *,
           food_trucks:truck_id(name, image_url),
-          order_items(name, quantity, price)
+          order_items(menu_item_id, name, quantity, price)
         `)
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false });
@@ -1659,6 +1686,28 @@ const CustomerProfile = ({ onBack }) => {
       setLoadingCheckIns(false);
     }
   }, [user?.id]);
+
+  // Claim punch card reward
+  const handleClaimReward = async (truckId) => {
+    try {
+      const { data, error } = await supabase.rpc('claim_punch_card_reward', {
+        p_customer_id: user.id,
+        p_truck_id: truckId,
+      });
+      if (error) throw error;
+      if (data?.success) {
+        showToast(`${data.message} +${data.points_awarded} points!`, 'success');
+        fetchCheckIns();
+        // Refresh profile to update points display
+        window.location.reload();
+      } else {
+        showToast(data?.message || 'Not enough punches yet', 'info');
+      }
+    } catch (err) {
+      console.error('Error claiming reward:', err);
+      showToast('Failed to claim reward. Please try again.', 'error');
+    }
+  };
 
   // Remove from favorites
   const handleRemoveFavorite = async (truckId) => {
@@ -1804,6 +1853,7 @@ const CustomerProfile = ({ onBack }) => {
             favorites={favorites}
             loading={loadingFavorites}
             onRemoveFavorite={handleRemoveFavorite}
+            onViewMenu={(truckId) => navigate(`/truck/${truckId}`)}
           />
         );
       case 'rewards':
@@ -1813,6 +1863,7 @@ const CustomerProfile = ({ onBack }) => {
             points={profile?.points}
             checkIns={checkIns}
             loading={loadingCheckIns}
+            onClaimReward={handleClaimReward}
           />
         );
       case 'addresses':

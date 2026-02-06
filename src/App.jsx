@@ -12,6 +12,7 @@ import DiscoverPage from './pages/DiscoverPage';
 import BoltPage from './pages/BoltPage';
 import LoginPage from './pages/LoginPage';
 import AuthConfirmPage from './pages/AuthConfirmPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute, { RequireOwner, RequireAdmin } from './components/auth/ProtectedRoute';
 import AuthModal from './components/auth/AuthModal';
 import ViewAsBanner from './components/admin/ViewAsBanner';
@@ -67,6 +68,9 @@ const App = () => {
 
         {/* Email confirmation page */}
         <Route path="/auth/confirm" element={<AuthConfirmPage />} />
+
+        {/* Password reset page */}
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Browse trucks - redirect to home */}
         <Route path="/browse" element={<Navigate to="/" replace />} />

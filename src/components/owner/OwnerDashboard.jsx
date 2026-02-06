@@ -311,6 +311,7 @@ const LocationInput = ({ value, coordinates, onChange }) => {
 // Trucks Management Tab
 const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loading }) => {
   const { confirm } = useConfirm();
+  const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingTruck, setEditingTruck] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -386,6 +387,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
       resetForm();
     } catch (err) {
       console.error('Failed to save truck:', err);
+      showToast('Failed to save truck. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -405,6 +407,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
       await onTruckDelete(truckId);
     } catch (err) {
       console.error('Failed to delete truck:', err);
+      showToast('Failed to delete truck. Please try again.', 'error');
     }
   };
 
@@ -653,6 +656,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       resetForm();
     } catch (err) {
       console.error('Failed to save menu item:', err);
+      showToast('Failed to save menu item. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -672,6 +676,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       await onMenuItemDelete(itemId);
     } catch (err) {
       console.error('Failed to delete menu item:', err);
+      showToast('Failed to delete menu item. Please try again.', 'error');
     }
   };
 
@@ -680,6 +685,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
       await onMenuItemUpdate(item.id, { is_available: !item.is_available });
     } catch (err) {
       console.error('Failed to update availability:', err);
+      showToast('Failed to update item availability.', 'error');
     }
   };
 
@@ -884,6 +890,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
 
 // Orders Tab
 const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
+  const { showToast } = useToast();
   const [filter, setFilter] = useState('all');
   const [updating, setUpdating] = useState(null);
 
@@ -915,6 +922,7 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
       await onOrderStatusUpdate(orderId, newStatus);
     } catch (err) {
       console.error('Failed to update order status:', err);
+      showToast('Failed to update order status. Please try again.', 'error');
     } finally {
       setUpdating(null);
     }
@@ -1024,51 +1032,96 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
 
 // Analytics Tab
 const AnalyticsTab = ({ trucks, orders }) => {
-  // Calculate weekly data from actual orders
-  const getWeeklyData = () => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const weekData = Array(7).fill(null).map((_, i) => ({
-      day: days[i],
-      orders: 0,
-      revenue: 0,
-    }));
+  const [period, setPeriod] = useState('week');
 
+  // Get date range based on selected period
+  const getDateRange = () => {
     const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    orders.forEach(order => {
-      const orderDate = new Date(order.created_at);
-      if (orderDate >= weekAgo) {
-        const dayIndex = orderDate.getDay();
-        weekData[dayIndex].orders += 1;
-        weekData[dayIndex].revenue += parseFloat(order.total || 0);
+    switch (period) {
+      case 'week': return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      case 'month': {
+        const d = new Date(now);
+        d.setMonth(d.getMonth() - 1);
+        return d;
       }
-    });
-
-    // Reorder to start from Monday
-    return [...weekData.slice(1), weekData[0]];
+      case '30days': return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      case 'year': {
+        const d = new Date(now);
+        d.setFullYear(d.getFullYear() - 1);
+        return d;
+      }
+      default: return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
   };
 
-  const weeklyData = getWeeklyData();
-  const maxRevenue = Math.max(...weeklyData.map(d => d.revenue), 1);
-  const totalWeeklyRevenue = weeklyData.reduce((sum, d) => sum + d.revenue, 0);
-  const totalWeeklyOrders = weeklyData.reduce((sum, d) => sum + d.orders, 0);
+  const periodStart = getDateRange();
+  const periodOrders = orders.filter(o => new Date(o.created_at) >= periodStart);
 
-  // Calculate average order value
-  const avgOrderValue = orders.length > 0
-    ? orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0) / orders.length
+  // Calculate chart data based on period
+  const getChartData = () => {
+    if (period === 'week') {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const data = days.map(day => ({ label: day, orders: 0, revenue: 0 }));
+      periodOrders.forEach(order => {
+        const dayIndex = (new Date(order.created_at).getDay() + 6) % 7; // Monday = 0
+        data[dayIndex].orders += 1;
+        data[dayIndex].revenue += parseFloat(order.total || 0);
+      });
+      return data;
+    } else if (period === 'month' || period === '30days') {
+      // Group by week
+      const weeks = [];
+      for (let i = 0; i < 4; i++) {
+        weeks.push({ label: `Week ${i + 1}`, orders: 0, revenue: 0 });
+      }
+      periodOrders.forEach(order => {
+        const daysSinceStart = Math.floor((new Date(order.created_at) - periodStart) / (24 * 60 * 60 * 1000));
+        const weekIndex = Math.min(Math.floor(daysSinceStart / 7), 3);
+        weeks[weekIndex].orders += 1;
+        weeks[weekIndex].revenue += parseFloat(order.total || 0);
+      });
+      return weeks;
+    } else {
+      // Year: group by month
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const data = months.map(m => ({ label: m, orders: 0, revenue: 0 }));
+      periodOrders.forEach(order => {
+        const monthIndex = new Date(order.created_at).getMonth();
+        data[monthIndex].orders += 1;
+        data[monthIndex].revenue += parseFloat(order.total || 0);
+      });
+      return data;
+    }
+  };
+
+  const chartData = getChartData();
+  const maxRevenue = Math.max(...chartData.map(d => d.revenue), 1);
+  const totalRevenue = periodOrders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+  const totalOrders = periodOrders.length;
+
+  // Calculate average order value for the period
+  const avgOrderValue = periodOrders.length > 0
+    ? totalRevenue / periodOrders.length
     : 0;
 
-  // Calculate orders per day (last 30 days)
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const recentOrders = orders.filter(o => new Date(o.created_at) >= thirtyDaysAgo);
-  const ordersPerDay = recentOrders.length > 0 ? (recentOrders.length / 30).toFixed(1) : 0;
+  // Calculate orders per day for the period
+  const dayCount = Math.max(1, Math.ceil((Date.now() - periodStart.getTime()) / (24 * 60 * 60 * 1000)));
+  const ordersPerDay = periodOrders.length > 0 ? (periodOrders.length / dayCount).toFixed(1) : 0;
 
   // Find best performing truck
   const bestTruck = trucks.reduce((best, truck) => {
     if (!best || (truck.today_revenue || 0) > (best.today_revenue || 0)) return truck;
     return best;
   }, null);
+
+  const periodLabels = {
+    week: 'This Week',
+    month: 'This Month',
+    '30days': 'Last 30 Days',
+    year: 'This Year',
+  };
+
+  const chartTitle = period === 'week' ? 'Daily Revenue' : period === 'year' ? 'Monthly Revenue' : 'Weekly Revenue';
 
   return (
     <div className="tab-content">
@@ -1077,22 +1130,26 @@ const AnalyticsTab = ({ trucks, orders }) => {
           <h1>Analytics</h1>
           <p>Track your performance and insights.</p>
         </div>
-        <select className="period-select">
-          <option>This Week</option>
-          <option>This Month</option>
-          <option>Last 30 Days</option>
-          <option>This Year</option>
+        <select
+          className="period-select"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+        >
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="30days">Last 30 Days</option>
+          <option value="year">This Year</option>
         </select>
       </div>
 
       <div className="analytics-grid">
         <div className="card chart-card">
           <div className="card-header">
-            <h3>Weekly Revenue</h3>
-            <span className="chart-total">${totalWeeklyRevenue.toFixed(0)} total</span>
+            <h3>{chartTitle}</h3>
+            <span className="chart-total">${totalRevenue.toFixed(0)} total</span>
           </div>
           <div className="bar-chart">
-            {weeklyData.map((d, i) => (
+            {chartData.map((d, i) => (
               <div className="bar-group" key={i}>
                 <div
                   className="bar"
@@ -1100,7 +1157,7 @@ const AnalyticsTab = ({ trucks, orders }) => {
                 >
                   <span className="bar-value">${d.revenue.toFixed(0)}</span>
                 </div>
-                <span className="bar-label">{d.day}</span>
+                <span className="bar-label">{d.label}</span>
               </div>
             ))}
           </div>
@@ -1138,12 +1195,12 @@ const AnalyticsTab = ({ trucks, orders }) => {
               <span className="metric-value">${avgOrderValue.toFixed(2)}</span>
             </div>
             <div className="metric-item">
-              <span className="metric-label">Orders Per Day (30d avg)</span>
+              <span className="metric-label">Orders Per Day</span>
               <span className="metric-value">{ordersPerDay}</span>
             </div>
             <div className="metric-item">
-              <span className="metric-label">This Week Orders</span>
-              <span className="metric-value">{totalWeeklyOrders}</span>
+              <span className="metric-label">{periodLabels[period]} Orders</span>
+              <span className="metric-value">{totalOrders}</span>
             </div>
             <div className="metric-item">
               <span className="metric-label">Active Trucks</span>
@@ -1196,22 +1253,103 @@ const SettingsTab = () => {
   const { showToast } = useToast();
   const { profile, updateProfile, user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [savingBusiness, setSavingBusiness] = useState(false);
+  const [savingNotifications, setSavingNotifications] = useState(false);
   const [profileData, setProfileData] = useState({
     name: profile?.name || '',
     avatar_url: profile?.avatar_url || '',
+    phone: '',
   });
+  const [businessData, setBusinessData] = useState({
+    business_name: '',
+    tax_id: '',
+    business_address: '',
+  });
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    new_order_alerts: true,
+    daily_summary: true,
+    marketing_emails: false,
+  });
+
+  // Load owner data on mount
+  useEffect(() => {
+    const loadOwnerData = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from('owners')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (data) {
+        setProfileData(prev => ({ ...prev, phone: data.phone || '' }));
+        setBusinessData({
+          business_name: data.business_name || '',
+          tax_id: data.tax_id || '',
+          business_address: data.business_address || '',
+        });
+        if (data.notification_preferences) {
+          setNotificationPrefs(prev => ({ ...prev, ...data.notification_preferences }));
+        }
+      }
+    };
+    loadOwnerData();
+  }, [user?.id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateProfile(profileData);
+      await updateProfile({ name: profileData.name, avatar_url: profileData.avatar_url });
+      // Save phone to owners table
+      const { error: ownerError } = await supabase
+        .from('owners')
+        .update({ phone: profileData.phone })
+        .eq('id', user.id);
+      if (ownerError) throw ownerError;
       showToast('Profile updated successfully!', 'success');
     } catch (err) {
       console.error('Failed to save profile:', err);
       showToast('Failed to save profile changes', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleBusinessSubmit = async (e) => {
+    e.preventDefault();
+    setSavingBusiness(true);
+    try {
+      const { error } = await supabase
+        .from('owners')
+        .update(businessData)
+        .eq('id', user.id);
+      if (error) throw error;
+      showToast('Business information saved!', 'success');
+    } catch (err) {
+      console.error('Failed to save business info:', err);
+      showToast('Failed to save business information', 'error');
+    } finally {
+      setSavingBusiness(false);
+    }
+  };
+
+  const handleNotificationChange = async (key, value) => {
+    const updated = { ...notificationPrefs, [key]: value };
+    setNotificationPrefs(updated);
+    setSavingNotifications(true);
+    try {
+      const { error } = await supabase
+        .from('owners')
+        .update({ notification_preferences: updated })
+        .eq('id', user.id);
+      if (error) throw error;
+      showToast('Notification preferences saved', 'success');
+    } catch (err) {
+      console.error('Failed to save notification preferences:', err);
+      setNotificationPrefs(notificationPrefs); // revert
+      showToast('Failed to save notification preferences', 'error');
+    } finally {
+      setSavingNotifications(false);
     }
   };
 
@@ -1252,7 +1390,12 @@ const SettingsTab = () => {
             </div>
             <div className="form-group">
               <label>Phone</label>
-              <input type="tel" placeholder="Enter phone number" />
+              <input
+                type="tel"
+                placeholder="Enter phone number"
+                value={profileData.phone}
+                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+              />
             </div>
             <button type="submit" className="btn-primary" disabled={saving}>
               {saving ? 'Saving...' : 'Save Changes'}
@@ -1264,20 +1407,37 @@ const SettingsTab = () => {
           <div className="card-header">
             <h3>Business Information</h3>
           </div>
-          <form>
+          <form onSubmit={handleBusinessSubmit}>
             <div className="form-group">
               <label>Business Name</label>
-              <input type="text" placeholder="Your business name" />
+              <input
+                type="text"
+                placeholder="Your business name"
+                value={businessData.business_name}
+                onChange={(e) => setBusinessData({ ...businessData, business_name: e.target.value })}
+              />
             </div>
             <div className="form-group">
               <label>Tax ID (EIN)</label>
-              <input type="text" placeholder="XX-XXXXXXX" />
+              <input
+                type="text"
+                placeholder="XX-XXXXXXX"
+                value={businessData.tax_id}
+                onChange={(e) => setBusinessData({ ...businessData, tax_id: e.target.value })}
+              />
             </div>
             <div className="form-group">
               <label>Business Address</label>
-              <textarea placeholder="Enter business address" rows={2}></textarea>
+              <textarea
+                placeholder="Enter business address"
+                rows={2}
+                value={businessData.business_address}
+                onChange={(e) => setBusinessData({ ...businessData, business_address: e.target.value })}
+              ></textarea>
             </div>
-            <button type="submit" className="btn-primary">Save Changes</button>
+            <button type="submit" className="btn-primary" disabled={savingBusiness}>
+              {savingBusiness ? 'Saving...' : 'Save Changes'}
+            </button>
           </form>
         </div>
 
@@ -1287,21 +1447,36 @@ const SettingsTab = () => {
           </div>
           <div className="settings-options">
             <label className="setting-option">
-              <input type="checkbox" defaultChecked />
+              <input
+                type="checkbox"
+                checked={notificationPrefs.new_order_alerts}
+                onChange={(e) => handleNotificationChange('new_order_alerts', e.target.checked)}
+                disabled={savingNotifications}
+              />
               <span className="option-info">
                 <span className="option-title">New Order Alerts</span>
                 <span className="option-desc">Get notified when you receive a new order</span>
               </span>
             </label>
             <label className="setting-option">
-              <input type="checkbox" defaultChecked />
+              <input
+                type="checkbox"
+                checked={notificationPrefs.daily_summary}
+                onChange={(e) => handleNotificationChange('daily_summary', e.target.checked)}
+                disabled={savingNotifications}
+              />
               <span className="option-info">
                 <span className="option-title">Daily Summary</span>
                 <span className="option-desc">Receive daily sales summary email</span>
               </span>
             </label>
             <label className="setting-option">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={notificationPrefs.marketing_emails}
+                onChange={(e) => handleNotificationChange('marketing_emails', e.target.checked)}
+                disabled={savingNotifications}
+              />
               <span className="option-info">
                 <span className="option-title">Marketing Emails</span>
                 <span className="option-desc">Tips and updates from Cravrr</span>
@@ -1319,7 +1494,7 @@ const SettingsTab = () => {
               <span className="plan-badge free">Free Plan</span>
               <p>You're on the free plan with basic features.</p>
             </div>
-            <button className="btn-primary upgrade-btn">
+            <button className="btn-primary upgrade-btn" onClick={() => showToast('Pro plan coming soon!', 'info')}>
               {Icons.trendingUp} Upgrade to Pro
             </button>
             <ul className="pro-features">
@@ -1339,6 +1514,7 @@ const SettingsTab = () => {
 const OwnerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const { user, profile, loading: authLoading } = useAuth();
+  const { showToast } = useToast();
 
   // Data state
   const [trucks, setTrucks] = useState([]);
@@ -1443,7 +1619,7 @@ const OwnerDashboard = () => {
         `)
         .in('truck_id', truckIds)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(500);
 
       if (ordersError) throw ordersError;
 
@@ -1543,8 +1719,8 @@ const OwnerDashboard = () => {
               item_count: newOrder.order_items?.[0]?.count || 0,
             };
             setOrders(prev => [formattedOrder, ...prev]);
-            // Optionally show a notification
-            console.log('New order received:', formattedOrder.order_number);
+            // Show notification for new order
+            showToast(`New order #${formattedOrder.order_number} from ${formattedOrder.customer_name}!`, 'success');
           }
         }
       )
