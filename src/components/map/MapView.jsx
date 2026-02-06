@@ -231,6 +231,7 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState('prompt'); // 'prompt', 'loading', 'granted', 'denied'
   const [isLargeDesktop, setIsLargeDesktop] = useState(window.innerWidth >= 1200);
+  const [geocodedTrucks, setGeocodedTrucks] = useState({});
 
   // Listen for resize to toggle desktop mode
   useEffect(() => {
@@ -240,6 +241,39 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Geocode trucks that have a location text but no coordinates
+  useEffect(() => {
+    const geocodeMissing = async () => {
+      for (const truck of trucks) {
+        if (!truck.lat && !truck.lng && truck.location && !geocodedTrucks[truck.id]) {
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(truck.location)}&format=json&limit=1`
+            );
+            const results = await response.json();
+            if (results.length > 0) {
+              setGeocodedTrucks(prev => ({
+                ...prev,
+                [truck.id]: { lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) },
+              }));
+            }
+          } catch (err) {
+            console.error(`Failed to geocode truck ${truck.name}:`, err);
+          }
+        }
+      }
+    };
+    if (trucks.length > 0) geocodeMissing();
+  }, [trucks]);
+
+  // Merge geocoded positions into trucks for marker placement
+  const getTruckPosition = (truck, index) => {
+    if (truck.lat && truck.lng) return [truck.lat, truck.lng];
+    const geo = geocodedTrucks[truck.id];
+    if (geo) return [geo.lat, geo.lng];
+    return truckPositions[index] || mapCenter;
+  };
 
   // Default to Portland
   const defaultCenter = [45.5152, -122.6784];
@@ -364,7 +398,7 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
           {trucks.map((truck, index) => (
             <Marker
               key={truck.id}
-              position={truck.lat && truck.lng ? [truck.lat, truck.lng] : truckPositions[index] || mapCenter}
+              position={getTruckPosition(truck, index)}
               icon={createTruckIcon(truck)}
             >
               <Popup>
