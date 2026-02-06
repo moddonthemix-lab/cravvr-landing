@@ -113,11 +113,6 @@ const HomePage = ({ embedded = false }) => {
             <span className="location-text">{userCity}</span>
           </div>
 
-          <div className="order-type-toggle">
-            <button className="type-btn active">Pickup</button>
-            <button className="type-btn" disabled title="Coming soon">Delivery</button>
-          </div>
-
           <button className="icon-btn notification-btn">
             {Icons.bell}
           </button>
@@ -434,8 +429,12 @@ const TruckCard = ({ truck, isFavorite, onFavorite, onClick }) => {
           </span>
           <span className="meta-dot">•</span>
           <span className="truck-distance">{truck.distance}</span>
-          <span className="meta-dot">•</span>
-          <span className="truck-time">{truck.deliveryTime}</span>
+          {truck.prepTime && (
+            <>
+              <span className="meta-dot">•</span>
+              <span className="truck-time">{truck.prepTime}</span>
+            </>
+          )}
         </div>
         <div className="truck-cuisine">{truck.cuisine}</div>
         <div className="truck-tags">

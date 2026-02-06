@@ -13,6 +13,7 @@ import BoltPage from './pages/BoltPage';
 import LoginPage from './pages/LoginPage';
 import AuthConfirmPage from './pages/AuthConfirmPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import OrderTrackerPage from './pages/OrderTrackerPage';
 import ProtectedRoute, { RequireOwner, RequireAdmin } from './components/auth/ProtectedRoute';
 import AuthModal from './components/auth/AuthModal';
 import ViewAsBanner from './components/admin/ViewAsBanner';
@@ -82,6 +83,13 @@ const App = () => {
 
         {/* Truck detail page - production version */}
         <Route path="/truck/:id" element={<TruckDetailPage />} />
+
+        {/* Order tracking page */}
+        <Route path="/order/:orderId" element={
+          <ProtectedRoute>
+            <OrderTrackerPage />
+          </ProtectedRoute>
+        } />
 
         {/* User profile - requires authentication */}
         <Route path="/profile" element={

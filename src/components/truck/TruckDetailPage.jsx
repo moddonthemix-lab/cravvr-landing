@@ -70,7 +70,7 @@ const TruckDetailPage = () => {
   const [addedItem, setAddedItem] = useState(null);
 
   // New feature state
-  const [orderType, setOrderType] = useState('pickup');
+
   const [activeCategory, setActiveCategory] = useState('all');
   const [menuSearchQuery, setMenuSearchQuery] = useState('');
 
@@ -129,8 +129,8 @@ const TruckDetailPage = () => {
             rating: data.rating || 4.5,
             reviewCount: data.review_count || 0,
             isOpen: data.is_open !== false,
-            deliveryTime: data.delivery_time || '15-30 min',
-            deliveryFee: data.delivery_fee || null,
+            acceptingOrders: data.accepting_orders !== false,
+            prepTime: data.estimated_prep_time || null,
             featured: data.featured || false,
             features: data.features || defaultFeatures,
             promotions: data.promotions || null,
@@ -274,6 +274,10 @@ const TruckDetailPage = () => {
   };
 
   const handleAddToCart = (item) => {
+    if (truck && !truck.acceptingOrders) {
+      showToast('This truck is not accepting orders right now', 'error');
+      return;
+    }
     const cartItem = {
       id: item.id,
       name: item.name,
@@ -563,9 +567,11 @@ const TruckDetailPage = () => {
             Featured
           </div>
         )}
-        <div className="hero-delivery-badge">
-          <span>{truck.deliveryTime || '15-25 min'}</span>
-        </div>
+        {truck.prepTime && (
+          <div className="hero-prep-badge">
+            <span>{truck.prepTime}</span>
+          </div>
+        )}
         {/* Logo Overlay */}
         <div className="store-logo-overlay">
           <img
@@ -592,32 +598,13 @@ const TruckDetailPage = () => {
           <p className="detail-description">{truck.description || 'Delicious food made fresh daily. Visit us to discover our amazing menu!'}</p>
         </div>
 
-        {/* Order Type Toggle */}
-        <div className="order-type-section">
-          <div className="order-type-toggle-detail">
-            <button
-              className={`order-type-btn ${orderType === 'delivery' ? 'active' : ''}`}
-              onClick={() => setOrderType('delivery')}
-              disabled
-            >
-              <span className="order-type-icon">{Icons.truck}</span>
-              <div className="order-type-info">
-                <span className="order-type-label">Delivery</span>
-                <span className="order-type-detail">{truck.deliveryFee ? `$${truck.deliveryFee} fee` : 'Coming soon'}</span>
-              </div>
-            </button>
-            <button
-              className={`order-type-btn ${orderType === 'pickup' ? 'active' : ''}`}
-              onClick={() => setOrderType('pickup')}
-            >
-              <span className="order-type-icon">{Icons.mapPin}</span>
-              <div className="order-type-info">
-                <span className="order-type-label">Pickup</span>
-                <span className="order-type-detail">{truck.deliveryTime || '15-25 min'} • Free</span>
-              </div>
-            </button>
+        {/* Not Accepting Orders Banner */}
+        {truck.isOpen && !truck.acceptingOrders && (
+          <div className="not-accepting-banner">
+            {Icons.clock}
+            <span>This truck is not accepting orders right now. Check back shortly!</span>
           </div>
-        </div>
+        )}
 
         {/* Quick Info Cards */}
         <div className="quick-info-grid">

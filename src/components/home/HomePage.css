@@ -128,36 +128,6 @@
   white-space: nowrap;
 }
 
-.order-type-toggle {
-  display: flex;
-  background: #f1f5f9;
-  border-radius: 20px;
-  padding: 3px;
-}
-
-.order-type-toggle .type-btn {
-  padding: 6px 14px;
-  border: none;
-  background: none;
-  border-radius: 18px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #64748b;
-}
-
-.order-type-toggle .type-btn.active {
-  background: white;
-  color: var(--primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.order-type-toggle .type-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .icon-btn {
   width: 40px;
   height: 40px;
@@ -868,10 +838,6 @@
     display: none;
   }
 
-  .order-type-toggle {
-    display: none;
-  }
-
   .home-main {
     padding: 16px;
   }
@@ -1034,10 +1000,6 @@
   }
 
   .header-right .location-picker {
-    display: none;
-  }
-
-  .header-right .order-type-toggle {
     display: none;
   }
 }

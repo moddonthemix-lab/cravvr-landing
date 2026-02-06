@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icons } from '../common/Icons';
+import { useTrucks } from '../../contexts/TruckContext';
 import './MapView.css';
 
 // Map controller to handle view updates
@@ -202,6 +203,8 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
   const [locationStatus, setLocationStatus] = useState('prompt'); // 'prompt', 'loading', 'granted', 'denied'
   const [isLargeDesktop, setIsLargeDesktop] = useState(window.innerWidth >= 1200);
   const [geocodedTrucks, setGeocodedTrucks] = useState({});
+  const { loadNearbyTrucks } = useTrucks();
+  const [spatialTrucks, setSpatialTrucks] = useState(null);
 
   // Listen for resize to toggle desktop mode
   useEffect(() => {
@@ -245,10 +248,24 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
     return truckPositions[index] || mapCenter;
   };
 
+  // Load nearby trucks via PostGIS when user location is available
+  useEffect(() => {
+    if (userLocation && loadNearbyTrucks) {
+      loadNearbyTrucks(userLocation[0], userLocation[1], 15).then(result => {
+        if (result && result.length > 0) {
+          setSpatialTrucks(result);
+        }
+      });
+    }
+  }, [userLocation, loadNearbyTrucks]);
+
+  // Use PostGIS results if available, otherwise fall back to passed-in trucks
+  const displayTrucks = spatialTrucks || trucks;
+
   // Default to Portland
   const defaultCenter = [45.5152, -122.6784];
   const mapCenter = userLocation || defaultCenter;
-  const truckPositions = getTruckPositions(mapCenter, trucks.length);
+  const truckPositions = getTruckPositions(mapCenter, displayTrucks.length);
 
   const requestLocation = () => {
     setLocationStatus('loading');
@@ -365,7 +382,7 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
           )}
 
           {/* Truck Markers */}
-          {trucks.map((truck, index) => (
+          {displayTrucks.map((truck, index) => (
             <Marker
               key={truck.id}
               position={getTruckPosition(truck, index)}
@@ -433,7 +450,7 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
       {/* List Overlay (mobile/tablet) */}
       {showList && !isLargeDesktop && (
         <MobileTruckList
-          trucks={trucks}
+          trucks={displayTrucks}
           onTruckClick={onTruckClick}
           onClose={() => setShowList(false)}
         />
@@ -442,7 +459,7 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
       {/* Desktop Sidebar List (always visible on large screens) */}
       {isLargeDesktop && (
         <DesktopTruckList
-          trucks={trucks}
+          trucks={displayTrucks}
           onTruckClick={onTruckClick}
         />
       )}

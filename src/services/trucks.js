@@ -18,8 +18,8 @@ export const transformTruck = (truck) => ({
   rating: truck.rating || 4.5,
   reviewCount: truck.review_count || 0,
   isOpen: truck.is_open !== false,
-  deliveryTime: truck.delivery_time || '15-25 min',
-  deliveryFee: truck.delivery_fee || 2.99,
+  acceptingOrders: truck.accepting_orders !== false,
+  prepTime: truck.estimated_prep_time || null,
   featured: truck.featured || false,
   lat: truck.coordinates?.lat || truck.latitude,
   lng: truck.coordinates?.lng || truck.longitude,
@@ -113,4 +113,25 @@ export const toggleTruckStatus = async (id, isOpen) => {
     .eq('id', id);
 
   if (error) throw error;
+};
+
+/**
+ * Fetch nearby trucks using PostGIS spatial query
+ * Falls back to fetching all trucks if PostGIS is not available
+ */
+export const fetchNearbyTrucks = async (lat, lng, radiusMiles = 10) => {
+  try {
+    const { data, error } = await supabase.rpc('find_nearby_trucks', {
+      p_lat: lat,
+      p_lng: lng,
+      p_radius_miles: radiusMiles,
+    });
+
+    if (error) throw error;
+    return data?.map(transformTruck) || [];
+  } catch (err) {
+    // Fallback: if PostGIS RPC doesn't exist yet, fetch all trucks
+    console.warn('PostGIS query failed, falling back to fetch all:', err.message);
+    return fetchTrucks();
+  }
 };

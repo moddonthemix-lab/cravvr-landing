@@ -95,60 +95,21 @@
   color: var(--primary-dark);
 }
 
-/* Order Type Toggle */
-.order-type-toggle {
+/* Order Type Banner */
+.order-type-info-banner {
   display: flex;
-  gap: 12px;
-}
-
-.type-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 20px 16px;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--primary-light, #fff1f2);
   border-radius: 12px;
-  cursor: pointer;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  position: relative;
-}
-
-.type-btn svg {
-  width: 24px;
-  height: 24px;
-  color: #64748b;
-}
-
-.type-btn.active {
-  background: var(--primary-light);
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.type-btn.active svg {
-  color: var(--primary);
-}
-
-.type-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.coming-soon {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 0.625rem;
-  background: var(--primary);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 10px;
   font-weight: 600;
+  color: var(--primary, #e11d48);
+}
+
+.order-type-info-banner svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Checkout Items */

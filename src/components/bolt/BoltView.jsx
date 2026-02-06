@@ -272,7 +272,7 @@ const BoltView = ({ trucks, loading, onTruckClick }) => {
                   <div className="result-meta">
                     <div className="meta-item">
                       <span className="meta-icon">{Icons.clock}</span>
-                      <span>{generated.truck.deliveryTime}</span>
+                      <span>{generated.truck.prepTime || 'Order ahead'}</span>
                     </div>
                     <div className="meta-item">
                       <span className="meta-icon">{Icons.mapPin}</span>

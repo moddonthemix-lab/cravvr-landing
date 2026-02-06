@@ -75,6 +75,11 @@ export const AuthProvider = ({ children }) => {
         permissions: null,
       };
 
+      // Ensure a customers row exists for all users (needed for favorites, rewards, etc.)
+      await supabase
+        .from('customers')
+        .upsert({ id: userId }, { onConflict: 'id', ignoreDuplicates: true });
+
       // Optionally fetch role-specific data based on role
       if (profileData.role === 'customer') {
         const { data: customerData } = await supabase

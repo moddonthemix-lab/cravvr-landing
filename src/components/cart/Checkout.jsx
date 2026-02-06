@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useToast } from '../../contexts/ToastContext';
 import { supabase } from '../../lib/supabase';
+import { checkTruckAcceptingOrders } from '../../services/throttle';
 import { Icons } from '../common/Icons';
 import './Checkout.css';
 
 const Checkout = ({ onBack, onOrderComplete }) => {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { items, subtotal, tax, total, currentTruckId, currentTruckName, clearCart } = useCart();
   const { showToast } = useToast();
 
-  const [orderType, setOrderType] = useState('pickup');
   const [notes, setNotes] = useState('');
   const [tip, setTip] = useState(0);
   const [customTip, setCustomTip] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [orderId, setOrderId] = useState(null);
   const [error, setError] = useState('');
 
   const tipOptions = [0, 15, 18, 20, 25];
@@ -44,6 +47,14 @@ const Checkout = ({ onBack, onOrderComplete }) => {
     setError('');
 
     try {
+      // Check if truck is accepting orders
+      const throttleCheck = await checkTruckAcceptingOrders(currentTruckId);
+      if (!throttleCheck?.accepting) {
+        setError(throttleCheck?.reason || 'This truck is not accepting orders right now.');
+        setSubmitting(false);
+        return;
+      }
+
       // Create the order
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
@@ -51,7 +62,7 @@ const Checkout = ({ onBack, onOrderComplete }) => {
           customer_id: user.id,
           truck_id: currentTruckId,
           status: 'pending',
-          order_type: orderType,
+          order_type: 'pickup',
           subtotal: subtotal,
           tax: tax,
           tip: calculateTip(),
@@ -79,6 +90,7 @@ const Checkout = ({ onBack, onOrderComplete }) => {
       if (itemsError) throw itemsError;
 
       // Success!
+      setOrderId(orderData.id);
       setOrderNumber(orderData.order_number);
       setOrderComplete(true);
       clearCart(true); // Silent clear to avoid duplicate toast
@@ -121,7 +133,15 @@ const Checkout = ({ onBack, onOrderComplete }) => {
               <span>${finalTotal.toFixed(2)}</span>
             </div>
           </div>
-          <button className="btn-primary" onClick={onOrderComplete || onBack}>
+          <button className="btn-primary" onClick={() => {
+            if (orderId) {
+              navigate(`/order/${orderId}`);
+            } else if (onOrderComplete) {
+              onOrderComplete();
+            } else {
+              onBack();
+            }
+          }}>
             Track Your Order
           </button>
           <button className="btn-secondary" onClick={onBack}>
@@ -153,24 +173,9 @@ const Checkout = ({ onBack, onOrderComplete }) => {
 
         {/* Order Type */}
         <section className="checkout-section">
-          <h3>Order Type</h3>
-          <div className="order-type-toggle">
-            <button
-              className={`type-btn ${orderType === 'pickup' ? 'active' : ''}`}
-              onClick={() => setOrderType('pickup')}
-            >
-              {Icons.mapPin}
-              Pickup
-            </button>
-            <button
-              className={`type-btn ${orderType === 'delivery' ? 'active' : ''}`}
-              onClick={() => setOrderType('delivery')}
-              disabled
-            >
-              {Icons.truck}
-              Delivery
-              <span className="coming-soon">Soon</span>
-            </button>
+          <div className="order-type-info-banner">
+            {Icons.mapPin}
+            <span>Pickup Order</span>
           </div>
         </section>
 

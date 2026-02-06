@@ -7,7 +7,12 @@ import { Icons } from '../common/Icons';
 import { formatRelativeTime } from '../../utils/formatters';
 import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
+import KitchenDisplay from './KitchenDisplay';
+import StripeOnboarding from './StripeOnboarding';
+import PaymentsDashboard from './PaymentsDashboard';
 import './OwnerDashboard.css';
+import './KitchenDisplay.css';
+import './StripeOnboarding.css';
 
 // Overview Tab
 const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
@@ -309,7 +314,7 @@ const LocationInput = ({ value, coordinates, onChange }) => {
 };
 
 // Trucks Management Tab
-const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loading }) => {
+const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDelete, loading }) => {
   const { confirm } = useConfirm();
   const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
@@ -325,6 +330,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
     hours: getDefaultHours(),
     phone: '',
     image_url: '',
+    estimated_prep_time: '15-25 min',
   });
 
   const resetForm = () => {
@@ -338,6 +344,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
       hours: getDefaultHours(),
       phone: '',
       image_url: '',
+      estimated_prep_time: '15-25 min',
     });
     setEditingTruck(null);
   };
@@ -353,6 +360,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
       hours: parseHours(truck.hours),
       phone: truck.phone || '',
       image_url: truck.image_url || '',
+      estimated_prep_time: truck.estimated_prep_time || '15-25 min',
     });
     setEditingTruck(truck);
     setShowForm(true);
@@ -509,6 +517,20 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
+              <div className="form-group">
+                <label>Estimated Prep Time</label>
+                <select
+                  value={formData.estimated_prep_time}
+                  onChange={(e) => setFormData({ ...formData, estimated_prep_time: e.target.value })}
+                >
+                  <option value="5-10 min">5-10 min</option>
+                  <option value="10-15 min">10-15 min</option>
+                  <option value="15-25 min">15-25 min</option>
+                  <option value="20-30 min">20-30 min</option>
+                  <option value="30-45 min">30-45 min</option>
+                  <option value="45-60 min">45-60 min</option>
+                </select>
+              </div>
               <ImageUpload
                 label="Truck Photo"
                 currentImage={formData.image_url}
@@ -544,7 +566,7 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
               </div>
               <div className="truck-content">
                 <h3>{truck.name}</h3>
-                <p className="truck-cuisine">{truck.cuisine}</p>
+                <p className="truck-cuisine">{truck.cuisine} {truck.estimated_prep_time && `• ${truck.estimated_prep_time}`}</p>
                 <div className="truck-meta">
                   <span>{Icons.star} {truck.average_rating || 'N/A'} ({truck.review_count || 0} reviews)</span>
                 </div>
@@ -564,6 +586,16 @@ const TrucksTab = ({ trucks, onTruckCreate, onTruckUpdate, onTruckDelete, loadin
                 </div>
               </div>
               <div className="truck-actions">
+                <button
+                  className={`btn-action ${truck.accepting_orders !== false ? 'success' : 'warning'}`}
+                  onClick={async () => {
+                    const newValue = !(truck.accepting_orders !== false);
+                    await supabase.from('food_trucks').update({ accepting_orders: newValue }).eq('id', truck.id);
+                    setTrucks(prev => prev.map(t => t.id === truck.id ? { ...t, accepting_orders: newValue } : t));
+                  }}
+                >
+                  {truck.accepting_orders !== false ? '\u2713 Accepting Orders' : '\u23F8 Orders Paused'}
+                </button>
                 <button className="btn-action edit" onClick={() => openEditForm(truck)}>
                   {Icons.edit} Edit
                 </button>
@@ -901,6 +933,7 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
     ready: '#16a34a',
     completed: '#64748b',
     cancelled: '#ef4444',
+    rejected: '#ef4444',
   };
 
   const statusLabels = {
@@ -910,6 +943,7 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
     ready: 'Ready',
     completed: 'Completed',
     cancelled: 'Cancelled',
+    rejected: 'Rejected',
   };
 
   const filteredOrders = filter === 'all'
@@ -953,7 +987,7 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
       </div>
 
       <div className="orders-filters">
-        {['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed'].map(status => (
+        {['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed', 'rejected'].map(status => (
           <button
             key={status}
             className={`filter-btn ${filter === status ? 'active' : ''}`}
@@ -1006,17 +1040,41 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
                     </td>
                     <td className="actions-cell">
                       {action ? (
-                        <button
-                          className={`btn-small ${action.style}`}
-                          onClick={() => updateStatus(order.id, action.next)}
-                          disabled={updating === order.id}
-                        >
-                          {updating === order.id ? 'Updating...' : action.label}
-                        </button>
+                        <>
+                          <button
+                            className={`btn-small ${action.style}`}
+                            onClick={() => updateStatus(order.id, action.next)}
+                            disabled={updating === order.id}
+                          >
+                            {updating === order.id ? 'Updating...' : action.label}
+                          </button>
+                          {order.status === 'pending' && (
+                            <button
+                              className="btn-small danger"
+                              onClick={async () => {
+                                const reason = window.prompt('Reason for rejection (optional):');
+                                if (reason === null) return; // User cancelled prompt
+                                await updateStatus(order.id, 'rejected');
+                                if (reason) {
+                                  // Store rejection reason
+                                  await supabase
+                                    .from('orders')
+                                    .update({ rejection_reason: reason })
+                                    .eq('id', order.id);
+                                }
+                              }}
+                              disabled={updating === order.id}
+                            >
+                              Reject
+                            </button>
+                          )}
+                        </>
                       ) : order.status === 'completed' ? (
                         <button className="btn-small" disabled>Completed</button>
                       ) : order.status === 'cancelled' ? (
                         <button className="btn-small" disabled>Cancelled</button>
+                      ) : order.status === 'rejected' ? (
+                        <button className="btn-small" disabled>Rejected</button>
                       ) : null}
                     </td>
                   </tr>
@@ -1270,6 +1328,12 @@ const SettingsTab = () => {
     daily_summary: true,
     marketing_emails: false,
   });
+  const [queueSettings, setQueueSettings] = useState({
+    maxQueueSize: 20,
+    autoPauseEnabled: false,
+  });
+  const [savingQueue, setSavingQueue] = useState(false);
+  const [firstTruckId, setFirstTruckId] = useState(null);
 
   // Load owner data on mount
   useEffect(() => {
@@ -1290,6 +1354,22 @@ const SettingsTab = () => {
         if (data.notification_preferences) {
           setNotificationPrefs(prev => ({ ...prev, ...data.notification_preferences }));
         }
+      }
+
+      // Load queue settings from first truck
+      const { data: truckData } = await supabase
+        .from('food_trucks')
+        .select('id, max_queue_size, auto_pause_enabled')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+      if (truckData) {
+        setFirstTruckId(truckData.id);
+        setQueueSettings({
+          maxQueueSize: truckData.max_queue_size || 20,
+          autoPauseEnabled: truckData.auto_pause_enabled || false,
+        });
       }
     };
     loadOwnerData();
@@ -1350,6 +1430,31 @@ const SettingsTab = () => {
       showToast('Failed to save notification preferences', 'error');
     } finally {
       setSavingNotifications(false);
+    }
+  };
+
+  const handleQueueSettingsSave = async (e) => {
+    e.preventDefault();
+    if (!firstTruckId) {
+      showToast('No truck found to save queue settings for', 'error');
+      return;
+    }
+    setSavingQueue(true);
+    try {
+      const { error } = await supabase
+        .from('food_trucks')
+        .update({
+          max_queue_size: queueSettings.maxQueueSize,
+          auto_pause_enabled: queueSettings.autoPauseEnabled,
+        })
+        .eq('id', firstTruckId);
+      if (error) throw error;
+      showToast('Kitchen capacity settings saved!', 'success');
+    } catch (err) {
+      console.error('Failed to save queue settings:', err);
+      showToast('Failed to save kitchen capacity settings', 'error');
+    } finally {
+      setSavingQueue(false);
     }
   };
 
@@ -1483,6 +1588,39 @@ const SettingsTab = () => {
               </span>
             </label>
           </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <h3>Kitchen Capacity</h3>
+          </div>
+          <form onSubmit={handleQueueSettingsSave}>
+            <div className="form-group">
+              <label>Max Active Orders (Queue Size)</label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={queueSettings.maxQueueSize}
+                onChange={(e) => setQueueSettings(prev => ({ ...prev, maxQueueSize: parseInt(e.target.value) || 20 }))}
+              />
+              <span className="form-hint">Maximum number of active orders before auto-pausing</span>
+            </div>
+            <div className="form-group">
+              <label className="toggle-label">
+                <span>Auto-pause when queue is full</span>
+                <input
+                  type="checkbox"
+                  checked={queueSettings.autoPauseEnabled}
+                  onChange={(e) => setQueueSettings(prev => ({ ...prev, autoPauseEnabled: e.target.checked }))}
+                />
+              </label>
+              <span className="form-hint">Automatically stop accepting orders when the queue reaches the max size</span>
+            </div>
+            <button type="submit" className="btn-primary" disabled={savingQueue}>
+              {savingQueue ? 'Saving...' : 'Save Changes'}
+            </button>
+          </form>
         </div>
 
         <div className="card">
@@ -1833,6 +1971,9 @@ const OwnerDashboard = () => {
     if (newStatus === 'completed') {
       updates.completed_at = new Date().toISOString();
     }
+    if (newStatus === 'rejected') {
+      updates.rejected_at = new Date().toISOString();
+    }
 
     const { error } = await supabase
       .from('orders')
@@ -1886,6 +2027,7 @@ const OwnerDashboard = () => {
         return (
           <TrucksTab
             trucks={trucks}
+            setTrucks={setTrucks}
             onTruckCreate={handleTruckCreate}
             onTruckUpdate={handleTruckUpdate}
             onTruckDelete={handleTruckDelete}
@@ -1913,6 +2055,15 @@ const OwnerDashboard = () => {
             loading={loadingOrders}
           />
         );
+      case 'kitchen':
+        return (
+          <KitchenDisplay
+            orders={orders}
+            trucks={trucks}
+          />
+        );
+      case 'payments':
+        return <PaymentsDashboard trucks={trucks} />;
       case 'analytics':
         return <AnalyticsTab trucks={trucks} orders={orders} />;
       case 'settings':
@@ -1934,6 +2085,8 @@ const OwnerDashboard = () => {
     { id: 'trucks', label: 'My Trucks', icon: Icons.truck },
     { id: 'menu', label: 'Menu', icon: Icons.menu },
     { id: 'orders', label: 'Orders', icon: Icons.orders },
+    { id: 'kitchen', label: 'Kitchen', icon: Icons.clock },
+    { id: 'payments', label: 'Payments', icon: Icons.creditCard },
     { id: 'analytics', label: 'Analytics', icon: Icons.trendingUp },
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];

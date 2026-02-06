@@ -10,6 +10,7 @@ export const ORDER_STATUS = {
   READY: 'ready',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+  REJECTED: 'rejected',
 };
 
 /**
@@ -112,16 +113,15 @@ export const createOrder = async ({
 /**
  * Update order status
  */
-export const updateOrderStatus = async (orderId, status) => {
-  const { error } = await supabase
-    .from('orders')
-    .update({
-      status,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', orderId);
-
+export const updateOrderStatus = async (orderId, newStatus, note = null) => {
+  const { data, error } = await supabase.rpc('update_order_status', {
+    p_order_id: orderId,
+    p_new_status: newStatus,
+    p_note: note,
+  });
   if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data;
 };
 
 /**
@@ -164,4 +164,17 @@ export const fetchActiveOrders = async (customerId) => {
 
   if (error) throw error;
   return data?.map(transformOrder) || [];
+};
+
+/**
+ * Fetch order status transition audit trail
+ */
+export const fetchOrderTransitions = async (orderId) => {
+  const { data, error } = await supabase
+    .from('order_status_transitions')
+    .select('*')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
 };

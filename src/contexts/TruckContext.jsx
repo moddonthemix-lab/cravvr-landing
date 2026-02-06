@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { transformTruck } from '../services/trucks';
+import { transformTruck, fetchNearbyTrucks } from '../services/trucks';
 
 const TruckContext = createContext({});
 
@@ -9,6 +9,7 @@ export const TruckProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastFetched, setLastFetched] = useState(null);
+  const [nearbyTrucks, setNearbyTrucks] = useState([]);
 
   // Fetch trucks from Supabase
   const fetchTrucks = useCallback(async (forceRefresh = false) => {
@@ -89,6 +90,18 @@ export const TruckProvider = ({ children }) => {
     return fetchTrucks(true);
   }, [fetchTrucks]);
 
+  // Load nearby trucks using PostGIS spatial query
+  const loadNearbyTrucks = useCallback(async (lat, lng, radiusMiles = 10) => {
+    try {
+      const result = await fetchNearbyTrucks(lat, lng, radiusMiles);
+      setNearbyTrucks(result);
+      return result;
+    } catch (err) {
+      console.error('Error loading nearby trucks:', err);
+      return [];
+    }
+  }, []);
+
   const value = {
     trucks,
     loading,
@@ -97,6 +110,8 @@ export const TruckProvider = ({ children }) => {
     refresh,
     getTruckById,
     getFilteredTrucks,
+    nearbyTrucks,
+    loadNearbyTrucks,
   };
 
   return (

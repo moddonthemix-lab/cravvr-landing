@@ -82,7 +82,26 @@ export const FavoritesProvider = ({ children }) => {
           .from('favorites')
           .insert({ customer_id: user.id, truck_id: truckId });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          // Auto-fix: if FK constraint fails, ensure customer row exists and retry
+          if (insertError.message?.includes('foreign key constraint') || insertError.code === '23503') {
+            const { error: fixError } = await supabase
+              .from('customers')
+              .upsert({ id: user.id }, { onConflict: 'id' });
+
+            if (!fixError) {
+              // Retry the favorite insert
+              const { error: retryError } = await supabase
+                .from('favorites')
+                .insert({ customer_id: user.id, truck_id: truckId });
+
+              if (retryError) throw retryError;
+              showToast('Added to favorites', 'success');
+              return true;
+            }
+          }
+          throw insertError;
+        }
         showToast('Added to favorites', 'success');
       }
       return true;
@@ -94,9 +113,8 @@ export const FavoritesProvider = ({ children }) => {
       } else {
         setFavorites(prev => prev.filter(id => id !== truckId));
       }
-      const errorMsg = err.message || 'Failed to update favorite';
-      setError(errorMsg);
-      showToast(errorMsg, 'error');
+      setError('Failed to update favorite');
+      showToast('Failed to update favorite. Please try again.', 'error');
       return false;
     }
   }, [user, favorites, openAuth, showToast]);

@@ -218,14 +218,15 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
                     </span>
                   </div>
 
-                  {/* Delivery Info */}
-                  <div className="card-delivery-info">
-                    <span className="delivery-time">
-                      {Icons.clock}
-                      {truck.deliveryTime}
-                    </span>
-                    <span className="delivery-fee">${truck.deliveryFee} fee</span>
-                  </div>
+                  {/* Prep Time */}
+                  {truck.prepTime && (
+                    <div className="card-prep-info">
+                      <span className="prep-time">
+                        {Icons.clock}
+                        {truck.prepTime}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Card Info */}

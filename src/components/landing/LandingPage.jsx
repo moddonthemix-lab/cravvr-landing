@@ -50,7 +50,7 @@ const cards = [
     price: '$12 avg',
     rating: '4.7',
     reviews: '500+',
-    offer: 'Free delivery',
+    offer: 'Free pickup',
     promoted: true,
     liked: true,
     image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80'
@@ -59,7 +59,7 @@ const cards = [
 
 const faqs = [
   {
-    q: 'How is Cravrr different from other food delivery apps?',
+    q: 'How is Cravrr different from other food apps?',
     a: 'Cravrr focuses exclusively on food trucks with 0% commission on pickup orders. We provide direct connections between trucks and their followers, not algorithms.'
   },
   {

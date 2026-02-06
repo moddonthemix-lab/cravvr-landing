@@ -280,8 +280,8 @@
   color: white;
 }
 
-/* Delivery Info */
-.card-delivery-info {
+/* Prep Time Info */
+.card-prep-info {
   position: absolute;
   bottom: 16px;
   left: 16px;
@@ -290,8 +290,7 @@
   z-index: 5;
 }
 
-.delivery-time,
-.delivery-fee {
+.prep-time {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -304,7 +303,7 @@
   backdrop-filter: blur(8px);
 }
 
-.delivery-time svg {
+.prep-time svg {
   width: 14px;
   height: 14px;
   color: var(--primary);
@@ -713,20 +712,19 @@
     height: 12px;
   }
 
-  .card-delivery-info {
+  .card-prep-info {
     bottom: 12px;
     left: 12px;
     gap: 10px;
   }
 
-  .delivery-time,
-  .delivery-fee {
+  .prep-time {
     padding: 6px 10px;
     font-size: 11px;
     border-radius: 16px;
   }
 
-  .delivery-time svg {
+  .prep-time svg {
     width: 12px;
     height: 12px;
   }

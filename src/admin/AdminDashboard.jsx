@@ -1827,9 +1827,7 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
     siteDescription: 'The map-first food truck app',
     contactEmail: 'support@cravvr.com',
     commissionRate: 0,
-    deliveryFee: 2.99,
     minOrderAmount: 10,
-    maxDeliveryRadius: 5,
     enableNotifications: true,
     maintenanceMode: false,
   });
@@ -2027,15 +2025,6 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
               onChange={(e) => setSettings({ ...settings, commissionRate: parseFloat(e.target.value) || 0 })}
             />
             <span className="form-hint">0% = No commission on pickup orders</span>
-          </div>
-          <div className="form-group">
-            <label>Default Delivery Fee ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={settings.deliveryFee}
-              onChange={(e) => setSettings({ ...settings, deliveryFee: parseFloat(e.target.value) || 0 })}
-            />
           </div>
         </div>
 
