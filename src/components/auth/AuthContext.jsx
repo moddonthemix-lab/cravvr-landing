@@ -182,11 +182,38 @@ export const AuthProvider = ({ children }) => {
             name,
             role,
           },
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
         },
       });
 
       if (error) throw error;
+
+      // If signup successful and email confirmation is required, send custom email via SendGrid
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        // User already exists
+        console.log('User already exists');
+      } else if (data.user && !data.session) {
+        // User created but needs to confirm email
+        try {
+          // Call Edge Function to send SendGrid confirmation email
+          const { error: emailError } = await supabase.functions.invoke('send-confirmation-email', {
+            body: {
+              email: data.user.email,
+              confirmationUrl: `${window.location.origin}/auth/confirm?token_hash=${data.user.id}&type=email`,
+            },
+          });
+
+          if (emailError) {
+            console.error('Failed to send confirmation email:', emailError);
+            // Don't throw - user is still created
+          } else {
+            console.log('Confirmation email sent via SendGrid');
+          }
+        } catch (emailErr) {
+          console.error('Error calling email function:', emailErr);
+          // Don't throw - user is still created
+        }
+      }
 
       return { data, error: null };
     } catch (err) {

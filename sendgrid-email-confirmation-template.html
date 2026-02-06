@@ -1,0 +1,161 @@
+<!--
+  SENDGRID EMAIL CONFIRMATION TEMPLATE
+
+  Instructions:
+  1. Go to SendGrid Dashboard → Email API → Dynamic Templates
+  2. Create a new template called "Cravvr Email Confirmation"
+  3. Add a new version
+  4. Use the Design Editor
+  5. Click "Code" tab and paste this HTML
+  6. Save the template
+  7. Copy the Template ID
+  8. Go to Supabase → Authentication → Email Templates
+  9. Update "Confirm signup" template to use this SendGrid template
+
+  Template Variables (from Supabase):
+  - {{ .ConfirmationURL }} - The confirmation link
+  - {{ .SiteURL }} - Your site URL (cravvr.com)
+  - {{ .Email }} - User's email address
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Your Email - Cravvr</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f3f4f6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .header {
+      background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+    }
+    .content {
+      padding: 40px 32px;
+    }
+    .content h1 {
+      color: #111827;
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 16px;
+    }
+    .content p {
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0 0 24px;
+    }
+    .confirm-button {
+      display: inline-block;
+      background: #e11d48;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 16px 48px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      margin: 16px 0;
+    }
+    .confirm-button:hover {
+      background: #be123c;
+    }
+    .alternative-link {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .alternative-link p {
+      font-size: 14px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+    .alternative-link a {
+      color: #e11d48;
+      word-break: break-all;
+      font-size: 12px;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 32px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer p {
+      color: #9ca3af;
+      font-size: 14px;
+      margin: 8px 0;
+    }
+    .footer a {
+      color: #e11d48;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <!-- Header -->
+    <div class="header">
+      <h1 class="logo">🍔 Cravvr</h1>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+      <h1>Welcome to Cravvr! 🎉</h1>
+
+      <p>Thanks for signing up! We're excited to have you join our community of food truck lovers.</p>
+
+      <p>To get started, please confirm your email address by clicking the button below:</p>
+
+      <center>
+        <a href="{{ .ConfirmationURL }}" class="confirm-button">
+          Confirm Email Address
+        </a>
+      </center>
+
+      <p style="margin-top: 32px;">Once confirmed, you'll be able to:</p>
+      <ul style="color: #6b7280; line-height: 1.8;">
+        <li>Discover amazing food trucks near you</li>
+        <li>Save your favorite trucks</li>
+        <li>Order food for pickup</li>
+        <li>Earn points and rewards</li>
+        <li>Leave reviews and ratings</li>
+      </ul>
+
+      <!-- Alternative link for email clients that block buttons -->
+      <div class="alternative-link">
+        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+        <a href="{{ .ConfirmationURL }}">{{ .ConfirmationURL }}</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p><strong>Cravvr</strong> - Find Your Next Favorite Food Truck</p>
+      <p>
+        <a href="https://cravvr.com">Visit our website</a> •
+        <a href="https://cravvr.com/eat">Learn more</a>
+      </p>
+      <p style="font-size: 12px; margin-top: 16px;">
+        If you didn't create a Cravvr account, you can safely ignore this email.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
