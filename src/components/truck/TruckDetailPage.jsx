@@ -6,7 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
-import { formatRelativeTime } from '../../utils/formatters';
+import { formatRelativeTime, formatTruckHours } from '../../utils/formatters';
 import ReviewModal from '../reviews/ReviewModal';
 import MenuItemRatingModal from '../reviews/MenuItemRatingModal';
 
@@ -124,7 +124,7 @@ const TruckDetailPage = () => {
             priceRange: data.price_range || '$$',
             description: data.description || 'Delicious food made fresh daily. Visit us to discover our amazing menu!',
             location: data.location || data.current_location || 'Portland, OR',
-            hours: data.hours || '11am - 9pm',
+            hours: formatTruckHours(data.hours),
             distance: '1.0 mi',
             rating: data.rating || 4.5,
             reviewCount: data.review_count || 0,

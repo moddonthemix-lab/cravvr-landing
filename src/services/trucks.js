@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { formatTruckHours } from '../utils/formatters';
 
 /**
  * Transform raw Supabase truck data to app format
@@ -12,7 +13,7 @@ export const transformTruck = (truck) => ({
   priceRange: truck.price_range || '$$',
   description: truck.description || 'Delicious food made fresh daily.',
   location: truck.location || truck.current_location || 'Portland, OR',
-  hours: truck.hours || '11am - 9pm',
+  hours: formatTruckHours(truck.hours),
   distance: '1.0 mi',
   rating: truck.rating || 4.5,
   reviewCount: truck.review_count || 0,

@@ -125,10 +125,36 @@ export const formatPhone = (phone) => {
   return phone;
 };
 
+/**
+ * Format a truck hours JSON object into a readable string for today
+ *
+ * @param {Object|string} hours - Hours object like {monday: {open, close, closed}, ...} or plain string
+ * @returns {string} Formatted hours string e.g. "11am - 10pm" or "Closed today"
+ */
+export const formatTruckHours = (hours) => {
+  if (!hours) return '11am - 9pm';
+  if (typeof hours === 'string') {
+    try { hours = JSON.parse(hours); } catch { return hours; }
+  }
+  if (typeof hours !== 'object') return String(hours);
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const today = days[new Date().getDay()];
+  const todayHours = hours[today];
+  if (!todayHours || todayHours.closed) return 'Closed today';
+  const fmt = (t) => {
+    const [h, m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'pm' : 'am';
+    const h12 = h % 12 || 12;
+    return m === 0 ? `${h12}${ampm}` : `${h12}:${String(m).padStart(2, '0')}${ampm}`;
+  };
+  return `${fmt(todayHours.open)} - ${fmt(todayHours.close)}`;
+};
+
 export default {
   formatRelativeTime,
   formatDate,
   formatCurrency,
   formatCompactNumber,
-  formatPhone
+  formatPhone,
+  formatTruckHours
 };
