@@ -1,4 +1,4 @@
-/* Kitchen Display System */
+/* Kitchen Display System - Cravvr Theme */
 .kitchen-display {
   padding: 0;
 }
@@ -14,13 +14,13 @@
 
 .kds-title h2 {
   font-size: 1.25rem;
-  color: var(--text-primary, #fff);
+  color: var(--owner-text, #1e293b);
   margin: 0;
 }
 
 .kds-order-count {
   font-size: 0.85rem;
-  color: var(--text-secondary, #999);
+  color: var(--owner-text-muted, #64748b);
 }
 
 .kds-controls {
@@ -30,17 +30,17 @@
 }
 
 .kds-truck-select {
-  background: var(--bg-secondary, #1a1a1a);
-  color: var(--text-primary, #fff);
-  border: 1px solid var(--border-color, #333);
+  background: white;
+  color: var(--owner-text, #1e293b);
+  border: 1px solid var(--owner-border, #e2e8f0);
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 0.85rem;
 }
 
 .kds-sound-btn {
-  background: var(--bg-secondary, #1a1a1a);
-  border: 1px solid var(--border-color, #333);
+  background: white;
+  border: 1px solid var(--owner-border, #e2e8f0);
   border-radius: 8px;
   padding: 8px 12px;
   cursor: pointer;
@@ -49,7 +49,8 @@
 }
 
 .kds-sound-btn.active {
-  border-color: var(--accent, #f97316);
+  border-color: var(--owner-primary, #e11d48);
+  background: var(--owner-primary-light, #ffe4e6);
 }
 
 /* Columns */
@@ -61,11 +62,13 @@
 }
 
 .kds-column {
-  background: var(--bg-secondary, #1a1a1a);
+  background: white;
   border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--owner-border, #e2e8f0);
 }
 
 .kds-column-header {
@@ -74,12 +77,14 @@
   justify-content: space-between;
   padding: 14px 16px;
   border-top: 3px solid;
+  background: #fafbfc;
 }
 
 .kds-column-header h3 {
   font-size: 0.95rem;
-  color: var(--text-primary, #fff);
+  color: var(--owner-text, #1e293b);
   margin: 0;
+  font-weight: 600;
 }
 
 .kds-column-count {
@@ -100,30 +105,32 @@
   gap: 12px;
   overflow-y: auto;
   max-height: 70vh;
+  background: #f8fafc;
 }
 
 .kds-empty {
   text-align: center;
   padding: 40px 16px;
-  color: var(--text-secondary, #666);
+  color: var(--owner-text-muted, #64748b);
   font-size: 0.85rem;
 }
 
 /* Order Cards */
 .kds-order-card {
-  background: var(--bg-primary, #0a0a0a);
+  background: white;
   border-radius: 10px;
   padding: 14px;
   border-left: 3px solid transparent;
   transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .kds-order-card.pending {
-  border-left-color: #f97316;
+  border-left-color: var(--owner-primary, #e11d48);
 }
 
 .kds-order-card.confirmed {
-  border-left-color: #3b82f6;
+  border-left-color: var(--owner-info, #3b82f6);
 }
 
 .kds-order-card.preparing {
@@ -131,12 +138,12 @@
 }
 
 .kds-order-card.ready {
-  border-left-color: #22c55e;
+  border-left-color: var(--owner-success, #16a34a);
 }
 
 .kds-order-card.new-order {
   animation: newOrderPulse 0.6s ease-out;
-  box-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 0 20px rgba(225, 29, 72, 0.2);
 }
 
 @keyframes newOrderPulse {
@@ -155,12 +162,12 @@
 .kds-order-number {
   font-weight: 700;
   font-size: 1rem;
-  color: var(--text-primary, #fff);
+  color: var(--owner-text, #1e293b);
 }
 
 .kds-elapsed {
   font-size: 0.75rem;
-  color: var(--text-secondary, #999);
+  color: var(--owner-text-muted, #64748b);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -173,7 +180,7 @@
 
 .kds-customer {
   font-size: 0.85rem;
-  color: var(--text-secondary, #bbb);
+  color: var(--owner-text-muted, #64748b);
   margin-bottom: 10px;
 }
 
@@ -191,19 +198,19 @@
 }
 
 .kds-item-qty {
-  color: var(--accent, #f97316);
+  color: var(--owner-primary, #e11d48);
   font-weight: 600;
   min-width: 24px;
 }
 
 .kds-item-name {
-  color: var(--text-primary, #fff);
+  color: var(--owner-text, #1e293b);
 }
 
 .kds-notes {
   font-size: 0.8rem;
-  color: var(--text-secondary, #999);
-  background: rgba(249, 115, 22, 0.08);
+  color: var(--owner-text-muted, #64748b);
+  background: var(--owner-primary-light, #ffe4e6);
   padding: 8px 10px;
   border-radius: 6px;
   margin-bottom: 10px;
@@ -217,6 +224,7 @@
   height: 14px;
   flex-shrink: 0;
   margin-top: 1px;
+  color: var(--owner-primary, #e11d48);
 }
 
 .kds-card-footer {
@@ -224,12 +232,12 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 10px;
-  border-top: 1px solid var(--border-color, #222);
+  border-top: 1px solid var(--owner-border, #e2e8f0);
 }
 
 .kds-total {
   font-weight: 600;
-  color: var(--text-primary, #fff);
+  color: var(--owner-text, #1e293b);
   font-size: 0.95rem;
 }
 
@@ -249,26 +257,26 @@
 }
 
 .btn-confirm {
-  background: #22c55e;
+  background: var(--owner-success, #16a34a);
   color: #fff;
 }
 
 .btn-confirm:hover {
-  background: #16a34a;
+  background: #15803d;
 }
 
 .btn-reject {
   background: transparent;
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--owner-danger, #dc2626);
+  border: 1px solid rgba(220, 38, 38, 0.3);
 }
 
 .btn-reject:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(220, 38, 38, 0.06);
 }
 
 .btn-prepare {
-  background: #3b82f6;
+  background: var(--owner-info, #3b82f6);
   color: #fff;
 }
 
@@ -277,154 +285,81 @@
 }
 
 .btn-ready {
-  background: #22c55e;
+  background: var(--owner-success, #16a34a);
   color: #fff;
 }
 
 .btn-ready:hover {
-  background: #16a34a;
+  background: #15803d;
 }
 
 .btn-complete {
-  background: var(--accent, #f97316);
+  background: var(--owner-primary, #e11d48);
   color: #fff;
 }
 
 .btn-complete:hover {
-  background: #ea580c;
+  background: var(--owner-primary-dark, #be123c);
 }
 
-/* Reject Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
+/* Reject Modal - Cravvr Theme */
+.reject-modal {
+  background: white;
 }
 
-.modal-content {
-  background: var(--bg-secondary, #1a1a1a);
-  border-radius: 16px;
-  max-width: 480px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
+.reject-modal .modal-header {
+  border-bottom-color: var(--owner-border, #e2e8f0);
 }
 
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border-color, #333);
+.reject-modal .modal-header h3 {
+  color: var(--owner-text, #1e293b);
 }
 
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: var(--text-primary, #fff);
+.reject-modal .modal-close {
+  color: var(--owner-text-muted, #64748b);
 }
 
-.modal-close {
-  background: none;
-  border: none;
-  color: var(--text-secondary, #999);
-  cursor: pointer;
-  padding: 4px;
+.reject-modal .reject-warning {
+  color: var(--owner-text-muted, #64748b);
 }
 
-.modal-body {
-  padding: 20px;
+.reject-modal .reason-option {
+  border-color: var(--owner-border, #e2e8f0);
+  color: var(--owner-text, #1e293b);
 }
 
-.reject-warning {
-  font-size: 0.85rem;
-  color: var(--text-secondary, #999);
-  margin: 0 0 16px;
+.reject-modal .reason-option:hover,
+.reject-modal .reason-option.selected {
+  border-color: var(--owner-danger, #dc2626);
+  background: rgba(220, 38, 38, 0.04);
 }
 
-.reject-reasons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.reject-modal .reason-option input[type="radio"] {
+  accent-color: var(--owner-danger, #dc2626);
 }
 
-.reason-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 1px solid var(--border-color, #333);
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  color: var(--text-primary, #fff);
+.reject-modal .custom-reason-input {
+  background: var(--owner-bg, #f8fafc);
+  border-color: var(--owner-border, #e2e8f0);
+  color: var(--owner-text, #1e293b);
 }
 
-.reason-option:hover,
-.reason-option.selected {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.06);
+.reject-modal .custom-reason-input:focus {
+  border-color: var(--owner-danger, #dc2626);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
-.reason-option input[type="radio"] {
-  accent-color: #ef4444;
+.reject-modal .modal-footer {
+  border-top-color: var(--owner-border, #e2e8f0);
 }
 
-.custom-reason-input {
-  width: 100%;
-  margin-top: 10px;
-  padding: 12px;
-  background: var(--bg-primary, #0a0a0a);
-  border: 1px solid var(--border-color, #333);
-  border-radius: 8px;
-  color: var(--text-primary, #fff);
-  font-size: 0.9rem;
-  resize: vertical;
+.reject-modal .modal-footer .btn-secondary {
+  border-color: var(--owner-border, #e2e8f0);
+  color: var(--owner-text-muted, #64748b);
 }
 
-.custom-reason-input:focus {
-  outline: none;
-  border-color: #ef4444;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 20px;
-  border-top: 1px solid var(--border-color, #333);
-}
-
-.modal-footer .btn-secondary {
-  background: transparent;
-  color: var(--text-secondary, #999);
-  border: 1px solid var(--border-color, #333);
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.modal-footer .btn-danger {
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.modal-footer .btn-danger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.reject-modal .modal-footer .btn-danger {
+  background: var(--owner-danger, #dc2626);
 }
 
 /* Responsive */

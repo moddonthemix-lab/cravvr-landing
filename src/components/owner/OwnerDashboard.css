@@ -717,7 +717,12 @@
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -726,6 +731,12 @@
   align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid var(--owner-border);
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  border-radius: 20px 20px 0 0;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -901,8 +912,12 @@
   gap: 12px;
   justify-content: flex-end;
   margin-top: 24px;
-  padding-top: 20px;
+  padding: 20px 24px;
   border-top: 1px solid var(--owner-border);
+  position: sticky;
+  bottom: 0;
+  background: white;
+  z-index: 10;
 }
 
 /* Trucks Grid */
@@ -1212,8 +1227,27 @@
 }
 
 .toggle-label {
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--owner-text);
+  cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--owner-primary);
+}
+
+.form-hint {
+  display: block;
+  font-size: 12px;
   color: var(--owner-text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
 }
 
 .action-buttons {
@@ -1318,10 +1352,6 @@
   font-size: 12px;
   font-weight: 600;
   text-transform: capitalize;
-}
-
-.actions-cell {
-  text-align: right;
 }
 
 /* Analytics Tab */
@@ -1709,6 +1739,26 @@
   .orders-table th,
   .orders-table td {
     padding: 12px 10px;
+  }
+
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal {
+    max-height: 95vh;
+    max-height: 95dvh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .modal-header {
+    border-radius: 20px 20px 0 0;
+  }
+
+  .modal form {
+    padding: 16px;
+    padding-bottom: 24px;
   }
 }
 

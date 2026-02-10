@@ -921,10 +921,8 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
 };
 
 // Orders Tab
-const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
-  const { showToast } = useToast();
+const OrdersTab = ({ orders, loading }) => {
   const [filter, setFilter] = useState('all');
-  const [updating, setUpdating] = useState(null);
 
   const statusColors = {
     pending: '#6366f1',
@@ -950,39 +948,12 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
     ? orders
     : orders.filter(o => o.status === filter);
 
-  const updateStatus = async (orderId, newStatus) => {
-    setUpdating(orderId);
-    try {
-      await onOrderStatusUpdate(orderId, newStatus);
-    } catch (err) {
-      console.error('Failed to update order status:', err);
-      showToast('Failed to update order status. Please try again.', 'error');
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const getNextAction = (status) => {
-    switch (status) {
-      case 'pending':
-        return { label: 'Confirm', next: 'confirmed', style: 'primary' };
-      case 'confirmed':
-        return { label: 'Start Preparing', next: 'preparing', style: 'primary' };
-      case 'preparing':
-        return { label: 'Mark Ready', next: 'ready', style: 'success' };
-      case 'ready':
-        return { label: 'Complete', next: 'completed', style: '' };
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="tab-content">
       <div className="content-header">
         <div>
           <h1>Orders</h1>
-          <p>Manage incoming and past orders.</p>
+          <p>Order history and reporting. Use the Kitchen tab to manage active orders.</p>
         </div>
       </div>
 
@@ -1020,13 +991,10 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
                 <th>Total</th>
                 <th>Time</th>
                 <th>Status</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map(order => {
-                const action = getNextAction(order.status);
-                return (
+              {filteredOrders.map(order => (
                   <tr key={order.id}>
                     <td className="order-id-cell">{order.order_number}</td>
                     <td>{order.customer_name || 'Customer'}</td>
@@ -1038,48 +1006,8 @@ const OrdersTab = ({ orders, onOrderStatusUpdate, loading }) => {
                         {statusLabels[order.status] || order.status}
                       </span>
                     </td>
-                    <td className="actions-cell">
-                      {action ? (
-                        <>
-                          <button
-                            className={`btn-small ${action.style}`}
-                            onClick={() => updateStatus(order.id, action.next)}
-                            disabled={updating === order.id}
-                          >
-                            {updating === order.id ? 'Updating...' : action.label}
-                          </button>
-                          {order.status === 'pending' && (
-                            <button
-                              className="btn-small danger"
-                              onClick={async () => {
-                                const reason = window.prompt('Reason for rejection (optional):');
-                                if (reason === null) return; // User cancelled prompt
-                                await updateStatus(order.id, 'rejected');
-                                if (reason) {
-                                  // Store rejection reason
-                                  await supabase
-                                    .from('orders')
-                                    .update({ rejection_reason: reason })
-                                    .eq('id', order.id);
-                                }
-                              }}
-                              disabled={updating === order.id}
-                            >
-                              Reject
-                            </button>
-                          )}
-                        </>
-                      ) : order.status === 'completed' ? (
-                        <button className="btn-small" disabled>Completed</button>
-                      ) : order.status === 'cancelled' ? (
-                        <button className="btn-small" disabled>Cancelled</button>
-                      ) : order.status === 'rejected' ? (
-                        <button className="btn-small" disabled>Rejected</button>
-                      ) : null}
-                    </td>
                   </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>
@@ -1965,27 +1893,6 @@ const OwnerDashboard = () => {
     setMenuItems(prev => prev.filter(item => item.id !== itemId));
   };
 
-  // Order status update
-  const handleOrderStatusUpdate = async (orderId, newStatus) => {
-    const updates = { status: newStatus };
-    if (newStatus === 'completed') {
-      updates.completed_at = new Date().toISOString();
-    }
-    if (newStatus === 'rejected') {
-      updates.rejected_at = new Date().toISOString();
-    }
-
-    const { error } = await supabase
-      .from('orders')
-      .update(updates)
-      .eq('id', orderId);
-
-    if (error) throw error;
-    setOrders(prev => prev.map(order =>
-      order.id === orderId ? { ...order, ...updates } : order
-    ));
-  };
-
   // Calculate stats for overview
   const calculateStats = () => {
     const todayOrders = trucks.reduce((sum, t) => sum + (t.today_orders || 0), 0);
@@ -2051,7 +1958,6 @@ const OwnerDashboard = () => {
         return (
           <OrdersTab
             orders={orders}
-            onOrderStatusUpdate={handleOrderStatusUpdate}
             loading={loadingOrders}
           />
         );
