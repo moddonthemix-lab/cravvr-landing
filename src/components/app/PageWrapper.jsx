@@ -11,7 +11,8 @@ const PageWrapper = ({ children, activeNav }) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { itemCount, openCart } = useCart();
-  const userCity = useUserLocation();
+  const { city: rawCity } = useUserLocation();
+  const userCity = typeof rawCity === 'string' ? rawCity : (rawCity?.city || 'Your Location');
 
   const isActive = (path) => {
     if (activeNav) return activeNav === path;

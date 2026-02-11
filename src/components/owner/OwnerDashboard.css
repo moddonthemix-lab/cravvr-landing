@@ -359,12 +359,13 @@
   color: #16a34a;
 }
 
-/* Cards */
-.card {
+/* Cards — override global opacity: 0 from index.css landing page animation */
+.owner-dashboard-content .card {
   background: var(--owner-card-bg);
   border-radius: 16px;
   border: 1px solid var(--owner-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  opacity: 1;
 }
 
 .card-header {

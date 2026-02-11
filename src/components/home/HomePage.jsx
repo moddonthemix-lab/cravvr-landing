@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
@@ -28,9 +28,18 @@ const HomePage = ({ embedded = false }) => {
   const navigate = useNavigate();
   const { user, profile, signOut, openAuth, isOwner, isAdmin } = useAuth();
   const { itemCount, openCart } = useCart();
-  const { trucks: contextTrucks, loading } = useTrucks();
+  const { trucks: contextTrucks, loading, setLocationAndFetch } = useTrucks();
   const { favorites, toggleFavorite } = useFavorites();
-  const userCity = useUserLocation();
+  const location = useUserLocation();
+  const userCity = typeof location.city === 'string' ? location.city : (location.city?.city || 'Your Location');
+  const coords = location.coords;
+
+  // When user coordinates become available, fetch location-filtered trucks
+  useEffect(() => {
+    if (coords?.latitude && coords?.longitude) {
+      setLocationAndFetch(coords.latitude, coords.longitude, 15);
+    }
+  }, [coords?.latitude, coords?.longitude, setLocationAndFetch]);
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
