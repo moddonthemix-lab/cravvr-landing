@@ -9,6 +9,7 @@ import { Icons } from '../common/Icons';
 import { formatRelativeTime, formatTruckHours } from '../../utils/formatters';
 import ReviewModal from '../reviews/ReviewModal';
 import MenuItemRatingModal from '../reviews/MenuItemRatingModal';
+import SidebarCart from '../cart/SidebarCart';
 
 // Default menu items for trucks without menu
 const defaultMenuItems = [
@@ -499,6 +500,7 @@ const TruckDetailPage = () => {
             </button>
           )}
         </nav>
+
       </aside>
 
       {/* Main Content */}
@@ -606,101 +608,98 @@ const TruckDetailPage = () => {
           </div>
         )}
 
-        {/* Quick Info Cards */}
-        <div className="quick-info-grid">
-          <div className="quick-info-card">
-            <span className="info-icon">{Icons.mapPin}</span>
-            <div className="info-text">
-              <span className="info-label">Location</span>
-              <span className="info-value">{truck.location || 'Portland, OR'}</span>
+        {/* Content sections */}
+        <div className="truck-detail-content-flow">
+            {/* Inline Info Strip */}
+            <div className="truck-info-strip">
+              <span className="info-strip-rating">
+                {Icons.star} {truck.rating || 4.5} ({truck.reviewCount || 0} ratings)
+              </span>
+              <span className="info-strip-dot">·</span>
+              <span>{truck.distance || '1.0 mi'}</span>
+              <span className="info-strip-dot">·</span>
+              <span>{truck.priceRange || '$$'}</span>
+              <span className="info-strip-dot">·</span>
+              <span className={`info-strip-status ${truck.isOpen !== false ? 'open' : 'closed'}`}>
+                {truck.isOpen !== false ? 'Open Now' : 'Closed'}
+              </span>
+              {truck.prepTime && (
+                <>
+                  <span className="info-strip-dot">·</span>
+                  <span>{truck.prepTime}</span>
+                </>
+              )}
             </div>
-          </div>
-          <div className="quick-info-card">
-            <span className="info-icon">{Icons.clock}</span>
-            <div className="info-text">
-              <span className="info-label">Hours</span>
-              <span className="info-value">{truck.hours || '11am - 9pm'}</span>
+            <div className="truck-meta-row">
+              <span className="meta-location" onClick={handleGetDirections}>
+                {Icons.mapPin} {truck.location || 'Portland, OR'}
+              </span>
+              <span className="meta-hours">
+                {Icons.clock} {truck.hours || '11am - 9pm'}
+              </span>
             </div>
-          </div>
-          <div className="quick-info-card distance">
-            <span className="info-icon">{Icons.target}</span>
-            <div className="info-text">
-              <span className="info-label">Distance</span>
-              <span className="info-value">{truck.distance || '1.0 mi'}</span>
-            </div>
-          </div>
-          <div className={`quick-info-card status ${truck.isOpen !== false ? 'open' : 'closed'}`}>
-            <span className="status-indicator">
-              <span className="status-dot"></span>
-            </span>
-            <div className="info-text">
-              <span className="info-label">Status</span>
-              <span className="info-value">{truck.isOpen !== false ? 'Open Now' : 'Closed'}</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Deals & Benefits Section */}
-        {deals.length > 0 && (
-          <div className="detail-section deals-section">
-            <h3>Deals & Benefits</h3>
-            <div className="deals-scroll">
-              {deals.map(deal => (
-                <div key={deal.id} className="deal-card">
-                  <span className="deal-emoji">{deal.emoji}</span>
-                  <div className="deal-content">
-                    <h4>{deal.title}</h4>
-                    <p>{deal.description}</p>
-                    {deal.code && <span className="deal-code">{deal.code}</span>}
+            {/* Deals & Benefits Section */}
+            {deals.length > 0 && (
+              <div className="detail-section deals-section">
+                <h3>Deals & Benefits</h3>
+                <div className="deals-scroll">
+                  {deals.map(deal => (
+                    <div key={deal.id} className="deal-card">
+                      <span className="deal-emoji">{deal.emoji}</span>
+                      <div className="deal-content">
+                        <h4>{deal.title}</h4>
+                        <p>{deal.description}</p>
+                        {deal.code && <span className="deal-code">{deal.code}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Featured Items Carousel */}
+            {featuredItems.length > 0 && (
+              <div className="detail-section featured-items-section">
+                <div className="section-header-detail">
+                  <h3>Featured Items</h3>
+                  <div className="scroll-btns-detail">
+                    <button onClick={() => scrollFeatured('left')}>{Icons.chevronLeft}</button>
+                    <button onClick={() => scrollFeatured('right')}>{Icons.chevronRight}</button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div className="featured-items-scroll" ref={featuredScrollRef}>
+                  {featuredItems.map(item => (
+                    <div key={item.id} className="featured-item-card" onClick={() => handleAddToCart(item)}>
+                      <div className="featured-item-image">
+                        <img src={item.image} alt={item.name} />
+                        <span className="featured-add-btn">+</span>
+                      </div>
+                      <div className="featured-item-info">
+                        <h4>{item.name}</h4>
+                        <span className="featured-item-price">{item.price}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Featured Items Carousel */}
-        {featuredItems.length > 0 && (
-          <div className="detail-section featured-items-section">
-            <div className="section-header-detail">
-              <h3>Featured Items</h3>
-              <div className="scroll-btns-detail">
-                <button onClick={() => scrollFeatured('left')}>{Icons.chevronLeft}</button>
-                <button onClick={() => scrollFeatured('right')}>{Icons.chevronRight}</button>
+            {/* Features */}
+            <div className="detail-section">
+              <h3>Features & Dietary</h3>
+              <div className="features-grid">
+                {features.map((feature, idx) => (
+                  <span key={idx} className="feature-tag">
+                    <span className="feature-check">{Icons.check}</span>
+                    {feature}
+                  </span>
+                ))}
               </div>
             </div>
-            <div className="featured-items-scroll" ref={featuredScrollRef}>
-              {featuredItems.map(item => (
-                <div key={item.id} className="featured-item-card" onClick={() => handleAddToCart(item)}>
-                  <div className="featured-item-image">
-                    <img src={item.image} alt={item.name} />
-                    <span className="featured-add-btn">+</span>
-                  </div>
-                  <div className="featured-item-info">
-                    <h4>{item.name}</h4>
-                    <span className="featured-item-price">{item.price}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* Features */}
-        <div className="detail-section">
-          <h3>Features & Dietary</h3>
-          <div className="features-grid">
-            {features.map((feature, idx) => (
-              <span key={idx} className="feature-tag">
-                <span className="feature-check">{Icons.check}</span>
-                {feature}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Menu Section */}
-        <div className="detail-section menu-section-img">
+            {/* Menu Section */}
+            <div className="detail-section menu-section-img">
           <div className="section-header">
             <h3>Menu</h3>
             <span className="menu-count">{filteredMenuItems.length} items</span>
@@ -756,23 +755,17 @@ const TruckDetailPage = () => {
             ) : (
               filteredMenuItems.map(item => (
                 <div key={item.id} className="menu-item-card-img">
-                  <div className="menu-item-image">
-                    <img src={item.image} alt={item.name} />
-                    {item.popular && <span className="popular-badge">Popular</span>}
-                  </div>
                   <div className="menu-item-details">
-                    <div className="menu-item-header">
-                      <h4>{item.name}</h4>
-                      <span className="menu-item-price">{item.price}</span>
-                    </div>
-                    {item.averageRating > 0 && (
-                      <div className="menu-item-rating">
-                        {Icons.star}
-                        <span>{item.averageRating.toFixed(1)}</span>
-                        <span className="rating-count">({item.reviewCount})</span>
-                      </div>
-                    )}
+                    <h4 className="menu-item-name">{item.name}</h4>
                     <p className="menu-item-desc">{item.description}</p>
+                    <div className="menu-item-footer">
+                      <span className="menu-item-price">{item.price}</span>
+                      {item.averageRating > 0 && (
+                        <span className="menu-item-rating-inline">
+                          {Icons.star} {item.averageRating.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
                     <div className="menu-item-actions">
                       <button
                         className={`add-to-cart-btn ${addedItem === item.id ? 'added' : ''}`}
@@ -787,7 +780,7 @@ const TruckDetailPage = () => {
                           </>
                         ) : (
                           <>
-                            Add to Order
+                            Add
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <line x1="12" y1="5" x2="12" y2="19"></line>
                               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -806,13 +799,18 @@ const TruckDetailPage = () => {
                       )}
                     </div>
                   </div>
+                  <div className="menu-item-image">
+                    <img src={item.image} alt={item.name} />
+                    {item.popular && <span className="popular-badge">Popular</span>}
+                  </div>
                 </div>
               ))
             )}
           </div>
-        </div>
+          </div>
+        </div>{/* End content flow */}
 
-        {/* Reviews Section */}
+        {/* Reviews Section - Full width below columns */}
         <div className="detail-section reviews-section">
           <div className="section-header-detail">
             <h3>Reviews ({truck.reviewCount || reviews.length})</h3>
@@ -882,6 +880,11 @@ const TruckDetailPage = () => {
           </button>
         </div>
       </div>
+        </div>
+
+        {/* Right Cart Sidebar — desktop only */}
+        <div className="truck-detail-cart-sidebar">
+          <SidebarCart />
         </div>
       </div>
 

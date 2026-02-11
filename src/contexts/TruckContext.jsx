@@ -10,6 +10,7 @@ export const TruckProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [lastFetched, setLastFetched] = useState(null);
   const [nearbyTrucks, setNearbyTrucks] = useState([]);
+  const [userCoords, setUserCoords] = useState(null);
 
   // Fetch trucks from Supabase
   const fetchTrucks = useCallback(async (forceRefresh = false) => {
@@ -30,7 +31,7 @@ export const TruckProvider = ({ children }) => {
       if (fetchError) throw fetchError;
 
       if (data) {
-        const mappedTrucks = data.map(transformTruck);
+        const mappedTrucks = data.map(t => transformTruck(t, userCoords));
         setTrucks(mappedTrucks);
         setLastFetched(Date.now());
         return mappedTrucks;
@@ -43,7 +44,7 @@ export const TruckProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [lastFetched, trucks]);
+  }, [lastFetched, trucks, userCoords]);
 
   // Initial fetch on mount
   useEffect(() => {
@@ -102,6 +103,38 @@ export const TruckProvider = ({ children }) => {
     }
   }, []);
 
+  // Set user location and fetch nearby trucks as the primary truck list
+  const setLocationAndFetch = useCallback(async (lat, lng, radiusMiles = 15) => {
+    setUserCoords({ lat, lng });
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await fetchNearbyTrucks(lat, lng, radiusMiles);
+      setTrucks(result);
+      setNearbyTrucks(result);
+      setLastFetched(Date.now());
+      return result;
+    } catch (err) {
+      console.error('Nearby fetch failed, falling back:', err);
+      // Fallback to all trucks with distance calculation
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('food_trucks')
+          .select('*');
+        if (fetchError) throw fetchError;
+        const mapped = data?.map(t => transformTruck(t, { lat, lng })) || [];
+        setTrucks(mapped);
+        setLastFetched(Date.now());
+        return mapped;
+      } catch (fallbackErr) {
+        setError(fallbackErr.message || 'Failed to fetch trucks');
+        return [];
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const value = {
     trucks,
     loading,
@@ -112,6 +145,8 @@ export const TruckProvider = ({ children }) => {
     getFilteredTrucks,
     nearbyTrucks,
     loadNearbyTrucks,
+    setLocationAndFetch,
+    userCoords,
   };
 
   return (

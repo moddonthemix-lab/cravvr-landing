@@ -24,7 +24,7 @@ const AppLayout = ({ children, activeNav, hideNav = false }) => {
   const { user, signOut, openAuth, isOwner, isAdmin } = useAuth();
   const { itemCount, openCart } = useCart();
   const { showToast } = useToast();
-  const userCity = useUserLocation();
+  const { city: userCity } = useUserLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {

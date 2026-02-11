@@ -219,7 +219,7 @@ const HomePage = ({ embedded = false }) => {
                   className={`category-pill ${selectedCategory === cat.id ? 'active' : ''}`}
                   onClick={() => setSelectedCategory(cat.id)}
                 >
-                  <span className="cat-emoji">{cat.emoji}</span>
+                  <span className="cat-emoji-circle">{cat.emoji}</span>
                   <span className="cat-name">{cat.name}</span>
                 </button>
               ))}
@@ -427,28 +427,25 @@ const TruckCard = ({ truck, isFavorite, onFavorite, onClick }) => {
         {truck.featured && <span className="featured-badge">Featured</span>}
       </div>
       <div className="truck-info">
-        <div className="truck-header">
-          <h3 className="truck-name">{truck.name}</h3>
-        </div>
+        <h3 className="truck-name">{truck.name}</h3>
         <div className="truck-meta">
           <span className="truck-rating">
             {Icons.star}
             <span>{truck.rating}</span>
             <span className="review-count">({truck.reviewCount}+)</span>
           </span>
-          <span className="meta-dot">•</span>
+          <span className="meta-dot">·</span>
           <span className="truck-distance">{truck.distance}</span>
           {truck.prepTime && (
             <>
-              <span className="meta-dot">•</span>
+              <span className="meta-dot">·</span>
               <span className="truck-time">{truck.prepTime}</span>
             </>
           )}
         </div>
-        <div className="truck-cuisine">{truck.cuisine}</div>
-        <div className="truck-tags">
-          <span className="tag open-tag">{truck.isOpen ? 'Open' : 'Closed'}</span>
-          <span className="tag">Free pickup</span>
+        <div className="truck-bottom-line">
+          <span className="truck-pickup">Free pickup</span>
+          {truck.cuisine && <span className="truck-cuisine-inline">{truck.cuisine}</span>}
         </div>
       </div>
     </div>
