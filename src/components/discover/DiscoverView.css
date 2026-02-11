@@ -3,6 +3,7 @@
 .discover-view {
   display: flex;
   flex-direction: column;
+  align-items: center;
   min-height: calc(100vh - 65px);
   background: linear-gradient(180deg, var(--primary-light) 0%, #ffffff 30%);
   padding-bottom: 20px;
@@ -143,20 +144,21 @@
 .card-container {
   position: relative;
   width: 100%;
-  max-width: 360px;
   height: 520px;
 }
 
 /* Swipeable Card Wrapper (from react-tinder-card) */
 .swipe-card {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Cards */
 .discover-card {
   position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   background: white;
@@ -501,8 +503,8 @@
   align-items: center;
   gap: 20px;
   padding: 16px 24px 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #f0f0f0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
 }
 
 .action-btn {
@@ -633,251 +635,223 @@
   color: #94a3b8;
 }
 
-/* Desktop Styles */
+/* ==============================================
+   DESKTOP: Fill-height horizontal card layout
+   ============================================== */
 @media (min-width: 769px) {
+  /* Fill the full viewport height, use flex to distribute space */
   .discover-view {
-    min-height: calc(100vh - 65px);
-    padding: 0 32px 24px;
-    align-items: center;
-    justify-content: center;
+    height: calc(100vh - 65px);
+    min-height: 0;
+    padding: 20px 32px;
+    align-items: stretch;
+    justify-content: flex-start;
+    background: var(--bg-alt, #f8fafc);
+    overflow: hidden;
   }
 
   .discover-header {
-    padding: 16px 0 12px;
+    padding: 0 0 14px;
+    width: 100%;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .discover-title {
+    justify-content: flex-start;
   }
 
   .discover-title h1 {
-    font-size: 24px;
-  }
-
-  .liked-badge {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  .liked-badge svg {
-    width: 14px;
-    height: 14px;
+    font-size: 26px;
   }
 
   .discover-header p {
-    font-size: 14px;
+    font-size: 13px;
+    text-align: left;
   }
 
+  /* Card + actions container fills remaining space */
+  .discover-content {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Stack fills available space above actions */
   .discover-stack {
-    min-height: auto;
+    flex: 1;
+    min-height: 0;
     padding: 0;
-    flex: none;
+    width: 100%;
+    position: relative;
   }
 
   .card-container {
-    max-width: 360px;
-    height: 480px;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
+  /* Horizontal card: image left, info right */
   .discover-card {
-    border-radius: 20px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    flex-direction: row;
+    border-radius: 16px 16px 0 0;
+    box-shadow: none;
+    max-width: none; /* override index.css max-width: 380px */
   }
 
   .card-image-container {
-    height: 200px;
+    width: 45%;
+    height: 100%;
+    flex-shrink: 0;
+    border-radius: 0;
   }
 
-  .swipe-indicator {
-    padding: 12px 24px;
-    font-size: 20px;
-    border-radius: 10px;
-  }
-
-  .indicator-icon svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  .card-badges {
-    top: 12px;
-    left: 12px;
-    gap: 8px;
-  }
-
-  .badge {
-    padding: 6px 10px;
-    font-size: 11px;
-    border-radius: 16px;
-  }
-
-  .badge svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  .card-prep-info {
-    bottom: 12px;
-    left: 12px;
-    gap: 10px;
-  }
-
-  .prep-time {
-    padding: 6px 10px;
-    font-size: 11px;
-    border-radius: 16px;
-  }
-
-  .prep-time svg {
-    width: 12px;
-    height: 12px;
+  .card-image-overlay {
+    height: 100%;
+    background: linear-gradient(to right, transparent 60%, rgba(0, 0, 0, 0.03));
   }
 
   .card-info {
-    padding: 16px;
+    flex: 1;
+    min-width: 0;
+    padding: 28px 32px;
+    overflow-y: auto;
+    justify-content: flex-start;
   }
 
   .card-header {
-    margin-bottom: 10px;
+    margin-bottom: 16px;
   }
 
   .card-header h2 {
-    font-size: 18px;
-    margin-bottom: 4px;
+    font-size: 24px;
+    margin-bottom: 6px;
   }
 
   .card-cuisine {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .card-rating {
-    padding: 6px 10px;
-    font-size: 14px;
+    padding: 8px 14px;
+    font-size: 16px;
   }
 
   .card-rating svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
 
   .card-description {
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 10px;
-    -webkit-line-clamp: 2;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    -webkit-line-clamp: 3;
   }
 
   .card-location {
+    font-size: 14px;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  /* Popular items */
+  .card-popular-items {
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+
+  .popular-label {
     font-size: 12px;
-    gap: 8px;
+    margin-bottom: 10px;
   }
 
-  .discover-content {
-    max-width: 380px;
-    margin: 0 auto;
+  .popular-item {
+    padding: 10px 12px;
   }
 
-  .discover-actions {
-    gap: 18px;
-    padding: 14px 20px 18px;
+  .popular-name {
+    font-size: 14px;
   }
 
-  .action-btn.nope,
-  .action-btn.like {
-    width: 54px;
-    height: 54px;
+  .popular-price {
+    font-size: 14px;
   }
 
-  .action-btn.info {
-    width: 44px;
-    height: 44px;
+  /* Swipe indicators centered in image area */
+  .swipe-indicator {
+    padding: 14px 28px;
+    font-size: 24px;
+    border-radius: 12px;
   }
 
-  .action-btn svg {
+  .swipe-indicator.like {
+    right: 30%;
+    top: 40%;
+  }
+
+  .swipe-indicator.nope {
+    left: 10%;
+    top: 40%;
+  }
+
+  .indicator-icon svg {
     width: 28px;
     height: 28px;
   }
 
-  .action-btn.info svg {
-    width: 24px;
-    height: 24px;
+  .card-badges {
+    top: 16px;
+    left: 16px;
+    gap: 8px;
   }
 
-  .discover-progress {
-    padding: 0 0 16px;
-    max-width: 360px;
-    width: 100%;
-  }
-
-  .progress-text {
+  .badge {
+    padding: 6px 14px;
     font-size: 12px;
-  }
-}
-
-/* Large desktop */
-@media (min-width: 1200px) {
-  .discover-view {
-    padding: 20px 48px 32px;
-    justify-content: center;
+    border-radius: 20px;
   }
 
-  .discover-header {
-    padding: 0 0 16px;
-    width: 100%;
-    max-width: 400px;
+  .badge svg {
+    width: 14px;
+    height: 14px;
   }
 
-  .discover-title h1 {
-    font-size: 28px;
+  .card-prep-info {
+    bottom: 16px;
+    left: 16px;
   }
 
-  .discover-header p {
-    font-size: 15px;
-    color: #475569;
+  .prep-time {
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 20px;
   }
 
-  .discover-stack {
-    min-height: auto;
-    width: 100%;
-    max-width: 400px;
+  .prep-time svg {
+    width: 14px;
+    height: 14px;
   }
 
-  .card-container {
-    max-width: 100%;
-    width: 100%;
-    height: 520px;
-  }
-
-  .discover-card {
-    border-radius: 22px;
-  }
-
-  .card-image-container {
-    height: 220px;
-  }
-
-  .card-header h2 {
-    font-size: 20px;
-  }
-
-  .card-info {
-    padding: 18px;
-  }
-
-  .card-description {
-    -webkit-line-clamp: 2;
-  }
-
-  .discover-content {
-    max-width: 400px;
-    margin: 0 auto;
-  }
-
+  /* Actions pinned to bottom of card container */
   .discover-actions {
-    gap: 20px;
-    padding: 16px 24px 20px;
+    flex-shrink: 0;
+    gap: 28px;
+    padding: 14px 32px 16px;
+    background: white;
+    border-top: 1px solid #e5e7eb;
   }
 
   .action-btn.nope,
   .action-btn.like {
-    width: 58px;
-    height: 58px;
+    width: 60px;
+    height: 60px;
   }
 
   .action-btn.info {
@@ -895,75 +869,77 @@
     height: 26px;
   }
 
+  /* Progress — compact at bottom */
   .discover-progress {
-    max-width: 400px;
+    flex-shrink: 0;
+    padding: 10px 0 0;
+    width: 100%;
+  }
+
+  .progress-text {
+    font-size: 12px;
   }
 }
 
-/* Extra large desktop */
-@media (min-width: 1400px) {
+/* Large desktop refinements */
+@media (min-width: 1200px) {
   .discover-view {
-    padding: 24px 60px 40px;
-  }
-
-  .discover-header {
-    max-width: 440px;
-    padding: 0 0 20px;
+    padding: 20px 40px;
   }
 
   .discover-title h1 {
-    font-size: 32px;
-  }
-
-  .discover-header p {
-    font-size: 16px;
-  }
-
-  .discover-stack {
-    max-width: 440px;
-    min-height: auto;
-  }
-
-  .card-container {
-    height: 560px;
-  }
-
-  .card-image-container {
-    height: 240px;
-  }
-
-  .card-header h2 {
-    font-size: 22px;
-  }
-
-  .card-info {
-    padding: 20px;
-  }
-
-  .card-description {
-    font-size: 14px;
-    -webkit-line-clamp: 2;
+    font-size: 28px;
   }
 
   .discover-content {
-    max-width: 440px;
-    margin: 0 auto;
+    border-radius: 18px;
+  }
+
+  .card-image-container {
+    width: 48%;
+  }
+
+  .card-header h2 {
+    font-size: 26px;
+  }
+
+  .card-info {
+    padding: 32px;
+  }
+
+  .card-description {
+    font-size: 15px;
+    -webkit-line-clamp: 4;
+    line-height: 1.6;
+  }
+
+  .card-cuisine {
+    font-size: 16px;
+  }
+
+  .card-location {
+    font-size: 15px;
+  }
+
+  .card-rating {
+    padding: 8px 16px;
+    font-size: 17px;
   }
 
   .discover-actions {
-    gap: 24px;
-    padding: 18px 28px 22px;
+    gap: 32px;
+    padding: 16px 40px 18px;
   }
 
   .action-btn.nope,
   .action-btn.like {
-    width: 62px;
-    height: 62px;
+    width: 64px;
+    height: 64px;
   }
 
   .action-btn.info {
-    width: 50px;
-    height: 50px;
+    width: 52px;
+    height: 52px;
   }
 
   .action-btn svg {
@@ -975,9 +951,90 @@
     width: 28px;
     height: 28px;
   }
+}
 
-  .discover-progress {
-    max-width: 440px;
+/* Extra large desktop */
+@media (min-width: 1400px) {
+  .discover-view {
+    padding: 24px 48px;
+  }
+
+  .discover-title h1 {
+    font-size: 30px;
+  }
+
+  .discover-content {
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-image-container {
+    width: 50%;
+  }
+
+  .card-header h2 {
+    font-size: 28px;
+  }
+
+  .card-info {
+    padding: 36px 40px;
+  }
+
+  .card-description {
+    font-size: 16px;
+    -webkit-line-clamp: 5;
+    line-height: 1.65;
+  }
+
+  .card-cuisine {
+    font-size: 17px;
+  }
+
+  .card-rating {
+    padding: 10px 18px;
+    font-size: 18px;
+  }
+
+  .popular-item {
+    padding: 12px 16px;
+  }
+
+  .popular-name {
+    font-size: 15px;
+  }
+
+  .popular-price {
+    font-size: 15px;
+  }
+
+  .popular-emoji {
+    font-size: 20px;
+  }
+
+  .discover-actions {
+    gap: 36px;
+    padding: 18px 48px 20px;
+  }
+
+  .action-btn.nope,
+  .action-btn.like {
+    width: 68px;
+    height: 68px;
+  }
+
+  .action-btn.info {
+    width: 56px;
+    height: 56px;
+  }
+
+  .action-btn svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .action-btn.info svg {
+    width: 30px;
+    height: 30px;
   }
 }
 
