@@ -18,45 +18,6 @@ const categories = [
   { label: 'Breakfast', icon: '🍳' }
 ];
 
-const cards = [
-  {
-    title: "Famous Dave's BBQ",
-    tags: ['BBQ', 'American', 'Comfort'],
-    time: '15-30 min',
-    price: '$25 avg',
-    rating: '4.8',
-    reviews: '300+',
-    offer: 'OSAHAN50',
-    promoted: true,
-    liked: false,
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    title: 'Thai Street Kitchen',
-    tags: ['Thai', 'Asian', 'Spicy'],
-    time: '20-35 min',
-    price: '$18 avg',
-    rating: '4.9',
-    reviews: '150+',
-    offer: '20% OFF',
-    promoted: false,
-    liked: true,
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    title: 'Taco Loco Express',
-    tags: ['Mexican', 'Street Food'],
-    time: '10-20 min',
-    price: '$12 avg',
-    rating: '4.7',
-    reviews: '500+',
-    offer: 'Free pickup',
-    promoted: true,
-    liked: true,
-    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80'
-  }
-];
-
 const faqs = [
   {
     q: 'How is Cravrr different from other food apps?',
@@ -73,27 +34,6 @@ const faqs = [
   {
     q: 'When will Cravrr launch?',
     a: 'We\'re currently in early access in select cities. Join the waitlist to be among the first to try it in your area.'
-  }
-];
-
-const testimonials = [
-  {
-    name: 'Maria G.',
-    role: 'Taco Truck Owner',
-    text: 'Finally an app that doesn\'t take 30% of my earnings. My regulars love the notifications!',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80'
-  },
-  {
-    name: 'James T.',
-    role: 'Food Lover',
-    text: 'I discovered 3 amazing trucks I never knew existed in my neighborhood. Game changer.',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80'
-  },
-  {
-    name: 'Sarah K.',
-    role: 'BBQ Truck Owner',
-    text: 'The route analytics helped me find the perfect lunch spots. Revenue up 40%!',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=100&q=80'
   }
 ];
 
@@ -217,42 +157,6 @@ const PhoneMockup = () => (
   </div>
 );
 
-const Card = ({ data, index }) => {
-  const [ref, isInView] = useInView();
-
-  return (
-    <div
-      ref={ref}
-      className={`card ${isInView ? 'animate-in' : ''}`}
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      <div className="card-media">
-        <img src={data.image} alt={data.title} loading="lazy" />
-        {data.promoted && <span className="pill promoted">Promoted</span>}
-        <button className={`heart ${data.liked ? 'active' : ''}`} aria-label="favorite">
-          {data.liked ? Icons.heartFilled : Icons.heart}
-        </button>
-        <span className="pill rating">
-          <span className="rating-star">{Icons.star}</span>
-          {data.rating}
-        </span>
-      </div>
-      <div className="card-body">
-        <h3>{data.title}</h3>
-        <p className="meta">{data.tags.join(' • ')}</p>
-        <div className="card-row">
-          <span className="card-time">
-            <span className="card-icon">{Icons.clock}</span>
-            {data.time}
-          </span>
-          <span className="muted">{data.price}</span>
-        </div>
-        <div className="offer">{data.offer}</div>
-      </div>
-    </div>
-  );
-};
-
 const FAQItem = ({ faq, isOpen, onClick }) => (
   <div className={`faq-item ${isOpen ? 'open' : ''}`}>
     <button className="faq-question" onClick={onClick} aria-expanded={isOpen}>
@@ -264,29 +168,6 @@ const FAQItem = ({ faq, isOpen, onClick }) => (
     </div>
   </div>
 );
-
-const TestimonialCard = ({ testimonial, index }) => {
-  const [ref, isInView] = useInView();
-
-  return (
-    <div
-      ref={ref}
-      className={`testimonial-card ${isInView ? 'animate-in' : ''}`}
-      style={{ animationDelay: `${index * 150}ms` }}
-    >
-      <div className="testimonial-content">
-        <p>"{testimonial.text}"</p>
-      </div>
-      <div className="testimonial-author">
-        <img src={testimonial.avatar} alt={testimonial.name} />
-        <div>
-          <strong>{testimonial.name}</strong>
-          <span>{testimonial.role}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const Footer = () => (
   <footer className="site-footer">
@@ -475,42 +356,6 @@ const LandingPage = ({ setCurrentView }) => {
                   </div>
                 );
               })}
-            </div>
-          </div>
-        </section>
-
-        {/* Social Proof / Testimonials */}
-        <section className="section section-alt">
-          <div className="container">
-            <div className="section-header-center">
-              <span className="eyebrow">Loved by trucks & eaters</span>
-              <h2>Don't just take our word for it</h2>
-            </div>
-            <div className="testimonial-grid">
-              {testimonials.map((t, i) => (
-                <TestimonialCard key={t.name} testimonial={t} index={i} />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Trending Trucks Section */}
-        <section className="section">
-          <div className="container">
-            <div className="section-header-left">
-              <div>
-                <span className="eyebrow">Coming soon</span>
-                <h2>Trending Trucks</h2>
-              </div>
-              <button className="btn-ghost btn-sm">
-                View all
-                <span className="btn-icon">{Icons.arrowRight}</span>
-              </button>
-            </div>
-            <div className="card-grid">
-              {cards.map((card, i) => (
-                <Card data={card} key={card.title} index={i} />
-              ))}
             </div>
           </div>
         </section>

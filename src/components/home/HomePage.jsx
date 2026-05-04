@@ -5,7 +5,6 @@ import { useCart } from '../../contexts/CartContext';
 import { useTrucks } from '../../contexts/TruckContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { Icons } from '../common/Icons';
-import { mockTrucks } from '../../data/mockData';
 import useUserLocation from '../../hooks/useUserLocation';
 import './HomePage.css';
 
@@ -49,8 +48,7 @@ const HomePage = ({ embedded = false }) => {
   const nearbyScrollRef = useRef(null);
   const allTrucksRef = useRef(null);
 
-  // Use context trucks or fallback to mock data while loading
-  const trucks = contextTrucks.length > 0 ? contextTrucks : mockTrucks;
+  const trucks = contextTrucks;
 
   const scrollToAllTrucks = () => {
     allTrucksRef.current?.scrollIntoView({ behavior: 'smooth' });

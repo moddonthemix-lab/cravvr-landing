@@ -4,55 +4,13 @@ import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
+import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { formatRelativeTime, formatTruckHours } from '../../utils/formatters';
 import ReviewModal from '../reviews/ReviewModal';
 import MenuItemRatingModal from '../reviews/MenuItemRatingModal';
 import SidebarCart from '../cart/SidebarCart';
-
-// Default menu items for trucks without menu
-const defaultMenuItems = [
-  {
-    id: 'default-1',
-    name: 'Signature Special',
-    description: 'Our most popular dish, made fresh daily with premium ingredients.',
-    price: '$12.99',
-    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80',
-    popular: true,
-    emoji: '🌟',
-    category: 'Mains',
-  },
-  {
-    id: 'default-2',
-    name: 'Classic Favorite',
-    description: 'A customer favorite that keeps people coming back.',
-    price: '$10.99',
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80',
-    popular: false,
-    emoji: '🍽️',
-    category: 'Mains',
-  },
-  {
-    id: 'default-3',
-    name: 'Chef\'s Choice',
-    description: 'Today\'s special selection prepared by our chef.',
-    price: '$14.99',
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
-    popular: true,
-    emoji: '👨‍🍳',
-    category: 'Specials',
-  },
-];
-
-// Default features
-const defaultFeatures = ['Cash Accepted', 'Card Accepted', 'Mobile Pay', 'Outdoor Seating'];
-
-// Default deals/promotions
-const defaultDeals = [
-  { id: 1, title: 'First Order', description: 'Get $5 off orders $15+', code: 'FIRST5', emoji: '🎉' },
-  { id: 2, title: 'Free Pickup', description: '0% fees on all pickup orders', code: null, emoji: '🚶' },
-];
 
 const TruckDetailPage = () => {
   const { id } = useParams();
@@ -62,6 +20,7 @@ const TruckDetailPage = () => {
   const { addItem, openCart, itemCount } = useCart();
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite: toggleFavoriteContext } = useFavorites();
+  const { track } = useAnalytics();
 
   // Core state
   const [truck, setTruck] = useState(location.state?.truck || null);
@@ -133,7 +92,7 @@ const TruckDetailPage = () => {
             acceptingOrders: data.accepting_orders !== false,
             prepTime: data.estimated_prep_time || null,
             featured: data.featured || false,
-            features: data.features || defaultFeatures,
+            features: data.features || [],
             promotions: data.promotions || null,
           });
         }
@@ -147,6 +106,18 @@ const TruckDetailPage = () => {
 
     fetchTruck();
   }, [id, truck, navigate]);
+
+  // Fire view_truck once the truck is resolved (handles both state-passed and fetched cases).
+  const trackedTruckId = useRef(null);
+  useEffect(() => {
+    if (!truck?.id || trackedTruckId.current === truck.id) return;
+    trackedTruckId.current = truck.id;
+    track('view_truck', {
+      truck_id: truck.id,
+      truck_name: truck.name,
+      cuisine: truck.cuisine,
+    });
+  }, [truck?.id, truck?.name, truck?.cuisine, track]);
 
   // Fetch menu items
   useEffect(() => {
@@ -318,8 +289,8 @@ const TruckDetailPage = () => {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
-        console.log('Share cancelled or failed');
+      } catch {
+        // User cancelled share or share API unavailable
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
@@ -443,8 +414,8 @@ const TruckDetailPage = () => {
   }
 
   // Derived data
-  const features = Array.isArray(truck.features) ? truck.features : defaultFeatures;
-  const deals = truck.promotions || defaultDeals;
+  const features = Array.isArray(truck.features) ? truck.features : [];
+  const deals = truck.promotions || [];
   const featuredItems = menuItems.filter(item => item.popular || item.featured);
   const categories = ['all', ...new Set(menuItems.filter(item => item.category).map(item => item.category))];
 
