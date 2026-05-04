@@ -1,0 +1,6 @@
+project_id = "coqwihsmmigktqqdnmis"
+
+# Stripe webhook is signed by Stripe (not by a Supabase JWT), so we skip
+# Supabase's JWT gate. The function itself verifies the Stripe-Signature header.
+[functions.stripe-webhook]
+verify_jwt = false
