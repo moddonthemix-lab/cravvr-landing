@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useConfirm } from './ConfirmContext';
 import { useToast } from './ToastContext';
+import { useAnalytics } from './AnalyticsContext';
 
 const CartContext = createContext({});
 
 export const CartProvider = ({ children }) => {
   const { confirm } = useConfirm();
   const { showToast } = useToast();
+  const { track } = useAnalytics();
   const [items, setItems] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [currentTruckId, setCurrentTruckId] = useState(null);
@@ -71,8 +73,17 @@ export const CartProvider = ({ children }) => {
     });
 
     showToast(`${item.name} added to cart`, 'success');
+
+    track('add_to_cart', {
+      item_id: item.id,
+      item_name: item.name,
+      price: parseFloat(item.price) || 0,
+      truck_id: truck.id,
+      truck_name: truck.name,
+    });
+
     return true;
-  }, [currentTruckId, currentTruckName, items.length, confirm, showToast]);
+  }, [currentTruckId, currentTruckName, items.length, confirm, showToast, track]);
 
   // Remove item from cart
   const removeItem = useCallback((itemId) => {

@@ -1,252 +1,207 @@
-// Supabase Edge Function for SendGrid Email Integration
-// Handles both direct API calls and Supabase Auth Hooks
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsHeaders } from "../_shared/cors.ts"
+// supabase/functions/resend-email/index.ts
+//
+// Email send function — backed by **Resend** (not SendGrid).
+//
+// Templates are React Email components in ../_shared/emails/. Each template
+// exports a default React component plus a `subject(props)` function.
+//
+// Two call shapes are accepted:
+//
+//   1. Direct API:
+//        POST { to, template, data, subject?: override }
+//      Used by src/services/email.js and lifecycle-email-runner.
+//
+//   2. Supabase Auth Hook:
+//        POST { user, email_data }   (Supabase's standard payload)
+//      Routed to the right template based on email_data.email_action_type.
+//
+// Required env vars (set via `supabase secrets set ...`):
+//   RESEND_API_KEY=re_...
+//   RESEND_FROM_EMAIL=noreply@cravvr.com
+//   RESEND_FROM_NAME=Cravvr
+//   SITE_URL=https://cravvr.com
+//   SUPABASE_URL (auto-injected)
 
-const SENDGRID_API_KEY = Deno.env.get('SENDGRID_API_KEY')
-const SENDGRID_FROM_EMAIL = Deno.env.get('SENDGRID_FROM_EMAIL') || 'noreply@cravvr.com'
-const SENDGRID_FROM_NAME = Deno.env.get('SENDGRID_FROM_NAME') || 'Cravvr'
-const SITE_URL = Deno.env.get('SITE_URL') || 'https://cravvr.com'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import * as React from 'https://esm.sh/react@18.3.1';
+import { render } from 'https://esm.sh/@react-email/render@0.0.16?deps=react@18.3.1';
+import { corsHeaders } from '../_shared/cors.ts';
 
-// SendGrid Template IDs - Update these with your template IDs
-const TEMPLATES = {
-  PASSWORD_RESET: Deno.env.get('SENDGRID_TEMPLATE_PASSWORD_RESET') || 'd-96a2dce832614b8ba32791f5fc7caae2',
-  WELCOME: Deno.env.get('SENDGRID_TEMPLATE_WELCOME') || 'd-0c6102cbf62c455790db0cffceb98aed',
-  MAGIC_LINK: Deno.env.get('SENDGRID_TEMPLATE_MAGIC_LINK') || 'd-96a2dce832614b8ba32791f5fc7caae2',
-  CONFIRM_SIGNUP: Deno.env.get('SENDGRID_TEMPLATE_CONFIRM') || 'd-0c6102cbf62c455790db0cffceb98aed',
+import Welcome, { subject as welcomeSubject } from '../_shared/emails/welcome.tsx';
+import PasswordReset, { subject as passwordResetSubject } from '../_shared/emails/password-reset.tsx';
+import ConfirmSignup, { subject as confirmSignupSubject } from '../_shared/emails/confirm-signup.tsx';
+import MagicLink, { subject as magicLinkSubject } from '../_shared/emails/magic-link.tsx';
+import OrderConfirmation, { subject as orderConfirmationSubject } from '../_shared/emails/order-confirmation.tsx';
+import OrderStatus, { subject as orderStatusSubject } from '../_shared/emails/order-status.tsx';
+import TruckApproved, { subject as truckApprovedSubject } from '../_shared/emails/truck-approved.tsx';
+import AbandonedCart, { subject as abandonedCartSubject } from '../_shared/emails/abandoned-cart.tsx';
+import FirstReorderNudge, { subject as firstReorderSubject } from '../_shared/emails/first-reorder-nudge.tsx';
+import WinBack, { subject as winBackSubject } from '../_shared/emails/win-back.tsx';
+
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@cravvr.com';
+const RESEND_FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'Cravvr';
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://cravvr.com';
+const SUPABASE_URL_VAL = Deno.env.get('SUPABASE_URL') || 'https://coqwihsmmigktqqdnmis.supabase.co';
+const FROM_HEADER = `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`;
+
+// Template registry — name → (component, subject fn).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const TEMPLATES: Record<string, { Component: any; subject: (p: any) => string }> = {
+  'welcome': { Component: Welcome, subject: welcomeSubject },
+  'password-reset': { Component: PasswordReset, subject: passwordResetSubject },
+  'confirm-signup': { Component: ConfirmSignup, subject: confirmSignupSubject },
+  'magic-link': { Component: MagicLink, subject: magicLinkSubject },
+  'order-confirmation': { Component: OrderConfirmation, subject: orderConfirmationSubject },
+  'order-status': { Component: OrderStatus, subject: orderStatusSubject },
+  'truck-approved': { Component: TruckApproved, subject: truckApprovedSubject },
+  'abandoned-cart': { Component: AbandonedCart, subject: abandonedCartSubject },
+  'first-reorder-nudge': { Component: FirstReorderNudge, subject: firstReorderSubject },
+  'win-back': { Component: WinBack, subject: winBackSubject },
+};
+
+interface DirectRequest {
+  to: string;
+  template: string;
+  data?: Record<string, unknown>;
+  subject?: string;
 }
 
-interface EmailRequest {
-  to: string
-  templateId: string
-  dynamicData: Record<string, any>
-  subject?: string
-}
-
-// Supabase Auth Hook payload
 interface AuthHookPayload {
-  user: {
-    id: string
-    email: string
-    user_metadata?: {
-      name?: string
-    }
-  }
+  user: { id: string; email: string; user_metadata?: { name?: string } };
   email_data: {
-    token: string
-    token_hash: string
-    redirect_to: string
-    email_action_type: 'recovery' | 'signup' | 'magiclink' | 'invite' | 'email_change'
+    token: string;
+    token_hash: string;
+    redirect_to: string;
+    email_action_type: 'recovery' | 'signup' | 'magiclink' | 'invite' | 'email_change' | 'email';
+  };
+}
+
+function isAuthHook(p: unknown): p is AuthHookPayload {
+  const x = p as AuthHookPayload | undefined;
+  return !!(x?.user?.email && x?.email_data?.email_action_type);
+}
+
+function buildVerifyUrl(d: AuthHookPayload['email_data']): string {
+  const redirect = d.redirect_to || SITE_URL;
+  return `${SUPABASE_URL_VAL}/auth/v1/verify?token=${d.token_hash}&type=${d.email_action_type}&redirect_to=${encodeURIComponent(redirect)}`;
+}
+
+async function sendViaResend(to: string, subject: string, html: string, text: string) {
+  if (!RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not set');
   }
-}
-
-// Check if payload is from Supabase Auth Hook
-function isAuthHookPayload(payload: any): payload is AuthHookPayload {
-  return payload?.user?.email && payload?.email_data?.email_action_type
-}
-
-// Supabase project URL for auth verification
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || 'https://coqwihsmmigktqqdnmis.supabase.co'
-
-// Build confirmation/reset URL from auth hook data
-// This goes through Supabase's auth verification endpoint
-function buildActionUrl(emailData: AuthHookPayload['email_data']): string {
-  const { token_hash, redirect_to, email_action_type } = emailData
-
-  // The URL must go through Supabase's verification endpoint
-  // Format: {SUPABASE_URL}/auth/v1/verify?token={token_hash}&type={type}&redirect_to={redirect}
-  const finalRedirect = redirect_to || SITE_URL
-  const encodedRedirect = encodeURIComponent(finalRedirect)
-
-  return `${SUPABASE_URL}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${encodedRedirect}`
-}
-
-// Send email via SendGrid
-async function sendEmail(to: string, templateId: string, dynamicData: Record<string, any>) {
-  if (!SENDGRID_API_KEY) {
-    throw new Error('SENDGRID_API_KEY environment variable is not set')
-  }
-
-  const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+  const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: {
-        email: SENDGRID_FROM_EMAIL,
-        name: SENDGRID_FROM_NAME,
-      },
-      personalizations: [
-        {
-          to: [{ email: to }],
-          dynamic_template_data: {
-            ...dynamicData,
-            year: new Date().getFullYear(),
-          },
-        },
-      ],
-      template_id: templateId,
+      from: FROM_HEADER,
+      to: [to],
+      subject,
+      html,
+      text,
     }),
-  })
-
-  if (!response.ok) {
-    const error = await response.text()
-    console.error('SendGrid error:', error)
-    throw new Error(`SendGrid API error: ${response.status} ${error}`)
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend ${res.status}: ${err}`);
   }
+  return res.json();
+}
 
-  return { success: true }
+async function renderAndSend(
+  to: string,
+  template: string,
+  data: Record<string, unknown>,
+  subjectOverride?: string
+) {
+  const entry = TEMPLATES[template];
+  if (!entry) throw new Error(`Unknown template: ${template}`);
+
+  const element = React.createElement(entry.Component, data);
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  const subject = subjectOverride || entry.subject(data);
+
+  return sendViaResend(to, subject, html, text);
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const data = await req.json()
+    const payload = await req.json();
 
-    // Check if this is a Supabase Auth Hook call
-    if (isAuthHookPayload(data)) {
-      console.log('Processing Auth Hook:', data.email_data.email_action_type)
+    // ---- Auth Hook path ----
+    if (isAuthHook(payload)) {
+      const { user, email_data } = payload;
+      const userName = user.user_metadata?.name || user.email.split('@')[0];
+      const url = buildVerifyUrl(email_data);
 
-      // If SendGrid is not configured, return success anyway to not block auth
-      if (!SENDGRID_API_KEY) {
-        console.warn('SENDGRID_API_KEY not set - skipping email, allowing auth to proceed')
-        return new Response(
-          JSON.stringify({ success: true, warning: 'Email skipped - SendGrid not configured' }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          }
-        )
+      if (!RESEND_API_KEY) {
+        // Don't block auth flow if email is misconfigured.
+        console.warn('RESEND_API_KEY not set — skipping auth-hook email');
+        return new Response(JSON.stringify({ success: true, warning: 'email skipped' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
-      const { user, email_data } = data
-      const userName = user.user_metadata?.name || user.email.split('@')[0]
-      const actionUrl = buildActionUrl(email_data)
-
-      // Select template based on action type
-      let templateId: string
-      let dynamicData: Record<string, any>
-
+      let template: string;
+      let data: Record<string, unknown>;
       switch (email_data.email_action_type) {
         case 'recovery':
-          templateId = TEMPLATES.PASSWORD_RESET
-          dynamicData = {
-            name: userName,
-            resetLink: actionUrl,
-            actionUrl: actionUrl,
-            link: actionUrl,
-          }
-          break
-
+          template = 'password-reset';
+          data = { name: userName, resetLink: url };
+          break;
         case 'signup':
         case 'email':
-          templateId = TEMPLATES.CONFIRM_SIGNUP
-          dynamicData = {
-            name: userName,
-            confirmLink: actionUrl,
-            actionUrl: actionUrl,
-            link: actionUrl,
-          }
-          break
-
-        case 'magiclink':
-          templateId = TEMPLATES.MAGIC_LINK
-          dynamicData = {
-            name: userName,
-            magicLink: actionUrl,
-            actionUrl: actionUrl,
-            link: actionUrl,
-          }
-          break
-
-        case 'invite':
-          templateId = TEMPLATES.WELCOME
-          dynamicData = {
-            name: userName,
-            inviteLink: actionUrl,
-            actionUrl: actionUrl,
-            link: actionUrl,
-          }
-          break
-
         case 'email_change':
-          templateId = TEMPLATES.CONFIRM_SIGNUP
-          dynamicData = {
-            name: userName,
-            confirmLink: actionUrl,
-            actionUrl: actionUrl,
-            link: actionUrl,
-          }
-          break
-
+          template = 'confirm-signup';
+          data = { name: userName, confirmLink: url };
+          break;
+        case 'magiclink':
+          template = 'magic-link';
+          data = { name: userName, magicLink: url };
+          break;
+        case 'invite':
+          template = 'welcome';
+          data = { name: userName, appLink: url };
+          break;
         default:
-          console.log('Unknown email_action_type:', email_data.email_action_type)
-          templateId = TEMPLATES.WELCOME
-          dynamicData = {
-            name: userName,
-            actionUrl: actionUrl,
-            link: actionUrl,
-          }
+          template = 'welcome';
+          data = { name: userName, appLink: url };
       }
-
-      console.log('Sending email:', {
-        to: user.email,
-        templateId,
-        actionType: email_data.email_action_type
-      })
 
       try {
-        await sendEmail(user.email, templateId, dynamicData)
-        console.log('Email sent successfully to:', user.email)
-      } catch (emailError) {
-        // Log error details but don't block auth
-        console.error('Failed to send email:', {
-          error: emailError.message,
-          to: user.email,
-          templateId,
-          actionType: email_data.email_action_type
-        })
+        await renderAndSend(user.email, template, data);
+      } catch (e) {
+        // Log, don't block auth.
+        console.error('Auth-hook email failed:', e);
       }
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      )
-    }
-
-    // Handle direct API calls (existing behavior)
-    const { to, templateId, dynamicData, subject }: EmailRequest = data
-
-    if (!to || !templateId) {
-      throw new Error('Missing required fields: to, templateId')
-    }
-
-    await sendEmail(to, templateId, dynamicData || {})
-
-    return new Response(
-      JSON.stringify({ success: true, message: 'Email sent successfully' }),
-      {
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
+      });
+    }
+
+    // ---- Direct API path ----
+    const { to, template, data, subject } = payload as DirectRequest;
+    if (!to || !template) {
+      throw new Error('Missing required fields: to, template');
+    }
+    const result = await renderAndSend(to, template, data || {}, subject);
+    return new Response(JSON.stringify({ success: true, ...result }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    console.error('Error sending email:', error)
+    console.error('Email send error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    )
+      JSON.stringify({ error: error.message || String(error) }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
-})
+});

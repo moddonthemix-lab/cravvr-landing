@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
+import { track as trackEvent, identify as identifyVisitor } from '../../services/analytics';
 
 // Create Auth Context
 const AuthContext = createContext({});
@@ -54,7 +55,6 @@ export const AuthProvider = ({ children }) => {
       if (profileError) {
         // If profile doesn't exist, that's okay - user just doesn't have a profile yet
         if (profileError.code === 'PGRST116') {
-          console.log('No profile found for user:', userId);
           return null;
         }
         setError(`Profile load failed: ${profileError.message}`);
@@ -193,11 +193,9 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      // Supabase handles confirmation emails automatically via built-in email templates
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        console.log('User already exists');
-      } else if (data.user && !data.session) {
-        console.log('Confirmation email sent via Supabase');
+      if (data?.user?.id) {
+        await identifyVisitor(data.user.id);
+        trackEvent('signup', { role });
       }
 
       return { data, error: null };
@@ -218,6 +216,11 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
+      if (data?.user?.id) {
+        await identifyVisitor(data.user.id);
+        trackEvent('login');
+      }
+
       return { data, error: null };
     } catch (err) {
       setError(err.message);
@@ -230,13 +233,11 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     setLoading(true);
     try {
-      console.log('Signing out...');
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Supabase signOut error:', error);
         throw error;
       }
-      console.log('Sign out successful, clearing state');
       setUser(null);
       setProfile(null);
       initialLoadComplete.current = false; // Reset for next login

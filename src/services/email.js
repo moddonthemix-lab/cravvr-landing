@@ -1,38 +1,28 @@
 /**
- * SendGrid Email Service for Cravvr
+ * Email service for Cravvr.
  *
- * This service handles all email communications through SendGrid using
- * Supabase Edge Functions.
+ * All transactional and lifecycle email goes through the `resend-email`
+ * Supabase Edge Function (which uses **Resend** + react-email templates).
  *
- * Before using:
- * 1. Deploy the send-email Edge Function to Supabase
- * 2. Set environment variables in Supabase (see SENDGRID_SETUP_GUIDE.md)
- * 3. Create email templates in SendGrid dashboard
- * 4. Update TEMPLATES object below with your SendGrid template IDs
+ * Templates live at supabase/functions/_shared/emails/<name>.tsx and are
+ * registered by name in the edge function's TEMPLATES map. To call one,
+ * pass its kebab-case name plus the props its component accepts.
  */
 
 import { supabase } from '../lib/supabase'
 
-// SendGrid Template IDs - UPDATE THESE WITH YOUR TEMPLATE IDS FROM SENDGRID
-const TEMPLATES = {
-  PASSWORD_RESET: 'd-96a2dce832614b8ba32791f5fc7caae2', // Replace with your password reset template ID
-  WELCOME: 'd-0c6102cbf62c455790db0cffceb98aed',        // Replace with your welcome email template ID
-  ORDER_CONFIRMATION: 'd-8a4299f845dc4bc5a61141d51d598248', // Replace with your order confirmation template ID
-  ORDER_STATUS: 'd-e3c21488399149f7ae94181a397ef88b',   // Replace with your order status template ID
-  TRUCK_APPROVED: 'd-afb62245593746f6944b34d32337e4dc', // Replace with your truck approved template ID
-}
-
-// Supabase Edge Function URL
-const SUPABASE_URL = 'https://coqwihsmmigktqqdnmis.supabase.co'
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SEND_EMAIL_FUNCTION = `${SUPABASE_URL}/functions/v1/resend-email`
 
 /**
- * Base function to send emails through SendGrid
- * @private
+ * Send an email by template name.
+ * @param {string} to        Recipient email address
+ * @param {string} template  Template name (e.g. 'welcome', 'order-confirmation')
+ * @param {object} data      Props for the template component
+ * @param {string} [subject] Optional subject override (default comes from the template)
  */
-const sendEmail = async (to, templateId, dynamicData) => {
+const sendEmail = async (to, template, data, subject) => {
   try {
-    // Get current session for authorization
     const { data: { session } } = await supabase.auth.getSession()
 
     const response = await fetch(SEND_EMAIL_FUNCTION, {
@@ -41,18 +31,11 @@ const sendEmail = async (to, templateId, dynamicData) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session?.access_token || ''}`,
       },
-      body: JSON.stringify({
-        to,
-        templateId,
-        dynamicData: {
-          ...dynamicData,
-          year: new Date().getFullYear(), // Auto-add current year to all emails
-        },
-      }),
+      body: JSON.stringify({ to, template, data, subject }),
     })
 
     if (!response.ok) {
-      const error = await response.json()
+      const error = await response.json().catch(() => ({}))
       throw new Error(error.error || 'Failed to send email')
     }
 
@@ -63,78 +46,34 @@ const sendEmail = async (to, templateId, dynamicData) => {
   }
 }
 
-/**
- * Send password reset email
- * @param {string} email - Recipient email address
- * @param {string} resetLink - Password reset URL with token
- * @param {string} userName - User's name
- */
-export const sendPasswordResetEmail = async (email, resetLink, userName = 'User') => {
-  return sendEmail(email, TEMPLATES.PASSWORD_RESET, {
-    name: userName,
-    resetLink,
-  })
-}
+export const sendPasswordResetEmail = (email, resetLink, userName = 'User') =>
+  sendEmail(email, 'password-reset', { name: userName, resetLink })
 
-/**
- * Send welcome email to new users
- * @param {string} email - New user's email address
- * @param {string} userName - User's name
- */
-export const sendWelcomeEmail = async (email, userName) => {
-  return sendEmail(email, TEMPLATES.WELCOME, {
+export const sendWelcomeEmail = (email, userName) =>
+  sendEmail(email, 'welcome', {
     name: userName,
     appLink: window.location.origin,
     helpLink: `${window.location.origin}/help`,
   })
-}
 
-/**
- * Send order confirmation email
- * @param {string} email - Customer email address
- * @param {Object} orderData - Order details
- * @param {string} orderData.customerName - Customer's name
- * @param {string} orderData.truckName - Food truck name
- * @param {string} orderData.orderNumber - Order ID or number
- * @param {string} orderData.orderTime - Time order was placed
- * @param {string} orderData.estimatedTime - Estimated pickup time
- * @param {Array} orderData.items - Array of order items [{quantity, name, price}]
- * @param {string} orderData.total - Total price
- * @param {string} orderData.orderId - Full order ID for tracking link
- */
-export const sendOrderConfirmationEmail = async (email, orderData) => {
-  return sendEmail(email, TEMPLATES.ORDER_CONFIRMATION, {
+export const sendOrderConfirmationEmail = (email, orderData) =>
+  sendEmail(email, 'order-confirmation', {
     customerName: orderData.customerName,
     truckName: orderData.truckName,
     orderNumber: orderData.orderNumber,
     orderTime: orderData.orderTime,
     estimatedTime: orderData.estimatedTime,
-    items: orderData.items.map(item => ({
+    items: orderData.items.map((item) => ({
       quantity: item.quantity,
       name: item.name,
       price: parseFloat(item.price).toFixed(2),
     })),
     total: parseFloat(orderData.total).toFixed(2),
-    trackOrderLink: `${window.location.origin}/orders/${orderData.orderId}`,
+    trackOrderLink: `${window.location.origin}/order/${orderData.orderId}`,
   })
-}
 
-/**
- * Send order status update email
- * @param {string} email - Customer email address
- * @param {Object} statusData - Order status details
- * @param {string} statusData.customerName - Customer's name
- * @param {string} statusData.statusTitle - Email title (e.g., "Your Order is Ready!")
- * @param {string} statusData.statusMessage - Status message
- * @param {string} statusData.status - Status label (e.g., "Ready for Pickup")
- * @param {string} statusData.orderNumber - Order ID or number
- * @param {string} statusData.truckName - Food truck name
- * @param {string} statusData.estimatedTime - Optional estimated time
- * @param {string} statusData.estimatedTimeLabel - Optional time label
- * @param {string} statusData.orderId - Full order ID for tracking link
- */
-export const sendOrderStatusEmail = async (email, statusData) => {
-  return sendEmail(email, TEMPLATES.ORDER_STATUS, {
+export const sendOrderStatusEmail = (email, statusData) =>
+  sendEmail(email, 'order-status', {
     customerName: statusData.customerName,
     statusTitle: statusData.statusTitle,
     statusMessage: statusData.statusMessage,
@@ -142,33 +81,18 @@ export const sendOrderStatusEmail = async (email, statusData) => {
     orderNumber: statusData.orderNumber,
     truckName: statusData.truckName,
     estimatedTime: statusData.estimatedTime || null,
-    estimatedTimeLabel: statusData.estimatedTimeLabel || 'Estimated Time',
-    trackOrderLink: `${window.location.origin}/orders/${statusData.orderId}`,
+    estimatedTimeLabel: statusData.estimatedTimeLabel || 'Estimated time',
+    trackOrderLink: `${window.location.origin}/order/${statusData.orderId}`,
   })
-}
 
-/**
- * Send truck approval notification email
- * @param {string} email - Owner email address
- * @param {Object} truckData - Truck approval details
- * @param {string} truckData.ownerName - Owner's name
- * @param {string} truckData.truckName - Food truck name
- */
-export const sendTruckApprovedEmail = async (email, truckData) => {
-  return sendEmail(email, TEMPLATES.TRUCK_APPROVED, {
+export const sendTruckApprovedEmail = (email, truckData) =>
+  sendEmail(email, 'truck-approved', {
     ownerName: truckData.ownerName,
     truckName: truckData.truckName,
-    dashboardLink: `${window.location.origin}/dashboard`,
+    dashboardLink: `${window.location.origin}/owner`,
     ownerGuideLink: `${window.location.origin}/owner-guide`,
   })
-}
 
-// Helper functions for common email scenarios
-
-/**
- * Get status email data for different order statuses
- * @param {string} status - Order status from database
- */
 export const getStatusEmailData = (status) => {
   const statusConfig = {
     confirmed: {
@@ -183,7 +107,7 @@ export const getStatusEmailData = (status) => {
     },
     ready: {
       statusTitle: 'Your Order is Ready!',
-      statusMessage: 'Your order is ready for pickup! Head to the truck when you\'re ready.',
+      statusMessage: "Your order is ready for pickup! Head to the truck when you're ready.",
       status: 'Ready for Pickup',
       estimatedTimeLabel: 'Ready',
       estimatedTime: 'Now',
@@ -199,9 +123,5 @@ export const getStatusEmailData = (status) => {
       status: 'Cancelled',
     },
   }
-
   return statusConfig[status] || statusConfig.confirmed
 }
-
-// Export template IDs for reference
-export { TEMPLATES }

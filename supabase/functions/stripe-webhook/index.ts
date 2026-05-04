@@ -37,6 +37,23 @@ serve(async (req) => {
             .from('orders')
             .update({ payment_status: 'paid' })
             .eq('id', pi.metadata.order_id);
+
+          // Fire server-side conversion (CAPI dispatch + acquisition stamping).
+          // Fire-and-forget — webhook must ack quickly to Stripe.
+          fetch(`${supabaseUrl}/functions/v1/analytics-server-event`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              event_name: 'purchase',
+              order_id: pi.metadata.order_id,
+              amount_cents: pi.amount,
+              currency: pi.currency?.toUpperCase() || 'USD',
+              event_id: `purchase:${pi.metadata.order_id}`,
+            }),
+          }).catch((e) => console.warn('analytics-server-event dispatch failed:', e));
         }
         break;
       }

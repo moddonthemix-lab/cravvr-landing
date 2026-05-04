@@ -42,7 +42,7 @@ export const callStripeFunction = async (functionName, body) => {
   const { data: { session } } = await supabase.auth.getSession();
 
   const response = await fetch(
-    `https://coqwihsmmigktqqdnmis.supabase.co/functions/v1/${functionName}`,
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
     {
       method: 'POST',
       headers: {

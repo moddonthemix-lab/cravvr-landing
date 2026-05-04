@@ -11,7 +11,12 @@ import { FavoritesProvider } from './contexts/FavoritesContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConfirmProvider } from './contexts/ConfirmContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { AnalyticsProvider } from './contexts/AnalyticsContext';
+import { validateConfig } from './lib/configValidation';
 import './index.css';
+
+validateConfig();
+
 import './styles/auth.css';
 import './styles/navigation.css';
 import './styles/animations.css';
@@ -25,16 +30,18 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ConfirmProvider>
           <BrowserRouter>
             <AuthProvider>
-              <NotificationProvider>
-                <TruckProvider>
-                  <FavoritesProvider>
-                    <CartProvider>
-                      <App />
-                      <ToastContainer />
-                    </CartProvider>
-                  </FavoritesProvider>
-                </TruckProvider>
-              </NotificationProvider>
+              <AnalyticsProvider>
+                <NotificationProvider>
+                  <TruckProvider>
+                    <FavoritesProvider>
+                      <CartProvider>
+                        <App />
+                        <ToastContainer />
+                      </CartProvider>
+                    </FavoritesProvider>
+                  </TruckProvider>
+                </NotificationProvider>
+              </AnalyticsProvider>
             </AuthProvider>
           </BrowserRouter>
         </ConfirmProvider>

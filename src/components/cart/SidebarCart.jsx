@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { Icons } from '../common/Icons';
 
 const SidebarCart = () => {
+  const navigate = useNavigate();
   const {
     items,
     itemCount,
@@ -67,7 +69,7 @@ const SidebarCart = () => {
           <span>Total</span>
           <span>${total.toFixed(2)}</span>
         </div>
-        <button className="sidebar-cart-checkout" onClick={openCart}>
+        <button className="sidebar-cart-checkout" onClick={() => navigate('/checkout')}>
           Checkout
         </button>
       </div>

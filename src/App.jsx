@@ -1,24 +1,36 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import LandingPage from './components/landing/LandingPage';
 import CartDrawer from './components/cart/Cart';
-import TruckDetailPage from './components/truck/TruckDetailPage';
-import SocialPage from './pages/SocialPage';
-import WaitlistPage from './pages/WaitlistPage';
-import CravvrPlusPage from './pages/CravvrPlusPage';
-import ResponsiveApp from './components/app/ResponsiveApp';
-import MapPage from './pages/MapPage';
-import DiscoverPage from './pages/DiscoverPage';
-import BoltPage from './pages/BoltPage';
-import LoginPage from './pages/LoginPage';
-import AuthConfirmPage from './pages/AuthConfirmPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import OrderTrackerPage from './pages/OrderTrackerPage';
 import ProtectedRoute, { RequireOwner, RequireAdmin } from './components/auth/ProtectedRoute';
 import AuthModal from './components/auth/AuthModal';
 import ViewAsBanner from './components/admin/ViewAsBanner';
 import { useAuth } from './components/auth/AuthContext';
-import { OwnerDashboardWrapper, AdminDashboardWrapper, CustomerProfileWrapper } from './components/wrappers';
+
+const LandingPage = lazy(() => import('./components/landing/LandingPage'));
+const TruckDetailPage = lazy(() => import('./components/truck/TruckDetailPage'));
+const SocialPage = lazy(() => import('./pages/SocialPage'));
+const WaitlistPage = lazy(() => import('./pages/WaitlistPage'));
+const CravvrPlusPage = lazy(() => import('./pages/CravvrPlusPage'));
+const ResponsiveApp = lazy(() => import('./components/app/ResponsiveApp'));
+const MapPage = lazy(() => import('./pages/MapPage'));
+const DiscoverPage = lazy(() => import('./pages/DiscoverPage'));
+const BoltPage = lazy(() => import('./pages/BoltPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const AuthConfirmPage = lazy(() => import('./pages/AuthConfirmPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const OrderTrackerPage = lazy(() => import('./pages/OrderTrackerPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const OwnerDashboardWrapper = lazy(() =>
+  import('./components/wrappers').then((m) => ({ default: m.OwnerDashboardWrapper }))
+);
+const AdminDashboardWrapper = lazy(() =>
+  import('./components/wrappers').then((m) => ({ default: m.AdminDashboardWrapper }))
+);
+const CustomerProfileWrapper = lazy(() =>
+  import('./components/wrappers').then((m) => ({ default: m.CustomerProfileWrapper }))
+);
+const GrowthDashboard = lazy(() => import('./components/admin/GrowthDashboard'));
+const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 
 // Wrapper for LandingPage with navigate
 const LandingPageWrapper = () => {
@@ -57,6 +69,7 @@ const App = () => {
       <ViewAsBanner />
       <CartDrawer />
       <AuthModal isOpen={showAuthModal} onClose={closeAuth} initialMode={authMode} />
+      <Suspense fallback={null}>
       <Routes>
         {/* Main app - responsive: TabContainer on mobile, HomePage on desktop */}
         <Route path="/" element={<ResponsiveApp />} />
@@ -83,6 +96,13 @@ const App = () => {
 
         {/* Truck detail page - production version */}
         <Route path="/truck/:id" element={<TruckDetailPage />} />
+
+        {/* Checkout - requires authentication */}
+        <Route path="/checkout" element={
+          <ProtectedRoute>
+            <CheckoutPage />
+          </ProtectedRoute>
+        } />
 
         {/* Order tracking page */}
         <Route path="/order/:orderId" element={
@@ -115,6 +135,16 @@ const App = () => {
           </RequireAdmin>
         } />
 
+        {/* Growth dashboard (CAC/LTV cohorts) - admin only */}
+        <Route path="/admin/growth" element={
+          <RequireAdmin>
+            <GrowthDashboard />
+          </RequireAdmin>
+        } />
+
+        {/* Unsubscribe from marketing email - public, token-authenticated */}
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
+
         {/* Social media graphics studio */}
         <Route path="/social" element={<SocialPage />} />
 
@@ -128,6 +158,7 @@ const App = () => {
         {/* Fallback to home */}
         <Route path="*" element={<ResponsiveApp />} />
       </Routes>
+      </Suspense>
     </>
   );
 };

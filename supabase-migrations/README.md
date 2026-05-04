@@ -12,11 +12,36 @@ This folder contains SQL migration scripts for the Cravvr database.
 
 ## Migration Files
 
-| File | Description | Status |
-|------|-------------|--------|
-| `001_add_orders.sql` | Adds orders and order_items tables with RLS | Pending |
-| `002_auto_profile_trigger.sql` | Auto-creates profile on user signup | Pending |
-| `003_add_admin_role.sql` | Adds admin role support to profiles | Pending |
+| File | Description |
+|------|-------------|
+| `001_add_orders.sql` | orders / order_items tables with RLS |
+| `002_auto_profile_trigger.sql` | auto-create profile on signup |
+| `003_add_admin_role.sql` | admin role support on profiles |
+| `004_add_waitlist.sql` | waitlist table |
+| `005_add_addresses_and_payments.sql` | saved addresses + payment methods |
+| `006_email_logs.sql` | email send log |
+| `007_add_menu_item_image_url.sql` | image_url on menu_items |
+| `008_create_truck_ratings_view.sql` | aggregated ratings view |
+| `009_add_admin_order_policies.sql` | admin RLS policies on orders |
+| `010_postgis.sql` | enable PostGIS, geography columns, distance fns |
+| `011_user_creation_trigger.sql` | user creation trigger updates |
+| `012_sendgrid_confirmation_setup.sql` | SendGrid confirmation hook |
+| `013_owner_settings.sql` | owner-side configuration table |
+| `014_prep_time.sql` | menu item prep time fields |
+| `015_order_throttling.sql` | per-truck order throttling |
+| `016_order_state_machine.sql` | formal order state transitions |
+| `017_rewards_points.sql` | loyalty points + redemption |
+| `018_stripe_connect.sql` | Stripe Connect payout config |
+| `019_fix_favorites.sql` | hotfix for favorites schema |
+| `020_fix_customers_fk.sql` | hotfix for customers FK |
+
+> ⚠️ **Ordering caveat for 010–020:** these files were previously loose at the
+> repo root and have been renumbered into a best-guess foundational → features →
+> hotfixes order. If you're running these on a fresh DB, verify each file's
+> assumptions before running the next. If your prod DB already has these
+> applied, the numbering is purely organizational.
+
+Dev-only SQL utilities (not migrations) live in `scripts/sql/`.
 
 ## Initial Setup
 

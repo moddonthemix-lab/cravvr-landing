@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { subscribeToOrder } from '../../services/orderTracking';
 import { fetchOrderTransitions } from '../../services/orders';
+import { callStripeFunction } from '../../lib/stripe';
 import './OrderTracker.css';
 
 const ORDER_STEPS = [
@@ -20,6 +21,9 @@ const OrderTracker = () => {
   const [transitions, setTransitions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errorCode, setErrorCode] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState(null);
 
   // Fetch initial order data
   useEffect(() => {
@@ -31,14 +35,27 @@ const OrderTracker = () => {
           .eq('id', orderId)
           .single();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          // PGRST116 = no rows returned. Anything else (RLS denial, etc.) is a permission error.
+          if (fetchError.code === 'PGRST116') {
+            setError('Order not found');
+            setErrorCode('not_found');
+          } else {
+            console.error('Order fetch error:', fetchError);
+            setError("You don't have permission to view this order.");
+            setErrorCode('forbidden');
+          }
+          return;
+        }
         setOrder(data);
 
         // Also fetch transitions
         const trans = await fetchOrderTransitions(orderId);
         setTransitions(trans);
       } catch (err) {
-        setError('Order not found');
+        console.error('Order fetch exception:', err);
+        setError('Could not load order. Please try again.');
+        setErrorCode('unknown');
       } finally {
         setLoading(false);
       }
@@ -85,10 +102,15 @@ const OrderTracker = () => {
   }
 
   if (error || !order) {
+    const heading = errorCode === 'forbidden'
+      ? 'Access Denied'
+      : errorCode === 'not_found'
+        ? 'Order Not Found'
+        : 'Could Not Load Order';
     return (
       <div className="order-tracker">
         <div className="tracker-error">
-          <h2>Order Not Found</h2>
+          <h2>{heading}</h2>
           <p>{error || 'This order could not be found.'}</p>
           <button className="btn-primary" onClick={() => navigate('/')}>Back to Home</button>
         </div>
@@ -219,21 +241,57 @@ const OrderTracker = () => {
 
       {/* Action Buttons */}
       <div className="tracker-actions">
-        {order.status === 'pending' && (
-          <button className="btn-secondary cancel-btn" onClick={async () => {
-            try {
-              await supabase.rpc('update_order_status', { p_order_id: orderId, p_new_status: 'cancelled' });
-            } catch (err) {
-              console.error('Failed to cancel:', err);
-            }
-          }}>
-            Cancel Order
+        {(order.status === 'pending' || order.status === 'confirmed') && (
+          <button
+            className="btn-secondary cancel-btn"
+            disabled={cancelling}
+            onClick={async () => {
+              const wasPaid = order.payment_status === 'paid' || order.payment_status === 'succeeded';
+              const confirmMsg = wasPaid
+                ? 'Cancel this order? You will be refunded automatically. This cannot be undone.'
+                : 'Cancel this order? This cannot be undone.';
+              if (!window.confirm(confirmMsg)) return;
+              setCancelling(true);
+              setCancelError(null);
+              try {
+                const { error: rpcError } = await supabase.rpc('update_order_status', {
+                  p_order_id: orderId,
+                  p_new_status: 'cancelled',
+                });
+                if (rpcError) throw rpcError;
+
+                if (wasPaid) {
+                  try {
+                    await callStripeFunction('stripe-refund', {
+                      order_id: orderId,
+                      reason: 'Cancelled by customer',
+                    });
+                  } catch (refundErr) {
+                    console.error('Refund failed:', refundErr);
+                    setCancelError('Order cancelled, but refund could not be processed automatically. Please contact support.');
+                    return;
+                  }
+                }
+
+                setOrder(prev => prev ? { ...prev, status: 'cancelled' } : prev);
+              } catch (err) {
+                console.error('Failed to cancel:', err);
+                setCancelError(err.message || 'Could not cancel this order.');
+              } finally {
+                setCancelling(false);
+              }
+            }}
+          >
+            {cancelling ? 'Cancelling...' : 'Cancel Order'}
           </button>
         )}
         <button className="btn-primary" onClick={() => navigate('/')}>
           Back to Browsing
         </button>
       </div>
+      {cancelError && (
+        <div className="checkout-error" style={{ margin: '12px 16px' }}>{cancelError}</div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { Icons } from '../common/Icons';
 import './Cart.css';
@@ -30,6 +31,7 @@ const CartItem = ({ item, onIncrement, onDecrement, onRemove }) => (
 
 // Cart Drawer Component
 const CartDrawer = ({ onCheckout }) => {
+  const navigate = useNavigate();
   const {
     items,
     itemCount,
@@ -44,6 +46,12 @@ const CartDrawer = ({ onCheckout }) => {
     removeItem,
     clearCart,
   } = useCart();
+
+  const handleCheckout = () => {
+    if (onCheckout) return onCheckout();
+    closeCart();
+    navigate('/checkout');
+  };
 
   if (!isOpen) return null;
 
@@ -107,7 +115,7 @@ const CartDrawer = ({ onCheckout }) => {
                 <span>${total.toFixed(2)}</span>
               </div>
             </div>
-            <button className="cart-checkout-btn" onClick={onCheckout}>
+            <button className="cart-checkout-btn" onClick={handleCheckout}>
               Proceed to Checkout
             </button>
             <button className="cart-clear-btn" onClick={clearCart}>
