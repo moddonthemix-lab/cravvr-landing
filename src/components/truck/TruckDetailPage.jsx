@@ -4,7 +4,6 @@ import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
-import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { formatRelativeTime, formatTruckHours } from '../../utils/formatters';
@@ -20,7 +19,6 @@ const TruckDetailPage = () => {
   const { addItem, openCart, itemCount } = useCart();
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite: toggleFavoriteContext } = useFavorites();
-  const { track } = useAnalytics();
 
   // Core state
   const [truck, setTruck] = useState(location.state?.truck || null);
@@ -106,18 +104,6 @@ const TruckDetailPage = () => {
 
     fetchTruck();
   }, [id, truck, navigate]);
-
-  // Fire view_truck once the truck is resolved (handles both state-passed and fetched cases).
-  const trackedTruckId = useRef(null);
-  useEffect(() => {
-    if (!truck?.id || trackedTruckId.current === truck.id) return;
-    trackedTruckId.current = truck.id;
-    track('view_truck', {
-      truck_id: truck.id,
-      truck_name: truck.name,
-      cuisine: truck.cuisine,
-    });
-  }, [truck?.id, truck?.name, truck?.cuisine, track]);
 
   // Fetch menu items
   useEffect(() => {
