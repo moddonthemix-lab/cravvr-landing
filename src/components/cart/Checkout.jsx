@@ -124,7 +124,7 @@ const Checkout = ({ onBack, onOrderComplete }) => {
         tip: calculateTip(),
         total: finalTotal,
         notes: notes || null,
-        payment_status: paymentMethod === 'online' ? 'requires_payment' : 'pay_at_pickup',
+        payment_status: paymentMethod === 'online' ? 'pending' : 'unpaid',
       }])
       .select()
       .single();
@@ -260,7 +260,7 @@ const Checkout = ({ onBack, onOrderComplete }) => {
       try {
         await supabase
           .from('orders')
-          .update({ status: 'cancelled', payment_status: 'cancelled' })
+          .update({ status: 'cancelled', payment_status: 'failed' })
           .eq('id', pendingOrderId);
       } catch (_) {}
     }

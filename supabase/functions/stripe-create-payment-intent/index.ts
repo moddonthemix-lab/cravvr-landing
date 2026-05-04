@@ -78,7 +78,7 @@ serve(async (req) => {
     // Update order with payment intent ID
     await supabase
       .from('orders')
-      .update({ payment_intent_id: paymentIntent.id, payment_status: 'processing' })
+      .update({ payment_intent_id: paymentIntent.id, payment_status: 'pending' })
       .eq('id', order_id);
 
     return new Response(
