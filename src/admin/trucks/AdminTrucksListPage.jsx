@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../../components/common/Icons';
 import { useToast } from '../../contexts/ToastContext';
+import { useConfirm } from '../../contexts/ConfirmContext';
 import { useTruckAdmin } from './hooks/useTruckAdmin';
+import CreateTruckModal from './components/CreateTruckModal';
 import './AdminTrucks.css';
 
 const STATUS_FILTERS = [
@@ -18,7 +20,9 @@ const Badge = ({ tone, children }) => (
 );
 
 const AdminTrucksListPage = () => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
+  const { prompt } = useConfirm();
   const { setFlag, restore, suspend, busy } = useTruckAdmin();
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +30,7 @@ const AdminTrucksListPage = () => {
   const [statusFilter, setStatusFilter] = useState('active');
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [selected, setSelected] = useState(new Set());
+  const [showCreate, setShowCreate] = useState(false);
 
   const fetchTrucks = async () => {
     setLoading(true);
@@ -108,8 +113,14 @@ const AdminTrucksListPage = () => {
   };
 
   const bulkSuspend = async () => {
-    const reason = window.prompt('Reason for suspension (shown in audit log):');
-    if (reason === null) return;
+    const reason = await prompt({
+      title: `Suspend ${selected.size} trucks`,
+      message: 'All selected trucks will be hidden from public listings.',
+      confirmText: 'Suspend all',
+      variant: 'danger',
+      inputLabel: 'Reason',
+    });
+    if (!reason) return;
     const ids = [...selected];
     for (const id of ids) await suspend(id, reason);
     setSelected(new Set());
@@ -131,6 +142,9 @@ const AdminTrucksListPage = () => {
           <p>Browse, edit, and moderate every truck.</p>
         </div>
         <div className="admin-trucks-actions">
+          <button className="btn-primary" onClick={() => setShowCreate(true)}>
+            {Icons.plus} New truck
+          </button>
           <Link to="/admin" className="btn-secondary">{Icons.chevronLeft} Back to dashboard</Link>
         </div>
       </div>
@@ -175,6 +189,16 @@ const AdminTrucksListPage = () => {
           <button className="btn-link" disabled={busy} onClick={bulkRestore}>Restore</button>
           <button className="btn-link" onClick={() => setSelected(new Set())}>Clear</button>
         </div>
+      )}
+
+      {showCreate && (
+        <CreateTruckModal
+          onClose={() => setShowCreate(false)}
+          onCreated={(truck) => {
+            showToast('Truck created', 'success');
+            navigate(`/admin/trucks/${truck.id}`);
+          }}
+        />
       )}
 
       {loading ? (

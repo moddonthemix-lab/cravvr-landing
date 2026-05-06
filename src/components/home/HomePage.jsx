@@ -425,7 +425,12 @@ const TruckCard = ({ truck, isFavorite, onFavorite, onClick }) => {
         {truck.featured && <span className="featured-badge">Featured</span>}
       </div>
       <div className="truck-info">
-        <h3 className="truck-name">{truck.name}</h3>
+        <h3 className="truck-name">
+          {truck.name}
+          {truck.verified && (
+            <span className="verified-badge inline" title="Verified">{Icons.checkCircle || Icons.check}</span>
+          )}
+        </h3>
         <div className="truck-meta">
           <span className="truck-rating">
             {Icons.star}

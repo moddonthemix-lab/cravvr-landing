@@ -1348,9 +1348,13 @@ const OwnerDashboard = () => {
 
       setTrucks(trucksWithStats);
 
-      // Auto-select first truck if none selected
+      // Auto-select: ?truckId=… from URL takes precedence (used when an admin
+      // clicks "View as owner" on a specific truck), otherwise pick the first
       if (trucksWithStats.length > 0 && !selectedTruckId) {
-        setSelectedTruckId(trucksWithStats[0].id);
+        const params = new URLSearchParams(window.location.search);
+        const requested = params.get('truckId');
+        const match = requested && trucksWithStats.find(t => t.id === requested);
+        setSelectedTruckId(match ? match.id : trucksWithStats[0].id);
       }
     } catch (err) {
       console.error('Error fetching trucks:', err);

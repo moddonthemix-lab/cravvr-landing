@@ -36,6 +36,8 @@ const AdminAreaWrapper = lazy(() =>
 const AdminTrucksListPage = lazy(() => import('./admin/trucks/AdminTrucksListPage'));
 const AdminTruckDetailPage = lazy(() => import('./admin/trucks/AdminTruckDetailPage'));
 const AdminTruckProfileTab = lazy(() => import('./admin/trucks/tabs/ProfileTab'));
+const AdminTruckAnalyticsTab = lazy(() => import('./admin/trucks/tabs/AnalyticsTab'));
+const AdminTruckOwnerProfileTab = lazy(() => import('./admin/trucks/tabs/OwnerProfileTab'));
 const AdminTruckMenuTab = lazy(() => import('./admin/trucks/tabs/MenuTab'));
 const AdminTruckHoursTab = lazy(() => import('./admin/trucks/tabs/HoursTab'));
 const AdminTruckPhotosTab = lazy(() => import('./admin/trucks/tabs/PhotosTab'));
@@ -166,12 +168,14 @@ const App = () => {
         }>
           <Route index element={<Navigate to="profile" replace />} />
           <Route path="profile" element={<AdminTruckProfileTab />} />
+          <Route path="analytics" element={<AdminTruckAnalyticsTab />} />
           <Route path="menu" element={<AdminTruckMenuTab />} />
           <Route path="hours" element={<AdminTruckHoursTab />} />
           <Route path="photos" element={<AdminTruckPhotosTab />} />
           <Route path="orders" element={<AdminTruckOrdersTab />} />
           <Route path="reviews" element={<AdminTruckReviewsTab />} />
           <Route path="settings" element={<AdminTruckSettingsTab />} />
+          <Route path="owner" element={<AdminTruckOwnerProfileTab />} />
           <Route path="audit" element={<AdminTruckAuditTab />} />
           <Route path="danger" element={<AdminTruckDangerZone />} />
         </Route>

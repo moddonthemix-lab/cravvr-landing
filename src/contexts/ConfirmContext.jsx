@@ -23,60 +23,63 @@ import ConfirmModal from '../components/common/ConfirmModal';
 
 const ConfirmContext = createContext({});
 
+const DEFAULT_OPTIONS = {
+  title: 'Confirm',
+  message: 'Are you sure?',
+  confirmText: 'Confirm',
+  cancelText: 'Cancel',
+  variant: 'default',
+  inputLabel: null,
+  inputPlaceholder: '',
+  inputRequired: false,
+};
+
 export const ConfirmProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [options, setOptions] = useState({
-    title: 'Confirm',
-    message: 'Are you sure?',
-    confirmText: 'Confirm',
-    cancelText: 'Cancel',
-    variant: 'default',
-  });
+  const [options, setOptions] = useState(DEFAULT_OPTIONS);
   const [resolvePromise, setResolvePromise] = useState(null);
 
-  /**
-   * Show confirmation dialog and return a Promise<boolean>
-   * @param {Object} opts - Configuration options
-   * @param {string} opts.title - Modal title
-   * @param {string} opts.message - Modal message
-   * @param {string} opts.confirmText - Confirm button text
-   * @param {string} opts.cancelText - Cancel button text
-   * @param {string} opts.variant - 'default' or 'danger'
-   * @returns {Promise<boolean>} - Resolves to true if confirmed, false if cancelled
-   */
-  const confirm = useCallback((opts = {}) => {
+  const open = useCallback((opts) => {
+    setOptions({ ...DEFAULT_OPTIONS, ...opts });
     return new Promise((resolve) => {
-      setOptions({
-        title: opts.title || 'Confirm',
-        message: opts.message || 'Are you sure?',
-        confirmText: opts.confirmText || 'Confirm',
-        cancelText: opts.cancelText || 'Cancel',
-        variant: opts.variant || 'default',
-      });
       setResolvePromise(() => resolve);
       setIsOpen(true);
     });
   }, []);
 
-  const handleConfirm = useCallback(() => {
+  /**
+   * Show confirmation dialog. Returns Promise<boolean>.
+   */
+  const confirm = useCallback((opts = {}) => open({ ...opts, inputLabel: null }), [open]);
+
+  /**
+   * Show confirmation dialog with a text input. Returns Promise<string|null>.
+   * Resolves to the input string on confirm, or null on cancel.
+   */
+  const prompt = useCallback((opts = {}) => open({
+    ...opts,
+    inputLabel: opts.inputLabel || 'Reason',
+    inputRequired: opts.inputRequired !== false,
+  }), [open]);
+
+  const handleConfirm = useCallback((value) => {
     setIsOpen(false);
     if (resolvePromise) {
-      resolvePromise(true);
+      // For prompt: resolve with the input value; for confirm: resolve true.
+      resolvePromise(options.inputLabel ? value : true);
       setResolvePromise(null);
     }
-  }, [resolvePromise]);
+  }, [resolvePromise, options.inputLabel]);
 
   const handleCancel = useCallback(() => {
     setIsOpen(false);
     if (resolvePromise) {
-      resolvePromise(false);
+      resolvePromise(options.inputLabel ? null : false);
       setResolvePromise(null);
     }
-  }, [resolvePromise]);
+  }, [resolvePromise, options.inputLabel]);
 
-  const value = {
-    confirm,
-  };
+  const value = { confirm, prompt };
 
   return (
     <ConfirmContext.Provider value={value}>
@@ -90,6 +93,9 @@ export const ConfirmProvider = ({ children }) => {
         confirmText={options.confirmText}
         cancelText={options.cancelText}
         variant={options.variant}
+        inputLabel={options.inputLabel}
+        inputPlaceholder={options.inputPlaceholder}
+        inputRequired={options.inputRequired}
       />
     </ConfirmContext.Provider>
   );

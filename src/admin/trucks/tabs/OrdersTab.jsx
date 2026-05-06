@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import { Icons } from '../../../components/common/Icons';
+import { useConfirm } from '../../../contexts/ConfirmContext';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 
 const STATUSES = ['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled', 'rejected'];
@@ -9,6 +10,7 @@ const STATUSES = ['all', 'pending', 'confirmed', 'preparing', 'ready', 'complete
 const OrdersTab = () => {
   const { truck } = useOutletContext();
   const { forceCancelOrder, busy } = useTruckAdmin();
+  const { prompt } = useConfirm();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -37,7 +39,13 @@ const OrdersTab = () => {
   useEffect(() => { fetch(); }, [fetch]);
 
   const handleCancel = async (order) => {
-    const reason = window.prompt(`Reason for cancelling order ${order.order_number}?`);
+    const reason = await prompt({
+      title: `Force cancel ${order.order_number}`,
+      message: 'This cancels the order regardless of state. Reason is recorded in audit log.',
+      confirmText: 'Force cancel',
+      variant: 'danger',
+      inputLabel: 'Reason',
+    });
     if (!reason) return;
     await forceCancelOrder(order.id, reason);
     fetch();

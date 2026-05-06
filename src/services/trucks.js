@@ -48,6 +48,7 @@ export const transformTruck = (truck, userCoords = null) => {
     acceptingOrders: truck.accepting_orders !== false,
     prepTime: truck.estimated_prep_time || null,
     featured: truck.featured || false,
+    verified: truck.verified || false,
     lat: tLat,
     lng: tLng,
     ownerId: truck.owner_id,

@@ -92,6 +92,7 @@ const TruckDetailPage = () => {
             acceptingOrders: data.accepting_orders !== false,
             prepTime: data.estimated_prep_time || null,
             featured: data.featured || false,
+            verified: data.verified || false,
             features: data.features || [],
             promotions: data.promotions || null,
           });
@@ -560,7 +561,14 @@ const TruckDetailPage = () => {
         {/* Title Section */}
         <div className="detail-title-section">
           <div className="title-row">
-            <h1>{truck.name}</h1>
+            <h1>
+              {truck.name}
+              {truck.verified && (
+                <span className="verified-badge" title="Verified by Cravvr" aria-label="Verified">
+                  {Icons.checkCircle || Icons.check}
+                </span>
+              )}
+            </h1>
             <div className="rating-pill">
               <span className="star">{Icons.star}</span>
               <span className="rating-num">{truck.rating || 4.5}</span>

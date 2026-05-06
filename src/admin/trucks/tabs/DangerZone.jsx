@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Icons } from '../../../components/common/Icons';
 import { useToast } from '../../../contexts/ToastContext';
+import { useConfirm } from '../../../contexts/ConfirmContext';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 import OwnerReassignModal from '../components/OwnerReassignModal';
 
@@ -11,16 +12,24 @@ const DangerZone = () => {
   const { truck, refetch } = useOutletContext();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { prompt } = useConfirm();
   const { softDelete, restore, suspend, busy } = useTruckAdmin();
   const [showReassign, setShowReassign] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null); // { reason, timer }
   const undoRef = useRef(false);
 
-  const handleSoftDelete = () => {
-    const reason = window.prompt('Reason for deleting this truck (audit log):');
-    if (reason === null) return;
+  const handleSoftDelete = async () => {
+    const reason = await prompt({
+      title: 'Delete truck',
+      message: 'This soft-deletes the truck. It will be hard-deleted in 30 days unless restored.',
+      confirmText: 'Delete',
+      variant: 'danger',
+      inputLabel: 'Reason (audit log)',
+      inputPlaceholder: 'e.g. owner request, fraudulent listing',
+    });
+    if (!reason) return;
     undoRef.current = false;
-    showToast('Deleting in 10s — click here to undo', 'info');
+    showToast('Deleting in 10s — click Undo to cancel', 'info');
     const timer = setTimeout(async () => {
       if (undoRef.current) return;
       try {
@@ -41,7 +50,13 @@ const DangerZone = () => {
   };
 
   const handleSuspend = async () => {
-    const reason = window.prompt('Reason for suspension (visible in audit log):');
+    const reason = await prompt({
+      title: 'Suspend truck',
+      message: 'Hides the truck from public listings. Reversible.',
+      confirmText: 'Suspend',
+      variant: 'danger',
+      inputLabel: 'Reason (visible in audit log)',
+    });
     if (!reason) return;
     await suspend(truck.id, reason);
     refetch();

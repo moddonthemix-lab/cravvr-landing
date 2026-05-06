@@ -2,11 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import { Icons } from '../../../components/common/Icons';
+import { useConfirm } from '../../../contexts/ConfirmContext';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 
 const ReviewsTab = () => {
   const { truck } = useOutletContext();
   const { hideReview, busy } = useTruckAdmin();
+  const { prompt, confirm } = useConfirm();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,9 +34,25 @@ const ReviewsTab = () => {
   useEffect(() => { fetch(); }, [fetch]);
 
   const handleHide = async (review, hide) => {
-    const reason = hide ? window.prompt('Reason for hiding this review?') : null;
-    if (hide && !reason) return;
-    await hideReview(review.id, hide, reason);
+    if (hide) {
+      const reason = await prompt({
+        title: 'Hide review',
+        message: 'Hidden reviews are excluded from public truck pages and rating averages.',
+        confirmText: 'Hide',
+        variant: 'danger',
+        inputLabel: 'Reason',
+      });
+      if (!reason) return;
+      await hideReview(review.id, true, reason);
+    } else {
+      const ok = await confirm({
+        title: 'Restore review',
+        message: 'Make this review visible to the public again?',
+        confirmText: 'Restore',
+      });
+      if (!ok) return;
+      await hideReview(review.id, false, 'admin restored');
+    }
     fetch();
   };
 

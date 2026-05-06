@@ -1,18 +1,11 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Icons } from './Icons';
 import './ConfirmModal.css';
 
 /**
  * ConfirmModal - A reusable confirmation dialog to replace window.confirm()
- *
- * @param {boolean} isOpen - Whether the modal is visible
- * @param {function} onClose - Called when modal should close (cancel action)
- * @param {function} onConfirm - Called when user confirms the action
- * @param {string} title - Modal title
- * @param {string} message - Modal message/description
- * @param {string} confirmText - Text for confirm button (default: "Confirm")
- * @param {string} cancelText - Text for cancel button (default: "Cancel")
- * @param {string} variant - 'default' or 'danger' (red confirm button)
+ * and window.prompt(). Pass `inputLabel` to switch into prompt mode; the
+ * confirmed input string is delivered via onConfirm(value).
  */
 const ConfirmModal = ({
   isOpen,
@@ -23,22 +16,36 @@ const ConfirmModal = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   variant = 'default',
+  inputLabel = null,
+  inputPlaceholder = '',
+  inputRequired = false,
 }) => {
   const modalRef = useRef(null);
   const confirmButtonRef = useRef(null);
+  const inputRef = useRef(null);
+  const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    if (isOpen) setInputValue('');
+  }, [isOpen]);
+
+  const canSubmit = !inputLabel || !inputRequired || inputValue.trim().length > 0;
+  const submit = useCallback(() => {
+    if (!canSubmit) return;
+    onConfirm(inputLabel ? inputValue.trim() : undefined);
+  }, [canSubmit, inputLabel, inputValue, onConfirm]);
 
   // Handle keyboard events
   const handleKeyDown = useCallback((e) => {
     if (!isOpen) return;
-
     if (e.key === 'Escape') {
       e.preventDefault();
       onClose();
-    } else if (e.key === 'Enter') {
+    } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onConfirm();
+      submit();
     }
-  }, [isOpen, onClose, onConfirm]);
+  }, [isOpen, onClose, submit]);
 
   // Handle click outside
   const handleOverlayClick = (e) => {
@@ -51,11 +58,10 @@ const ConfirmModal = ({
   useEffect(() => {
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      // Focus the confirm button when modal opens for accessibility
       setTimeout(() => {
-        confirmButtonRef.current?.focus();
+        if (inputLabel && inputRef.current) inputRef.current.focus();
+        else confirmButtonRef.current?.focus();
       }, 100);
-      // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
     }
 
@@ -63,7 +69,7 @@ const ConfirmModal = ({
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isOpen, handleKeyDown]);
+  }, [isOpen, handleKeyDown, inputLabel]);
 
   if (!isOpen) return null;
 
@@ -92,6 +98,24 @@ const ConfirmModal = ({
           {message}
         </p>
 
+        {/* Optional input (prompt mode) */}
+        {inputLabel && (
+          <div className="confirm-modal-input-group">
+            <label className="confirm-modal-input-label" htmlFor="confirm-modal-input">
+              {inputLabel}{inputRequired ? ' *' : ''}
+            </label>
+            <input
+              id="confirm-modal-input"
+              ref={inputRef}
+              type="text"
+              className="confirm-modal-input"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder={inputPlaceholder}
+            />
+          </div>
+        )}
+
         {/* Actions */}
         <div className="confirm-modal-actions">
           <button
@@ -105,7 +129,8 @@ const ConfirmModal = ({
             type="button"
             ref={confirmButtonRef}
             className={`confirm-modal-btn confirm ${variant}`}
-            onClick={onConfirm}
+            onClick={submit}
+            disabled={!canSubmit}
           >
             {confirmText}
           </button>

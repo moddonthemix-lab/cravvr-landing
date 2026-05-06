@@ -3,17 +3,20 @@ import { Link, NavLink, Outlet, useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../../components/common/Icons';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../components/auth/AuthContext';
 import AdminBadgePanel from './components/AdminBadgePanel';
 import './AdminTrucks.css';
 
 const SUBTABS = [
   { path: 'profile', label: 'Profile' },
+  { path: 'analytics', label: 'Analytics' },
   { path: 'menu', label: 'Menu' },
   { path: 'hours', label: 'Hours' },
   { path: 'photos', label: 'Photos' },
   { path: 'orders', label: 'Orders' },
   { path: 'reviews', label: 'Reviews' },
   { path: 'settings', label: 'Settings' },
+  { path: 'owner', label: 'Owner profile' },
   { path: 'audit', label: 'Audit' },
   { path: 'danger', label: 'Danger Zone' },
 ];
@@ -22,6 +25,7 @@ const AdminTruckDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { startViewingAs } = useAuth();
   const [truck, setTruck] = useState(null);
   const [owner, setOwner] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +74,15 @@ const AdminTruckDetailPage = () => {
   }
 
   const publicUrl = `/truck/${truck.id}`;
-  const ownerUrl = `/owner?truckId=${truck.id}`;
+
+  const handleViewAsOwner = async () => {
+    if (!owner) {
+      showToast('No owner linked to this truck', 'error');
+      return;
+    }
+    await startViewingAs({ id: owner.id, email: owner.email });
+    navigate(`/owner?truckId=${truck.id}`);
+  };
 
   return (
     <div className="admin-trucks-page admin-truck-detail">
@@ -94,9 +106,9 @@ const AdminTruckDetailPage = () => {
           <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary">
             {Icons.eye} View public page
           </a>
-          <a href={ownerUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+          <button type="button" className="btn-secondary" onClick={handleViewAsOwner} disabled={!owner}>
             {Icons.user} View as owner
-          </a>
+          </button>
         </div>
       </div>
 
