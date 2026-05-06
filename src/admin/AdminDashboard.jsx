@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Icons } from '../components/common/Icons';
+import MarketingPage from '../components/admin/MarketingPage';
 import './AdminDashboard.css';
 
 // Chart colors
@@ -2048,6 +2049,7 @@ const AdminDashboard = () => {
     { id: 'trucks', label: 'Food Trucks', icon: Icons.truck },
     { id: 'orders', label: 'Orders', icon: Icons.shoppingBag },
     { id: 'analytics', label: 'Analytics', icon: Icons.trendingUp },
+    { id: 'marketing', label: 'Marketing', icon: Icons.megaphone },
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];
 
@@ -2080,6 +2082,8 @@ const AdminDashboard = () => {
         return <OrdersManagement />;
       case 'analytics':
         return <AnalyticsPage stats={stats} chartData={chartData} />;
+      case 'marketing':
+        return <MarketingPage />;
       case 'settings':
         return <SettingsPage adminEmail={user?.email} devSettings={devSettings} onUpdateDevSettings={updateDevSettings} />;
       default:
