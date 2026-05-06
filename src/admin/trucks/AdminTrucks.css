@@ -1,0 +1,344 @@
+/* ============================================
+   ADMIN — TRUCKS MODULE
+   ============================================ */
+
+.admin-trucks-page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: var(--admin-text, #1e293b);
+}
+
+.admin-trucks-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-trucks-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.admin-trucks-header p {
+  margin: 4px 0 0;
+  color: var(--admin-text-muted, #64748b);
+}
+
+.admin-trucks-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--admin-text-muted, #64748b);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.back-link:hover { color: var(--admin-primary, #e11d48); }
+
+.admin-trucks-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.admin-search {
+  flex: 1;
+  min-width: 280px;
+  padding: 10px 14px;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.admin-filter-group {
+  display: inline-flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.admin-filter {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--admin-text-muted, #64748b);
+}
+.admin-filter.active {
+  background: white;
+  color: var(--admin-text, #1e293b);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.admin-cuisine-filter {
+  padding: 8px 12px;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+}
+
+.admin-bulk-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.admin-bulk-bar .btn-link.danger { color: var(--admin-danger, #dc2626); }
+
+.admin-trucks-table-wrapper {
+  background: white;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-trucks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.admin-trucks-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: #f8fafc;
+  font-weight: 600;
+  color: var(--admin-text-muted, #64748b);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--admin-border, #e2e8f0);
+}
+
+.admin-trucks-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.admin-trucks-table tr:last-child td { border-bottom: none; }
+.admin-trucks-table tr.row-deleted { background: #fef2f2; opacity: 0.7; }
+.admin-trucks-table tr.row-suspended { background: #fffbeb; }
+.admin-trucks-table tr:hover { background: #f8fafc; }
+
+.empty-row { text-align: center; color: var(--admin-text-muted, #64748b); padding: 32px !important; }
+
+.truck-name-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--admin-text, #1e293b);
+  text-decoration: none;
+  font-weight: 500;
+}
+.truck-name-link:hover { color: var(--admin-primary, #e11d48); }
+
+.truck-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+.cell-stack { display: flex; flex-direction: column; gap: 2px; }
+.cell-sub { color: var(--admin-text-muted, #64748b); font-size: 12px; }
+
+.badge-row { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.admin-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.admin-badge-success { background: #dcfce7; color: #166534; }
+.admin-badge-neutral { background: #f1f5f9; color: #475569; }
+.admin-badge-warning { background: #fef3c7; color: #92400e; }
+.admin-badge-danger  { background: #fee2e2; color: #991b1b; }
+.admin-badge-accent  { background: #fce7f3; color: #9d174d; }
+.admin-badge-info    { background: #dbeafe; color: #1e40af; }
+
+/* ============================================
+   TRUCK DETAIL PAGE
+   ============================================ */
+
+.admin-truck-detail .admin-trucks-header { align-items: flex-start; }
+
+.admin-truck-body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+@media (max-width: 900px) {
+  .admin-truck-body { grid-template-columns: 1fr; }
+}
+
+.admin-truck-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 88px;
+}
+
+.admin-subtabs {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-subtab {
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--admin-text, #1e293b);
+  font-size: 14px;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid #f1f5f9;
+}
+.admin-subtab:last-child { border-bottom: none; }
+.admin-subtab:hover { background: #f8fafc; }
+.admin-subtab.active {
+  background: #fff7f9;
+  border-left-color: var(--admin-primary, #e11d48);
+  color: var(--admin-primary, #e11d48);
+  font-weight: 600;
+}
+.admin-subtab.danger.active {
+  background: #fef2f2;
+  border-left-color: var(--admin-danger, #dc2626);
+  color: var(--admin-danger, #dc2626);
+}
+
+.admin-badge-panel {
+  background: white;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-badge-panel h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted, #64748b);
+}
+
+.admin-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.admin-toggle-row input { margin-top: 4px; }
+.admin-toggle-row p { margin: 2px 0 0; }
+
+.admin-truck-content {
+  background: white;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 12px;
+  padding: 24px;
+  min-height: 400px;
+}
+
+/* ============================================
+   FORMS
+   ============================================ */
+
+.admin-tab-form { display: flex; flex-direction: column; gap: 16px; }
+.admin-tab-form h2 { margin: 0 0 8px; }
+.admin-tab-form h3 { margin: 0; font-size: 16px; }
+.admin-tab-header { display: flex; justify-content: space-between; align-items: center; }
+.form-error { color: var(--admin-danger, #dc2626); font-size: 12px; }
+.form-ok    { color: var(--admin-success, #16a34a); font-size: 12px; }
+
+.danger-section {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.danger-section h3 { margin: 0; }
+
+/* Photos */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.photo-tile {
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+.photo-tile img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.photo-tile-actions { display: flex; justify-content: space-between; padding: 6px 8px; }
+
+/* Audit */
+.audit-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.audit-item {
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fafafa;
+}
+.audit-row { display: flex; justify-content: space-between; align-items: baseline; }
+.audit-reason { margin: 4px 0; font-style: italic; }
+.audit-detail {
+  background: #0f172a;
+  color: #f1f5f9;
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
+/* Owner reassign list */
+.owner-results { list-style: none; padding: 0; margin: 8px 0; max-height: 240px; overflow-y: auto; border: 1px solid var(--admin-border, #e2e8f0); border-radius: 8px; }
+.owner-results li { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+.owner-results li:hover { background: #f8fafc; }
+.owner-results li.picked { background: #fff7f9; border-left: 3px solid var(--admin-primary, #e11d48); }
+
+/* Reuse btn-link with danger modifier in this module */
+.btn-link.danger { color: var(--admin-danger, #dc2626); }
+.btn-secondary.danger { color: var(--admin-danger, #dc2626); border-color: #fecaca; }

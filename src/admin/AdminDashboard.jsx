@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../components/auth/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -1223,383 +1224,6 @@ const UsersManagement = ({ onViewAs }) => {
   );
 };
 
-// Food Trucks Management Component
-const TrucksManagement = () => {
-  const { showToast } = useToast();
-  const { confirm } = useConfirm();
-  const [trucks, setTrucks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTruck, setSelectedTruck] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const fetchTrucks = async () => {
-    setLoading(true);
-    try {
-      // Fetch trucks with owner profiles via a simpler join
-      const { data, error } = await supabase
-        .from('food_trucks')
-        .select(`
-          *,
-          owner_id
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch owner profiles separately to avoid ambiguous join
-      const ownerIds = [...new Set((data || []).map(t => t.owner_id).filter(Boolean))];
-      let ownerProfiles = {};
-
-      if (ownerIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, name, email')
-          .in('id', ownerIds);
-
-        (profiles || []).forEach(p => {
-          ownerProfiles[p.id] = p;
-        });
-      }
-
-      const flattenedTrucks = (data || []).map(truck => ({
-        ...truck,
-        owner_name: ownerProfiles[truck.owner_id]?.name || 'Unknown',
-        owner_email: ownerProfiles[truck.owner_id]?.email || '',
-      }));
-
-      setTrucks(flattenedTrucks);
-    } catch (err) {
-      console.error('Error fetching trucks:', err);
-      setTrucks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTrucks();
-  }, []);
-
-  const filteredTrucks = trucks.filter(truck =>
-    (truck.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (truck.cuisine || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleEditTruck = (truck) => {
-    setSelectedTruck({ ...truck });
-    setEditMode(true);
-    setShowModal(true);
-  };
-
-  const handleViewTruck = (truck) => {
-    setSelectedTruck(truck);
-    setEditMode(false);
-    setShowModal(true);
-  };
-
-  const handleSaveTruck = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('food_trucks')
-        .update({
-          name: selectedTruck.name,
-          description: selectedTruck.description,
-          cuisine: selectedTruck.cuisine,
-          location: selectedTruck.location,
-          price_range: selectedTruck.price_range,
-          is_open: selectedTruck.is_open,
-          hours: selectedTruck.hours,
-        })
-        .eq('id', selectedTruck.id);
-
-      if (error) throw error;
-      setTrucks(trucks.map(t => t.id === selectedTruck.id ? selectedTruck : t));
-      setShowModal(false);
-      setSelectedTruck(null);
-    } catch (err) {
-      console.error('Error saving truck:', err);
-      showToast('Error saving truck: ' + err.message, 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDeleteTruck = async (truckId) => {
-    const confirmed = await confirm({
-      title: 'Delete Food Truck',
-      message: 'Are you sure you want to delete this food truck? This will also delete all menu items and reviews.',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
-
-    try {
-      const { error } = await supabase
-        .from('food_trucks')
-        .delete()
-        .eq('id', truckId);
-
-      if (error) throw error;
-      setTrucks(trucks.filter(t => t.id !== truckId));
-    } catch (err) {
-      console.error('Error deleting truck:', err);
-      showToast('Error deleting truck: ' + err.message, 'error');
-    }
-  };
-
-  const handleToggleOpen = async (truckId, currentStatus) => {
-    try {
-      const { error } = await supabase
-        .from('food_trucks')
-        .update({ is_open: !currentStatus })
-        .eq('id', truckId);
-
-      if (error) throw error;
-      setTrucks(trucks.map(t => t.id === truckId ? { ...t, is_open: !currentStatus } : t));
-    } catch (err) {
-      console.error('Error toggling status:', err);
-    }
-  };
-
-  return (
-    <div className="trucks-management">
-      <div className="page-header">
-        <h1>Food Trucks</h1>
-        <span className="page-subtitle">Food trucks are created by owners through the app</span>
-      </div>
-
-      <div className="filters-bar">
-        <div className="search-box">
-          {Icons.search}
-          <input
-            type="text"
-            placeholder="Search trucks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-          Loading food trucks...
-        </div>
-      ) : filteredTrucks.length > 0 ? (
-        <div className="trucks-table-container">
-          <table className="trucks-table">
-            <thead>
-              <tr>
-                <th>Truck</th>
-                <th>Owner</th>
-                <th>Location</th>
-                <th>Price</th>
-                <th>Hours</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTrucks.map((truck) => (
-                <tr key={truck.id}>
-                  <td>
-                    <div className="truck-cell">
-                      <div className="truck-avatar-sm">{(truck.name || '?').charAt(0).toUpperCase()}</div>
-                      <div className="truck-cell-info">
-                        <span className="truck-cell-name">{truck.name || 'Unnamed'}</span>
-                        <span className="truck-cell-cuisine">{truck.cuisine || 'Various'}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{truck.owner_name || 'Unknown'}</td>
-                  <td>{truck.location || '—'}</td>
-                  <td>{truck.price_range || '$'}</td>
-                  <td>{truck.hours || '—'}</td>
-                  <td>
-                    <span className={`status-pill ${truck.is_open ? 'open' : 'closed'}`}>
-                      {truck.is_open ? 'Open' : 'Closed'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="table-actions">
-                      <button className="action-btn" onClick={() => handleViewTruck(truck)} title="View">
-                        {Icons.eye}
-                      </button>
-                      <button className="action-btn" onClick={() => handleEditTruck(truck)} title="Edit">
-                        {Icons.edit}
-                      </button>
-                      <button
-                        className={`action-btn ${truck.is_open ? 'danger' : ''}`}
-                        onClick={() => handleToggleOpen(truck.id, truck.is_open)}
-                        title={truck.is_open ? 'Close truck' : 'Open truck'}
-                      >
-                        {truck.is_open ? Icons.x : Icons.check}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center', padding: '60px', color: '#64748b', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          {searchTerm ? 'No trucks match your search.' : 'No food trucks yet. Owners can add trucks through the app.'}
-        </div>
-      )}
-
-      {/* Truck Modal */}
-      {showModal && selectedTruck && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{editMode ? 'Edit Food Truck' : 'Truck Details'}</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>
-                {Icons.x}
-              </button>
-            </div>
-            <div className="modal-body">
-              {editMode ? (
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Truck Name *</label>
-                    <input
-                      type="text"
-                      value={selectedTruck.name || ''}
-                      onChange={(e) => setSelectedTruck({ ...selectedTruck, name: e.target.value })}
-                      placeholder="Enter truck name"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Cuisine Type</label>
-                    <input
-                      type="text"
-                      value={selectedTruck.cuisine || ''}
-                      onChange={(e) => setSelectedTruck({ ...selectedTruck, cuisine: e.target.value })}
-                      placeholder="e.g., Mexican, Asian, American"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Location</label>
-                    <input
-                      type="text"
-                      value={selectedTruck.location || ''}
-                      onChange={(e) => setSelectedTruck({ ...selectedTruck, location: e.target.value })}
-                      placeholder="Enter default location"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Hours</label>
-                    <input
-                      type="text"
-                      value={selectedTruck.hours || ''}
-                      onChange={(e) => setSelectedTruck({ ...selectedTruck, hours: e.target.value })}
-                      placeholder="e.g., 11am - 9pm"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Price Range</label>
-                    <select
-                      value={selectedTruck.price_range || '$'}
-                      onChange={(e) => setSelectedTruck({ ...selectedTruck, price_range: e.target.value })}
-                    >
-                      <option value="$">$ (Budget)</option>
-                      <option value="$$">$$ (Moderate)</option>
-                      <option value="$$$">$$$ (Upscale)</option>
-                      <option value="$$$$">$$$$ (Premium)</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select
-                      value={selectedTruck.is_open ? 'open' : 'closed'}
-                      onChange={(e) => setSelectedTruck({ ...selectedTruck, is_open: e.target.value === 'open' })}
-                    >
-                      <option value="open">Open</option>
-                      <option value="closed">Closed</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Description</label>
-                    <textarea
-                      value={selectedTruck.description || ''}
-                      onChange={(e) => setSelectedTruck({ ...selectedTruck, description: e.target.value })}
-                      placeholder="Enter truck description"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="user-details">
-                  <div className="detail-header">
-                    <div className="user-avatar large">{(selectedTruck.name || '?').charAt(0)}</div>
-                    <div>
-                      <h3>{selectedTruck.name || 'Unnamed'}</h3>
-                      <span className={`status-badge ${selectedTruck.is_open ? 'active' : 'inactive'}`}>
-                        {selectedTruck.is_open ? 'Open' : 'Closed'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Owner</span>
-                      <span className="detail-value">{selectedTruck.owner_name || 'Unknown'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Cuisine</span>
-                      <span className="detail-value">{selectedTruck.cuisine || 'Various'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Location</span>
-                      <span className="detail-value">{selectedTruck.location || 'Not set'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Price Range</span>
-                      <span className="detail-value">{selectedTruck.price_range || '$'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Hours</span>
-                      <span className="detail-value">{selectedTruck.hours || 'Not set'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Created</span>
-                      <span className="detail-value">{selectedTruck.created_at ? format(new Date(selectedTruck.created_at), 'MMM dd, yyyy') : 'N/A'}</span>
-                    </div>
-                  </div>
-                  {selectedTruck.description && (
-                    <div className="detail-item" style={{ marginTop: '16px' }}>
-                      <span className="detail-label">Description</span>
-                      <span className="detail-value">{selectedTruck.description}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-              {editMode && (
-                <button
-                  className="btn-primary"
-                  onClick={handleSaveTruck}
-                  disabled={saving || !selectedTruck.name}
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // Analytics Component - Real Data Only
 const AnalyticsPage = ({ stats, chartData }) => {
@@ -2138,6 +1762,7 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
 
 // Main Admin Dashboard Component
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { user, profile, isAdmin, loading: authLoading, signOut, startViewingAs, devSettings, updateDevSettings } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [stats, setStats] = useState({
@@ -2441,7 +2066,16 @@ const AdminDashboard = () => {
       case 'users':
         return <UsersManagement onViewAs={handleViewAs} />;
       case 'trucks':
-        return <TrucksManagement />;
+        // Truck management has moved to /admin/trucks (richer UI, audit log, soft delete).
+        // This case is kept only as a defensive fallback if the navigate() above is bypassed.
+        return (
+          <div className="admin-tab-content">
+            <p>Truck management has moved.</p>
+            <button className="btn-primary" onClick={() => navigate('/admin/trucks')}>
+              Open truck manager
+            </button>
+          </div>
+        );
       case 'orders':
         return <OrdersManagement />;
       case 'analytics':
@@ -2466,7 +2100,13 @@ const AdminDashboard = () => {
             <button
               key={item.id}
               className={`admin-tab ${currentPage === item.id ? 'active' : ''}`}
-              onClick={() => setCurrentPage(item.id)}
+              onClick={() => {
+                if (item.id === 'trucks') {
+                  navigate('/admin/trucks');
+                } else {
+                  setCurrentPage(item.id);
+                }
+              }}
             >
               <span className="tab-icon">{item.icon}</span>
               <span className="tab-label">{item.label}</span>

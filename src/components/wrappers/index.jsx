@@ -7,6 +7,15 @@ import AdminDashboard from '../../admin/AdminDashboard';
 import AppLayout from '../layout/AppLayout';
 
 /**
+ * Generic admin-area wrapper. Wraps children in AppLayout with admin nav highlight.
+ */
+export const AdminAreaWrapper = ({ children }) => (
+  <AppLayout activeNav="/admin">
+    {children}
+  </AppLayout>
+);
+
+/**
  * Wrapper for OwnerDashboard with AppLayout integration
  * Owner dashboard now uses the main app layout for consistent navigation
  */

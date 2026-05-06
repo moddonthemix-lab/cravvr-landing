@@ -7,6 +7,9 @@ import { Icons } from '../common/Icons';
 import { formatRelativeTime } from '../../utils/formatters';
 import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
+import HoursInput, { getDefaultHours, parseHours } from '../truck-form/HoursInput';
+import LocationInput, { geocodeAddress } from '../truck-form/LocationInput';
+import MenuItemForm from '../truck-form/MenuItemForm';
 import KitchenDisplay from './KitchenDisplay';
 import StripeOnboarding from './StripeOnboarding';
 import PaymentsDashboard from './PaymentsDashboard';
@@ -115,200 +118,6 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
           )}
         </div>
       </div>
-    </div>
-  );
-};
-
-// Default hours structure
-const getDefaultHours = () => ({
-  monday: { open: '11:00', close: '22:00', closed: false },
-  tuesday: { open: '11:00', close: '22:00', closed: false },
-  wednesday: { open: '11:00', close: '22:00', closed: false },
-  thursday: { open: '11:00', close: '22:00', closed: false },
-  friday: { open: '11:00', close: '22:00', closed: false },
-  saturday: { open: '11:00', close: '22:00', closed: false },
-  sunday: { open: '11:00', close: '22:00', closed: false },
-});
-
-// Parse hours from database format
-const parseHours = (hoursString) => {
-  if (!hoursString) return getDefaultHours();
-
-  try {
-    const parsed = JSON.parse(hoursString);
-    return { ...getDefaultHours(), ...parsed };
-  } catch (e) {
-    // If it's old format (text), return default
-    return getDefaultHours();
-  }
-};
-
-// Hours Input Component
-const HoursInput = ({ hours, onChange }) => {
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-  // Convert 24hr to 12hr for display
-  const to12hr = (time24) => {
-    if (!time24) return '';
-    const [h, m] = time24.split(':');
-    const hour = parseInt(h, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-    return `${hour12}:${m} ${ampm}`;
-  };
-
-  // Generate time options (every 30 minutes) - store 24hr, display 12hr
-  const timeOptions = [];
-  for (let h = 0; h < 24; h++) {
-    for (let m of ['00', '30']) {
-      const value = `${h.toString().padStart(2, '0')}:${m}`;
-      timeOptions.push({ value, label: to12hr(value) });
-    }
-  }
-
-  const handleDayChange = (day, field, value) => {
-    onChange({
-      ...hours,
-      [day]: {
-        ...hours[day],
-        [field]: value,
-      },
-    });
-  };
-
-  return (
-    <div className="hours-input-container">
-      <label className="form-label">Hours of Operation</label>
-      <div className="hours-grid">
-        {days.map((day, idx) => (
-          <div key={day} className="hours-row">
-            <div className="day-label">{dayLabels[idx]}</div>
-            <div className="hours-controls">
-              <label className="hours-toggle">
-                <input
-                  type="checkbox"
-                  checked={!hours[day].closed}
-                  onChange={(e) => handleDayChange(day, 'closed', !e.target.checked)}
-                />
-                <span>{hours[day].closed ? 'Closed' : 'Open'}</span>
-              </label>
-              {!hours[day].closed && (
-                <>
-                  <select
-                    value={hours[day].open}
-                    onChange={(e) => handleDayChange(day, 'open', e.target.value)}
-                    className="time-select"
-                  >
-                    {timeOptions.map(t => (
-                      <option key={`open-${t.value}`} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                  <span className="time-separator">to</span>
-                  <select
-                    value={hours[day].close}
-                    onChange={(e) => handleDayChange(day, 'close', e.target.value)}
-                    className="time-select"
-                  >
-                    {timeOptions.map(t => (
-                      <option key={`close-${t.value}`} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                </>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Geocode an address using Nominatim (OpenStreetMap)
-const geocodeAddress = async (address) => {
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=5&addressdetails=1`
-    );
-    const results = await response.json();
-    return results.map(r => ({
-      display_name: r.display_name,
-      lat: parseFloat(r.lat),
-      lng: parseFloat(r.lon),
-    }));
-  } catch (err) {
-    console.error('Geocoding failed:', err);
-    return [];
-  }
-};
-
-// Location input with geocoding autocomplete
-const LocationInput = ({ value, coordinates, onChange }) => {
-  const [query, setQuery] = useState(value || '');
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searching, setSearching] = useState(false);
-  const debounceRef = React.useRef(null);
-
-  useEffect(() => {
-    setQuery(value || '');
-  }, [value]);
-
-  const handleInputChange = (e) => {
-    const val = e.target.value;
-    setQuery(val);
-    onChange({ location: val, coordinates: null });
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (val.length >= 3) {
-      debounceRef.current = setTimeout(async () => {
-        setSearching(true);
-        const results = await geocodeAddress(val);
-        setSuggestions(results);
-        setShowSuggestions(results.length > 0);
-        setSearching(false);
-      }, 400);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
-
-  const handleSelect = (suggestion) => {
-    setQuery(suggestion.display_name);
-    setSuggestions([]);
-    setShowSuggestions(false);
-    onChange({
-      location: suggestion.display_name,
-      coordinates: { lat: suggestion.lat, lng: suggestion.lng },
-    });
-  };
-
-  return (
-    <div className="location-input-wrapper">
-      <input
-        type="text"
-        placeholder="Search for an address..."
-        value={query}
-        onChange={handleInputChange}
-        onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        required
-      />
-      {searching && <span className="location-searching">Searching...</span>}
-      {coordinates && (
-        <span className="location-confirmed">Location set</span>
-      )}
-      {showSuggestions && (
-        <ul className="location-suggestions">
-          {suggestions.map((s, i) => (
-            <li key={i} onMouseDown={() => handleSelect(s)}>
-              {s.display_name}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 };
@@ -626,14 +435,6 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
   const [editingItem, setEditingItem] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    category: '',
-    description: '',
-    emoji: '',
-    image_url: '',
-  });
 
   const categories = ['all', ...new Set(menuItems.filter(item => item.category).map(item => item.category))];
 
@@ -641,51 +442,29 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
     ? menuItems
     : menuItems.filter(item => item.category === activeCategory);
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      price: '',
-      category: '',
-      description: '',
-      emoji: '',
-      image_url: '',
-    });
+  const closeForm = () => {
+    setShowForm(false);
     setEditingItem(null);
   };
 
   const openEditForm = (item) => {
-    setFormData({
-      name: item.name || '',
-      price: item.price || '',
-      category: item.category || '',
-      description: item.description || '',
-      emoji: item.emoji || '',
-      image_url: item.image_url || '',
-    });
     setEditingItem(item);
     setShowForm(true);
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
+  const handleSave = async (data) => {
     if (!selectedTruckId) {
       showToast('Please select a truck first', 'error');
       return;
     }
     setSaving(true);
     try {
-      const data = {
-        ...formData,
-        price: parseFloat(formData.price),
-        truck_id: selectedTruckId,
-      };
       if (editingItem) {
         await onMenuItemUpdate(editingItem.id, data);
       } else {
         await onMenuItemCreate(data);
       }
-      setShowForm(false);
-      resetForm();
+      closeForm();
     } catch (err) {
       console.error('Failed to save menu item:', err);
       showToast('Failed to save menu item. Please try again.', 'error');
@@ -743,7 +522,7 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
           )}
           <button
             className="btn-primary"
-            onClick={() => { resetForm(); setShowForm(true); }}
+            onClick={() => { setEditingItem(null); setShowForm(true); }}
             disabled={!selectedTruckId}
           >
             {Icons.plus} Add Item
@@ -772,96 +551,13 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
           )}
 
           {showForm && (
-            <div className="modal-overlay">
-              <div className="modal">
-                <div className="modal-header">
-                  <h2>{editingItem ? 'Edit Menu Item' : 'Add Menu Item'}</h2>
-                  <button className="close-btn" onClick={() => { setShowForm(false); resetForm(); }}>
-                    {Icons.x}
-                  </button>
-                </div>
-                <form onSubmit={handleSave}>
-                  <div className="form-group">
-                    <label>Item Name</label>
-                    <input
-                      type="text"
-                      placeholder="Enter item name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Price</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Category</label>
-                      <select
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      >
-                        <option value="">Select category</option>
-                        <option value="Appetizers">Appetizers</option>
-                        <option value="Mains">Mains</option>
-                        <option value="Tacos">Tacos</option>
-                        <option value="Burritos">Burritos</option>
-                        <option value="Bowls">Bowls</option>
-                        <option value="Sides">Sides</option>
-                        <option value="Desserts">Desserts</option>
-                        <option value="Drinks">Drinks</option>
-                        <option value="Specials">Specials</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Description</label>
-                    <textarea
-                      placeholder="Describe this item..."
-                      rows={2}
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    ></textarea>
-                  </div>
-                  <ImageUpload
-                    label="Item Photo (optional)"
-                    currentImage={formData.image_url}
-                    onUpload={(url) => setFormData({ ...formData, image_url: url })}
-                    bucket="images"
-                    folder={selectedTruckId ? `menu-items/${selectedTruckId}` : 'menu-items/temp'}
-                    disabled={saving}
-                  />
-                  <div className="form-group" style={{ maxWidth: '120px' }}>
-                    <label>Emoji (fallback if no photo)</label>
-                    <input
-                      type="text"
-                      placeholder="🌮"
-                      value={formData.emoji}
-                      onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                      maxLength={4}
-                      style={{ textAlign: 'center', fontSize: '1.5rem' }}
-                    />
-                  </div>
-                  <div className="form-actions">
-                    <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
-                      Cancel
-                    </button>
-                    <button type="submit" className="btn-primary" disabled={saving}>
-                      {saving ? 'Saving...' : (editingItem ? 'Save Changes' : 'Add Item')}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+            <MenuItemForm
+              initialItem={editingItem}
+              truckId={selectedTruckId}
+              onSubmit={handleSave}
+              onCancel={closeForm}
+              saving={saving}
+            />
           )}
 
           {loading ? (

@@ -30,6 +30,20 @@ const CustomerProfileWrapper = lazy(() =>
   import('./components/wrappers').then((m) => ({ default: m.CustomerProfileWrapper }))
 );
 const GrowthDashboard = lazy(() => import('./components/admin/GrowthDashboard'));
+const AdminAreaWrapper = lazy(() =>
+  import('./components/wrappers').then((m) => ({ default: m.AdminAreaWrapper }))
+);
+const AdminTrucksListPage = lazy(() => import('./admin/trucks/AdminTrucksListPage'));
+const AdminTruckDetailPage = lazy(() => import('./admin/trucks/AdminTruckDetailPage'));
+const AdminTruckProfileTab = lazy(() => import('./admin/trucks/tabs/ProfileTab'));
+const AdminTruckMenuTab = lazy(() => import('./admin/trucks/tabs/MenuTab'));
+const AdminTruckHoursTab = lazy(() => import('./admin/trucks/tabs/HoursTab'));
+const AdminTruckPhotosTab = lazy(() => import('./admin/trucks/tabs/PhotosTab'));
+const AdminTruckOrdersTab = lazy(() => import('./admin/trucks/tabs/OrdersTab'));
+const AdminTruckReviewsTab = lazy(() => import('./admin/trucks/tabs/ReviewsTab'));
+const AdminTruckSettingsTab = lazy(() => import('./admin/trucks/tabs/SettingsTab'));
+const AdminTruckAuditTab = lazy(() => import('./admin/trucks/tabs/AuditTab'));
+const AdminTruckDangerZone = lazy(() => import('./admin/trucks/tabs/DangerZone'));
 const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 
 // Wrapper for LandingPage with navigate
@@ -134,6 +148,33 @@ const App = () => {
             <AdminDashboardWrapper />
           </RequireAdmin>
         } />
+
+        {/* Admin truck management — list and per-truck detail with subtabs */}
+        <Route path="/admin/trucks" element={
+          <RequireAdmin>
+            <AdminAreaWrapper>
+              <AdminTrucksListPage />
+            </AdminAreaWrapper>
+          </RequireAdmin>
+        } />
+        <Route path="/admin/trucks/:id" element={
+          <RequireAdmin>
+            <AdminAreaWrapper>
+              <AdminTruckDetailPage />
+            </AdminAreaWrapper>
+          </RequireAdmin>
+        }>
+          <Route index element={<Navigate to="profile" replace />} />
+          <Route path="profile" element={<AdminTruckProfileTab />} />
+          <Route path="menu" element={<AdminTruckMenuTab />} />
+          <Route path="hours" element={<AdminTruckHoursTab />} />
+          <Route path="photos" element={<AdminTruckPhotosTab />} />
+          <Route path="orders" element={<AdminTruckOrdersTab />} />
+          <Route path="reviews" element={<AdminTruckReviewsTab />} />
+          <Route path="settings" element={<AdminTruckSettingsTab />} />
+          <Route path="audit" element={<AdminTruckAuditTab />} />
+          <Route path="danger" element={<AdminTruckDangerZone />} />
+        </Route>
 
         {/* Growth dashboard (CAC/LTV cohorts) - admin only */}
         <Route path="/admin/growth" element={
