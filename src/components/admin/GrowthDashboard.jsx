@@ -145,6 +145,8 @@ const GrowthDashboard = () => {
         </div>
       )}
 
+      <AdSpendForm onSaved={load} />
+
       {/* Top-line cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
         <Card label="Revenue (30d)" value={`$${summary.revenue.toFixed(2)}`} />
@@ -254,6 +256,163 @@ const GrowthDashboard = () => {
           </table>
         )}
       </Section>
+    </div>
+  );
+};
+
+const AdSpendForm = ({ onSaved }) => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const [open, setOpen] = useState(false);
+  const [day, setDay] = useState(today);
+  const [source, setSource] = useState('');
+  const [medium, setMedium] = useState('');
+  const [campaign, setCampaign] = useState('');
+  const [amount, setAmount] = useState('');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+
+  const reset = () => {
+    setDay(today); setSource(''); setMedium(''); setCampaign('');
+    setAmount(''); setNotes(''); setErr(''); setMsg('');
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr(''); setMsg('');
+    const dollars = Number(amount);
+    if (!source.trim()) return setErr('Source is required (e.g. instagram, google, meta).');
+    if (!Number.isFinite(dollars) || dollars < 0) return setErr('Amount must be a non-negative number.');
+    setSaving(true);
+    try {
+      const row = {
+        day,
+        source: source.trim().toLowerCase(),
+        medium: medium.trim().toLowerCase() || null,
+        campaign: campaign.trim().toLowerCase() || null,
+        spend_cents: Math.round(dollars * 100),
+        notes: notes.trim() || null,
+      };
+      const { error } = await supabase
+        .from('ad_spend')
+        .upsert(row, { onConflict: 'day,source,medium,campaign' });
+      if (error) throw error;
+      // Recompute cohort/CAC so the leaderboard reflects the new spend.
+      await supabase.rpc('refresh_cohort_performance');
+      setMsg(`Saved $${dollars.toFixed(2)} for ${row.source} on ${day}.`);
+      reset();
+      if (onSaved) await onSaved();
+    } catch (e2) {
+      setErr(e2.message || String(e2));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '8px 10px', borderRadius: 6,
+    border: '1px solid #e5e7eb', fontSize: 14, fontFamily: 'inherit',
+  };
+  const labelStyle = {
+    display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280',
+    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6,
+  };
+
+  return (
+    <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20, marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 18 }}>Record ad spend</h2>
+          <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 13 }}>
+            Add what you spent on a channel for a given day. Without spend rows, CAC and LTV:CAC stay at $0/—.
+          </p>
+        </div>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          style={{
+            background: open ? '#f3f4f6' : '#e11d48', color: open ? '#374151' : 'white',
+            border: 'none', borderRadius: 6, padding: '8px 14px',
+            fontWeight: 600, cursor: 'pointer',
+          }}
+        >
+          {open ? 'Close' : 'Add spend'}
+        </button>
+      </div>
+
+      {open && (
+        <form onSubmit={submit} style={{ marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+            <div>
+              <label style={labelStyle}>Day *</label>
+              <input type="date" style={inputStyle} value={day} onChange={(e) => setDay(e.target.value)} required />
+            </div>
+            <div>
+              <label style={labelStyle}>Source *</label>
+              <input style={inputStyle} value={source} onChange={(e) => setSource(e.target.value)} placeholder="instagram" required />
+            </div>
+            <div>
+              <label style={labelStyle}>Medium</label>
+              <input style={inputStyle} value={medium} onChange={(e) => setMedium(e.target.value)} placeholder="paid_social" />
+            </div>
+            <div>
+              <label style={labelStyle}>Campaign</label>
+              <input style={inputStyle} value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="may_2026" />
+            </div>
+            <div>
+              <label style={labelStyle}>Amount (USD) *</label>
+              <input
+                type="number" min="0" step="0.01" style={inputStyle}
+                value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="25.00" required
+              />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Notes</label>
+              <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" />
+            </div>
+          </div>
+
+          {err && (
+            <div style={{ background: '#fee2e2', color: '#991b1b', padding: 10, borderRadius: 6, marginTop: 12, fontSize: 13 }}>
+              {err}
+            </div>
+          )}
+          {msg && (
+            <div style={{ background: '#dcfce7', color: '#166534', padding: 10, borderRadius: 6, marginTop: 12, fontSize: 13 }}>
+              {msg}
+            </div>
+          )}
+
+          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                background: '#e11d48', color: 'white', border: 'none',
+                padding: '10px 16px', borderRadius: 8, fontWeight: 600,
+                cursor: saving ? 'wait' : 'pointer',
+              }}
+            >
+              {saving ? 'Saving…' : 'Save spend'}
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              disabled={saving}
+              style={{
+                background: 'white', color: '#374151', border: '1px solid #e5e7eb',
+                padding: '10px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Clear
+            </button>
+          </div>
+
+          <p style={{ margin: '12px 0 0', fontSize: 12, color: '#6b7280' }}>
+            Re-saving the same day + source + medium + campaign overwrites the existing row.
+          </p>
+        </form>
+      )}
     </div>
   );
 };

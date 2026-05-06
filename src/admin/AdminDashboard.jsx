@@ -2050,6 +2050,7 @@ const AdminDashboard = () => {
     { id: 'orders', label: 'Orders', icon: Icons.shoppingBag },
     { id: 'analytics', label: 'Analytics', icon: Icons.trendingUp },
     { id: 'marketing', label: 'Marketing', icon: Icons.megaphone },
+    { id: 'growth', label: 'Growth', icon: Icons.target },
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];
 
@@ -2107,6 +2108,8 @@ const AdminDashboard = () => {
               onClick={() => {
                 if (item.id === 'trucks') {
                   navigate('/admin/trucks');
+                } else if (item.id === 'growth') {
+                  navigate('/admin/growth');
                 } else {
                   setCurrentPage(item.id);
                 }
