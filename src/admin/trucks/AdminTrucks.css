@@ -381,3 +381,16 @@
   transition: opacity 0.15s;
 }
 .spark-col:hover .spark-bar { opacity: 0.7; }
+
+/* Drag handle for reordering */
+.drag-handle {
+  cursor: grab;
+  user-select: none;
+  text-align: center;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: -2px;
+}
+.drag-handle:active { cursor: grabbing; }
+.admin-trucks-table tr:hover .drag-handle { color: #475569; }
+.admin-trucks-table.is-reordering { opacity: 0.7; pointer-events: none; }

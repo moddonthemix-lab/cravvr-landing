@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import MenuItemForm from '../../../components/truck-form/MenuItemForm';
+import MenuCsvImport from '../components/MenuCsvImport';
 import { Icons } from '../../../components/common/Icons';
 import { useToast } from '../../../contexts/ToastContext';
 import { useConfirm } from '../../../contexts/ConfirmContext';
@@ -13,8 +14,11 @@ const MenuTab = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const dragIdRef = useRef(null);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -47,7 +51,9 @@ const MenuTab = () => {
         if (error) throw error;
         showToast('Menu item updated', 'success');
       } else {
-        const { error } = await supabase.from('menu_items').insert([data]);
+        // Append to bottom: next display_order
+        const next = (items[items.length - 1]?.display_order ?? -1) + 1;
+        const { error } = await supabase.from('menu_items').insert([{ ...data, display_order: next }]);
         if (error) throw error;
         showToast('Menu item added', 'success');
       }
@@ -88,23 +94,84 @@ const MenuTab = () => {
     }
   };
 
+  // ── drag-and-drop reordering ──
+  const persistOrder = async (next) => {
+    setReordering(true);
+    try {
+      // Build the changeset: anything whose new index differs from old display_order
+      const updates = next
+        .map((item, idx) => ({ id: item.id, display_order: idx }))
+        .filter(u => {
+          const orig = items.find(i => i.id === u.id);
+          return orig && orig.display_order !== u.display_order;
+        });
+      if (updates.length === 0) return;
+      // Run as parallel UPDATEs (Supabase has no batch update by id list out of the box)
+      const results = await Promise.all(
+        updates.map(u =>
+          supabase.from('menu_items').update({ display_order: u.display_order }).eq('id', u.id)
+        )
+      );
+      const firstErr = results.find(r => r.error);
+      if (firstErr) throw firstErr.error;
+      showToast('Order saved', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Reorder failed', 'error');
+      // revert
+      fetchItems();
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const onDragStart = (id) => (e) => {
+    dragIdRef.current = id;
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const onDragOver = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
+  const onDrop = (overId) => (e) => {
+    e.preventDefault();
+    const fromId = dragIdRef.current;
+    dragIdRef.current = null;
+    if (!fromId || fromId === overId) return;
+    const from = items.findIndex(i => i.id === fromId);
+    const to = items.findIndex(i => i.id === overId);
+    if (from === -1 || to === -1) return;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setItems(next);
+    persistOrder(next);
+  };
+
   return (
     <div className="admin-tab-form">
       <div className="admin-tab-header">
         <h2>Menu</h2>
-        <button className="btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}>
-          {Icons.plus} Add item
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-secondary" onClick={() => setShowImport(true)}>
+            {Icons.upload || Icons.plus} Import CSV
+          </button>
+          <button className="btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}>
+            {Icons.plus} Add item
+          </button>
+        </div>
       </div>
+
+      {items.length > 1 && (
+        <p className="cell-sub">Drag the {Icons.menu || '☰'} handle to reorder. Order is saved instantly.</p>
+      )}
 
       {loading ? (
         <div className="loading-state">{Icons.loader} Loading...</div>
       ) : items.length === 0 ? (
         <p className="cell-sub">No menu items yet.</p>
       ) : (
-        <table className="admin-trucks-table">
+        <table className={`admin-trucks-table ${reordering ? 'is-reordering' : ''}`}>
           <thead>
             <tr>
+              <th style={{ width: 28 }}></th>
               <th></th>
               <th>Name</th>
               <th>Category</th>
@@ -115,7 +182,19 @@ const MenuTab = () => {
           </thead>
           <tbody>
             {items.map(item => (
-              <tr key={item.id}>
+              <tr
+                key={item.id}
+                onDragOver={onDragOver}
+                onDrop={onDrop(item.id)}
+              >
+                <td
+                  className="drag-handle"
+                  draggable
+                  onDragStart={onDragStart(item.id)}
+                  title="Drag to reorder"
+                >
+                  ⋮⋮
+                </td>
                 <td>
                   {item.image_url ? (
                     <img src={item.image_url} alt="" className="truck-thumb" />
@@ -149,6 +228,15 @@ const MenuTab = () => {
           onSubmit={handleSubmit}
           onCancel={close}
           saving={saving}
+        />
+      )}
+
+      {showImport && (
+        <MenuCsvImport
+          truckId={truck.id}
+          existingItems={items}
+          onClose={() => setShowImport(false)}
+          onImported={fetchItems}
         />
       )}
     </div>
