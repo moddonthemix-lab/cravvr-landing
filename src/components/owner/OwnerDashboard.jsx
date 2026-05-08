@@ -56,18 +56,23 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
             {recentOrders.length === 0 ? (
               <p className="empty-state">No orders yet</p>
             ) : (
-              recentOrders.map(order => (
-                <div className="order-item" key={order.id}>
-                  <div className="order-info">
-                    <span className="order-id">{order.order_number}</span>
-                    <span className="order-customer">{order.customer_name || 'Customer'}</span>
+              recentOrders.map(order => {
+                const isAbandoned = order.status === 'cancelled' && order.payment_status === 'failed';
+                const displayStatus = isAbandoned ? 'abandoned' : order.status;
+                const displayLabel = isAbandoned ? 'abandoned cart' : order.status;
+                return (
+                  <div className="order-item" key={order.id}>
+                    <div className="order-info">
+                      <span className="order-id">{order.order_number}</span>
+                      <span className="order-customer">{order.customer_name || 'Customer'}</span>
+                    </div>
+                    <div className="order-details">
+                      <span className="order-total">${parseFloat(order.total).toFixed(2)}</span>
+                      <span className={`order-status ${displayStatus}`}>{displayLabel}</span>
+                    </div>
                   </div>
-                  <div className="order-details">
-                    <span className="order-total">${parseFloat(order.total).toFixed(2)}</span>
-                    <span className={`order-status ${order.status}`}>{order.status}</span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -673,6 +678,14 @@ const MenuTab = ({ menuItems, setMenuItems, refetchMenu, trucks, selectedTruckId
 const OrdersTab = ({ orders, loading }) => {
   const [filter, setFilter] = useState('all');
 
+  // Cancelled-with-failed-payment means the customer started online checkout
+  // but never submitted a card — display these as "Abandoned" so they don't
+  // get conflated with real owner/customer cancellations of placed orders.
+  const getDerivedStatus = (o) => {
+    if (o.status === 'cancelled' && o.payment_status === 'failed') return 'abandoned';
+    return o.status;
+  };
+
   const statusColors = {
     pending: '#6366f1',
     confirmed: '#3b82f6',
@@ -681,6 +694,7 @@ const OrdersTab = ({ orders, loading }) => {
     completed: '#64748b',
     cancelled: '#ef4444',
     rejected: '#ef4444',
+    abandoned: '#94a3b8',
   };
 
   const statusLabels = {
@@ -691,11 +705,12 @@ const OrdersTab = ({ orders, loading }) => {
     completed: 'Completed',
     cancelled: 'Cancelled',
     rejected: 'Rejected',
+    abandoned: 'Abandoned Cart',
   };
 
   const filteredOrders = filter === 'all'
     ? orders
-    : orders.filter(o => o.status === filter);
+    : orders.filter(o => getDerivedStatus(o) === filter);
 
   return (
     <div className="tab-content">
@@ -707,7 +722,7 @@ const OrdersTab = ({ orders, loading }) => {
       </div>
 
       <div className="orders-filters">
-        {['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed', 'rejected'].map(status => (
+        {['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed', 'rejected', 'abandoned'].map(status => (
           <button
             key={status}
             className={`filter-btn ${filter === status ? 'active' : ''}`}
@@ -716,7 +731,7 @@ const OrdersTab = ({ orders, loading }) => {
             {status === 'all' ? 'All Orders' : statusLabels[status]}
             {status !== 'all' && (
               <span className="filter-count" style={{ background: statusColors[status] }}>
-                {orders.filter(o => o.status === status).length}
+                {orders.filter(o => getDerivedStatus(o) === status).length}
               </span>
             )}
           </button>
@@ -743,7 +758,9 @@ const OrdersTab = ({ orders, loading }) => {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map(order => (
+              {filteredOrders.map(order => {
+                const derived = getDerivedStatus(order);
+                return (
                   <tr key={order.id}>
                     <td className="order-id-cell">{order.order_number}</td>
                     <td>{order.customer_name || 'Customer'}</td>
@@ -751,12 +768,13 @@ const OrdersTab = ({ orders, loading }) => {
                     <td className="order-total-cell">${parseFloat(order.total).toFixed(2)}</td>
                     <td className="order-time-cell">{formatRelativeTime(order.created_at, 'minutes')}</td>
                     <td>
-                      <span className="status-pill" style={{ background: `${statusColors[order.status]}20`, color: statusColors[order.status] }}>
-                        {statusLabels[order.status] || order.status}
+                      <span className="status-pill" style={{ background: `${statusColors[derived]}20`, color: statusColors[derived] }}>
+                        {statusLabels[derived] || derived}
                       </span>
                     </td>
                   </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
