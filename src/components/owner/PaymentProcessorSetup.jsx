@@ -1,23 +1,50 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../contexts/ToastContext';
+import { Icons } from '../common/Icons';
 import StripeOnboarding from './StripeOnboarding';
 import SquareOnboarding from './SquareOnboarding';
+import './PaymentProcessorSetup.css';
 
-/**
- * PaymentProcessorSetup
- *
- * Owner-facing block that lets the owner pick their POS (Stripe, Square,
- * or pickup-only) and renders the matching onboarding panel inline.
- * Clover slot is reserved but not yet wired.
- */
+const CHOICES = [
+  {
+    value: 'stripe',
+    name: 'Stripe',
+    sub: 'Best for new businesses — guided onboarding',
+    iconText: 'S',
+    brandClass: 'brand-stripe',
+  },
+  {
+    value: 'square',
+    name: 'Square',
+    sub: 'Use your existing Square account & POS',
+    iconText: 'sq',
+    brandClass: 'brand-square',
+  },
+  {
+    value: 'clover',
+    name: 'Clover',
+    sub: 'Coming soon',
+    iconText: 'cl',
+    brandClass: 'brand-clover',
+    disabled: true,
+  },
+  {
+    value: 'pickup',
+    name: 'Pay at Pickup',
+    sub: 'No online checkout — collect in person',
+    iconText: '$',
+    brandClass: 'brand-pickup',
+  },
+];
+
 const PaymentProcessorSetup = ({ truck, onUpdate }) => {
   const { showToast } = useToast();
   const [updating, setUpdating] = useState(false);
   const processor = truck.payment_processor || 'pickup';
 
   const setProcessor = async (next) => {
-    if (next === processor) return;
+    if (next === processor || updating) return;
     setUpdating(true);
     try {
       const { error } = await supabase
@@ -25,7 +52,8 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
         .update({ payment_processor: next })
         .eq('id', truck.id);
       if (error) throw error;
-      showToast(`Payment processor set to ${next}`, 'success');
+      const label = CHOICES.find((c) => c.value === next)?.name || next;
+      showToast(`Customer payments set to ${label}`, 'success');
       onUpdate?.();
     } catch (err) {
       showToast(err.message || 'Could not update processor', 'error');
@@ -34,42 +62,62 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
     }
   };
 
-  const Choice = ({ value, label, sub }) => (
-    <button
-      type="button"
-      className={`payment-option ${processor === value ? 'selected' : ''}`}
-      disabled={updating}
-      onClick={() => setProcessor(value)}
-    >
-      <span style={{ display: 'flex', flexDirection: 'column' }}>
-        <strong>{label}</strong>
-        {sub && <span className="payment-note" style={{ marginTop: 4 }}>{sub}</span>}
-      </span>
-    </button>
-  );
-
   return (
-    <div className="payment-processor-setup">
-      <h3>Customer Payments</h3>
-      <p className="payment-note">
-        Pick how customers pay you. You can change this later. Funds always go directly to you — Cravvr only charges your Cravvr Plus subscription.
-      </p>
-
-      <div className="payment-processor-choices" style={{ display: 'grid', gap: 8, margin: '12px 0' }}>
-        <Choice value="stripe" label="Stripe" sub="Connect a Stripe account (best for new businesses)" />
-        <Choice value="square" label="Square" sub="Use your existing Square account and POS" />
-        <Choice value="clover" label="Clover" sub="Coming soon" />
-        <Choice value="pickup" label="Pay at Pickup only" sub="No online checkout — collect in person" />
+    <div className="processor-setup">
+      <div className="processor-setup-header">
+        <h3>Customer Payments</h3>
+        <p>
+          Pick how customers pay you. Funds always go directly to you — Cravvr only charges your Cravvr Plus subscription.
+        </p>
       </div>
 
-      {processor === 'stripe' && <StripeOnboarding truck={truck} onUpdate={onUpdate} />}
-      {processor === 'square' && <SquareOnboarding truck={truck} onUpdate={onUpdate} />}
-      {processor === 'clover' && (
-        <p className="payment-note">Clover support is on the roadmap. Pick Stripe or Square for now.</p>
-      )}
-      {processor === 'pickup' && (
-        <p className="payment-note">Customers will see "Pay at Pickup" only.</p>
-      )}
+      <div className="processor-grid">
+        {CHOICES.map((choice) => {
+          const selected = processor === choice.value;
+          const disabled = choice.disabled || updating;
+          return (
+            <button
+              key={choice.value}
+              type="button"
+              className={[
+                'processor-tile',
+                selected ? 'is-selected' : '',
+                choice.disabled ? 'is-soon' : '',
+              ].filter(Boolean).join(' ')}
+              disabled={disabled}
+              onClick={() => !choice.disabled && setProcessor(choice.value)}
+              aria-pressed={selected}
+            >
+              <span className={`processor-tile-icon ${choice.brandClass}`}>
+                {choice.iconText}
+              </span>
+              <span className="processor-tile-body">
+                <span className="processor-tile-name">
+                  {choice.name}
+                  {choice.disabled && <span className="processor-tile-soon-tag">Soon</span>}
+                </span>
+                <span className="processor-tile-sub">{choice.sub}</span>
+              </span>
+              {selected && (
+                <span className="processor-tile-check" aria-hidden="true">
+                  {Icons.check}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="processor-detail">
+        {processor === 'stripe' && <StripeOnboarding truck={truck} onUpdate={onUpdate} />}
+        {processor === 'square' && <SquareOnboarding truck={truck} onUpdate={onUpdate} />}
+        {processor === 'clover' && (
+          <p className="processor-empty-state">Clover support is on the roadmap. Pick Stripe or Square for now.</p>
+        )}
+        {processor === 'pickup' && (
+          <p className="processor-empty-state">Customers will see “Pay at Pickup” only — no online checkout for this truck.</p>
+        )}
+      </div>
     </div>
   );
 };

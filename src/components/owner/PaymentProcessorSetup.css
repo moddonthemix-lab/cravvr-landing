@@ -1,0 +1,165 @@
+/* PaymentProcessorSetup — owner-facing POS chooser. Matches StripeOnboarding card aesthetic. */
+
+.processor-setup {
+  margin-top: 4px;
+}
+
+.processor-setup-header {
+  margin-bottom: 12px;
+}
+
+.processor-setup-header h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+.processor-setup-header p {
+  margin: 0;
+  font-size: 0.825rem;
+  line-height: 1.45;
+  color: var(--text-muted, #6b7280);
+}
+
+.processor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 14px 0 16px;
+}
+
+@media (max-width: 480px) {
+  .processor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.processor-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background: var(--card, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition, 0.2s ease),
+              background var(--transition, 0.2s ease),
+              box-shadow var(--transition, 0.2s ease),
+              transform var(--transition, 0.2s ease);
+  position: relative;
+  font-family: inherit;
+  width: 100%;
+}
+
+.processor-tile:hover:not(:disabled):not(.is-selected) {
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
+  transform: translateY(-1px);
+}
+
+.processor-tile.is-selected {
+  border-color: var(--primary, #e11d48);
+  background: var(--primary-light, #ffe4e6);
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.08);
+}
+
+.processor-tile:disabled,
+.processor-tile.is-soon {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.processor-tile-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  background: var(--bg-alt, #f3f4f6);
+  color: var(--text, #0f172a);
+}
+
+.processor-tile.is-selected .processor-tile-icon {
+  background: var(--primary, #e11d48);
+  color: white;
+}
+
+.processor-tile-icon.brand-stripe { background: #635bff; color: white; }
+.processor-tile-icon.brand-square { background: #006aff; color: white; }
+.processor-tile-icon.brand-clover { background: #00ad6f; color: white; }
+.processor-tile-icon.brand-pickup { background: #f59e0b; color: white; }
+
+.processor-tile-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.processor-tile-name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+  margin-bottom: 2px;
+}
+
+.processor-tile-sub {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-muted, #6b7280);
+}
+
+.processor-tile-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary, #e11d48);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.processor-tile-check svg {
+  width: 10px;
+  height: 10px;
+}
+
+.processor-tile-soon-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--bg-alt, #f3f4f6);
+  color: var(--text-muted, #6b7280);
+  border-radius: 4px;
+}
+
+.processor-detail {
+  margin-top: 8px;
+}
+
+.processor-empty-state {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  font-size: 0.825rem;
+  line-height: 1.45;
+  color: var(--text-muted, #6b7280);
+  background: var(--bg-alt, #f3f4f6);
+  border-radius: var(--radius-md, 12px);
+}
