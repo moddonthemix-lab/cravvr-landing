@@ -37,6 +37,7 @@ import TruckApproved, { subject as truckApprovedSubject } from '../_shared/email
 import AbandonedCart, { subject as abandonedCartSubject } from '../_shared/emails/abandoned-cart.tsx';
 import FirstReorderNudge, { subject as firstReorderSubject } from '../_shared/emails/first-reorder-nudge.tsx';
 import WinBack, { subject as winBackSubject } from '../_shared/emails/win-back.tsx';
+import AdminActionNotification, { subject as adminActionSubject } from '../_shared/emails/admin-action-notification.tsx';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@cravvr.com';
@@ -58,6 +59,7 @@ const TEMPLATES: Record<string, { Component: any; subject: (p: any) => string }>
   'abandoned-cart': { Component: AbandonedCart, subject: abandonedCartSubject },
   'first-reorder-nudge': { Component: FirstReorderNudge, subject: firstReorderSubject },
   'win-back': { Component: WinBack, subject: winBackSubject },
+  'admin-action-notification': { Component: AdminActionNotification, subject: adminActionSubject },
 };
 
 interface DirectRequest {

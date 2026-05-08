@@ -93,6 +93,19 @@ export const sendTruckApprovedEmail = (email, truckData) =>
     ownerGuideLink: `${window.location.origin}/owner-guide`,
   })
 
+/**
+ * Notify a truck owner about an administrative action on their truck.
+ * action: 'suspended' | 'deleted' | 'restored' | 'transferred' | 'received'
+ */
+export const sendAdminActionEmail = (email, { ownerName, truckName, action, reason }) =>
+  sendEmail(email, 'admin-action-notification', {
+    ownerName,
+    truckName,
+    action,
+    reason: reason || null,
+    dashboardLink: `${window.location.origin}/owner`,
+  })
+
 export const getStatusEmailData = (status) => {
   const statusConfig = {
     confirmed: {
