@@ -6,9 +6,27 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@13.0.0?target=deno';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' });
-const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
+// We have two Stripe webhook endpoints pointing at this function:
+//   1. Platform webhook       — payment_intent.*, charge.refunded
+//   2. Connect webhook        — account.updated (events about connected accounts)
+// Each has its own signing secret. We try both.
+const platformSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') || '';
+const connectSecret = Deno.env.get('STRIPE_CONNECT_WEBHOOK_SECRET') || '';
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+async function constructEventWithEitherSecret(body: string, signature: string) {
+  const secrets = [platformSecret, connectSecret].filter(Boolean);
+  let lastErr: unknown;
+  for (const secret of secrets) {
+    try {
+      return await stripe.webhooks.constructEventAsync(body, signature, secret);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('No webhook secret configured');
+}
 
 serve(async (req) => {
   const signature = req.headers.get('stripe-signature');
@@ -18,7 +36,7 @@ serve(async (req) => {
 
   try {
     const body = await req.text();
-    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    const event = await constructEventWithEitherSecret(body, signature);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     switch (event.type) {
