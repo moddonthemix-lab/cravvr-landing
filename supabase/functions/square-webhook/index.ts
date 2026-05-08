@@ -48,6 +48,47 @@ serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+  // Replay protection: reject events whose `created_at` is too old. Square
+  // events include an ISO `created_at`; if it's missing we skip the check
+  // rather than fail closed (verified signature is still required).
+  const REPLAY_WINDOW_MS = 5 * 60 * 1000;
+  if (event.created_at) {
+    const eventTime = Date.parse(event.created_at);
+    if (Number.isFinite(eventTime) && Math.abs(Date.now() - eventTime) > REPLAY_WINDOW_MS) {
+      console.warn('Square webhook: rejecting stale event', event.event_id, event.created_at);
+      return new Response('Event too old', { status: 400 });
+    }
+  }
+
+  // Dedup: try to claim this event_id in the ledger. ON CONFLICT means we've
+  // already processed it (Square retransmits) — return 200 so it stops retrying.
+  if (event.event_id) {
+    const { error: dupError, data: claimed } = await supabase
+      .from('processor_webhook_events')
+      .insert({
+        processor: 'square',
+        event_id: event.event_id,
+        event_type: event.type ?? null,
+        event_created_at: event.created_at ?? null,
+      })
+      .select('event_id')
+      .maybeSingle();
+    if (dupError) {
+      // 23505 unique_violation = already processed; anything else is a real error.
+      // PostgREST surfaces unique_violation as code '23505' on the error object.
+      const code = (dupError as any)?.code;
+      if (code === '23505') {
+        return new Response('ok', { status: 200 });
+      }
+      console.error('Square webhook: ledger insert failed', dupError);
+      // Fall through and process anyway — better to risk a double-apply than
+      // to drop a legitimate event. The replay protection above bounds this.
+    } else if (!claimed) {
+      // No row returned and no error — treat as duplicate to be safe.
+      return new Response('ok', { status: 200 });
+    }
+  }
+
   try {
     switch (event.type) {
       case 'payment.updated': {

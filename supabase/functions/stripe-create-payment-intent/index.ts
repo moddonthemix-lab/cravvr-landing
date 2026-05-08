@@ -4,6 +4,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@13.0.0?target=deno';
+import { corsHeaders } from '../_shared/cors.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' });
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -11,14 +12,9 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const PLATFORM_FEE_PERCENT = 5; // 5% platform fee
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders(req) });
   }
 
   try {
@@ -33,6 +29,29 @@ serve(async (req) => {
     const { order_id, truck_id, amount_cents } = await req.json();
     if (!order_id || !truck_id || !amount_cents) {
       throw new Error('order_id, truck_id, and amount_cents are required');
+    }
+
+    // Verify the caller is the customer who placed this order, and that the
+    // order matches the truck and amount being charged. Without these checks
+    // any authenticated user could create a payment intent against an
+    // arbitrary order — funds would still settle to the right truck via
+    // Connect, but the side effects (DB writes, status updates) would be
+    // attacker-controlled.
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('customer_id, truck_id, total, payment_status')
+      .eq('id', order_id)
+      .single();
+    if (orderError || !order) throw new Error('Order not found');
+    if (order.customer_id !== user.id) throw new Error('Unauthorized: not your order');
+    if (order.truck_id !== truck_id) throw new Error('truck_id does not match order');
+    if (order.payment_status === 'paid' || order.payment_status === 'refunded') {
+      throw new Error(`Order is already ${order.payment_status}`);
+    }
+    // Amount comes from the client; refuse if it doesn't match the server-side total.
+    const expected_cents = Math.round(Number(order.total) * 100);
+    if (expected_cents !== amount_cents) {
+      throw new Error('amount_cents does not match order total');
     }
 
     // Get truck's Stripe account
@@ -86,12 +105,12 @@ serve(async (req) => {
         client_secret: paymentIntent.client_secret,
         payment_intent_id: paymentIntent.id,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 400, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

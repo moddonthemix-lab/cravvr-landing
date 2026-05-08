@@ -47,7 +47,8 @@ serve(async (req) => {
     }
 
     const env = getSquareEnv();
-    const tokens = await exchangeOAuthCode(code, env);
+    const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/square-oauth-callback`;
+    const tokens = await exchangeOAuthCode(code, env, callbackUrl);
     const locationId = await fetchPrimaryLocation(tokens.access_token, env);
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

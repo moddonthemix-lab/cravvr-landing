@@ -1,22 +1,31 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-import { transformTruck, fetchNearbyTrucks } from '../services/trucks';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import {
+  transformTruck,
+  fetchTrucks as fetchTrucksFromService,
+  fetchTruckById,
+  fetchNearbyTrucks,
+  resolveTruckBySlug,
+} from '../services/trucks';
 
 const TruckContext = createContext({});
+const CACHE_TIMEOUT_MS = 5 * 60 * 1000;
 
 export const TruckProvider = ({ children }) => {
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastFetched, setLastFetched] = useState(null);
   const [nearbyTrucks, setNearbyTrucks] = useState([]);
   const [userCoords, setUserCoords] = useState(null);
+  // useRef so cache timestamps don't trigger renders on update.
+  const lastFetchedRef = useRef(null);
+  // Per-id cache of trucks fetched outside the list (e.g. direct deep links).
+  // Stays in sync with `trucks` for entries that exist there too.
+  const detailCacheRef = useRef(new Map());
 
-  // Fetch trucks from Supabase
+  // Fetch the full list. Cached for CACHE_TIMEOUT_MS unless forceRefresh.
   const fetchTrucks = useCallback(async (forceRefresh = false) => {
-    // Use cache if data was fetched within last 5 minutes and not forcing refresh
-    const cacheTimeout = 5 * 60 * 1000; // 5 minutes
-    if (!forceRefresh && lastFetched && Date.now() - lastFetched < cacheTimeout && trucks.length > 0) {
+    const last = lastFetchedRef.current;
+    if (!forceRefresh && last && Date.now() - last < CACHE_TIMEOUT_MS && trucks.length > 0) {
       return trucks;
     }
 
@@ -24,19 +33,11 @@ export const TruckProvider = ({ children }) => {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('food_trucks')
-        .select('*');
-
-      if (fetchError) throw fetchError;
-
-      if (data) {
-        const mappedTrucks = data.map(t => transformTruck(t, userCoords));
-        setTrucks(mappedTrucks);
-        setLastFetched(Date.now());
-        return mappedTrucks;
-      }
-      return [];
+      const mapped = await fetchTrucksFromService(userCoords);
+      setTrucks(mapped);
+      lastFetchedRef.current = Date.now();
+      mapped.forEach((t) => detailCacheRef.current.set(t.id, t));
+      return mapped;
     } catch (err) {
       console.error('Error fetching trucks:', err);
       setError(err.message || 'Failed to fetch trucks');
@@ -44,54 +45,85 @@ export const TruckProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [lastFetched, trucks, userCoords]);
+  }, [trucks, userCoords]);
 
   // Initial fetch on mount
   useEffect(() => {
     fetchTrucks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Get a single truck by ID
+  // Synchronous lookup against in-memory cache. Does NOT trigger a fetch.
   const getTruckById = useCallback((id) => {
-    return trucks.find(t => t.id === id) || null;
+    if (!id) return null;
+    return (
+      trucks.find((t) => t.id === id) ||
+      detailCacheRef.current.get(id) ||
+      null
+    );
   }, [trucks]);
 
-  // Get trucks filtered by criteria
+  // Async loader: returns from cache if present, otherwise fetches by id and
+  // caches. Use this for routes like /truck/:id and any deep link.
+  const loadTruckById = useCallback(async (id) => {
+    if (!id) return null;
+    const cached = trucks.find((t) => t.id === id) || detailCacheRef.current.get(id);
+    if (cached) return cached;
+    const truck = await fetchTruckById(id);
+    if (truck) detailCacheRef.current.set(truck.id, truck);
+    return truck;
+  }, [trucks]);
+
+  // Async loader for slugs (current or historical). Returns the canonical
+  // truck; callers can compare `slug` vs `truck.slug` to decide whether to
+  // redirect to a canonical URL.
+  const loadTruckBySlug = useCallback(async (slug) => {
+    if (!slug) return null;
+    const cached = trucks.find((t) => t.slug === slug);
+    if (cached) return cached;
+    const truck = await resolveTruckBySlug(slug);
+    if (truck) detailCacheRef.current.set(truck.id, truck);
+    return truck;
+  }, [trucks]);
+
+  // Drop a truck from the cache. Owner-side mutations should call this so
+  // the next list/detail read re-fetches.
+  const invalidateTruck = useCallback((id) => {
+    if (!id) return;
+    detailCacheRef.current.delete(id);
+    setTrucks((prev) => prev.filter((t) => t.id !== id));
+    lastFetchedRef.current = null;
+  }, []);
+
+  // Filtered list (in-memory).
   const getFilteredTrucks = useCallback((filters = {}) => {
     let result = [...trucks];
 
     if (filters.isOpen !== undefined) {
-      result = result.filter(t => t.isOpen === filters.isOpen);
+      result = result.filter((t) => t.isOpen === filters.isOpen);
     }
-
     if (filters.cuisine) {
-      result = result.filter(t =>
+      result = result.filter((t) =>
         t.cuisine.toLowerCase().includes(filters.cuisine.toLowerCase())
       );
     }
-
     if (filters.featured !== undefined) {
-      result = result.filter(t => t.featured === filters.featured);
+      result = result.filter((t) => t.featured === filters.featured);
     }
-
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      result = result.filter(t =>
+      result = result.filter((t) =>
         t.name.toLowerCase().includes(searchLower) ||
         t.cuisine.toLowerCase().includes(searchLower) ||
         t.description.toLowerCase().includes(searchLower)
       );
     }
-
     return result;
   }, [trucks]);
 
-  // Force refresh trucks data
-  const refresh = useCallback(() => {
-    return fetchTrucks(true);
-  }, [fetchTrucks]);
+  const refresh = useCallback(() => fetchTrucks(true), [fetchTrucks]);
 
-  // Load nearby trucks using PostGIS spatial query
+  // PostGIS nearby (no list mutation).
   const loadNearbyTrucks = useCallback(async (lat, lng, radiusMiles = 10) => {
     try {
       const result = await fetchNearbyTrucks(lat, lng, radiusMiles);
@@ -103,7 +135,7 @@ export const TruckProvider = ({ children }) => {
     }
   }, []);
 
-  // Set user location and fetch nearby trucks as the primary truck list
+  // Set user location and refresh the primary list using nearby+distance.
   const setLocationAndFetch = useCallback(async (lat, lng, radiusMiles = 15) => {
     setUserCoords({ lat, lng });
     setLoading(true);
@@ -112,19 +144,16 @@ export const TruckProvider = ({ children }) => {
       const result = await fetchNearbyTrucks(lat, lng, radiusMiles);
       setTrucks(result);
       setNearbyTrucks(result);
-      setLastFetched(Date.now());
+      lastFetchedRef.current = Date.now();
+      result.forEach((t) => detailCacheRef.current.set(t.id, t));
       return result;
     } catch (err) {
-      console.error('Nearby fetch failed, falling back:', err);
-      // Fallback to all trucks with distance calculation
+      console.error('Nearby fetch failed, falling back to fetchTrucks:', err);
       try {
-        const { data, error: fetchError } = await supabase
-          .from('food_trucks')
-          .select('*');
-        if (fetchError) throw fetchError;
-        const mapped = data?.map(t => transformTruck(t, { lat, lng })) || [];
+        const mapped = await fetchTrucksFromService({ lat, lng });
         setTrucks(mapped);
-        setLastFetched(Date.now());
+        lastFetchedRef.current = Date.now();
+        mapped.forEach((t) => detailCacheRef.current.set(t.id, t));
         return mapped;
       } catch (fallbackErr) {
         setError(fallbackErr.message || 'Failed to fetch trucks');
@@ -142,6 +171,9 @@ export const TruckProvider = ({ children }) => {
     fetchTrucks,
     refresh,
     getTruckById,
+    loadTruckById,
+    loadTruckBySlug,
+    invalidateTruck,
     getFilteredTrucks,
     nearbyTrucks,
     loadNearbyTrucks,

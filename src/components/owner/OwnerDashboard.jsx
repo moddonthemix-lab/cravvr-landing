@@ -16,6 +16,7 @@ import KitchenDisplay from './KitchenDisplay';
 import StripeOnboarding from './StripeOnboarding';
 import PaymentProcessorSetup from './PaymentProcessorSetup';
 import PaymentsDashboard from './PaymentsDashboard';
+import CravvrPlusBilling from './CravvrPlusBilling';
 import './OwnerDashboard.css';
 import './KitchenDisplay.css';
 import './StripeOnboarding.css';
@@ -425,7 +426,11 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
               <div className="truck-payment-setup" style={{ padding: '12px 16px', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
                 <PaymentProcessorSetup
                   truck={truck}
-                  onUpdate={() => onTruckUpdate && onTruckUpdate(truck.id, {})}
+                  onUpdate={(patch) =>
+                    setTrucks(prev =>
+                      prev.map(t => (t.id === truck.id ? { ...t, ...(patch || {}) } : t))
+                    )
+                  }
                 />
               </div>
             </div>
@@ -1163,6 +1168,8 @@ const SettingsTab = () => {
       </div>
 
       <div className="settings-grid">
+        <CravvrPlusBilling />
+
         <div className="card">
           <div className="card-header">
             <h3>Profile Information</h3>

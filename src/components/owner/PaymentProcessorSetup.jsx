@@ -4,6 +4,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { Icons } from '../common/Icons';
 import StripeOnboarding from './StripeOnboarding';
 import SquareOnboarding from './SquareOnboarding';
+import { useCravvrSubscription } from '../../hooks/useCravvrSubscription';
 import './PaymentProcessorSetup.css';
 
 const CHOICES = [
@@ -40,11 +41,22 @@ const CHOICES = [
 
 const PaymentProcessorSetup = ({ truck, onUpdate }) => {
   const { showToast } = useToast();
+  const { isPlus, loading: subLoading, openCheckout } = useCravvrSubscription();
   const [updating, setUpdating] = useState(false);
   const processor = truck.payment_processor || 'pickup';
+  // Online-checkout processors require an active Cravvr Plus subscription.
+  const requiresPlus = (code) => code === 'stripe' || code === 'square' || code === 'clover';
 
   const setProcessor = async (next) => {
     if (next === processor || updating) return;
+    if (requiresPlus(next) && !isPlus) {
+      const ok = window.confirm(
+        'Online card payments require Cravvr Plus ($29/mo). Start a 14-day free trial now?',
+      );
+      if (!ok) return;
+      try { await openCheckout('plus'); } catch (e) { showToast(e.message || 'Could not start checkout', 'error'); }
+      return;
+    }
     setUpdating(true);
     try {
       const { error } = await supabase
@@ -54,7 +66,7 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
       if (error) throw error;
       const label = CHOICES.find((c) => c.value === next)?.name || next;
       showToast(`Customer payments set to ${label}`, 'success');
-      onUpdate?.();
+      onUpdate?.({ payment_processor: next });
     } catch (err) {
       showToast(err.message || 'Could not update processor', 'error');
     } finally {
@@ -74,6 +86,7 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
       <div className="processor-grid">
         {CHOICES.map((choice) => {
           const selected = processor === choice.value;
+          const needsPlus = requiresPlus(choice.value) && !isPlus && !subLoading;
           const disabled = choice.disabled || updating;
           return (
             <button
@@ -83,6 +96,7 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
                 'processor-tile',
                 selected ? 'is-selected' : '',
                 choice.disabled ? 'is-soon' : '',
+                needsPlus ? 'is-locked' : '',
               ].filter(Boolean).join(' ')}
               disabled={disabled}
               onClick={() => !choice.disabled && setProcessor(choice.value)}
@@ -95,6 +109,7 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
                 <span className="processor-tile-name">
                   {choice.name}
                   {choice.disabled && <span className="processor-tile-soon-tag">Soon</span>}
+                  {needsPlus && <span className="processor-tile-plus-tag">Plus</span>}
                 </span>
                 <span className="processor-tile-sub">{choice.sub}</span>
               </span>

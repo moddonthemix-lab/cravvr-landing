@@ -69,7 +69,7 @@ async function stitchVisitorToUser(
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders(req) });
   }
 
   try {
@@ -85,7 +85,7 @@ serve(async (req) => {
       );
       return new Response(
         JSON.stringify({ ok: true, stitched: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -149,13 +149,13 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ ok: true, count: rows.length }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch (err) {
     console.error('analytics-collect error:', err);
     return new Response(
       JSON.stringify({ error: err.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 400, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

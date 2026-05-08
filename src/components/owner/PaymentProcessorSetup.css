@@ -150,6 +150,27 @@
   border-radius: 4px;
 }
 
+.processor-tile-plus-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--primary, #e11d48);
+  color: white;
+  border-radius: 4px;
+}
+
+.processor-tile.is-locked {
+  opacity: 0.85;
+}
+
+.processor-tile.is-locked:hover:not(:disabled) {
+  border-color: var(--primary, #e11d48);
+}
+
 .processor-detail {
   margin-top: 8px;
 }

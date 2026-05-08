@@ -97,6 +97,23 @@ export const fetchTruckById = async (id) => {
 };
 
 /**
+ * Resolve a current OR historical slug to the live truck. Wraps the
+ * `resolve_truck_slug` RPC (migration 035_slug_history). Returns null when no
+ * truck is found.
+ *
+ * Callers that received a non-canonical slug (i.e. an old slug that has since
+ * been renamed) should redirect to `truck.slug` to canonicalize the URL.
+ */
+export const resolveTruckBySlug = async (slug) => {
+  if (!slug) return null;
+  const { data, error } = await supabase
+    .rpc('resolve_truck_slug', { p_slug: slug });
+  if (error) throw error;
+  if (!data || !data.id) return null;
+  return transformTruck(data);
+};
+
+/**
  * Fetch trucks by owner ID
  */
 export const fetchTrucksByOwner = async (ownerId) => {

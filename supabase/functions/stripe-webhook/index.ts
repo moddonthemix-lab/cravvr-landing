@@ -134,6 +134,64 @@ serve(async (req) => {
           .eq('stripe_account_id', account.id);
         break;
       }
+
+      // Cravvr Plus subscription lifecycle. Stripe sends these for any change
+      // to the subscription state — trial start, activation, payment fail,
+      // cancel, plan change. We mirror the relevant fields onto our
+      // cravvr_subscriptions row so has_active_plus() reads correct state.
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const sub: any = event.data.object;
+        const customerId: string = sub.customer;
+        const priceId: string | undefined = sub.items?.data?.[0]?.price?.id;
+
+        // Resolve plan_code from the price id we have on file
+        let planCode: string | null = null;
+        if (priceId) {
+          const { data: plan } = await supabase
+            .from('cravvr_plans')
+            .select('code')
+            .eq('stripe_price_id', priceId)
+            .maybeSingle();
+          planCode = plan?.code ?? null;
+        }
+        // 'deleted' means the subscription is no longer active — flip back to free
+        const effectivePlanCode = event.type === 'customer.subscription.deleted'
+          ? 'free'
+          : (planCode || 'plus');
+
+        const update: Record<string, unknown> = {
+          plan_code: effectivePlanCode,
+          status: event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
+          stripe_subscription_id: sub.id,
+          current_period_start: sub.current_period_start ? new Date(sub.current_period_start * 1000).toISOString() : null,
+          current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+          cancel_at_period_end: !!sub.cancel_at_period_end,
+          trial_end: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
+          canceled_at: sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null,
+        };
+
+        await supabase
+          .from('cravvr_subscriptions')
+          .update(update)
+          .eq('stripe_customer_id', customerId);
+        break;
+      }
+
+      // Failed renewal payment. Stripe will retry per dunning settings; we
+      // just reflect the state. Customers are notified by Stripe directly.
+      case 'invoice.payment_failed': {
+        const invoice: any = event.data.object;
+        const customerId: string = invoice.customer;
+        if (customerId) {
+          await supabase
+            .from('cravvr_subscriptions')
+            .update({ status: 'past_due' })
+            .eq('stripe_customer_id', customerId);
+        }
+        break;
+      }
     }
 
     return new Response(JSON.stringify({ received: true }), {

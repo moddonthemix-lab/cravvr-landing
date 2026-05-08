@@ -6,17 +6,13 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { squareBaseUrl, type SquareEnvironment } from '../_shared/square.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) });
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -31,6 +27,24 @@ serve(async (req) => {
     const { order_id, truck_id, amount_cents, source_id, verification_token, idempotency_key } = await req.json();
     if (!order_id || !truck_id || !amount_cents || !source_id) {
       throw new Error('order_id, truck_id, amount_cents, and source_id are required');
+    }
+
+    // Verify caller owns the order, the order matches truck/amount, and isn't
+    // already paid. Mirrors stripe-create-payment-intent.
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('customer_id, truck_id, total, payment_status')
+      .eq('id', order_id)
+      .single();
+    if (orderError || !order) throw new Error('Order not found');
+    if (order.customer_id !== user.id) throw new Error('Unauthorized: not your order');
+    if (order.truck_id !== truck_id) throw new Error('truck_id does not match order');
+    if (order.payment_status === 'paid' || order.payment_status === 'refunded') {
+      throw new Error(`Order is already ${order.payment_status}`);
+    }
+    const expected_cents = Math.round(Number(order.total) * 100);
+    if (expected_cents !== amount_cents) {
+      throw new Error('amount_cents does not match order total');
     }
 
     // Look up truck's Square credentials (service role bypasses RLS so we can
@@ -109,12 +123,12 @@ serve(async (req) => {
         status: dbStatus,
         receipt_url: payment.receipt_url || null,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } },
     );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: (error as Error).message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { status: 400, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } },
     );
   }
 });

@@ -133,7 +133,7 @@ async function renderAndSend(
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders(req) });
   }
 
   try {
@@ -149,7 +149,7 @@ serve(async (req) => {
         // Don't block auth flow if email is misconfigured.
         console.warn('RESEND_API_KEY not set — skipping auth-hook email');
         return new Response(JSON.stringify({ success: true, warning: 'email skipped' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         });
       }
 
@@ -186,7 +186,7 @@ serve(async (req) => {
         console.error('Auth-hook email failed:', e);
       }
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -197,13 +197,13 @@ serve(async (req) => {
     }
     const result = await renderAndSend(to, template, data || {}, subject);
     return new Response(JSON.stringify({ success: true, ...result }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Email send error:', error);
     return new Response(
       JSON.stringify({ error: error.message || String(error) }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 400, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -83,7 +83,7 @@ export async function verifyOAuthState(state: string): Promise<OAuthState> {
 }
 
 // Token exchange against Square's OAuth endpoint
-export async function exchangeOAuthCode(code: string, env: SquareEnvironment): Promise<{
+export async function exchangeOAuthCode(code: string, env: SquareEnvironment, redirectUri: string): Promise<{
   access_token: string;
   refresh_token: string;
   expires_at: string; // ISO
@@ -100,6 +100,7 @@ export async function exchangeOAuthCode(code: string, env: SquareEnvironment): P
       client_secret: getSquareAppSecret(),
       grant_type: 'authorization_code',
       code,
+      redirect_uri: redirectUri,
     }),
   });
   if (!resp.ok) {

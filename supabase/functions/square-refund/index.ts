@@ -1,21 +1,18 @@
 // supabase/functions/square-refund/index.ts
-// Refund a Square payment for an order. Either the truck owner OR the
-// customer who placed the order can trigger this (matches Stripe parity).
+// Refund a Square payment for an order. Owner-only: only the truck owner can
+// issue a refund (matches stripe-refund). Customers cancel orders via the
+// order RPC; refunds are an owner-side action.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { squareBaseUrl, type SquareEnvironment } from '../_shared/square.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) });
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -39,20 +36,15 @@ serve(async (req) => {
       .single();
     if (paymentError || !payment) throw new Error('No successful Square payment found for this order');
 
-    // Authorization: owner of the truck OR customer who placed the order
-    const { data: order } = await supabase
-      .from('orders')
-      .select('customer_id')
-      .eq('id', order_id)
-      .single();
+    // Authorization: owner of the truck only (matches stripe-refund)
     const { data: truck } = await supabase
       .from('food_trucks')
       .select('owner_id, square_access_token, square_environment')
       .eq('id', payment.truck_id)
       .single();
-    if (!order || !truck) throw new Error('Order or truck not found');
-    if (order.customer_id !== user.id && truck.owner_id !== user.id) {
-      throw new Error('Unauthorized: not the truck owner or order customer');
+    if (!truck) throw new Error('Truck not found');
+    if (truck.owner_id !== user.id) {
+      throw new Error('Unauthorized: not the truck owner');
     }
     if (!truck.square_access_token) throw new Error('Square access token missing on truck');
 
@@ -97,12 +89,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ refund_id: result.refund.id, status: 'refunded' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } },
     );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: (error as Error).message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { status: 400, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } },
     );
   }
 });
