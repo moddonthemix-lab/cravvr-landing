@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
+import { fetchAdminAuditLog, fetchProfilesByIds } from '../../../services/admin';
 import { Icons } from '../../../components/common/Icons';
 
 const PAGE_SIZE = 25;
@@ -17,27 +17,15 @@ const AuditTab = () => {
   const fetchPage = async (p) => {
     setLoading(true);
     try {
-      const from = p * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-      const { data, error } = await supabase
-        .from('admin_audit_log')
-        .select('*')
-        .eq('entity_type', 'food_truck')
-        .eq('entity_id', truck.id)
-        .order('created_at', { ascending: false })
-        .range(from, to);
-      if (error) throw error;
-      setRows(data || []);
-      setHasMore((data || []).length === PAGE_SIZE);
+      const data = await fetchAdminAuditLog(truck.id, { page: p, pageSize: PAGE_SIZE });
+      setRows(data);
+      setHasMore(data.length === PAGE_SIZE);
 
-      const adminIds = [...new Set((data || []).map(r => r.admin_id))];
+      const adminIds = [...new Set(data.map(r => r.admin_id))];
       if (adminIds.length > 0) {
-        const { data: profs } = await supabase
-          .from('profiles')
-          .select('id, name, email')
-          .in('id', adminIds);
+        const profs = await fetchProfilesByIds(adminIds);
         const map = {};
-        (profs || []).forEach(p => { map[p.id] = p; });
+        profs.forEach(pr => { map[pr.id] = pr; });
         setAdmins(prev => ({ ...prev, ...map }));
       }
     } catch (err) {

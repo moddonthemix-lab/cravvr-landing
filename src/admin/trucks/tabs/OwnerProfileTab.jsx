@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
+import { adminUpdateOwner, fetchOwnerForAdmin } from '../../../services/admin';
 import { Icons } from '../../../components/common/Icons';
 import { useToast } from '../../../contexts/ToastContext';
 
@@ -23,12 +23,7 @@ const OwnerProfileTab = () => {
     if (!truck.owner_id) { setLoading(false); return; }
     setLoading(true);
     try {
-      const { data, error: err } = await supabase
-        .from('owners')
-        .select('business_name, tax_id, business_address, phone, notification_preferences')
-        .eq('id', truck.owner_id)
-        .maybeSingle();
-      if (err) throw err;
+      const data = await fetchOwnerForAdmin(truck.owner_id);
       setForm({
         business_name: data?.business_name || '',
         tax_id: data?.tax_id || '',
@@ -51,18 +46,13 @@ const OwnerProfileTab = () => {
     setSaving(true);
     setError('');
     try {
-      const { error: rpcErr } = await supabase.rpc('admin_update_owner', {
-        p_id: truck.owner_id,
-        p_patch: {
-          business_name: form.business_name,
-          tax_id: form.tax_id,
-          business_address: form.business_address,
-          phone: form.phone,
-          notification_preferences: form.notification_preferences,
-        },
-        p_reason: reason || null,
-      });
-      if (rpcErr) throw rpcErr;
+      await adminUpdateOwner(truck.owner_id, {
+        business_name: form.business_name,
+        tax_id: form.tax_id,
+        business_address: form.business_address,
+        phone: form.phone,
+        notification_preferences: form.notification_preferences,
+      }, reason || null);
       showToast('Owner profile saved', 'success');
       setReason('');
     } catch (err) {

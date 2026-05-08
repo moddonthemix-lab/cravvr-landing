@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { searchOwnerProfiles } from '../../../services/admin';
 import { Icons } from '../../../components/common/Icons';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 
@@ -16,14 +16,7 @@ const OwnerReassignModal = ({ truck, onClose, onTransferred }) => {
     const handle = setTimeout(async () => {
       setSearching(true);
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, name, email, role')
-          .eq('role', 'owner')
-          .or(`email.ilike.%${query}%,name.ilike.%${query}%`)
-          .limit(20);
-        if (error) throw error;
-        setResults(data || []);
+        setResults(await searchOwnerProfiles(query));
       } catch (err) {
         console.error(err);
         setResults([]);

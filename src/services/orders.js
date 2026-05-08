@@ -221,6 +221,54 @@ export const fetchOrderForCustomer = async (orderId) => {
 };
 
 /**
+ * Fetch the recent orders for an owner across all their trucks. Used by
+ * OwnerDashboard's overview/orders tab. Adds derived `customer_name` and
+ * `item_count` (from `order_items(count)`).
+ */
+export const fetchOwnerOrders = async (truckIds, { limit = 500 } = {}) => {
+  if (!truckIds?.length) return [];
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      order_items(count),
+      customers!customer_id(profiles(name))
+    `)
+    .in('truck_id', truckIds)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data || []).map((order) => ({
+    ...order,
+    customer_name: order.customers?.profiles?.name || 'Customer',
+    item_count: order.order_items?.[0]?.count || 0,
+  }));
+};
+
+/**
+ * Fetch a single order with the customer name + item count attached, the
+ * shape the owner dashboard's realtime subscription expects.
+ */
+export const fetchOwnerOrderById = async (orderId) => {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      order_items(count),
+      customers!customer_id(profiles(name))
+    `)
+    .eq('id', orderId)
+    .single();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    ...data,
+    customer_name: data.customers?.profiles?.name || 'Customer',
+    item_count: data.order_items?.[0]?.count || 0,
+  };
+};
+
+/**
  * Fetch a single order with the customer name attached, for owner-side
  * surfaces (Kitchen Display, etc.). Joins through customers→profiles using
  * the `customers_select_via_order` and `profiles_select_via_order` RLS
@@ -272,6 +320,31 @@ export const cancelOrder = async (orderId) => {
 };
 
 /**
+ * Fetch a customer's full order history with line items and truck name.
+ * Powers the orders tab in CustomerProfile. Returns the raw rows augmented
+ * with derived `truck_name`, `truck_image`, `items`, and `item_count`.
+ */
+export const fetchCustomerOrdersDetailed = async (customerId) => {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      food_trucks:truck_id(name, image_url),
+      order_items(menu_item_id, name, quantity, price)
+    `)
+    .eq('customer_id', customerId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map((order) => ({
+    ...order,
+    truck_name: order.food_trucks?.name || 'Food Truck',
+    truck_image: order.food_trucks?.image_url,
+    items: order.order_items || [],
+    item_count: order.order_items?.length || 0,
+  }));
+};
+
+/**
  * Get active orders for a customer (pending, confirmed, preparing, ready)
  */
 export const fetchActiveOrders = async (customerId) => {
@@ -287,6 +360,37 @@ export const fetchActiveOrders = async (customerId) => {
 
   if (error) throw error;
   return data?.map(transformOrder) || [];
+};
+
+/**
+ * Returns true when the customer has at least one completed order at this
+ * truck. Powers review eligibility on the truck detail page.
+ */
+export const hasCompletedOrderForTruck = async (customerId, truckId) => {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('truck_id', truckId)
+    .eq('customer_id', customerId)
+    .eq('status', 'completed')
+    .limit(1);
+  if (error) throw error;
+  return !!(data && data.length);
+};
+
+/**
+ * Returns the unique set of menu_item_ids the customer has completed orders
+ * for at this truck. Used to gate the per-item rating UI.
+ */
+export const fetchOrderedMenuItemIdsForTruck = async (customerId, truckId) => {
+  const { data, error } = await supabase
+    .from('order_items')
+    .select('menu_item_id, orders!inner(customer_id, truck_id, status)')
+    .eq('orders.truck_id', truckId)
+    .eq('orders.customer_id', customerId)
+    .eq('orders.status', 'completed');
+  if (error) throw error;
+  return [...new Set((data || []).map((o) => o.menu_item_id).filter(Boolean))];
 };
 
 /**

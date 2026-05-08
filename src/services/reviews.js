@@ -103,6 +103,34 @@ export const deleteTruckReview = async (reviewId, truckId) => {
 };
 
 /**
+ * Submit a review for a specific order, marking the order as reviewed in a
+ * second write. Used by CustomerProfile's "leave review on past order" flow.
+ *
+ * NOT atomic — the order update can leave the review without the has_review
+ * flag if it fails. Keeps existing behavior; promote to an RPC if it matters.
+ */
+export const submitOrderReview = async ({ truckId, customerId, orderId, rating, comment }) => {
+  const { error: reviewError } = await supabase
+    .from('reviews')
+    .insert([{
+      customer_id: customerId,
+      truck_id: truckId,
+      order_id: orderId,
+      rating,
+      comment: comment?.trim() || null,
+    }]);
+  if (reviewError) throw reviewError;
+
+  const { error: orderError } = await supabase
+    .from('orders')
+    .update({ has_review: true })
+    .eq('id', orderId);
+  if (orderError) throw orderError;
+
+  await updateTruckRating(truckId);
+};
+
+/**
  * Fetch a user's rating for a menu item
  */
 export const fetchUserMenuItemRating = async (itemId, userId) => {

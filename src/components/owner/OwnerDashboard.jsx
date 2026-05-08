@@ -1,7 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { fetchOwnerTrucksWithStats } from '../../services/trucks';
+import {
+  fetchOwnerTrucksWithStats,
+  setTruckAcceptingOrders,
+  updateTruckQueueSettings,
+  createOwnerTruck,
+  deleteOwnerTruck,
+  updateTruck as updateTruckService,
+  fetchOwnerFirstTruckQueueSettings,
+} from '../../services/trucks';
+import { fetchOwnerSelf, updateOwnerSelf } from '../../services/owners';
+import { fetchOwnerOrders, fetchOwnerOrderById } from '../../services/orders';
+import {
+  fetchMenuItemsRaw,
+  createMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
+} from '../../services/menu';
 import ImageUpload from '../common/ImageUpload';
 import { uploadTruckImage, uploadMenuItemImage } from '../../lib/storage';
 import { Icons } from '../common/Icons';
@@ -411,7 +427,7 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
                   className={`btn-action ${truck.accepting_orders !== false ? 'success' : 'warning'}`}
                   onClick={async () => {
                     const newValue = !(truck.accepting_orders !== false);
-                    await supabase.from('food_trucks').update({ accepting_orders: newValue }).eq('id', truck.id);
+                    await setTruckAcceptingOrders(truck.id, newValue);
                     setTrucks(prev => prev.map(t => t.id === truck.id ? { ...t, accepting_orders: newValue } : t));
                   }}
                 >
@@ -1040,11 +1056,7 @@ const SettingsTab = () => {
   useEffect(() => {
     const loadOwnerData = async () => {
       if (!user?.id) return;
-      const { data } = await supabase
-        .from('owners')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const data = await fetchOwnerSelf(user.id).catch(() => null);
       if (data) {
         setProfileData(prev => ({ ...prev, phone: data.phone || '' }));
         setBusinessData({
@@ -1057,14 +1069,8 @@ const SettingsTab = () => {
         }
       }
 
-      // Load queue settings from first truck
-      const { data: truckData } = await supabase
-        .from('food_trucks')
-        .select('id, max_queue_size, auto_pause_enabled')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .single();
+      // Load queue settings from first truck (oldest-first).
+      const truckData = await fetchOwnerFirstTruckQueueSettings(user.id).catch(() => null);
       if (truckData) {
         setFirstTruckId(truckData.id);
         setQueueSettings({
@@ -1081,12 +1087,7 @@ const SettingsTab = () => {
     setSaving(true);
     try {
       await updateProfile({ name: profileData.name, avatar_url: profileData.avatar_url });
-      // Save phone to owners table
-      const { error: ownerError } = await supabase
-        .from('owners')
-        .update({ phone: profileData.phone })
-        .eq('id', user.id);
-      if (ownerError) throw ownerError;
+      await updateOwnerSelf(user.id, { phone: profileData.phone });
       showToast('Profile updated successfully!', 'success');
     } catch (err) {
       console.error('Failed to save profile:', err);
@@ -1100,11 +1101,7 @@ const SettingsTab = () => {
     e.preventDefault();
     setSavingBusiness(true);
     try {
-      const { error } = await supabase
-        .from('owners')
-        .update(businessData)
-        .eq('id', user.id);
-      if (error) throw error;
+      await updateOwnerSelf(user.id, businessData);
       showToast('Business information saved!', 'success');
     } catch (err) {
       console.error('Failed to save business info:', err);
@@ -1119,11 +1116,7 @@ const SettingsTab = () => {
     setNotificationPrefs(updated);
     setSavingNotifications(true);
     try {
-      const { error } = await supabase
-        .from('owners')
-        .update({ notification_preferences: updated })
-        .eq('id', user.id);
-      if (error) throw error;
+      await updateOwnerSelf(user.id, { notification_preferences: updated });
       showToast('Notification preferences saved', 'success');
     } catch (err) {
       console.error('Failed to save notification preferences:', err);
@@ -1142,14 +1135,7 @@ const SettingsTab = () => {
     }
     setSavingQueue(true);
     try {
-      const { error } = await supabase
-        .from('food_trucks')
-        .update({
-          max_queue_size: queueSettings.maxQueueSize,
-          auto_pause_enabled: queueSettings.autoPauseEnabled,
-        })
-        .eq('id', firstTruckId);
-      if (error) throw error;
+      await updateTruckQueueSettings(firstTruckId, queueSettings);
       showToast('Kitchen capacity settings saved!', 'success');
     } catch (err) {
       console.error('Failed to save queue settings:', err);
@@ -1405,29 +1391,7 @@ const OwnerDashboard = () => {
     }
     setLoadingOrders(true);
     try {
-      const truckIds = trucks.map(t => t.id);
-
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items(count),
-          customers!customer_id(
-            profiles(name)
-          )
-        `)
-        .in('truck_id', truckIds)
-        .order('created_at', { ascending: false })
-        .limit(500);
-
-      if (ordersError) throw ordersError;
-
-      const formattedOrders = (ordersData || []).map(order => ({
-        ...order,
-        customer_name: order.customers?.profiles?.name || 'Customer',
-        item_count: order.order_items?.[0]?.count || 0,
-      }));
-
+      const formattedOrders = await fetchOwnerOrders(trucks.map((t) => t.id));
       setOrders(formattedOrders);
     } catch (err) {
       console.error('Error fetching orders:', err);
@@ -1445,14 +1409,7 @@ const OwnerDashboard = () => {
     }
     setLoadingMenu(true);
     try {
-      const { data, error: menuError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('truck_id', selectedTruckId)
-        .order('display_order', { ascending: true });
-
-      if (menuError) throw menuError;
-      setMenuItems(data || []);
+      setMenuItems(await fetchMenuItemsRaw(selectedTruckId));
     } catch (err) {
       console.error('Error fetching menu items:', err);
       setError('Failed to load menu items');
@@ -1498,27 +1455,9 @@ const OwnerDashboard = () => {
           filter: `truck_id=in.(${truckIds.join(',')})`,
         },
         async (payload) => {
-          // Fetch the complete order with customer info
-          const { data: newOrder, error } = await supabase
-            .from('orders')
-            .select(`
-              *,
-              order_items(count),
-              customers!customer_id(
-                profiles(name)
-              )
-            `)
-            .eq('id', payload.new.id)
-            .single();
-
-          if (!error && newOrder) {
-            const formattedOrder = {
-              ...newOrder,
-              customer_name: newOrder.customers?.profiles?.name || 'Customer',
-              item_count: newOrder.order_items?.[0]?.count || 0,
-            };
+          const formattedOrder = await fetchOwnerOrderById(payload.new.id).catch(() => null);
+          if (formattedOrder) {
             setOrders(prev => [formattedOrder, ...prev]);
-            // Show notification for new order
             showToast(`New order #${formattedOrder.order_number} from ${formattedOrder.customer_name}!`, 'success');
           }
         }
@@ -1550,40 +1489,18 @@ const OwnerDashboard = () => {
 
   // CRUD operations for trucks
   const handleTruckCreate = async (truckData) => {
-    const slug = truckData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const { data, error } = await supabase
-      .from('food_trucks')
-      .insert([{
-        ...truckData,
-        owner_id: user.id,
-        slug: `${slug}-${Date.now()}`,
-        is_open: true,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
+    const data = await createOwnerTruck(user.id, truckData);
     setTrucks(prev => [{ ...data, today_orders: 0, today_revenue: 0 }, ...prev]);
     if (!selectedTruckId) setSelectedTruckId(data.id);
   };
 
   const handleTruckUpdate = async (truckId, updates) => {
-    const { error } = await supabase
-      .from('food_trucks')
-      .update(updates)
-      .eq('id', truckId);
-
-    if (error) throw error;
+    await updateTruckService(truckId, updates);
     setTrucks(prev => prev.map(t => t.id === truckId ? { ...t, ...updates } : t));
   };
 
   const handleTruckDelete = async (truckId) => {
-    const { error } = await supabase
-      .from('food_trucks')
-      .delete()
-      .eq('id', truckId);
-
-    if (error) throw error;
+    await deleteOwnerTruck(truckId);
     setTrucks(prev => prev.filter(t => t.id !== truckId));
     if (selectedTruckId === truckId) {
       const remaining = trucks.filter(t => t.id !== truckId);
@@ -1593,36 +1510,17 @@ const OwnerDashboard = () => {
 
   // CRUD operations for menu items
   const handleMenuItemCreate = async (itemData) => {
-    const { data, error } = await supabase
-      .from('menu_items')
-      .insert([{
-        ...itemData,
-        is_available: true,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
+    const data = await createMenuItem({ ...itemData, is_available: true });
     setMenuItems(prev => [...prev, data]);
   };
 
   const handleMenuItemUpdate = async (itemId, updates) => {
-    const { error } = await supabase
-      .from('menu_items')
-      .update(updates)
-      .eq('id', itemId);
-
-    if (error) throw error;
+    await updateMenuItem(itemId, updates);
     setMenuItems(prev => prev.map(item => item.id === itemId ? { ...item, ...updates } : item));
   };
 
   const handleMenuItemDelete = async (itemId) => {
-    const { error } = await supabase
-      .from('menu_items')
-      .delete()
-      .eq('id', itemId);
-
-    if (error) throw error;
+    await deleteMenuItem(itemId);
     setMenuItems(prev => prev.filter(item => item.id !== itemId));
   };
 

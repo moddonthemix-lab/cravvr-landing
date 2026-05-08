@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { fetchAdminTrucksWithOwners } from '../../services/admin';
 import { Icons } from '../../components/common/Icons';
 import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
@@ -40,28 +40,7 @@ const AdminTrucksListPage = () => {
   const fetchTrucks = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('food_trucks')
-        .select('*')
-        .order('updated_at', { ascending: false, nullsFirst: false });
-      if (error) throw error;
-
-      const ownerIds = [...new Set((data || []).map(t => t.owner_id).filter(Boolean))];
-      let owners = {};
-      if (ownerIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, name, email')
-          .in('id', ownerIds);
-        (profiles || []).forEach(p => { owners[p.id] = p; });
-      }
-
-      const enriched = (data || []).map(t => ({
-        ...t,
-        owner_name: owners[t.owner_id]?.name || '—',
-        owner_email: owners[t.owner_id]?.email || '',
-      }));
-      setTrucks(enriched);
+      setTrucks(await fetchAdminTrucksWithOwners());
     } catch (err) {
       console.error('Fetch trucks failed', err);
       showToast('Failed to load trucks', 'error');

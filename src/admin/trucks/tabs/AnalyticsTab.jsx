@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
+import { fetchAdminTruckAnalytics } from '../../../services/admin';
 import { Icons } from '../../../components/common/Icons';
 
 const RANGES = [
@@ -25,24 +25,14 @@ const AnalyticsTab = () => {
       setLoading(true);
       try {
         const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-        const [ordersRes, reviewsRes] = await Promise.all([
-          supabase
-            .from('orders')
-            .select('id, total, status, payment_status, created_at')
-            .eq('truck_id', truck.id)
-            .gte('created_at', since)
-            .order('created_at', { ascending: true }),
-          supabase
-            .from('reviews')
-            .select('id, rating, created_at, hidden_at, is_hidden')
-            .eq('truck_id', truck.id)
-            .gte('created_at', since)
-            .order('created_at', { ascending: true }),
-        ]);
+        const { orders: ordersData, reviews: reviewsData } =
+          await fetchAdminTruckAnalytics(truck.id, since);
         if (!cancelled) {
-          setOrders(ordersRes.data || []);
-          setReviews(reviewsRes.data || []);
+          setOrders(ordersData);
+          setReviews(reviewsData);
         }
+      } catch (err) {
+        if (!cancelled) console.error('Analytics fetch failed:', err);
       } finally {
         if (!cancelled) setLoading(false);
       }

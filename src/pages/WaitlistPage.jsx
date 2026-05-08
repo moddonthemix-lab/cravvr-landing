@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { joinWaitlist } from '../services/waitlist';
 import { Icons } from '../components/common/Icons';
 import './WaitlistPage.css';
 
@@ -69,29 +69,24 @@ const WaitlistPage = () => {
     setError('');
 
     try {
-      const { error: insertError } = await supabase.from('waitlist').insert([
-        {
-          name: formData.name,
-          email: formData.email,
-          type: userType,
-          status: 'pending',
-          metadata: {
-            location: formData.location,
-            cuisines: userType === 'lover' ? formData.cuisines : null,
-            truckName: userType === 'truck' ? formData.truckName : null,
-            cuisine: userType === 'truck' ? formData.cuisine : null,
-          },
+      const result = await joinWaitlist({
+        name: formData.name,
+        email: formData.email,
+        type: userType,
+        metadata: {
+          location: formData.location,
+          cuisines: userType === 'lover' ? formData.cuisines : null,
+          truckName: userType === 'truck' ? formData.truckName : null,
+          cuisine: userType === 'truck' ? formData.cuisine : null,
         },
-      ]);
+      });
 
-      if (insertError) {
-        if (insertError.code === '23505') {
-          setError('This email is already on our waitlist!');
-        } else {
-          throw insertError;
-        }
-      } else {
+      if (result.ok) {
         setSubmitted(true);
+      } else if (result.errorCode === 'duplicate') {
+        setError('This email is already on our waitlist!');
+      } else {
+        throw result.rawError || new Error('Submit failed');
       }
     } catch (err) {
       console.error('Submit error:', err);

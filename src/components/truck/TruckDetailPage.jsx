@@ -6,9 +6,13 @@ import { useToast } from '../../contexts/ToastContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { useTrucks } from '../../contexts/TruckContext';
-import { supabase } from '../../lib/supabase';
 import { fetchMenuItems } from '../../services/menu';
-import { fetchTruckReviews } from '../../services/reviews';
+import { fetchTruckReviews, fetchUserTruckReview, fetchUserMenuItemRating } from '../../services/reviews';
+import {
+  hasCompletedOrderForTruck,
+  fetchOrderedMenuItemIdsForTruck,
+} from '../../services/orders';
+import { fetchTruckRatingSummary } from '../../services/trucks';
 import { Icons } from '../common/Icons';
 import { formatRelativeTime, formatTruckHours } from '../../utils/formatters';
 import ReviewModal from '../reviews/ReviewModal';
@@ -170,45 +174,20 @@ const TruckDetailPage = () => {
         return;
       }
 
-      // Dev setting: skip order requirement for reviews
-      if (devSettings?.skipReviewOrderRequirement) {
-        setCanReview(true);
-      } else {
-        // Check for completed orders
-        const { data: orders } = await supabase
-          .from('orders')
-          .select('id')
-          .eq('truck_id', id)
-          .eq('customer_id', user.id)
-          .eq('status', 'completed')
-          .limit(1);
+      try {
+        if (devSettings?.skipReviewOrderRequirement) {
+          setCanReview(true);
+        } else {
+          setCanReview(await hasCompletedOrderForTruck(user.id, id));
+        }
 
-        setCanReview(orders && orders.length > 0);
-      }
+        const review = await fetchUserTruckReview(id, user.id);
+        if (review) setExistingReview(review);
 
-      // Check for existing review
-      const { data: review } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('truck_id', id)
-        .eq('customer_id', user.id)
-        .single();
-
-      if (review) {
-        setExistingReview(review);
-      }
-
-      // Get ordered menu items for this truck
-      const { data: orderedItems } = await supabase
-        .from('order_items')
-        .select('menu_item_id, orders!inner(customer_id, truck_id, status)')
-        .eq('orders.truck_id', id)
-        .eq('orders.customer_id', user.id)
-        .eq('orders.status', 'completed');
-
-      if (orderedItems) {
-        const itemIds = [...new Set(orderedItems.map(o => o.menu_item_id))];
+        const itemIds = await fetchOrderedMenuItemIdsForTruck(user.id, id);
         setOrderedItemIds(itemIds);
+      } catch (err) {
+        console.error('Review eligibility check failed:', err);
       }
     };
 
@@ -298,13 +277,8 @@ const TruckDetailPage = () => {
       return;
     }
 
-    // Check for existing rating
-    const { data: existingRating } = await supabase
-      .from('menu_item_reviews')
-      .select('*')
-      .eq('menu_item_id', item.id)
-      .eq('customer_id', user.id)
-      .single();
+    // Check for existing rating (canonical table is menu_item_ratings).
+    const existingRating = await fetchUserMenuItemRating(item.id, user.id).catch(() => null);
 
     setSelectedItemForRating(item);
     setExistingItemRating(existingRating || null);
@@ -312,36 +286,20 @@ const TruckDetailPage = () => {
   };
 
   const handleReviewSuccess = async () => {
-    // Refresh reviews
-    const { data } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('truck_id', id)
-      .order('created_at', { ascending: false })
-      .limit(5);
+    try {
+      const list = await fetchTruckReviews(id, { limit: 5 });
+      setReviews(list);
 
-    if (data) setReviews(data);
+      const truckRating = await fetchTruckRatingSummary(id);
+      if (truckRating && truck) {
+        setTruck({ ...truck, rating: truckRating.rating, reviewCount: truckRating.review_count });
+      }
 
-    // Refresh truck data for updated rating
-    const { data: truckData } = await supabase
-      .from('food_trucks')
-      .select('rating, review_count')
-      .eq('id', id)
-      .single();
-
-    if (truckData && truck) {
-      setTruck({ ...truck, rating: truckData.rating, reviewCount: truckData.review_count });
+      const review = await fetchUserTruckReview(id, user.id);
+      setExistingReview(review || null);
+    } catch (err) {
+      console.error('Refresh after review failed:', err);
     }
-
-    // Update existing review state
-    const { data: review } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('truck_id', id)
-      .eq('customer_id', user.id)
-      .single();
-
-    setExistingReview(review || null);
   };
 
   const handleItemRatingSuccess = async () => {

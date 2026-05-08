@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { adminCreateTruck, searchOwnerProfiles } from '../../../services/admin';
 import { Icons } from '../../../components/common/Icons';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 
@@ -17,13 +17,11 @@ const CreateTruckModal = ({ onClose, onCreated }) => {
   useEffect(() => {
     if (query.length < 2) { setResults([]); return; }
     const handle = setTimeout(async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, name, email, role')
-        .eq('role', 'owner')
-        .or(`email.ilike.%${query}%,name.ilike.%${query}%`)
-        .limit(20);
-      setResults(data || []);
+      try {
+        setResults(await searchOwnerProfiles(query));
+      } catch (err) {
+        console.error('Owner search failed:', err);
+      }
     }, 300);
     return () => clearTimeout(handle);
   }, [query]);
@@ -34,12 +32,7 @@ const CreateTruckModal = ({ onClose, onCreated }) => {
     setSubmitting(true);
     setError('');
     try {
-      const { data, error: rpcErr } = await supabase.rpc('admin_create_truck', {
-        p_owner_id: pickedOwner.id,
-        p_patch: { name, cuisine },
-        p_reason: reason || null,
-      });
-      if (rpcErr) throw rpcErr;
+      const data = await adminCreateTruck(pickedOwner.id, { name, cuisine }, reason || null);
       onCreated?.(data);
       onClose();
     } catch (err) {

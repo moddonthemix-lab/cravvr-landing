@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { fetchOwnerPayments } from '../../services/payments';
 import { Icons } from '../common/Icons';
 
 const PaymentsDashboard = ({ trucks }) => {
@@ -11,29 +11,8 @@ const PaymentsDashboard = ({ trucks }) => {
     const fetchPayments = async () => {
       setLoading(true);
       try {
-        const truckIds = trucks.map(t => t.id);
-
-        let query = supabase
-          .from('payments')
-          .select('*, orders(order_number), food_trucks(name)')
-          .in('truck_id', truckIds)
-          .order('created_at', { ascending: false });
-
-        // Apply time filter
-        const now = new Date();
-        if (timeRange === 'today') {
-          query = query.gte('created_at', new Date(now.setHours(0, 0, 0, 0)).toISOString());
-        } else if (timeRange === 'week') {
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          query = query.gte('created_at', weekAgo.toISOString());
-        } else if (timeRange === 'month') {
-          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          query = query.gte('created_at', monthAgo.toISOString());
-        }
-
-        const { data, error } = await query.limit(100);
-        if (error) throw error;
-        setPayments(data || []);
+        const rows = await fetchOwnerPayments(trucks.map((t) => t.id), { range: timeRange });
+        setPayments(rows);
       } catch (err) {
         console.error('Error fetching payments:', err);
       } finally {

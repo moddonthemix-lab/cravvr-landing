@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { reorderMenuItems } from '../../services/menu';
 
 /**
  * Pure helper: given the current array, move the item with id=fromId to the
@@ -48,13 +48,7 @@ export function useMenuDragReorder(items, setItems, { onError, onSuccess } = {})
     try {
       const updates = diffDisplayOrder(items, next);
       if (updates.length === 0) return;
-      const results = await Promise.all(
-        updates.map(u =>
-          supabase.from('menu_items').update({ display_order: u.display_order }).eq('id', u.id)
-        )
-      );
-      const firstErr = results.find(r => r.error);
-      if (firstErr) throw firstErr.error;
+      await reorderMenuItems(updates);
       onSuccess?.();
     } catch (err) {
       onError?.(err);

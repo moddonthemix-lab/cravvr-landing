@@ -1,22 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-
-// Transform raw Supabase menu item to app format
-const transformMenuItem = (item) => ({
-  id: item.id,
-  name: item.name,
-  description: item.description || 'A delicious menu item.',
-  price: item.price,
-  priceFormatted: `$${item.price?.toFixed(2) || '0.00'}`,
-  image: item.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80',
-  popular: item.popular || false,
-  featured: item.featured || false,
-  emoji: item.emoji || '🍽️',
-  category: item.category || 'Other',
-  truckId: item.truck_id,
-  // Preserve raw data for cases that need additional fields
-  _raw: item,
-});
+import { fetchMenuItems as fetchMenuItemsService } from '../services/menu';
 
 /**
  * Hook for fetching menu items from Supabase
@@ -39,21 +22,13 @@ export const useMenuItems = (truckId, options = {}) => {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('truck_id', id);
-
-      if (fetchError) throw fetchError;
-
-      if (data && data.length > 0) {
-        const items = data.map(transformMenuItem);
+      const items = await fetchMenuItemsService(id);
+      if (items.length > 0) {
         setMenuItems(items);
         return items;
-      } else {
-        setMenuItems(fallback);
-        return fallback;
       }
+      setMenuItems(fallback);
+      return fallback;
     } catch (err) {
       console.error('Error fetching menu items:', err);
       setError(err.message || 'Failed to fetch menu items');
@@ -114,19 +89,8 @@ export const useMenuItems = (truckId, options = {}) => {
  */
 export const fetchMenuItemsForTruck = async (truckId) => {
   if (!truckId) return [];
-
   try {
-    const { data, error } = await supabase
-      .from('menu_items')
-      .select('*')
-      .eq('truck_id', truckId);
-
-    if (error) throw error;
-
-    if (data && data.length > 0) {
-      return data.map(transformMenuItem);
-    }
-    return [];
+    return await fetchMenuItemsService(truckId);
   } catch (err) {
     console.error('Error fetching menu items:', err);
     return [];

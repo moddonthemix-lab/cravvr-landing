@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/auth/AuthContext';
 import { useToast } from './ToastContext';
-import { supabase } from '../lib/supabase';
+import {
+  fetchFavorites as fetchFavoritesService,
+  addFavorite,
+  removeFavorite,
+} from '../services/favorites';
+import { ensureCustomerRow } from '../services/customers';
 
 const FavoritesContext = createContext({});
 
@@ -24,16 +29,7 @@ export const FavoritesProvider = ({ children }) => {
       setError(null);
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('favorites')
-          .select('truck_id')
-          .eq('customer_id', user.id);
-
-        if (fetchError) throw fetchError;
-
-        if (data) {
-          setFavorites(data.map(f => f.truck_id));
-        }
+        setFavorites(await fetchFavoritesService(user.id));
       } catch (err) {
         console.error('Error fetching favorites:', err);
         setError(err.message || 'Failed to fetch favorites');
@@ -69,38 +65,20 @@ export const FavoritesProvider = ({ children }) => {
 
     try {
       if (wasFavorite) {
-        const { error: deleteError } = await supabase
-          .from('favorites')
-          .delete()
-          .eq('customer_id', user.id)
-          .eq('truck_id', truckId);
-
-        if (deleteError) throw deleteError;
+        await removeFavorite(user.id, truckId);
         showToast('Removed from favorites', 'info');
       } else {
-        const { error: insertError } = await supabase
-          .from('favorites')
-          .insert({ customer_id: user.id, truck_id: truckId });
-
-        if (insertError) {
-          // Auto-fix: if FK constraint fails, ensure customer row exists and retry
+        try {
+          await addFavorite(user.id, truckId);
+        } catch (insertError) {
+          // Auto-fix: if FK constraint fails, ensure customer row exists and retry.
+          // Caused by historical broken signup triggers (see migration 043).
           if (insertError.message?.includes('foreign key constraint') || insertError.code === '23503') {
-            const { error: fixError } = await supabase
-              .from('customers')
-              .upsert({ id: user.id }, { onConflict: 'id' });
-
-            if (!fixError) {
-              // Retry the favorite insert
-              const { error: retryError } = await supabase
-                .from('favorites')
-                .insert({ customer_id: user.id, truck_id: truckId });
-
-              if (retryError) throw retryError;
-              showToast('Added to favorites', 'success');
-              return true;
-            }
+            await ensureCustomerRow(user.id);
+            await addFavorite(user.id, truckId);
+          } else {
+            throw insertError;
           }
-          throw insertError;
         }
         showToast('Added to favorites', 'success');
       }
@@ -125,16 +103,7 @@ export const FavoritesProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      const { data, error: fetchError } = await supabase
-        .from('favorites')
-        .select('truck_id')
-        .eq('customer_id', user.id);
-
-      if (fetchError) throw fetchError;
-
-      if (data) {
-        setFavorites(data.map(f => f.truck_id));
-      }
+      setFavorites(await fetchFavoritesService(user.id));
     } catch (err) {
       console.error('Error refreshing favorites:', err);
       setError(err.message || 'Failed to refresh favorites');

@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
+import {
+  fetchMenuItemsRaw,
+  createMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
+  setMenuItemAvailability,
+} from '../../../services/menu';
 import MenuItemForm from '../../../components/truck-form/MenuItemForm';
 import MenuCsvImport from '../components/MenuCsvImport';
 import { useMenuDragReorder } from '../../../components/truck-form/useMenuDragReorder';
@@ -31,14 +37,7 @@ const MenuTab = () => {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('truck_id', truck.id)
-        .order('display_order', { ascending: true })
-        .order('created_at', { ascending: true });
-      if (error) throw error;
-      setItems(data || []);
+      setItems(await fetchMenuItemsRaw(truck.id));
     } catch (err) {
       console.error(err);
       showToast('Failed to load menu', 'error');
@@ -55,14 +54,12 @@ const MenuTab = () => {
     setSaving(true);
     try {
       if (editing) {
-        const { error } = await supabase.from('menu_items').update(data).eq('id', editing.id);
-        if (error) throw error;
+        await updateMenuItem(editing.id, data);
         showToast('Menu item updated', 'success');
       } else {
         // Append to bottom: next display_order
         const next = (items[items.length - 1]?.display_order ?? -1) + 1;
-        const { error } = await supabase.from('menu_items').insert([{ ...data, display_order: next }]);
-        if (error) throw error;
+        await createMenuItem({ ...data, display_order: next });
         showToast('Menu item added', 'success');
       }
       close();
@@ -83,8 +80,7 @@ const MenuTab = () => {
     });
     if (!ok) return;
     try {
-      const { error } = await supabase.from('menu_items').delete().eq('id', item.id);
-      if (error) throw error;
+      await deleteMenuItem(item.id);
       showToast('Deleted', 'success');
       fetchItems();
     } catch (err) {
@@ -94,8 +90,7 @@ const MenuTab = () => {
 
   const toggleAvailable = async (item) => {
     try {
-      const { error } = await supabase.from('menu_items').update({ is_available: !item.is_available }).eq('id', item.id);
-      if (error) throw error;
+      await setMenuItemAvailability(item.id, !item.is_available);
       fetchItems();
     } catch (err) {
       showToast(err.message || 'Update failed', 'error');

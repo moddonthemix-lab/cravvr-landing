@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { refreshCohortPerformance, upsertAdSpend } from '../../services/admin';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend,
@@ -62,8 +62,7 @@ const GrowthDashboard = () => {
   const triggerRefresh = async () => {
     setRefreshing(true);
     try {
-      const { error } = await supabase.rpc('refresh_cohort_performance');
-      if (error) throw error;
+      await refreshCohortPerformance();
       await load();
     } catch (e) {
       setError(e.message || String(e));
@@ -294,12 +293,9 @@ const AdSpendForm = ({ onSaved }) => {
         spend_cents: Math.round(dollars * 100),
         notes: notes.trim() || null,
       };
-      const { error } = await supabase
-        .from('ad_spend')
-        .upsert(row, { onConflict: 'day,source,medium,campaign' });
-      if (error) throw error;
+      await upsertAdSpend(row);
       // Recompute cohort/CAC so the leaderboard reflects the new spend.
-      await supabase.rpc('refresh_cohort_performance');
+      await refreshCohortPerformance();
       setMsg(`Saved $${dollars.toFixed(2)} for ${row.source} on ${day}.`);
       reset();
       if (onSaved) await onSaved();

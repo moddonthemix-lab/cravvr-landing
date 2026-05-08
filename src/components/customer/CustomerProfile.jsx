@@ -3,6 +3,25 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { supabase } from '../../lib/supabase';
+import {
+  fetchAddresses as fetchAddressesService,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+} from '../../services/addresses';
+import {
+  fetchPaymentMethods as fetchPaymentMethodsService,
+  createPaymentMethod,
+  updatePaymentMethod,
+  deletePaymentMethod,
+} from '../../services/paymentMethods';
+import {
+  fetchCustomerOrdersDetailed,
+} from '../../services/orders';
+import { fetchFavoriteTrucksWithRatings } from '../../services/favorites';
+import { fetchUserCheckIns } from '../../services/checkIns';
+import { updateCustomerProfile, claimPunchCardReward } from '../../services/customers';
+import { submitOrderReview } from '../../services/reviews';
 import { Icons } from '../common/Icons';
 import { formatDate } from '../../utils/formatters';
 import PunchCard from './PunchCard';
@@ -408,15 +427,7 @@ const AddressesTab = ({ onBack, userId }) => {
     if (!userId) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('addresses')
-        .select('*')
-        .eq('user_id', userId)
-        .order('is_default', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setAddresses(data || []);
+      setAddresses(await fetchAddressesService(userId));
     } catch (err) {
       console.error('Error fetching addresses:', err);
     } finally {
@@ -441,12 +452,7 @@ const AddressesTab = ({ onBack, userId }) => {
   const handleDelete = async (addressId) => {
     if (!window.confirm('Are you sure you want to delete this address?')) return;
     try {
-      const { error } = await supabase
-        .from('addresses')
-        .delete()
-        .eq('id', addressId);
-
-      if (error) throw error;
+      await deleteAddress(addressId);
       fetchAddresses();
     } catch (err) {
       console.error('Error deleting address:', err);
@@ -527,15 +533,7 @@ const PaymentTab = ({ onBack, userId }) => {
     if (!userId) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('user_id', userId)
-        .order('is_default', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setPayments(data || []);
+      setPayments(await fetchPaymentMethodsService(userId));
     } catch (err) {
       console.error('Error fetching payment methods:', err);
     } finally {
@@ -560,12 +558,7 @@ const PaymentTab = ({ onBack, userId }) => {
   const handleDelete = async (paymentId) => {
     if (!window.confirm('Are you sure you want to delete this payment method?')) return;
     try {
-      const { error } = await supabase
-        .from('payment_methods')
-        .delete()
-        .eq('id', paymentId);
-
-      if (error) throw error;
+      await deletePaymentMethod(paymentId);
       fetchPayments();
     } catch (err) {
       console.error('Error deleting payment method:', err);
@@ -999,18 +992,9 @@ const AddressModal = ({ isOpen, onClose, address, onSave, userId }) => {
     setError('');
     try {
       if (address) {
-        // Update existing address
-        const { error } = await supabase
-          .from('addresses')
-          .update(formData)
-          .eq('id', address.id);
-        if (error) throw error;
+        await updateAddress(address.id, formData);
       } else {
-        // Insert new address
-        const { error } = await supabase
-          .from('addresses')
-          .insert([{ ...formData, user_id: userId }]);
-        if (error) throw error;
+        await createAddress({ ...formData, user_id: userId });
       }
       onSave();
       onClose();
@@ -1162,18 +1146,9 @@ const PaymentModal = ({ isOpen, onClose, payment, onSave, userId }) => {
     setError('');
     try {
       if (payment) {
-        // Update existing payment method
-        const { error } = await supabase
-          .from('payment_methods')
-          .update(formData)
-          .eq('id', payment.id);
-        if (error) throw error;
+        await updatePaymentMethod(payment.id, formData);
       } else {
-        // Insert new payment method
-        const { error } = await supabase
-          .from('payment_methods')
-          .insert([{ ...formData, user_id: userId }]);
-        if (error) throw error;
+        await createPaymentMethod({ ...formData, user_id: userId });
       }
       onSave();
       onClose();
@@ -1508,16 +1483,12 @@ const CustomerProfile = ({ onBack }) => {
   // Handle profile update
   const handleSaveProfile = async (updatedData) => {
     if (!user?.id) return;
-    const { error } = await supabase
-      .from('customer_profiles')
-      .update(updatedData)
-      .eq('user_id', user.id);
-
-    if (error) {
+    try {
+      await updateCustomerProfile(user.id, updatedData);
+    } catch (err) {
       showToast('Failed to update profile', 'error');
-      throw error;
+      throw err;
     }
-
     showToast('Profile updated successfully', 'success');
     // Refresh profile data (AuthContext will handle this automatically)
     window.location.reload(); // Simple refresh for now
@@ -1552,28 +1523,13 @@ const CustomerProfile = ({ onBack }) => {
 
   const handleSubmitReview = async ({ rating, comment, orderId, truckId }) => {
     try {
-      // Insert review
-      const { error: reviewError } = await supabase
-        .from('reviews')
-        .insert([{
-          customer_id: user.id,
-          truck_id: truckId,
-          order_id: orderId,
-          rating,
-          comment,
-        }]);
-
-      if (reviewError) throw reviewError;
-
-      // Mark order as reviewed
-      const { error: orderError } = await supabase
-        .from('orders')
-        .update({ has_review: true })
-        .eq('id', orderId);
-
-      if (orderError) throw orderError;
-
-      // Refresh orders
+      await submitOrderReview({
+        truckId,
+        customerId: user.id,
+        orderId,
+        rating,
+        comment,
+      });
       fetchOrders();
       showToast('Thank you for your review!', 'success');
     } catch (err) {
@@ -1588,27 +1544,7 @@ const CustomerProfile = ({ onBack }) => {
     if (!user?.id) return;
     setLoadingOrders(true);
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          food_trucks:truck_id(name, image_url),
-          order_items(menu_item_id, name, quantity, price)
-        `)
-        .eq('customer_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formattedOrders = (data || []).map(order => ({
-        ...order,
-        truck_name: order.food_trucks?.name || 'Food Truck',
-        truck_image: order.food_trucks?.image_url,
-        items: order.order_items || [],
-        item_count: order.order_items?.length || 0,
-      }));
-
-      setOrders(formattedOrders);
+      setOrders(await fetchCustomerOrdersDetailed(user.id));
     } catch (err) {
       console.error('Error fetching orders:', err);
     } finally {
@@ -1621,36 +1557,7 @@ const CustomerProfile = ({ onBack }) => {
     if (!user?.id) return;
     setLoadingFavorites(true);
     try {
-      const { data, error } = await supabase
-        .from('favorites')
-        .select(`
-          *,
-          food_trucks:truck_id(*)
-        `)
-        .eq('customer_id', user.id);
-
-      if (error) throw error;
-
-      // Also get ratings for each truck
-      const formattedFavorites = await Promise.all((data || []).map(async (fav) => {
-        const truck = fav.food_trucks;
-        if (!truck) return null;
-
-        // Get rating from view
-        const { data: ratingData } = await supabase
-          .from('truck_ratings_summary')
-          .select('average_rating')
-          .eq('truck_id', truck.id)
-          .single();
-
-        return {
-          ...truck,
-          favorite_id: fav.id,
-          average_rating: ratingData?.average_rating || null,
-        };
-      }));
-
-      setFavorites(formattedFavorites.filter(f => f !== null));
+      setFavorites(await fetchFavoriteTrucksWithRatings(user.id));
     } catch (err) {
       console.error('Error fetching favorites:', err);
     } finally {
@@ -1663,23 +1570,7 @@ const CustomerProfile = ({ onBack }) => {
     if (!user?.id) return;
     setLoadingCheckIns(true);
     try {
-      const { data, error } = await supabase
-        .from('check_ins')
-        .select(`
-          *,
-          food_trucks:truck_id(name)
-        `)
-        .eq('customer_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formattedCheckIns = (data || []).map(ci => ({
-        ...ci,
-        truck_name: ci.food_trucks?.name || 'Food Truck',
-      }));
-
-      setCheckIns(formattedCheckIns);
+      setCheckIns(await fetchUserCheckIns(user.id));
     } catch (err) {
       console.error('Error fetching check-ins:', err);
     } finally {
@@ -1690,11 +1581,7 @@ const CustomerProfile = ({ onBack }) => {
   // Claim punch card reward
   const handleClaimReward = async (truckId) => {
     try {
-      const { data, error } = await supabase.rpc('claim_punch_card_reward', {
-        p_customer_id: user.id,
-        p_truck_id: truckId,
-      });
-      if (error) throw error;
+      const data = await claimPunchCardReward(user.id, truckId);
       if (data?.success) {
         showToast(`${data.message} +${data.points_awarded} points!`, 'success');
         fetchCheckIns();

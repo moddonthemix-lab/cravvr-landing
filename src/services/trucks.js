@@ -228,6 +228,45 @@ export const fetchOwnerTrucksWithStats = async (ownerId) => {
 };
 
 /**
+ * Create a new truck for the current owner. Auto-generates a slug from name.
+ * Returns the inserted row.
+ */
+export const createOwnerTruck = async (ownerId, truckData) => {
+  const slug = (truckData.name || 'truck').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const { data, error } = await supabase
+    .from('food_trucks')
+    .insert([{
+      ...truckData,
+      owner_id: ownerId,
+      slug: `${slug}-${Date.now()}`,
+      is_open: true,
+    }])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+/** Delete a truck row outright. Owner-side; cascades to orders/menu_items. */
+export const deleteOwnerTruck = async (truckId) => {
+  const { error } = await supabase.from('food_trucks').delete().eq('id', truckId);
+  if (error) throw error;
+};
+
+/** Fetch the queue settings for the oldest truck of an owner. */
+export const fetchOwnerFirstTruckQueueSettings = async (ownerId) => {
+  const { data, error } = await supabase
+    .from('food_trucks')
+    .select('id, max_queue_size, auto_pause_enabled')
+    .eq('owner_id', ownerId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single();
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+};
+
+/**
  * Update truck data
  */
 export const updateTruck = async (id, updates) => {
@@ -262,6 +301,57 @@ export const updateTruckRating = async (truckId) => {
       })
       .eq('id', truckId);
   }
+};
+
+/**
+ * Update kitchen-capacity / throttling fields on a truck (owner-side).
+ */
+export const updateTruckQueueSettings = async (truckId, { maxQueueSize, autoPauseEnabled }) => {
+  const { error } = await supabase
+    .from('food_trucks')
+    .update({
+      max_queue_size: maxQueueSize,
+      auto_pause_enabled: autoPauseEnabled,
+    })
+    .eq('id', truckId);
+  if (error) throw error;
+};
+
+/**
+ * Toggle whether a truck is currently accepting orders. Owner-side.
+ */
+export const setTruckAcceptingOrders = async (truckId, accepting) => {
+  const { error } = await supabase
+    .from('food_trucks')
+    .update({ accepting_orders: accepting })
+    .eq('id', truckId);
+  if (error) throw error;
+};
+
+/**
+ * Set the payment processor on a truck. Used by the owner-side processor
+ * chooser. Wraps a narrow update so RLS / column GRANTs apply.
+ */
+export const setTruckPaymentProcessor = async (truckId, processor) => {
+  const { error } = await supabase
+    .from('food_trucks')
+    .update({ payment_processor: processor })
+    .eq('id', truckId);
+  if (error) throw error;
+};
+
+/**
+ * Refresh just `rating` and `review_count` on a truck — used after a review
+ * is submitted to keep the local card in sync without a full refetch.
+ */
+export const fetchTruckRatingSummary = async (truckId) => {
+  const { data, error } = await supabase
+    .from('food_trucks')
+    .select('rating, review_count')
+    .eq('id', truckId)
+    .single();
+  if (error) throw error;
+  return data;
 };
 
 /**

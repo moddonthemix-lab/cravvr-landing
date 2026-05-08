@@ -10,7 +10,8 @@ const LandingPage = lazy(() => import('./components/landing/LandingPage'));
 const TruckDetailPage = lazy(() => import('./components/truck/TruckDetailPage'));
 const SocialPage = lazy(() => import('./pages/SocialPage'));
 const WaitlistPage = lazy(() => import('./pages/WaitlistPage'));
-const CravvrPlusPage = lazy(() => import('./pages/CravvrPlusPage'));
+const EnterprisePage = lazy(() => import('./pages/EnterprisePage'));
+const GoPage = lazy(() => import('./pages/GoPage'));
 const ResponsiveApp = lazy(() => import('./components/app/ResponsiveApp'));
 const MapPage = lazy(() => import('./pages/MapPage'));
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'));
@@ -198,11 +199,17 @@ const App = () => {
         {/* Waitlist signup questionnaire */}
         <Route path="/waitlist" element={<WaitlistPage />} />
 
-        {/* Cravvr Go premium landing page (also reachable via legacy /plus) */}
-        <Route path="/go" element={<CravvrPlusPage />} />
-        <Route path="/CravvrGo" element={<CravvrPlusPage />} />
-        <Route path="/plus" element={<CravvrPlusPage />} />
-        <Route path="/CravvrPlus" element={<CravvrPlusPage />} />
+        {/* Cravvr Go — simple plan info page (subscription tier) */}
+        <Route path="/go" element={<GoPage />} />
+        <Route path="/CravvrGo" element={<GoPage />} />
+
+        {/* Cravvr Enterprise — full marketing page (fleets / franchises) */}
+        <Route path="/enterprise" element={<EnterprisePage />} />
+        <Route path="/CravvrEnterprise" element={<EnterprisePage />} />
+
+        {/* Legacy /plus URLs → Enterprise (where the heavy marketing design moved) */}
+        <Route path="/plus" element={<Navigate to="/enterprise" replace />} />
+        <Route path="/CravvrPlus" element={<Navigate to="/enterprise" replace />} />
 
         {/* Fallback to home */}
         <Route path="*" element={<ResponsiveApp />} />

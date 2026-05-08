@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, NavLink, Outlet, useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { fetchAdminTruckById } from '../../services/admin';
 import { Icons } from '../../components/common/Icons';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../components/auth/AuthContext';
@@ -33,28 +33,14 @@ const AdminTruckDetailPage = () => {
   const fetchTruck = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('food_trucks')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-      if (error) throw error;
+      const { truck: data, owner: prof } = await fetchAdminTruckById(id);
       if (!data) {
         showToast('Truck not found', 'error');
         navigate('/admin/trucks');
         return;
       }
       setTruck(data);
-      if (data.owner_id) {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('id, name, email')
-          .eq('id', data.owner_id)
-          .maybeSingle();
-        setOwner(prof || null);
-      } else {
-        setOwner(null);
-      }
+      setOwner(prof);
     } catch (err) {
       console.error('Fetch truck failed', err);
       showToast(err.message || 'Failed to load truck', 'error');

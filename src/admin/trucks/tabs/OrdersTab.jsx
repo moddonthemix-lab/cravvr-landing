@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
+import { fetchAdminTruckOrders } from '../../../services/admin';
 import { Icons } from '../../../components/common/Icons';
 import { useConfirm } from '../../../contexts/ConfirmContext';
 import { useAuth } from '../../../components/auth/AuthContext';
@@ -21,16 +21,7 @@ const OrdersTab = () => {
   const fetch = useCallback(async () => {
     setLoading(true);
     try {
-      let q = supabase
-        .from('orders')
-        .select('*')
-        .eq('truck_id', truck.id)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (filter !== 'all') q = q.eq('status', filter);
-      const { data, error } = await q;
-      if (error) throw error;
-      setOrders(data || []);
+      setOrders(await fetchAdminTruckOrders(truck.id, { status: filter }));
     } catch (err) {
       console.error(err);
       setOrders([]);

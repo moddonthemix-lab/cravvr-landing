@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icons } from '../components/common/Icons';
-import { supabase } from '../lib/supabase';
+import { joinWaitlist } from '../services/waitlist';
 import { useInView } from '../hooks/useInView';
 import './CravvrPlusPage.css';
 
@@ -29,18 +29,15 @@ const CravvrPlusPage = () => {
     setError('');
 
     try {
-      const { error: dbError } = await supabase
-        .from('waitlist')
-        .insert([{
-          name: name,
-          email: email,
-          type: 'cravvr_plus',
-          metadata: { truck_name: truckName },
-          status: 'pending'
-        }]);
+      const result = await joinWaitlist({
+        name,
+        email,
+        type: 'cravvr_plus',
+        metadata: { truck_name: truckName },
+      });
 
-      if (dbError) {
-        if (dbError.code === '23505') {
+      if (!result.ok) {
+        if (result.errorCode === 'duplicate') {
           setError('This email is already on our list!');
         } else {
           setError('Something went wrong. Please try again.');

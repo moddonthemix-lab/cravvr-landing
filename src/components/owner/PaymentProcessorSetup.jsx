@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { setTruckPaymentProcessor } from '../../services/trucks';
 import { useToast } from '../../contexts/ToastContext';
 import { Icons } from '../common/Icons';
 import StripeOnboarding from './StripeOnboarding';
@@ -63,11 +63,7 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
     }
     setUpdating(true);
     try {
-      const { error } = await supabase
-        .from('food_trucks')
-        .update({ payment_processor: next })
-        .eq('id', truck.id);
-      if (error) throw error;
+      await setTruckPaymentProcessor(truck.id, next);
       const label = CHOICES.find((c) => c.value === next)?.name || next;
       showToast(`Customer payments set to ${label}`, 'success');
       onUpdate?.({ payment_processor: next });

@@ -37,6 +37,21 @@ export const fetchMenuItems = async (truckId, { limit } = {}) => {
 };
 
 /**
+ * Fetch raw menu_items rows ordered for an admin/owner editor — preserves
+ * `display_order` and the canonical schema shape (no transformMenuItem).
+ */
+export const fetchMenuItemsRaw = async (truckId) => {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('*')
+    .eq('truck_id', truckId)
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
+};
+
+/**
  * Fetch a single menu item by ID
  */
 export const fetchMenuItemById = async (id) => {
@@ -102,6 +117,38 @@ export const deleteMenuItem = async (id) => {
     .delete()
     .eq('id', id);
 
+  if (error) throw error;
+};
+
+/**
+ * Bulk update display_order on a list of menu items. Issues parallel writes —
+ * not atomic; if any fails the others still apply. Caller should refetch.
+ */
+export const reorderMenuItems = async (updates) => {
+  await Promise.all(
+    updates.map((u) =>
+      supabase.from('menu_items').update({ display_order: u.display_order }).eq('id', u.id)
+    )
+  );
+};
+
+/**
+ * Bulk-insert menu items (used by the admin CSV importer). Caller is
+ * responsible for shaping rows.
+ */
+export const bulkCreateMenuItems = async (rows) => {
+  const { error } = await supabase.from('menu_items').insert(rows);
+  if (error) throw error;
+};
+
+/**
+ * Toggle a menu item's availability flag.
+ */
+export const setMenuItemAvailability = async (id, isAvailable) => {
+  const { error } = await supabase
+    .from('menu_items')
+    .update({ is_available: isAvailable })
+    .eq('id', id);
   if (error) throw error;
 };
 

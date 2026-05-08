@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Icons } from '../../../components/common/Icons';
-import { supabase } from '../../../lib/supabase';
+import { bulkCreateMenuItems } from '../../../services/menu';
 import { useToast } from '../../../contexts/ToastContext';
 
 const REQUIRED = ['name', 'price'];
@@ -85,8 +85,7 @@ const MenuCsvImport = ({ truckId, onClose, onImported, existingItems = [] }) => 
     if (!validation.ok) return;
     setImporting(true);
     try {
-      const { error } = await supabase.from('menu_items').insert(validation.rows);
-      if (error) throw error;
+      await bulkCreateMenuItems(validation.rows);
       showToast(`Imported ${validation.rows.length} items`, 'success');
       onImported?.();
       onClose();

@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import LocationInput from '../../../components/truck-form/LocationInput';
 import ImageUpload from '../../../components/common/ImageUpload';
 import { Icons } from '../../../components/common/Icons';
-import { supabase } from '../../../lib/supabase';
+import { isTruckSlugAvailable } from '../../../services/admin';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 
 const PRICE_RANGES = ['$', '$$', '$$$', '$$$$'];
@@ -48,13 +48,8 @@ const ProfileTab = () => {
     }
     setSlugStatus('checking');
     const handle = setTimeout(async () => {
-      const { data } = await supabase
-        .from('food_trucks')
-        .select('id')
-        .eq('slug', form.slug)
-        .neq('id', truck.id)
-        .maybeSingle();
-      setSlugStatus(data ? 'conflict' : 'ok');
+      const available = await isTruckSlugAvailable(form.slug, truck.id).catch(() => false);
+      setSlugStatus(available ? 'ok' : 'conflict');
     }, 350);
     return () => clearTimeout(handle);
   }, [form.slug, truck.slug, truck.id]);
