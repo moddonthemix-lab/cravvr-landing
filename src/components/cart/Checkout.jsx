@@ -6,6 +6,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { supabase } from '../../lib/supabase';
 import { getStripe, callStripeFunction } from '../../lib/stripe';
+import { callSquareFunction } from '../../lib/square';
+import SquarePaymentForm from './SquarePaymentForm';
 import { checkTruckAcceptingOrders } from '../../services/throttle';
 import { Icons } from '../common/Icons';
 import './Checkout.css';
@@ -38,16 +40,19 @@ const Checkout = ({ onBack, onOrderComplete }) => {
   const [orderId, setOrderId] = useState(null);
   const [error, setError] = useState('');
 
-  // Truck Stripe capability + payment method selection
+  // Truck capability + payment method selection
   const [truckOnlineEnabled, setTruckOnlineEnabled] = useState(false);
+  const [truckProcessor, setTruckProcessor] = useState('pickup'); // 'stripe' | 'square' | 'pickup'
+  const [squareConfig, setSquareConfig] = useState(null); // { applicationId, locationId, environment }
   const [paymentMethod, setPaymentMethod] = useState('pickup'); // 'online' | 'pickup'
   const [paymentStep, setPaymentStep] = useState('details'); // 'details' | 'card' | 'processing'
-  const [clientSecret, setClientSecret] = useState(null);
+  const [clientSecret, setClientSecret] = useState(null); // Stripe only
   const [pendingOrderId, setPendingOrderId] = useState(null);
   const stripeRef = useRef(null);
   const elementsRef = useRef(null);
   const cardElementRef = useRef(null);
   const cardMountRef = useRef(null);
+  const squareFormRef = useRef(null);
 
   const tipOptions = [0, 15, 18, 20, 25];
 
@@ -58,27 +63,39 @@ const Checkout = ({ onBack, onOrderComplete }) => {
 
   const finalTotal = total + calculateTip();
 
-  // Fetch truck Stripe capability
+  // Fetch truck payment capability — works for any processor
   useEffect(() => {
     if (!currentTruckId) return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from('food_trucks')
-        .select('stripe_account_id, stripe_charges_enabled')
+        .select('payment_processor, online_payment_enabled, square_location_id, square_environment')
         .eq('id', currentTruckId)
         .single();
       if (cancelled) return;
-      const enabled = !!(data?.stripe_account_id && data?.stripe_charges_enabled);
+      const processor = data?.payment_processor || 'pickup';
+      const enabled = !!data?.online_payment_enabled;
+      setTruckProcessor(processor);
       setTruckOnlineEnabled(enabled);
       setPaymentMethod(enabled ? 'online' : 'pickup');
+      if (processor === 'square' && enabled) {
+        setSquareConfig({
+          applicationId: import.meta.env.VITE_SQUARE_APPLICATION_ID,
+          locationId: data.square_location_id,
+          environment: data.square_environment === 'production' ? 'production' : 'sandbox',
+        });
+      } else {
+        setSquareConfig(null);
+      }
     })();
     return () => { cancelled = true; };
   }, [currentTruckId]);
 
-  // Mount Stripe card element when entering card step
+  // Mount Stripe card element when entering card step (Stripe path only —
+  // Square card mounts inside SquarePaymentForm via its own effect)
   useEffect(() => {
-    if (paymentStep !== 'card' || !clientSecret) return;
+    if (paymentStep !== 'card' || truckProcessor !== 'stripe' || !clientSecret) return;
     let mounted = true;
     (async () => {
       try {
@@ -125,6 +142,7 @@ const Checkout = ({ onBack, onOrderComplete }) => {
         total: finalTotal,
         notes: notes || null,
         payment_status: paymentMethod === 'online' ? 'pending' : 'unpaid',
+        payment_processor: paymentMethod === 'online' ? truckProcessor : 'pickup',
       }])
       .select()
       .single();
@@ -194,15 +212,23 @@ const Checkout = ({ onBack, onOrderComplete }) => {
       const orderData = await createOrderAndItems();
 
       if (paymentMethod === 'online') {
-        // Create payment intent and move to card collection step
         const amountCents = Math.round(finalTotal * 100);
-        const piResp = await callStripeFunction('stripe-create-payment-intent', {
-          order_id: orderData.id,
-          truck_id: currentTruckId,
-          amount_cents: amountCents,
-        });
-        if (!piResp?.client_secret) throw new Error('Failed to initialize payment');
-        setClientSecret(piResp.client_secret);
+
+        if (truckProcessor === 'stripe') {
+          const piResp = await callStripeFunction('stripe-create-payment-intent', {
+            order_id: orderData.id,
+            truck_id: currentTruckId,
+            amount_cents: amountCents,
+          });
+          if (!piResp?.client_secret) throw new Error('Failed to initialize payment');
+          setClientSecret(piResp.client_secret);
+        } else if (truckProcessor === 'square') {
+          // No payment intent needed up front — Square tokenizes on submit.
+          // We just transition to the card form.
+        } else {
+          throw new Error('Online payment is not supported for this truck');
+        }
+
         setPendingOrderId(orderData.id);
         setOrderNumber(orderData.order_number);
         setPaymentStep('card');
@@ -220,32 +246,52 @@ const Checkout = ({ onBack, onOrderComplete }) => {
   };
 
   const handleConfirmCardPayment = async () => {
-    if (!stripeRef.current || !elementsRef.current) {
-      setError('Payment form not ready. Please wait a moment.');
-      return;
-    }
     setSubmitting(true);
     setError('');
     try {
-      const result = await stripeRef.current.confirmPayment({
-        elements: elementsRef.current,
-        confirmParams: {
-          return_url: `${window.location.origin}/order/${pendingOrderId}`,
-        },
-        redirect: 'if_required',
-      });
-
-      if (result.error) {
-        setError(result.error.message || 'Payment failed. Please try again.');
-        setSubmitting(false);
-        return;
-      }
-
-      const status = result.paymentIntent?.status;
-      if (status === 'succeeded' || status === 'processing' || status === 'requires_capture') {
-        finalizeSuccess({ id: pendingOrderId, order_number: orderNumber });
-      } else {
-        setError(`Payment status: ${status}. Please try again.`);
+      if (truckProcessor === 'stripe') {
+        if (!stripeRef.current || !elementsRef.current) {
+          setError('Payment form not ready. Please wait a moment.');
+          setSubmitting(false);
+          return;
+        }
+        const result = await stripeRef.current.confirmPayment({
+          elements: elementsRef.current,
+          confirmParams: { return_url: `${window.location.origin}/order/${pendingOrderId}` },
+          redirect: 'if_required',
+        });
+        if (result.error) {
+          setError(result.error.message || 'Payment failed. Please try again.');
+          setSubmitting(false);
+          return;
+        }
+        const piStatus = result.paymentIntent?.status;
+        if (piStatus === 'succeeded' || piStatus === 'processing' || piStatus === 'requires_capture') {
+          finalizeSuccess({ id: pendingOrderId, order_number: orderNumber });
+        } else {
+          setError(`Payment status: ${piStatus}. Please try again.`);
+        }
+      } else if (truckProcessor === 'square') {
+        if (!squareFormRef.current) {
+          setError('Payment form not ready. Please wait a moment.');
+          setSubmitting(false);
+          return;
+        }
+        const { token, verificationToken } = await squareFormRef.current.tokenize();
+        const amountCents = Math.round(finalTotal * 100);
+        const resp = await callSquareFunction('square-create-payment', {
+          order_id: pendingOrderId,
+          truck_id: currentTruckId,
+          amount_cents: amountCents,
+          source_id: token,
+          verification_token: verificationToken,
+          idempotency_key: `${pendingOrderId}-${Date.now()}`,
+        });
+        if (resp?.status === 'succeeded' || resp?.status === 'processing') {
+          finalizeSuccess({ id: pendingOrderId, order_number: orderNumber });
+        } else {
+          throw new Error('Payment did not complete');
+        }
       }
     } catch (err) {
       console.error('Payment confirmation error:', err);
@@ -336,8 +382,25 @@ const Checkout = ({ onBack, onOrderComplete }) => {
           </section>
           <section className="checkout-section">
             <h3>Card Details</h3>
-            <div ref={cardMountRef} className="stripe-card-mount" style={{ minHeight: 240 }} />
-            <p className="payment-note">Your card is processed securely by Stripe. You won't be charged until the truck confirms your order.</p>
+            {truckProcessor === 'stripe' && (
+              <>
+                <div ref={cardMountRef} className="stripe-card-mount" style={{ minHeight: 240 }} />
+                <p className="payment-note">Your card is processed securely by Stripe. You won't be charged until the truck confirms your order.</p>
+              </>
+            )}
+            {truckProcessor === 'square' && squareConfig && (
+              <>
+                <SquarePaymentForm
+                  ref={squareFormRef}
+                  applicationId={squareConfig.applicationId}
+                  locationId={squareConfig.locationId}
+                  environment={squareConfig.environment}
+                  amount={finalTotal}
+                  onError={(e) => setError(e.message || 'Could not load payment form')}
+                />
+                <p className="payment-note">Your card is processed securely by Square. Funds go directly to the truck.</p>
+              </>
+            )}
           </section>
           {error && <div className="checkout-error">{error}</div>}
         </div>
@@ -452,7 +515,11 @@ const Checkout = ({ onBack, onOrderComplete }) => {
               tabIndex={0}
             >
               {Icons.creditCard}
-              <span>Pay Online (Card)</span>
+              <span>
+                Pay Online (Card)
+                {truckProcessor === 'square' && <span className="payment-processor-badge"> via Square</span>}
+                {truckProcessor === 'stripe' && <span className="payment-processor-badge"> via Stripe</span>}
+              </span>
               {paymentMethod === 'online' && <span className="check-icon">{Icons.check}</span>}
             </div>
           )}

@@ -14,6 +14,7 @@ import { useMenuDragReorder } from '../truck-form/useMenuDragReorder';
 import MenuCsvImport from '../../admin/trucks/components/MenuCsvImport';
 import KitchenDisplay from './KitchenDisplay';
 import StripeOnboarding from './StripeOnboarding';
+import PaymentProcessorSetup from './PaymentProcessorSetup';
 import PaymentsDashboard from './PaymentsDashboard';
 import './OwnerDashboard.css';
 import './KitchenDisplay.css';
@@ -413,6 +414,12 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
                 <button className="btn-action danger" onClick={() => handleDelete(truck.id)}>
                   {Icons.trash} Delete
                 </button>
+              </div>
+              <div className="truck-payment-setup" style={{ padding: '12px 16px', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
+                <PaymentProcessorSetup
+                  truck={truck}
+                  onUpdate={() => onTruckUpdate && onTruckUpdate(truck.id, {})}
+                />
               </div>
             </div>
           ))}

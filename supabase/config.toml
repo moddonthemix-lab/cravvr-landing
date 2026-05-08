@@ -4,3 +4,13 @@ project_id = "coqwihsmmigktqqdnmis"
 # Supabase's JWT gate. The function itself verifies the Stripe-Signature header.
 [functions.stripe-webhook]
 verify_jwt = false
+
+# Square's webhook is signed by Square (HMAC-SHA256 with merchant signature key);
+# our function verifies the signature itself.
+[functions.square-webhook]
+verify_jwt = false
+
+# Square redirects the merchant browser here after OAuth consent. There is no
+# Supabase JWT on the redirect; we validate via signed `state` parameter.
+[functions.square-oauth-callback]
+verify_jwt = false
