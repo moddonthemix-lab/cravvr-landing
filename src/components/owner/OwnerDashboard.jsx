@@ -443,11 +443,7 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
               <div className="truck-payment-setup" style={{ padding: '12px 16px', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
                 <PaymentProcessorSetup
                   truck={truck}
-                  onUpdate={(patch) =>
-                    setTrucks(prev =>
-                      prev.map(t => (t.id === truck.id ? { ...t, ...(patch || {}) } : t))
-                    )
-                  }
+                  onUpdate={() => onTruckUpdate && onTruckUpdate(truck.id, {})}
                 />
               </div>
             </div>
@@ -1487,21 +1483,52 @@ const OwnerDashboard = () => {
     };
   }, [trucks]);
 
-  // CRUD operations for trucks
+  // Real-time subscription for the owner's trucks themselves. Catches
+  // webhook-driven changes (Stripe Connect onboarding completion flips
+  // stripe_charges_enabled, Square OAuth callback flips square_charges_enabled,
+  // etc.) and triggers a fresh fetch so the UI stays in sync without F5.
+  useEffect(() => {
+    if (!user?.id) return;
+    const sub = supabase
+      .channel(`owner-trucks-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'food_trucks',
+          filter: `owner_id=eq.${user.id}`,
+        },
+        () => { fetchTrucks(); },
+      )
+      .subscribe();
+    return () => { sub.unsubscribe(); };
+  }, [user?.id, fetchTrucks]);
+
+  // CRUD operations for trucks. We always re-fetch from the server after any
+  // mutation rather than optimistic-merging because:
+  //   1. food_trucks has generated columns (online_payment_enabled) that the
+  //      client can't compute locally.
+  //   2. Some fields are flipped by webhooks (stripe_charges_enabled,
+  //      square_charges_enabled) and the optimistic merge doesn't see those.
+  //   3. Stats (today_orders, today_revenue) are aggregated server-side.
+  // Result: one source of truth, no "I have to refresh to see the change".
   const handleTruckCreate = async (truckData) => {
     const data = await createOwnerTruck(user.id, truckData);
-    setTrucks(prev => [{ ...data, today_orders: 0, today_revenue: 0 }, ...prev]);
+    await fetchTrucks();
     if (!selectedTruckId) setSelectedTruckId(data.id);
   };
 
   const handleTruckUpdate = async (truckId, updates) => {
-    await updateTruckService(truckId, updates);
-    setTrucks(prev => prev.map(t => t.id === truckId ? { ...t, ...updates } : t));
+    if (updates && Object.keys(updates).length > 0) {
+      await updateTruckService(truckId, updates);
+    }
+    await fetchTrucks();
   };
 
   const handleTruckDelete = async (truckId) => {
     await deleteOwnerTruck(truckId);
-    setTrucks(prev => prev.filter(t => t.id !== truckId));
+    await fetchTrucks();
     if (selectedTruckId === truckId) {
       const remaining = trucks.filter(t => t.id !== truckId);
       setSelectedTruckId(remaining.length > 0 ? remaining[0].id : null);
