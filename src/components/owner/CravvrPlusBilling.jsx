@@ -43,7 +43,7 @@ const CravvrPlusBilling = () => {
     <div className="cp-billing-card">
       <div className="cp-billing-header">
         <div>
-          <h3>Cravvr Plus</h3>
+          <h3>Cravvr Go</h3>
           <p className="cp-billing-sub">
             {onFree
               ? 'Unlock online card payments via Stripe, Square, and Clover.'
@@ -51,7 +51,7 @@ const CravvrPlusBilling = () => {
           </p>
         </div>
         <div className={`cp-plan-badge ${isPlus ? 'is-plus' : 'is-free'}`}>
-          {plan?.name || (isPlus ? 'Cravvr Plus' : 'Free')}
+          {plan?.name || (isPlus ? 'Cravvr Go' : 'Free')}
           {trialing && <span className="cp-trial-tag">Trial</span>}
           {pastDue && <span className="cp-past-due-tag">Past due</span>}
         </div>

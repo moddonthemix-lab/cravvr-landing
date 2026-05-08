@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { submitMenuItemRating } from '../../services/reviews';
 import { Icons } from '../common/Icons';
 import StarRatingInput from '../common/StarRatingInput';
 import './MenuItemRatingModal.css';
@@ -35,22 +35,7 @@ const MenuItemRatingModal = ({ isOpen, onClose, item, userId, existingRating, on
     setError('');
 
     try {
-      // Upsert the rating
-      const { error: upsertError } = await supabase
-        .from('menu_item_reviews')
-        .upsert({
-          menu_item_id: item.id,
-          customer_id: userId,
-          rating,
-          comment: comment.trim() || null
-        }, {
-          onConflict: 'menu_item_id,customer_id'
-        });
-
-      if (upsertError) throw upsertError;
-
-      // Update item's average rating
-      await updateItemRating(item.id);
+      await submitMenuItemRating({ itemId: item.id, userId, rating });
 
       setSuccess(true);
       setTimeout(() => {

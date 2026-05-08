@@ -5,7 +5,10 @@ import { useCart } from '../../contexts/CartContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useFavorites } from '../../contexts/FavoritesContext';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
+import { useTrucks } from '../../contexts/TruckContext';
 import { supabase } from '../../lib/supabase';
+import { fetchMenuItems } from '../../services/menu';
+import { fetchTruckReviews } from '../../services/reviews';
 import { Icons } from '../common/Icons';
 import { formatRelativeTime, formatTruckHours } from '../../utils/formatters';
 import ReviewModal from '../reviews/ReviewModal';
@@ -25,6 +28,7 @@ const TruckDetailPage = () => {
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite: toggleFavoriteContext } = useFavorites();
   const { track } = useAnalytics();
+  const { loadTruckById, loadTruckBySlug } = useTrucks();
 
   // Core state
   const [truck, setTruck] = useState(location.state?.truck || null);
@@ -63,7 +67,9 @@ const TruckDetailPage = () => {
     }
   };
 
-  // Fetch truck data if not passed via state
+  // Fetch truck data if not passed via state. Routes through TruckContext so
+  // the cache + canonical transformTruck shape are shared with the rest of
+  // the app — no parallel fetch path, no second truck shape to drift.
   useEffect(() => {
     const fetchTruck = async () => {
       if (truck) {
@@ -72,57 +78,30 @@ const TruckDetailPage = () => {
       }
 
       try {
-        let data = null;
-        let error = null;
+        let resolved = null;
+
         if (isSlugRoute) {
-          // Resolve current OR historical slug → current truck row
-          const { data: resolved, error: rpcErr } = await supabase
-            .rpc('resolve_truck_slug', { p_slug: idOrSlug });
-          error = rpcErr;
-          data = resolved && resolved.id ? resolved : null;
-          // Canonicalizing redirect: if visited an old slug, swap URL silently
-          if (data && data.slug && data.slug !== idOrSlug) {
-            navigate(`/t/${data.slug}`, { replace: true });
+          resolved = await loadTruckBySlug(idOrSlug);
+          // Canonicalizing redirect when visited via an old slug.
+          if (resolved && resolved.slug && resolved.slug !== idOrSlug) {
+            navigate(`/t/${resolved.slug}`, { replace: true });
             return;
           }
         } else if (UUID_RE.test(idOrSlug)) {
-          const res = await supabase.from('food_trucks').select('*').eq('id', idOrSlug).single();
-          data = res.data; error = res.error;
+          resolved = await loadTruckById(idOrSlug);
         } else {
-          // Legacy /truck/:id with non-UUID — try as slug
-          const { data: resolved } = await supabase.rpc('resolve_truck_slug', { p_slug: idOrSlug });
-          data = resolved && resolved.id ? resolved : null;
-          if (data) {
-            navigate(`/t/${data.slug || data.id}`, { replace: true });
+          // Legacy /truck/:non-uuid — treat as slug and canonicalize.
+          resolved = await loadTruckBySlug(idOrSlug);
+          if (resolved) {
+            navigate(`/t/${resolved.slug || resolved.id}`, { replace: true });
             return;
           }
         }
 
-        if (error) throw error;
-
-        if (data) {
-          setTruck({
-            id: data.id,
-            name: data.name || 'Food Truck',
-            image: data.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',
-            coverImage: data.cover_image_url || data.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=1200&q=80',
-            logoUrl: data.logo_url || null,
-            cuisine: data.cuisine || data.cuisine_type || 'Food Truck',
-            priceRange: data.price_range || '$$',
-            description: data.description || 'Delicious food made fresh daily. Visit us to discover our amazing menu!',
-            location: data.location || data.current_location || 'Portland, OR',
-            hours: formatTruckHours(data.hours),
-            distance: '1.0 mi',
-            rating: data.rating || 4.5,
-            reviewCount: data.review_count || 0,
-            isOpen: data.is_open !== false,
-            acceptingOrders: data.accepting_orders !== false,
-            prepTime: data.estimated_prep_time || null,
-            featured: data.featured || false,
-            verified: data.verified || false,
-            features: data.features || [],
-            promotions: data.promotions || null,
-          });
+        if (resolved) {
+          setTruck(resolved);
+        } else {
+          navigate('/');
         }
       } catch (err) {
         console.error('Error fetching truck:', err);
@@ -133,7 +112,7 @@ const TruckDetailPage = () => {
     };
 
     fetchTruck();
-  }, [idOrSlug, isSlugRoute, truck, navigate]);
+  }, [idOrSlug, isSlugRoute, truck, navigate, loadTruckById, loadTruckBySlug]);
 
   // Fire view_truck once the truck is resolved (handles both state-passed and fetched cases).
   const trackedTruckId = useRef(null);
@@ -147,65 +126,37 @@ const TruckDetailPage = () => {
     });
   }, [truck?.id, truck?.name, truck?.cuisine, track]);
 
-  // Fetch menu items
+  // Fetch menu items via the shared service so the menu shape is canonical.
   useEffect(() => {
-    const fetchMenuItems = async () => {
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
       try {
-        const { data, error } = await supabase
-          .from('menu_items')
-          .select('*')
-          .eq('truck_id', id);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          setMenuItems(data.map(item => ({
-            id: item.id,
-            name: item.name,
-            description: item.description || 'A delicious menu item.',
-            price: `$${item.price?.toFixed(2) || '0.00'}`,
-            image: item.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80',
-            popular: item.popular || false,
-            featured: item.featured || false,
-            emoji: item.emoji || '🍽️',
-            category: item.category || 'Other',
-          })));
-        } else {
-          setMenuItems([]);
-        }
+        const items = await fetchMenuItems(id);
+        if (!cancelled) setMenuItems(items);
       } catch (err) {
         console.error('Error fetching menu items:', err);
-        setMenuItems([]);
+        if (!cancelled) setMenuItems([]);
       }
-    };
-
-    if (id) {
-      fetchMenuItems();
-    }
+    })();
+    return () => { cancelled = true; };
   }, [id]);
 
-  // Fetch reviews
+  // Fetch reviews via the shared service so reviewer-name resolution lives in
+  // one place (matters because of the new RLS in 041 — names come through
+  // the customers→profiles join).
   useEffect(() => {
-    const fetchReviews = async () => {
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
       try {
-        const { data, error } = await supabase
-          .from('reviews')
-          .select('*')
-          .eq('truck_id', id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (!error && data) {
-          setReviews(data);
-        }
+        const list = await fetchTruckReviews(id, { limit: 5 });
+        if (!cancelled) setReviews(list);
       } catch (err) {
         console.error('Error fetching reviews:', err);
       }
-    };
-
-    if (id) {
-      fetchReviews();
-    }
+    })();
+    return () => { cancelled = true; };
   }, [id]);
 
   // Favorite status is now handled by FavoritesContext
@@ -282,7 +233,7 @@ const TruckDetailPage = () => {
       id: item.id,
       name: item.name,
       description: item.description,
-      price: parseFloat(item.price.replace('$', '')),
+      price: item.price,
       emoji: item.emoji || '🍽️',
     };
 
@@ -394,26 +345,11 @@ const TruckDetailPage = () => {
   };
 
   const handleItemRatingSuccess = async () => {
-    // Refresh menu items to show updated ratings
-    const { data } = await supabase
-      .from('menu_items')
-      .select('*')
-      .eq('truck_id', id);
-
-    if (data && data.length > 0) {
-      setMenuItems(data.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description || 'A delicious menu item.',
-        price: `$${item.price?.toFixed(2) || '0.00'}`,
-        image: item.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80',
-        popular: item.popular || false,
-        featured: item.featured || false,
-        emoji: item.emoji || '🍽️',
-        category: item.category || 'Other',
-        averageRating: item.average_rating || 0,
-        reviewCount: item.review_count || 0,
-      })));
+    try {
+      const items = await fetchMenuItems(id);
+      setMenuItems(items);
+    } catch (err) {
+      console.error('Error refreshing menu items after rating:', err);
     }
   };
 
@@ -683,7 +619,7 @@ const TruckDetailPage = () => {
                       </div>
                       <div className="featured-item-info">
                         <h4>{item.name}</h4>
-                        <span className="featured-item-price">{item.price}</span>
+                        <span className="featured-item-price">{item.priceFormatted}</span>
                       </div>
                     </div>
                   ))}
@@ -765,7 +701,7 @@ const TruckDetailPage = () => {
                     <h4 className="menu-item-name">{item.name}</h4>
                     <p className="menu-item-desc">{item.description}</p>
                     <div className="menu-item-footer">
-                      <span className="menu-item-price">{item.price}</span>
+                      <span className="menu-item-price">{item.priceFormatted}</span>
                       {item.averageRating > 0 && (
                         <span className="menu-item-rating-inline">
                           {Icons.star} {item.averageRating.toFixed(1)}
@@ -852,10 +788,10 @@ const TruckDetailPage = () => {
                   <div className="review-header">
                     <div className="reviewer-info">
                       <div className="reviewer-avatar">
-                        {review.customer_name?.charAt(0) || 'C'}
+                        {review.customerName?.charAt(0) || 'C'}
                       </div>
                       <div>
-                        <span className="reviewer-name">{review.customer_name || 'Customer'}</span>
+                        <span className="reviewer-name">{review.customerName || 'Customer'}</span>
                         <div className="review-rating">
                           {[...Array(5)].map((_, i) => (
                             <span key={i} className={`star-icon ${i < review.rating ? 'filled' : ''}`}>
@@ -865,7 +801,7 @@ const TruckDetailPage = () => {
                         </div>
                       </div>
                     </div>
-                    <span className="review-date">{formatRelativeTime(review.created_at)}</span>
+                    <span className="review-date">{formatRelativeTime(review.createdAt)}</span>
                   </div>
                   {review.comment && <p className="review-comment">{review.comment}</p>}
                 </div>

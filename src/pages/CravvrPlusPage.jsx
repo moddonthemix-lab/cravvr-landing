@@ -275,7 +275,7 @@ const CravvrPlusPage = () => {
               <span className="eyebrow">Everything You Need</span>
               <h2>One Platform, <span className="gradient-text">Endless Growth</span></h2>
               <p className="section-subtitle">
-                Cravvr Plus combines our powerful food truck platform with a professional web presence to help you reach more customers.
+                Cravvr Go combines our powerful food truck platform with a professional web presence to help you reach more customers.
               </p>
             </div>
             <div className="feature-grid">
@@ -306,7 +306,7 @@ const CravvrPlusPage = () => {
             </div>
             <div className="pricing-grid plus-pricing-grid">
               <div className={`price-card featured plus-price-card ${pricingInView ? 'animate-in' : ''}`} style={{ animationDelay: '200ms' }}>
-                <div className="price-badge-featured">Cravvr Plus</div>
+                <div className="price-badge-featured">Cravvr Go</div>
                 <div className="plus-price-header">
                   <p className="plus-price-tagline">Everything you need to dominate online</p>
                 </div>
@@ -390,7 +390,7 @@ const CravvrPlusPage = () => {
                 </span>
                 <h2>Let's Build Your <span className="gradient-text">Online Empire</span></h2>
                 <p className="section-subtitle">
-                  Join the food trucks that are getting found online, building their brand, and growing their customer base with Cravvr Plus.
+                  Join the food trucks that are getting found online, building their brand, and growing their customer base with Cravvr Go.
                 </p>
               </div>
               <div className="waitlist-form">
@@ -398,7 +398,7 @@ const CravvrPlusPage = () => {
                   <div className="waitlist-success">
                     <div className="success-icon">{Icons.checkCircle}</div>
                     <h3>You're on the list!</h3>
-                    <p>Thanks for your interest in Cravvr Plus! We'll reach out soon to get your truck set up.</p>
+                    <p>Thanks for your interest in Cravvr Go! We'll reach out soon to get your truck set up.</p>
                     <button
                       className="btn-ghost"
                       onClick={() => setSubmitted(false)}
@@ -464,13 +464,13 @@ const CravvrPlusPage = () => {
                         </>
                       ) : (
                         <>
-                          Get Started with Cravvr Plus
+                          Get Started with Cravvr Go
                           <span className="btn-icon">{Icons.arrowRight}</span>
                         </>
                       )}
                     </button>
                     <p className="form-disclaimer">
-                      By submitting, you agree to be contacted about Cravvr Plus. We'll never spam you.
+                      By submitting, you agree to be contacted about Cravvr Go. We'll never spam you.
                     </p>
                   </form>
                 )}
@@ -497,7 +497,7 @@ const CravvrPlusPage = () => {
 
           <div className="footer-links">
             <div className="footer-col">
-              <h4>Cravvr Plus</h4>
+              <h4>Cravvr Go</h4>
               <a href="#features">Features</a>
               <a href="#pricing">Pricing</a>
               <a href="#faq">FAQ</a>

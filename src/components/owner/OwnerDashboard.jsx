@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { fetchOwnerTrucksWithStats } from '../../services/trucks';
 import ImageUpload from '../common/ImageUpload';
 import { uploadTruckImage, uploadMenuItemImage } from '../../lib/storage';
 import { Icons } from '../common/Icons';
@@ -1370,60 +1371,14 @@ const OwnerDashboard = () => {
   // Error state
   const [error, setError] = useState(null);
 
-  // Fetch trucks for this owner
+  // Fetch trucks for this owner. Routes through services/trucks.js so the
+  // 1+3N query pattern is collapsed into 3 total queries (truck list +
+  // ratings + orders) and aggregated client-side.
   const fetchTrucks = useCallback(async () => {
     if (!user?.id) return;
     setLoadingTrucks(true);
     try {
-      // Get trucks owned by this user
-      const { data: trucksData, error: trucksError } = await supabase
-        .from('food_trucks')
-        .select('*')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (trucksError) throw trucksError;
-
-      // For each truck, get its rating and today's orders
-      const trucksWithStats = await Promise.all((trucksData || []).map(async (truck) => {
-        // Get average rating
-        const { data: ratingData } = await supabase
-          .from('truck_ratings_summary')
-          .select('average_rating, review_count')
-          .eq('truck_id', truck.id)
-          .single();
-
-        // Get today's orders
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const { data: todayOrders } = await supabase
-          .from('orders')
-          .select('total, status')
-          .eq('truck_id', truck.id)
-          .gte('created_at', today.toISOString())
-          .neq('status', 'cancelled');
-
-        // Get all-time orders for total revenue
-        const { data: allOrders } = await supabase
-          .from('orders')
-          .select('total, status')
-          .eq('truck_id', truck.id)
-          .neq('status', 'cancelled');
-
-        const todayRevenue = (todayOrders || []).reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
-        const totalRevenue = (allOrders || []).reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
-
-        return {
-          ...truck,
-          average_rating: ratingData?.average_rating || null,
-          review_count: ratingData?.review_count || 0,
-          today_orders: todayOrders?.length || 0,
-          today_revenue: todayRevenue,
-          total_orders: allOrders?.length || 0,
-          total_revenue: totalRevenue,
-        };
-      }));
-
+      const trucksWithStats = await fetchOwnerTrucksWithStats(user.id);
       setTrucks(trucksWithStats);
 
       // Auto-select: ?truckId=… from URL takes precedence (used when an admin

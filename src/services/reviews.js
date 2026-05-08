@@ -19,10 +19,10 @@ export const transformReview = (review) => ({
 });
 
 /**
- * Fetch reviews for a truck
+ * Fetch reviews for a truck. Pass `limit` to cap the number of rows.
  */
-export const fetchTruckReviews = async (truckId) => {
-  const { data, error } = await supabase
+export const fetchTruckReviews = async (truckId, { limit } = {}) => {
+  let query = supabase
     .from('reviews')
     .select(`
       *,
@@ -34,6 +34,11 @@ export const fetchTruckReviews = async (truckId) => {
     .eq('truck_id', truckId)
     .order('created_at', { ascending: false });
 
+  if (limit && limit > 0) {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data?.map(transformReview) || [];
 };

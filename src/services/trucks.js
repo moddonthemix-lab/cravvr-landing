@@ -62,6 +62,8 @@ export const transformTruck = (truck, userCoords = null) => {
     prepTime: truck.estimated_prep_time || null,
     featured: truck.featured || false,
     verified: truck.verified || false,
+    features: truck.features || [],
+    promotions: truck.promotions || null,
     lat: tLat,
     lng: tLng,
     ownerId: truck.owner_id,
@@ -124,6 +126,105 @@ export const fetchTrucksByOwner = async (ownerId) => {
 
   if (error) throw error;
   return data?.map(transformTruck) || [];
+};
+
+/**
+ * Fetch the payment-related fields used by the customer checkout flow.
+ * Intentionally narrow — does not select the full row — so RLS column policies
+ * (e.g. revoked square_access_token) stay enforced and the wire payload is small.
+ */
+export const fetchTruckPaymentInfo = async (truckId) => {
+  const { data, error } = await supabase
+    .from('food_trucks')
+    .select('payment_processor, online_payment_enabled, square_location_id, square_environment')
+    .eq('id', truckId)
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+/**
+ * Fetch all trucks for an owner with aggregated rating + order stats.
+ *
+ * Replaces a 1+3N query pattern (one query per truck, three sub-queries each)
+ * in OwnerDashboard with three total queries: trucks, ratings, orders. The
+ * aggregation runs client-side. For dozens of trucks this is fine; if an
+ * owner ever ends up with hundreds of trucks, move this to a Postgres view
+ * or RPC.
+ *
+ * Returns raw food_trucks rows augmented with: average_rating, review_count,
+ * today_orders, today_revenue, total_orders, total_revenue.
+ */
+export const fetchOwnerTrucksWithStats = async (ownerId) => {
+  if (!ownerId) return [];
+
+  const { data: trucks, error: trucksError } = await supabase
+    .from('food_trucks')
+    .select('*')
+    .eq('owner_id', ownerId)
+    .order('created_at', { ascending: false });
+  if (trucksError) throw trucksError;
+  if (!trucks?.length) return [];
+
+  const truckIds = trucks.map((t) => t.id);
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const [ratingsRes, ordersRes] = await Promise.all([
+    supabase
+      .from('truck_ratings_summary')
+      .select('truck_id, average_rating, review_count')
+      .in('truck_id', truckIds),
+    supabase
+      .from('orders')
+      .select('truck_id, total, status, created_at')
+      .in('truck_id', truckIds)
+      .neq('status', 'cancelled'),
+  ]);
+  if (ratingsRes.error) throw ratingsRes.error;
+  if (ordersRes.error) throw ordersRes.error;
+
+  const ratingByTruck = new Map(
+    (ratingsRes.data || []).map((r) => [r.truck_id, r])
+  );
+
+  // Bucket orders per truck once.
+  const statsByTruck = new Map();
+  for (const id of truckIds) {
+    statsByTruck.set(id, {
+      today_orders: 0,
+      today_revenue: 0,
+      total_orders: 0,
+      total_revenue: 0,
+    });
+  }
+  const startMs = startOfDay.getTime();
+  for (const o of ordersRes.data || []) {
+    const bucket = statsByTruck.get(o.truck_id);
+    if (!bucket) continue;
+    const totalNum = parseFloat(o.total || 0);
+    bucket.total_orders += 1;
+    bucket.total_revenue += totalNum;
+    if (o.created_at && new Date(o.created_at).getTime() >= startMs) {
+      bucket.today_orders += 1;
+      bucket.today_revenue += totalNum;
+    }
+  }
+
+  return trucks.map((truck) => {
+    const rating = ratingByTruck.get(truck.id);
+    const stats = statsByTruck.get(truck.id) || {};
+    return {
+      ...truck,
+      average_rating: rating?.average_rating || null,
+      review_count: rating?.review_count || 0,
+      today_orders: stats.today_orders || 0,
+      today_revenue: stats.today_revenue || 0,
+      total_orders: stats.total_orders || 0,
+      total_revenue: stats.total_revenue || 0,
+    };
+  });
 };
 
 /**

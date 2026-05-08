@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DeviceFrameset } from 'react-device-frameset';
 import 'react-device-frameset/styles/marvel-devices.min.css';
 import { useInView } from '../../hooks/useInView';
-import { supabase } from '../../lib/supabase';
+import { joinWaitlist } from '../../services/waitlist';
 import { Icons } from '../common/Icons';
 import Header from './Header';
 
@@ -237,24 +237,18 @@ const LandingPage = ({ setCurrentView }) => {
     setWaitlistError('');
 
     try {
-      const { error } = await supabase
-        .from('waitlist')
-        .insert([
-          {
-            name: waitlistName,
-            email: waitlistEmail,
-            type: waitlistType,
-            status: 'pending'
-          }
-        ]);
+      const result = await joinWaitlist({
+        name: waitlistName,
+        email: waitlistEmail,
+        type: waitlistType,
+      });
 
-      if (error) {
-        if (error.code === '23505') {
-          // Unique constraint violation - email already exists
+      if (!result.ok) {
+        if (result.errorCode === 'duplicate') {
           setWaitlistError('This email is already on the waitlist!');
         } else {
           setWaitlistError('Something went wrong. Please try again.');
-          console.error('Waitlist error:', error);
+          console.error('Waitlist error:', result.rawError);
         }
       } else {
         setWaitlistSuccess(true);

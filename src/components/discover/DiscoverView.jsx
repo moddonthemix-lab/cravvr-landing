@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TinderCard from 'react-tinder-card';
-import { supabase } from '../../lib/supabase';
+import { fetchMenuItems } from '../../services/menu';
 import { Icons } from '../common/Icons';
 import './DiscoverView.css';
 
@@ -46,21 +46,16 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
       for (const idx of indicesToFetch) {
         const truck = trucks[idx];
         try {
-          const { data, error } = await supabase
-            .from('menu_items')
-            .select('*')
-            .eq('truck_id', truck.id)
-            .limit(2);
-
-          if (!error && data && data.length > 0) {
+          const items = await fetchMenuItems(truck.id, { limit: 2 });
+          if (items.length > 0) {
             setPopularItemsMap(prev => ({
               ...prev,
-              [truck.id]: data.map(item => ({
+              [truck.id]: items.map(item => ({
                 id: item.id,
                 name: item.name,
-                price: `$${item.price?.toFixed(2) || '0.00'}`,
-                emoji: item.emoji || '🍽️',
-              }))
+                price: item.priceFormatted,
+                emoji: item.emoji,
+              })),
             }));
           } else {
             setPopularItemsMap(prev => ({
@@ -68,7 +63,7 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
               [truck.id]: [
                 { id: 1, name: 'Popular Special', price: '$12.99', emoji: '🌟' },
                 { id: 2, name: 'House Favorite', price: '$10.99', emoji: '❤️' },
-              ]
+              ],
             }));
           }
         } catch (err) {

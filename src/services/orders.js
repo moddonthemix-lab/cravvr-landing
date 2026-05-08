@@ -111,6 +111,77 @@ export const createOrder = async ({
 };
 
 /**
+ * Create an order plus its order_items rows in two writes (Supabase has no
+ * single transactional API from the client). Returns the inserted order row
+ * (raw, with order_number assigned by the trigger).
+ *
+ * The two writes are not atomic — if order_items fails the order will be
+ * orphaned. That has been the existing behavior; if this becomes an issue,
+ * promote to a Postgres function.
+ */
+export const createOrderWithItems = async ({
+  customerId,
+  truckId,
+  subtotal,
+  tax,
+  tip,
+  total,
+  notes,
+  paymentStatus,
+  paymentProcessor,
+  items,
+}) => {
+  const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .insert([{
+      customer_id: customerId,
+      truck_id: truckId,
+      status: 'pending',
+      order_type: 'pickup',
+      subtotal,
+      tax,
+      tip,
+      total,
+      notes: notes || null,
+      payment_status: paymentStatus,
+      payment_processor: paymentProcessor,
+    }])
+    .select()
+    .single();
+  if (orderError) throw orderError;
+
+  if (items?.length) {
+    const orderItems = items.map((item) => ({
+      order_id: orderData.id,
+      menu_item_id: item.id,
+      name: item.name,
+      price: parseFloat(item.price),
+      quantity: item.quantity,
+    }));
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems);
+    if (itemsError) throw itemsError;
+  }
+
+  return orderData;
+};
+
+/**
+ * Mark a still-pending order as cancelled when the customer aborts the
+ * payment step. Goes around the order state-machine RPC because we also
+ * need to set payment_status='failed' atomically. The order will only be
+ * in 'pending' here — the state machine would allow this transition anyway.
+ */
+export const cancelPendingOrder = async (orderId) => {
+  if (!orderId) return;
+  await supabase
+    .from('orders')
+    .update({ status: 'cancelled', payment_status: 'failed' })
+    .eq('id', orderId);
+};
+
+/**
  * Update order status
  */
 export const updateOrderStatus = async (orderId, newStatus, note = null) => {
@@ -122,6 +193,58 @@ export const updateOrderStatus = async (orderId, newStatus, note = null) => {
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
   return data;
+};
+
+/**
+ * Fetch the raw order row + selected truck columns, for the customer-side
+ * order tracker. Returns the raw row (no transformOrder) because the tracker
+ * UI consumes a number of fields not exposed by the canonical shape
+ * (payment_status, rejected_reason, food_trucks.location, etc.).
+ *
+ * Returns `{ order, errorCode }` so the caller can distinguish 404 from a
+ * permission denial without re-implementing PostgREST error parsing.
+ */
+export const fetchOrderForCustomer = async (orderId) => {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, food_trucks(name, image_url, location, estimated_prep_time)')
+    .eq('id', orderId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return { order: null, errorCode: 'not_found' };
+    }
+    return { order: null, errorCode: 'forbidden', rawError: error };
+  }
+  return { order: data, errorCode: null };
+};
+
+/**
+ * Fetch a single order with the customer name attached, for owner-side
+ * surfaces (Kitchen Display, etc.). Joins through customers→profiles using
+ * the `customers_select_via_order` and `profiles_select_via_order` RLS
+ * policies introduced in 041_lock_down_pii.
+ */
+export const fetchOrderForOwner = async (orderId) => {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      customers!customer_id(
+        phone,
+        profiles(name)
+      )
+    `)
+    .eq('id', orderId)
+    .single();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    ...data,
+    customer_name: data.customers?.profiles?.name || 'Customer',
+    customer_phone: data.customers?.phone || null,
+  };
 };
 
 /**

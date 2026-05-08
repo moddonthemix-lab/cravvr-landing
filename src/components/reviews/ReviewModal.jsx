@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
 import { useToast } from '../../contexts/ToastContext';
+import { submitTruckReview } from '../../services/reviews';
 import { Icons } from '../common/Icons';
 import StarRatingInput from '../common/StarRatingInput';
 import './ReviewModal.css';
@@ -37,34 +37,13 @@ const ReviewModal = ({ isOpen, onClose, truck, userId, existingReview, onSuccess
     setError('');
 
     try {
-      if (existingReview) {
-        // Update existing review
-        const { error: updateError } = await supabase
-          .from('reviews')
-          .update({
-            rating,
-            comment: comment.trim() || null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingReview.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Insert new review
-        const { error: insertError } = await supabase
-          .from('reviews')
-          .insert({
-            truck_id: truck.id,
-            customer_id: userId,
-            rating,
-            comment: comment.trim() || null
-          });
-
-        if (insertError) throw insertError;
-      }
-
-      // Update truck's average rating
-      await updateTruckRating(truck.id);
+      await submitTruckReview({
+        truckId: truck.id,
+        userId,
+        rating,
+        comment,
+        existingReviewId: existingReview?.id,
+      });
 
       setSuccess(true);
       showToast(
@@ -84,26 +63,6 @@ const ReviewModal = ({ isOpen, onClose, truck, userId, existingReview, onSuccess
       showToast('Failed to submit review', 'error');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const updateTruckRating = async (truckId) => {
-    // Calculate new average rating
-    const { data: reviews } = await supabase
-      .from('reviews')
-      .select('rating')
-      .eq('truck_id', truckId);
-
-    if (reviews && reviews.length > 0) {
-      const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-      await supabase
-        .from('food_trucks')
-        .update({
-          rating: Math.round(avgRating * 10) / 10,
-          review_count: reviews.length
-        })
-        .eq('id', truckId);
     }
   };
 

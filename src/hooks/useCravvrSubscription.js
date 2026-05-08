@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../components/auth/AuthContext';
 
 /**
- * Owner-side hook for the current user's Cravvr Plus subscription.
+ * Owner-side hook for the current user's Cravvr Go subscription.
  * Returns { subscription, plan, isPlus, loading, refresh, openCheckout, openPortal }.
  *
  * - `isPlus` is the entitlement gate: true when status ∈ {active, trialing}

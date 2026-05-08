@@ -22,14 +22,16 @@ export const transformMenuItem = (item) => ({
 });
 
 /**
- * Fetch menu items for a truck
+ * Fetch menu items for a truck. Pass `limit` to cap the number of rows.
  */
-export const fetchMenuItems = async (truckId) => {
-  const { data, error } = await supabase
+export const fetchMenuItems = async (truckId, { limit } = {}) => {
+  let query = supabase
     .from('menu_items')
     .select('*')
     .eq('truck_id', truckId);
+  if (limit && limit > 0) query = query.limit(limit);
 
+  const { data, error } = await query;
   if (error) throw error;
   return data?.map(transformMenuItem) || [];
 };
@@ -104,22 +106,26 @@ export const deleteMenuItem = async (id) => {
 };
 
 /**
- * Update menu item rating (recalculate from reviews)
+ * Update menu item rating (recalculate from menu_item_ratings).
+ *
+ * Reads from `menu_item_ratings` (the canonical per supabase-schema.sql:329).
+ * A previous version of this function read from `menu_item_reviews` which
+ * does not exist — recomputed averages were silently a no-op.
  */
 export const updateMenuItemRating = async (itemId) => {
-  const { data: reviews } = await supabase
-    .from('menu_item_reviews')
+  const { data: ratings } = await supabase
+    .from('menu_item_ratings')
     .select('rating')
     .eq('menu_item_id', itemId);
 
-  if (reviews && reviews.length > 0) {
-    const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  if (ratings && ratings.length > 0) {
+    const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
 
     await supabase
       .from('menu_items')
       .update({
         average_rating: Math.round(avgRating * 10) / 10,
-        review_count: reviews.length
+        review_count: ratings.length
       })
       .eq('id', itemId);
   }

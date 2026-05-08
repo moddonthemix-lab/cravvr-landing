@@ -198,7 +198,9 @@ const App = () => {
         {/* Waitlist signup questionnaire */}
         <Route path="/waitlist" element={<WaitlistPage />} />
 
-        {/* Cravvr Plus premium landing page */}
+        {/* Cravvr Go premium landing page (also reachable via legacy /plus) */}
+        <Route path="/go" element={<CravvrPlusPage />} />
+        <Route path="/CravvrGo" element={<CravvrPlusPage />} />
         <Route path="/plus" element={<CravvrPlusPage />} />
         <Route path="/CravvrPlus" element={<CravvrPlusPage />} />
 

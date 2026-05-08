@@ -44,14 +44,14 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
   const { isPlus, loading: subLoading, openCheckout } = useCravvrSubscription();
   const [updating, setUpdating] = useState(false);
   const processor = truck.payment_processor || 'pickup';
-  // Online-checkout processors require an active Cravvr Plus subscription.
+  // Online-checkout processors require an active Cravvr Go subscription.
   const requiresPlus = (code) => code === 'stripe' || code === 'square' || code === 'clover';
 
   const setProcessor = async (next) => {
     if (next === processor || updating) return;
     if (requiresPlus(next) && !isPlus) {
       const ok = window.confirm(
-        'Online card payments require Cravvr Plus ($29/mo). Start a 14-day free trial now?',
+        'Online card payments require Cravvr Go ($29/mo). Start a 14-day free trial now?',
       );
       if (!ok) return;
       try { await openCheckout('plus'); } catch (e) { showToast(e.message || 'Could not start checkout', 'error'); }
@@ -79,7 +79,7 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
       <div className="processor-setup-header">
         <h3>Customer Payments</h3>
         <p>
-          Pick how customers pay you. Funds always go directly to you — Cravvr only charges your Cravvr Plus subscription.
+          Pick how customers pay you. Funds always go directly to you — Cravvr only charges your Cravvr Go subscription.
         </p>
       </div>
 
@@ -109,7 +109,7 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
                 <span className="processor-tile-name">
                   {choice.name}
                   {choice.disabled && <span className="processor-tile-soon-tag">Soon</span>}
-                  {needsPlus && <span className="processor-tile-plus-tag">Plus</span>}
+                  {needsPlus && <span className="processor-tile-plus-tag">Go</span>}
                 </span>
                 <span className="processor-tile-sub">{choice.sub}</span>
               </span>

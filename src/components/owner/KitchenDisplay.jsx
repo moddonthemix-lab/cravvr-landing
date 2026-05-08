@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { fetchOrderForOwner, updateOrderStatus } from '../../services/orders';
 import { Icons } from '../common/Icons';
 import RejectOrderModal from './RejectOrderModal';
 import './KitchenDisplay.css';
@@ -152,18 +153,10 @@ const KitchenDisplay = ({ orders: initialOrders, trucks }) => {
         { event: '*', schema: 'public', table: 'orders', filter: `truck_id=eq.${selectedTruck}` },
         async (payload) => {
           if (payload.eventType === 'INSERT') {
-            const { data: newOrder } = await supabase
-              .from('orders')
-              .select('*, customers!customer_id(profiles(name))')
-              .eq('id', payload.new.id)
-              .single();
+            const newOrder = await fetchOrderForOwner(payload.new.id).catch(() => null);
 
             if (newOrder) {
-              const formatted = {
-                ...newOrder,
-                customer_name: newOrder.customers?.profiles?.name || 'Customer',
-                _isNew: true,
-              };
+              const formatted = { ...newOrder, _isNew: true };
               setOrders(prev => [formatted, ...prev]);
               playNewOrderSound();
               showToast(`New order #${formatted.order_number}!`, 'success');
@@ -184,13 +177,7 @@ const KitchenDisplay = ({ orders: initialOrders, trucks }) => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const { data, error } = await supabase.rpc('update_order_status', {
-        p_order_id: orderId,
-        p_new_status: newStatus,
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
+      await updateOrderStatus(orderId, newStatus);
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       showToast(`Order updated to ${newStatus}`, 'success');
     } catch (err) {
@@ -200,14 +187,7 @@ const KitchenDisplay = ({ orders: initialOrders, trucks }) => {
 
   const handleReject = async (orderId, reason) => {
     try {
-      const { data, error } = await supabase.rpc('update_order_status', {
-        p_order_id: orderId,
-        p_new_status: 'rejected',
-        p_note: reason,
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
+      await updateOrderStatus(orderId, 'rejected', reason);
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'rejected', rejected_reason: reason } : o));
       showToast('Order rejected', 'success');
     } catch (err) {

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 import { subscribeToOrder } from '../../services/orderTracking';
-import { fetchOrderTransitions } from '../../services/orders';
+import {
+  fetchOrderForCustomer,
+  fetchOrderTransitions,
+  updateOrderStatus,
+} from '../../services/orders';
 import { callStripeFunction } from '../../lib/stripe';
 import './OrderTracker.css';
 
@@ -29,19 +32,12 @@ const OrderTracker = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const { data, error: fetchError } = await supabase
-          .from('orders')
-          .select('*, food_trucks(name, image_url, location, estimated_prep_time)')
-          .eq('id', orderId)
-          .single();
-
-        if (fetchError) {
-          // PGRST116 = no rows returned. Anything else (RLS denial, etc.) is a permission error.
-          if (fetchError.code === 'PGRST116') {
+        const { order: data, errorCode: code } = await fetchOrderForCustomer(orderId);
+        if (!data) {
+          if (code === 'not_found') {
             setError('Order not found');
             setErrorCode('not_found');
           } else {
-            console.error('Order fetch error:', fetchError);
             setError("You don't have permission to view this order.");
             setErrorCode('forbidden');
           }
@@ -254,11 +250,7 @@ const OrderTracker = () => {
               setCancelling(true);
               setCancelError(null);
               try {
-                const { error: rpcError } = await supabase.rpc('update_order_status', {
-                  p_order_id: orderId,
-                  p_new_status: 'cancelled',
-                });
-                if (rpcError) throw rpcError;
+                await updateOrderStatus(orderId, 'cancelled');
 
                 if (wasPaid) {
                   try {

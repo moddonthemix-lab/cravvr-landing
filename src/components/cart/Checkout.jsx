@@ -4,11 +4,12 @@ import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
-import { supabase } from '../../lib/supabase';
 import { getStripe, callStripeFunction } from '../../lib/stripe';
 import { callSquareFunction } from '../../lib/square';
 import SquarePaymentForm from './SquarePaymentForm';
 import { checkTruckAcceptingOrders } from '../../services/throttle';
+import { fetchTruckPaymentInfo } from '../../services/trucks';
+import { createOrderWithItems, cancelPendingOrder } from '../../services/orders';
 import { Icons } from '../common/Icons';
 import './Checkout.css';
 
@@ -68,25 +69,25 @@ const Checkout = ({ onBack, onOrderComplete }) => {
     if (!currentTruckId) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from('food_trucks')
-        .select('payment_processor, online_payment_enabled, square_location_id, square_environment')
-        .eq('id', currentTruckId)
-        .single();
-      if (cancelled) return;
-      const processor = data?.payment_processor || 'pickup';
-      const enabled = !!data?.online_payment_enabled;
-      setTruckProcessor(processor);
-      setTruckOnlineEnabled(enabled);
-      setPaymentMethod(enabled ? 'online' : 'pickup');
-      if (processor === 'square' && enabled) {
-        setSquareConfig({
-          applicationId: import.meta.env.VITE_SQUARE_APPLICATION_ID,
-          locationId: data.square_location_id,
-          environment: data.square_environment === 'production' ? 'production' : 'sandbox',
-        });
-      } else {
-        setSquareConfig(null);
+      try {
+        const data = await fetchTruckPaymentInfo(currentTruckId);
+        if (cancelled) return;
+        const processor = data?.payment_processor || 'pickup';
+        const enabled = !!data?.online_payment_enabled;
+        setTruckProcessor(processor);
+        setTruckOnlineEnabled(enabled);
+        setPaymentMethod(enabled ? 'online' : 'pickup');
+        if (processor === 'square' && enabled) {
+          setSquareConfig({
+            applicationId: import.meta.env.VITE_SQUARE_APPLICATION_ID,
+            locationId: data.square_location_id,
+            environment: data.square_environment === 'production' ? 'production' : 'sandbox',
+          });
+        } else {
+          setSquareConfig(null);
+        }
+      } catch (err) {
+        if (!cancelled) console.error('Failed to load truck payment info:', err);
       }
     })();
     return () => { cancelled = true; };
@@ -128,43 +129,19 @@ const Checkout = ({ onBack, onOrderComplete }) => {
     };
   }, [paymentStep, clientSecret]);
 
-  const createOrderAndItems = async () => {
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert([{
-        customer_id: user.id,
-        truck_id: currentTruckId,
-        status: 'pending',
-        order_type: 'pickup',
-        subtotal: subtotal,
-        tax: tax,
-        tip: calculateTip(),
-        total: finalTotal,
-        notes: notes || null,
-        payment_status: paymentMethod === 'online' ? 'pending' : 'unpaid',
-        payment_processor: paymentMethod === 'online' ? truckProcessor : 'pickup',
-      }])
-      .select()
-      .single();
-
-    if (orderError) throw orderError;
-
-    const orderItems = items.map(item => ({
-      order_id: orderData.id,
-      menu_item_id: item.id,
-      name: item.name,
-      price: parseFloat(item.price),
-      quantity: item.quantity,
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) throw itemsError;
-
-    return orderData;
-  };
+  const createOrderAndItems = () =>
+    createOrderWithItems({
+      customerId: user.id,
+      truckId: currentTruckId,
+      subtotal,
+      tax,
+      tip: calculateTip(),
+      total: finalTotal,
+      notes,
+      paymentStatus: paymentMethod === 'online' ? 'pending' : 'unpaid',
+      paymentProcessor: paymentMethod === 'online' ? truckProcessor : 'pickup',
+      items,
+    });
 
   const finalizeSuccess = (orderData) => {
     setOrderId(orderData.id);
@@ -303,12 +280,7 @@ const Checkout = ({ onBack, onOrderComplete }) => {
 
   const cancelPaymentAndOrder = async () => {
     if (pendingOrderId) {
-      try {
-        await supabase
-          .from('orders')
-          .update({ status: 'cancelled', payment_status: 'failed' })
-          .eq('id', pendingOrderId);
-      } catch (_) {}
+      try { await cancelPendingOrder(pendingOrderId); } catch (_) {}
     }
     setPaymentStep('details');
     setClientSecret(null);

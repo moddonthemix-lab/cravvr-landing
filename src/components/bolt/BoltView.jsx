@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { fetchMenuItems as fetchTruckMenuItems } from '../../services/menu';
 import { Icons } from '../common/Icons';
 import './BoltView.css';
 
@@ -80,25 +80,18 @@ const BoltView = ({ trucks, loading, onTruckClick }) => {
 
   const fetchMenuItems = async (truckId) => {
     try {
-      const { data, error } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('truck_id', truckId)
-        .limit(10);
-
-      if (!error && data) {
-        return data.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description || 'A delicious menu item.',
-          price: `$${item.price?.toFixed(2) || '0.00'}`,
-          emoji: item.emoji || '🍽️',
-        }));
-      }
+      const items = await fetchTruckMenuItems(truckId, { limit: 10 });
+      return items.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.priceFormatted,
+        emoji: item.emoji,
+      }));
     } catch (err) {
       console.error('Error fetching menu:', err);
+      return [];
     }
-    return [];
   };
 
   const handleGenerate = async () => {
