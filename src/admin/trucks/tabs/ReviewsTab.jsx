@@ -3,12 +3,15 @@ import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import { Icons } from '../../../components/common/Icons';
 import { useConfirm } from '../../../contexts/ConfirmContext';
+import { useAuth } from '../../../components/auth/AuthContext';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 
 const ReviewsTab = () => {
   const { truck } = useOutletContext();
   const { hideReview, busy } = useTruckAdmin();
   const { prompt, confirm } = useConfirm();
+  const { hasAdminPermission } = useAuth();
+  const canHide = hasAdminPermission('review.hide');
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,14 +81,16 @@ const ReviewsTab = () => {
                 </div>
                 {r.comment && <p>{r.comment}</p>}
                 {r.hidden_reason && <p className="audit-reason">Hidden: {r.hidden_reason}</p>}
-                <button
-                  type="button"
-                  className={`btn-link ${hidden ? '' : 'danger'}`}
-                  disabled={busy}
-                  onClick={() => handleHide(r, !hidden)}
-                >
-                  {hidden ? 'Restore' : 'Hide'}
-                </button>
+                {canHide && (
+                  <button
+                    type="button"
+                    className={`btn-link ${hidden ? '' : 'danger'}`}
+                    disabled={busy}
+                    onClick={() => handleHide(r, !hidden)}
+                  >
+                    {hidden ? 'Restore' : 'Hide'}
+                  </button>
+                )}
               </li>
             );
           })}

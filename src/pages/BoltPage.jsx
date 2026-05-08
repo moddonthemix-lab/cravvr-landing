@@ -9,7 +9,7 @@ const BoltPage = () => {
   const { trucks, loading } = useTrucks();
 
   const handleTruckClick = (truck) => {
-    navigate(`/truck/${truck.id}`, { state: { truck } });
+    navigate(truck.slug ? `/t/${truck.slug}` : `/truck/${truck.id}`, { state: { truck } });
   };
 
   return (

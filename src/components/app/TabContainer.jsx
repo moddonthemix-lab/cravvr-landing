@@ -22,7 +22,7 @@ const TabContainer = () => {
   };
 
   const handleTruckClick = (truck) => {
-    navigate(`/truck/${truck.id}`, { state: { truck } });
+    navigate(truck.slug ? `/t/${truck.slug}` : `/truck/${truck.id}`, { state: { truck } });
   };
 
   // Render active tab content

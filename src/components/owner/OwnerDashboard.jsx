@@ -10,6 +10,8 @@ import { useConfirm } from '../../contexts/ConfirmContext';
 import HoursInput, { getDefaultHours, parseHours } from '../truck-form/HoursInput';
 import LocationInput, { geocodeAddress } from '../truck-form/LocationInput';
 import MenuItemForm from '../truck-form/MenuItemForm';
+import { useMenuDragReorder } from '../truck-form/useMenuDragReorder';
+import MenuCsvImport from '../../admin/trucks/components/MenuCsvImport';
 import KitchenDisplay from './KitchenDisplay';
 import StripeOnboarding from './StripeOnboarding';
 import PaymentsDashboard from './PaymentsDashboard';
@@ -428,19 +430,30 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
 };
 
 // Menu Management Tab
-const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItemCreate, onMenuItemUpdate, onMenuItemDelete, loading }) => {
+const MenuTab = ({ menuItems, setMenuItems, refetchMenu, trucks, selectedTruckId, onTruckSelect, onMenuItemCreate, onMenuItemUpdate, onMenuItemDelete, loading }) => {
   const { showToast } = useToast();
   const { confirm } = useConfirm();
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [saving, setSaving] = useState(false);
+
+  const { reordering, onDragStart, onDragOver, onDrop } = useMenuDragReorder(menuItems, setMenuItems, {
+    onSuccess: () => showToast('Order saved', 'success'),
+    onError: (err) => {
+      console.error(err);
+      showToast(err.message || 'Reorder failed', 'error');
+      refetchMenu?.();
+    },
+  });
 
   const categories = ['all', ...new Set(menuItems.filter(item => item.category).map(item => item.category))];
 
   const filteredItems = activeCategory === 'all'
     ? menuItems
     : menuItems.filter(item => item.category === activeCategory);
+  const dragEnabled = activeCategory === 'all';
 
   const closeForm = () => {
     setShowForm(false);
@@ -521,6 +534,13 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
             </select>
           )}
           <button
+            className="btn-secondary"
+            onClick={() => setShowImport(true)}
+            disabled={!selectedTruckId}
+          >
+            {Icons.plus} Import CSV
+          </button>
+          <button
             className="btn-primary"
             onClick={() => { setEditingItem(null); setShowForm(true); }}
             disabled={!selectedTruckId}
@@ -560,6 +580,15 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
             />
           )}
 
+          {showImport && (
+            <MenuCsvImport
+              truckId={selectedTruckId}
+              existingItems={menuItems}
+              onClose={() => setShowImport(false)}
+              onImported={() => refetchMenu?.()}
+            />
+          )}
+
           {loading ? (
             <div className="loading-state">{Icons.loader} Loading menu items...</div>
           ) : filteredItems.length === 0 ? (
@@ -567,9 +596,24 @@ const MenuTab = ({ menuItems, trucks, selectedTruckId, onTruckSelect, onMenuItem
               <p>No menu items yet. Add your first item to get started!</p>
             </div>
           ) : (
-            <div className="menu-grid">
+            <div className={`menu-grid ${reordering ? 'is-reordering' : ''}`}>
               {filteredItems.map(item => (
-                <div className={`menu-item-card ${!item.is_available ? 'unavailable' : ''}`} key={item.id}>
+                <div
+                  className={`menu-item-card ${!item.is_available ? 'unavailable' : ''}`}
+                  key={item.id}
+                  onDragOver={dragEnabled ? onDragOver : undefined}
+                  onDrop={dragEnabled ? onDrop(item.id) : undefined}
+                >
+                  {dragEnabled && (
+                    <span
+                      className="menu-card-drag-handle"
+                      draggable
+                      onDragStart={onDragStart(item.id)}
+                      title="Drag to reorder"
+                    >
+                      ⋮⋮
+                    </span>
+                  )}
                   <div className="menu-item-image">
                     {item.image_url ? (
                       <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1645,6 +1689,8 @@ const OwnerDashboard = () => {
         return (
           <MenuTab
             menuItems={menuItems}
+            setMenuItems={setMenuItems}
+            refetchMenu={fetchMenuItems}
             trucks={trucks}
             selectedTruckId={selectedTruckId}
             onTruckSelect={setSelectedTruckId}

@@ -11,7 +11,7 @@ const ALLOWED = ['name', 'price', 'category', 'description', 'emoji', 'image_url
  * Supports double-quoted fields with escaped quotes ("foo, ""bar""").
  * Strips a UTF-8 BOM and trims trailing CR.
  */
-function parseCsv(text) {
+export function parseCsv(text) {
   if (!text) return { headers: [], rows: [] };
   const cleaned = text.replace(/^﻿/, '').replace(/\r/g, '');
   const lines = cleaned.split('\n').filter(l => l.length > 0);

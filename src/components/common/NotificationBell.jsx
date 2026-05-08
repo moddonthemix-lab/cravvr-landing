@@ -74,6 +74,22 @@ const NotificationBell = () => {
       case 'new_truck_registered':
         navigate('/admin?tab=dashboard');
         break;
+      case 'system_alert': {
+        // Owner-side notifications inserted by admin RPCs (suspend, delete,
+        // restore, transfer, received). Route to the owner dashboard with
+        // the relevant truck preselected when truck_id is present.
+        const truckId = notification.data?.truck_id;
+        if (truckId) navigate(`/owner?truckId=${truckId}`);
+        else navigate('/owner');
+        break;
+      }
+      case 'flagged_content': {
+        // Owner-side notification when a review on their truck was hidden.
+        const truckId = notification.data?.truck_id;
+        if (truckId) navigate(`/owner?truckId=${truckId}&tab=trucks`);
+        else navigate('/owner');
+        break;
+      }
       default:
         break;
     }
@@ -100,6 +116,10 @@ const NotificationBell = () => {
         return Icons.user;
       case 'new_truck_registered':
         return Icons.truck;
+      case 'system_alert':
+        return Icons.alertCircle || Icons.shield || Icons.bell;
+      case 'flagged_content':
+        return Icons.flag || Icons.alertCircle || Icons.bell;
       default:
         return Icons.bell;
     }

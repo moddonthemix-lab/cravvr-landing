@@ -110,8 +110,10 @@ const App = () => {
         <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/bolt" element={<BoltPage />} />
 
-        {/* Truck detail page - production version */}
+        {/* Truck detail page - production version (UUID) */}
         <Route path="/truck/:id" element={<TruckDetailPage />} />
+        {/* Slug-based shareable URL with historical-slug redirect */}
+        <Route path="/t/:slug" element={<TruckDetailPage />} />
 
         {/* Checkout - requires authentication */}
         <Route path="/checkout" element={

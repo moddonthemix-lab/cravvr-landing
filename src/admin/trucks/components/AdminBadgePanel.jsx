@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
+import { useAuth } from '../../../components/auth/AuthContext';
 
 const Toggle = ({ label, checked, disabled, onChange, hint }) => (
   <label className="admin-toggle-row">
@@ -13,6 +14,9 @@ const Toggle = ({ label, checked, disabled, onChange, hint }) => (
 
 const AdminBadgePanel = ({ truck, onChange }) => {
   const { setFlag, busy } = useTruckAdmin();
+  const { hasAdminPermission } = useAuth();
+  const canFlags = hasAdminPermission('truck.flags');
+  const canWrite = hasAdminPermission('truck.write');
 
   const handleToggle = async (flag, value) => {
     try {
@@ -26,28 +30,28 @@ const AdminBadgePanel = ({ truck, onChange }) => {
       <h3>Admin flags</h3>
       <Toggle
         label="Featured"
-        hint="Show on homepage hero rail"
+        hint={canFlags ? 'Show on homepage hero rail' : 'Requires truck.flags permission'}
         checked={truck.featured}
-        disabled={busy}
+        disabled={busy || !canFlags}
         onChange={(v) => handleToggle('featured', v)}
       />
       <Toggle
         label="Verified"
-        hint="Display verified badge on public page"
+        hint={canFlags ? 'Display verified badge on public page' : 'Requires truck.flags permission'}
         checked={truck.verified}
-        disabled={busy}
+        disabled={busy || !canFlags}
         onChange={(v) => handleToggle('verified', v)}
       />
       <Toggle
         label="Open"
         checked={truck.is_open}
-        disabled={busy}
+        disabled={busy || !(canFlags || canWrite)}
         onChange={(v) => handleToggle('is_open', v)}
       />
       <Toggle
         label="Accepting orders"
         checked={truck.accepting_orders}
-        disabled={busy}
+        disabled={busy || !(canFlags || canWrite)}
         onChange={(v) => handleToggle('accepting_orders', v)}
       />
     </div>

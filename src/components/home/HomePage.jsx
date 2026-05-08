@@ -59,7 +59,7 @@ const HomePage = ({ embedded = false }) => {
   };
 
   const handleTruckClick = (truck) => {
-    navigate(`/truck/${truck.id}`, { state: { truck } });
+    navigate(truck.slug ? `/t/${truck.slug}` : `/truck/${truck.id}`, { state: { truck } });
   };
 
   // Handle sign out with navigation

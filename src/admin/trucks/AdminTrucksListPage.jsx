@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Icons } from '../../components/common/Icons';
 import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
+import { useAuth } from '../../components/auth/AuthContext';
 import { useTruckAdmin } from './hooks/useTruckAdmin';
 import CreateTruckModal from './components/CreateTruckModal';
 import './AdminTrucks.css';
@@ -23,6 +24,10 @@ const AdminTrucksListPage = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { prompt } = useConfirm();
+  const { hasAdminPermission } = useAuth();
+  const canCreate = hasAdminPermission('truck.create');
+  const canFlags = hasAdminPermission('truck.flags');
+  const canSuspend = hasAdminPermission('truck.suspend');
   const { setFlag, restore, suspend, busy } = useTruckAdmin();
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,9 +147,11 @@ const AdminTrucksListPage = () => {
           <p>Browse, edit, and moderate every truck.</p>
         </div>
         <div className="admin-trucks-actions">
-          <button className="btn-primary" onClick={() => setShowCreate(true)}>
-            {Icons.plus} New truck
-          </button>
+          {canCreate && (
+            <button className="btn-primary" onClick={() => setShowCreate(true)}>
+              {Icons.plus} New truck
+            </button>
+          )}
           <Link to="/admin" className="btn-secondary">{Icons.chevronLeft} Back to dashboard</Link>
         </div>
       </div>
@@ -181,12 +188,12 @@ const AdminTrucksListPage = () => {
       {selected.size > 0 && (
         <div className="admin-bulk-bar">
           <span>{selected.size} selected</span>
-          <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('featured', true)}>Feature</button>
-          <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('featured', false)}>Unfeature</button>
-          <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('verified', true)}>Verify</button>
-          <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('verified', false)}>Unverify</button>
-          <button className="btn-link danger" disabled={busy} onClick={bulkSuspend}>Suspend</button>
-          <button className="btn-link" disabled={busy} onClick={bulkRestore}>Restore</button>
+          {canFlags && <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('featured', true)}>Feature</button>}
+          {canFlags && <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('featured', false)}>Unfeature</button>}
+          {canFlags && <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('verified', true)}>Verify</button>}
+          {canFlags && <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('verified', false)}>Unverify</button>}
+          {canSuspend && <button className="btn-link danger" disabled={busy} onClick={bulkSuspend}>Suspend</button>}
+          {canSuspend && <button className="btn-link" disabled={busy} onClick={bulkRestore}>Restore</button>}
           <button className="btn-link" onClick={() => setSelected(new Set())}>Clear</button>
         </div>
       )}

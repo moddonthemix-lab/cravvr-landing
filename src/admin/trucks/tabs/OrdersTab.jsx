@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import { Icons } from '../../../components/common/Icons';
 import { useConfirm } from '../../../contexts/ConfirmContext';
+import { useAuth } from '../../../components/auth/AuthContext';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 
 const STATUSES = ['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled', 'rejected'];
@@ -11,6 +12,8 @@ const OrdersTab = () => {
   const { truck } = useOutletContext();
   const { forceCancelOrder, busy } = useTruckAdmin();
   const { prompt } = useConfirm();
+  const { hasAdminPermission } = useAuth();
+  const canCancel = hasAdminPermission('order.force_cancel');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -85,7 +88,7 @@ const OrdersTab = () => {
                 <td>${parseFloat(o.total || 0).toFixed(2)}</td>
                 <td className="cell-sub">{new Date(o.created_at).toLocaleString()}</td>
                 <td>
-                  {!['cancelled', 'rejected', 'completed'].includes(o.status) && (
+                  {canCancel && !['cancelled', 'rejected', 'completed'].includes(o.status) && (
                     <button className="btn-link danger" disabled={busy} onClick={() => handleCancel(o)}>
                       Force cancel
                     </button>

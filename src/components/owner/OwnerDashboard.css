@@ -1133,11 +1133,39 @@
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.2s;
+  position: relative;
 }
 
 .menu-item-card.unavailable {
   opacity: 0.6;
 }
+
+.menu-grid.is-reordering { opacity: 0.6; pointer-events: none; }
+
+.menu-card-drag-handle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: -2px;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.menu-item-card:hover .menu-card-drag-handle { opacity: 1; }
+.menu-card-drag-handle:active { cursor: grabbing; }
 
 .menu-item-image {
   height: 140px;

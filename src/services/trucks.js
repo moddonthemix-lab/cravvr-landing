@@ -2,6 +2,18 @@ import { supabase } from '../lib/supabase';
 import { formatTruckHours } from '../utils/formatters';
 
 /**
+ * Canonical URL path for a truck. Prefers slug when available so links are
+ * shareable and SEO-friendly; falls back to UUID otherwise. Both shapes
+ * resolve to the same TruckDetailPage component.
+ */
+export const truckPath = (truck) => {
+  if (!truck) return '/';
+  const slug = truck.slug || truck._raw?.slug;
+  if (slug) return `/t/${slug}`;
+  return `/truck/${truck.id}`;
+};
+
+/**
  * Calculate distance between two coordinates using Haversine formula
  * Returns distance in miles
  */
@@ -33,6 +45,7 @@ export const transformTruck = (truck, userCoords = null) => {
 
   return {
     id: truck.id,
+    slug: truck.slug || null,
     name: truck.name,
     image: truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',
     coverImage: truck.cover_image_url || truck.image_url,

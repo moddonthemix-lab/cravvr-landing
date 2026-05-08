@@ -349,6 +349,23 @@ export const AuthProvider = ({ children }) => {
     isOwner: effectiveProfile?.role === 'owner',
     isCustomer: effectiveProfile?.role === 'customer',
     isAdmin: profile?.role === 'admin', // Always check real profile for admin
+    /**
+     * Mirror of has_admin_permission() (migration 037). Returns true if the
+     * caller is an admin AND the permission is granted. Empty/null perms on
+     * an admin row → treat as superadmin (matches the SQL helper's backstop).
+     */
+    hasAdminPermission: (perm) => {
+      if (profile?.role !== 'admin') return false;
+      const p = profile?.permissions;
+      if (!p || (Array.isArray(p) && p.length === 0)) return true;
+      if (Array.isArray(p)) return p.includes('*') || p.includes(perm);
+      if (typeof p === 'object') {
+        if (Array.isArray(p.permissions)) return p.permissions.includes('*') || p.permissions.includes(perm);
+        if (p['*'] === true) return true;
+        if (p[perm] === true) return true;
+      }
+      return false;
+    },
     // Auth modal controls (centralized)
     showAuthModal,
     authMode,

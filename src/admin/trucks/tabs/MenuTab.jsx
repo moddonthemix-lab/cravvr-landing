@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import MenuItemForm from '../../../components/truck-form/MenuItemForm';
 import MenuCsvImport from '../components/MenuCsvImport';
+import { useMenuDragReorder } from '../../../components/truck-form/useMenuDragReorder';
 import { Icons } from '../../../components/common/Icons';
 import { useToast } from '../../../contexts/ToastContext';
 import { useConfirm } from '../../../contexts/ConfirmContext';
@@ -17,8 +18,15 @@ const MenuTab = () => {
   const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [reordering, setReordering] = useState(false);
-  const dragIdRef = useRef(null);
+
+  const { reordering, onDragStart, onDragOver, onDrop } = useMenuDragReorder(items, setItems, {
+    onSuccess: () => showToast('Order saved', 'success'),
+    onError: (err) => {
+      console.error(err);
+      showToast(err.message || 'Reorder failed', 'error');
+      fetchItems();
+    },
+  });
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -92,57 +100,6 @@ const MenuTab = () => {
     } catch (err) {
       showToast(err.message || 'Update failed', 'error');
     }
-  };
-
-  // ── drag-and-drop reordering ──
-  const persistOrder = async (next) => {
-    setReordering(true);
-    try {
-      // Build the changeset: anything whose new index differs from old display_order
-      const updates = next
-        .map((item, idx) => ({ id: item.id, display_order: idx }))
-        .filter(u => {
-          const orig = items.find(i => i.id === u.id);
-          return orig && orig.display_order !== u.display_order;
-        });
-      if (updates.length === 0) return;
-      // Run as parallel UPDATEs (Supabase has no batch update by id list out of the box)
-      const results = await Promise.all(
-        updates.map(u =>
-          supabase.from('menu_items').update({ display_order: u.display_order }).eq('id', u.id)
-        )
-      );
-      const firstErr = results.find(r => r.error);
-      if (firstErr) throw firstErr.error;
-      showToast('Order saved', 'success');
-    } catch (err) {
-      console.error(err);
-      showToast(err.message || 'Reorder failed', 'error');
-      // revert
-      fetchItems();
-    } finally {
-      setReordering(false);
-    }
-  };
-
-  const onDragStart = (id) => (e) => {
-    dragIdRef.current = id;
-    e.dataTransfer.effectAllowed = 'move';
-  };
-  const onDragOver = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
-  const onDrop = (overId) => (e) => {
-    e.preventDefault();
-    const fromId = dragIdRef.current;
-    dragIdRef.current = null;
-    if (!fromId || fromId === overId) return;
-    const from = items.findIndex(i => i.id === fromId);
-    const to = items.findIndex(i => i.id === overId);
-    if (from === -1 || to === -1) return;
-    const next = [...items];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    setItems(next);
-    persistOrder(next);
   };
 
   return (

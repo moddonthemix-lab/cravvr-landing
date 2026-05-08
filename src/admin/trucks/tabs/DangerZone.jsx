@@ -3,6 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Icons } from '../../../components/common/Icons';
 import { useToast } from '../../../contexts/ToastContext';
 import { useConfirm } from '../../../contexts/ConfirmContext';
+import { useAuth } from '../../../components/auth/AuthContext';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
 import OwnerReassignModal from '../components/OwnerReassignModal';
 
@@ -14,6 +15,10 @@ const DangerZone = () => {
   const { showToast } = useToast();
   const { prompt } = useConfirm();
   const { softDelete, restore, suspend, busy } = useTruckAdmin();
+  const { hasAdminPermission } = useAuth();
+  const canSuspend = hasAdminPermission('truck.suspend');
+  const canDelete = hasAdminPermission('truck.delete');
+  const canTransfer = hasAdminPermission('truck.transfer_owner');
   const [showReassign, setShowReassign] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null); // { reason, timer }
   const undoRef = useRef(false);
@@ -71,64 +76,74 @@ const DangerZone = () => {
     <div className="admin-tab-form">
       <h2>Danger zone</h2>
 
-      <section className="danger-section">
-        <h3>Suspend</h3>
-        <p className="cell-sub">Hides the truck from public listings. Reversible.</p>
-        {truck.suspended_at ? (
-          <p>
-            <span className="admin-badge admin-badge-warning">Suspended</span>{' '}
-            {truck.suspension_reason && <span className="cell-sub">— {truck.suspension_reason}</span>}
-          </p>
-        ) : null}
-        <div className="form-actions">
-          {!truck.suspended_at ? (
-            <button type="button" className="btn-secondary danger" disabled={busy} onClick={handleSuspend}>
-              Suspend truck
-            </button>
-          ) : (
-            <button type="button" className="btn-secondary" disabled={busy} onClick={handleRestore}>
-              Lift suspension
-            </button>
-          )}
-        </div>
-      </section>
+      {canSuspend && (
+        <section className="danger-section">
+          <h3>Suspend</h3>
+          <p className="cell-sub">Hides the truck from public listings. Reversible.</p>
+          {truck.suspended_at ? (
+            <p>
+              <span className="admin-badge admin-badge-warning">Suspended</span>{' '}
+              {truck.suspension_reason && <span className="cell-sub">— {truck.suspension_reason}</span>}
+            </p>
+          ) : null}
+          <div className="form-actions">
+            {!truck.suspended_at ? (
+              <button type="button" className="btn-secondary danger" disabled={busy} onClick={handleSuspend}>
+                Suspend truck
+              </button>
+            ) : (
+              <button type="button" className="btn-secondary" disabled={busy} onClick={handleRestore}>
+                Lift suspension
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
-      <section className="danger-section">
-        <h3>Transfer ownership</h3>
-        <p className="cell-sub">Reassign this truck to a different owner profile.</p>
-        <div className="form-actions">
-          <button type="button" className="btn-secondary" onClick={() => setShowReassign(true)} disabled={busy}>
-            Reassign owner
-          </button>
-        </div>
-      </section>
+      {canTransfer && (
+        <section className="danger-section">
+          <h3>Transfer ownership</h3>
+          <p className="cell-sub">Reassign this truck to a different owner profile.</p>
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={() => setShowReassign(true)} disabled={busy}>
+              Reassign owner
+            </button>
+          </div>
+        </section>
+      )}
 
-      <section className="danger-section">
-        <h3>Soft delete</h3>
-        <p className="cell-sub">Hides the truck everywhere; recoverable from Trash for 30 days.</p>
-        {truck.deleted_at ? (
-          <>
-            <p><span className="admin-badge admin-badge-danger">Deleted</span> on {new Date(truck.deleted_at).toLocaleString()}</p>
+      {canDelete && (
+        <section className="danger-section">
+          <h3>Soft delete</h3>
+          <p className="cell-sub">Hides the truck everywhere; recoverable from Trash for 30 days.</p>
+          {truck.deleted_at ? (
+            <>
+              <p><span className="admin-badge admin-badge-danger">Deleted</span> on {new Date(truck.deleted_at).toLocaleString()}</p>
+              <div className="form-actions">
+                <button type="button" className="btn-primary" disabled={busy} onClick={handleRestore}>
+                  Restore from trash
+                </button>
+              </div>
+            </>
+          ) : pendingDelete ? (
             <div className="form-actions">
-              <button type="button" className="btn-primary" disabled={busy} onClick={handleRestore}>
-                Restore from trash
+              <button type="button" className="btn-secondary" onClick={cancelPending}>
+                {Icons.x} Undo delete (10s)
               </button>
             </div>
-          </>
-        ) : pendingDelete ? (
-          <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={cancelPending}>
-              {Icons.x} Undo delete (10s)
-            </button>
-          </div>
-        ) : (
-          <div className="form-actions">
-            <button type="button" className="btn-primary danger" disabled={busy} onClick={handleSoftDelete}>
-              {Icons.trash} Delete truck
-            </button>
-          </div>
-        )}
-      </section>
+          ) : (
+            <div className="form-actions">
+              <button type="button" className="btn-primary danger" disabled={busy} onClick={handleSoftDelete}>
+                {Icons.trash} Delete truck
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {!canSuspend && !canTransfer && !canDelete && (
+        <p className="cell-sub">You don't have permissions for any actions on this page.</p>
+      )}
 
       {showReassign && (
         <OwnerReassignModal

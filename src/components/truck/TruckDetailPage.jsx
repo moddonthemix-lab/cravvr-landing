@@ -12,8 +12,12 @@ import ReviewModal from '../reviews/ReviewModal';
 import MenuItemRatingModal from '../reviews/MenuItemRatingModal';
 import SidebarCart from '../cart/SidebarCart';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const TruckDetailPage = () => {
-  const { id } = useParams();
+  const params = useParams();
+  const idOrSlug = params.id || params.slug;
+  const isSlugRoute = !!params.slug;
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut, devSettings } = useAuth();
@@ -24,6 +28,9 @@ const TruckDetailPage = () => {
 
   // Core state
   const [truck, setTruck] = useState(location.state?.truck || null);
+  // Aliased for legacy callsites that fetch by truck id (favorites, menu, reviews).
+  // Prefers the resolved truck's UUID; falls back to URL param if it's a UUID.
+  const id = truck?.id || (UUID_RE.test(idOrSlug || '') ? idOrSlug : null);
   const [menuItems, setMenuItems] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(!location.state?.truck);
@@ -65,11 +72,31 @@ const TruckDetailPage = () => {
       }
 
       try {
-        const { data, error } = await supabase
-          .from('food_trucks')
-          .select('*')
-          .eq('id', id)
-          .single();
+        let data = null;
+        let error = null;
+        if (isSlugRoute) {
+          // Resolve current OR historical slug → current truck row
+          const { data: resolved, error: rpcErr } = await supabase
+            .rpc('resolve_truck_slug', { p_slug: idOrSlug });
+          error = rpcErr;
+          data = resolved && resolved.id ? resolved : null;
+          // Canonicalizing redirect: if visited an old slug, swap URL silently
+          if (data && data.slug && data.slug !== idOrSlug) {
+            navigate(`/t/${data.slug}`, { replace: true });
+            return;
+          }
+        } else if (UUID_RE.test(idOrSlug)) {
+          const res = await supabase.from('food_trucks').select('*').eq('id', idOrSlug).single();
+          data = res.data; error = res.error;
+        } else {
+          // Legacy /truck/:id with non-UUID — try as slug
+          const { data: resolved } = await supabase.rpc('resolve_truck_slug', { p_slug: idOrSlug });
+          data = resolved && resolved.id ? resolved : null;
+          if (data) {
+            navigate(`/t/${data.slug || data.id}`, { replace: true });
+            return;
+          }
+        }
 
         if (error) throw error;
 
@@ -106,7 +133,7 @@ const TruckDetailPage = () => {
     };
 
     fetchTruck();
-  }, [id, truck, navigate]);
+  }, [idOrSlug, isSlugRoute, truck, navigate]);
 
   // Fire view_truck once the truck is resolved (handles both state-passed and fetched cases).
   const trackedTruckId = useRef(null);
