@@ -45,7 +45,7 @@ const GoPage = () => {
       return;
     }
     if (!isOwner) {
-      setError('Cravvr Go is for truck owners. Sign in with an owner account or contact us about Enterprise.');
+      setError('Cravvr Go is for truck owners. Sign in with an owner account to start your trial.');
       return;
     }
     setBusy(true);
@@ -141,18 +141,14 @@ const GoPage = () => {
             </>
           ) : (
             <>
-              <p className="go-not-owner">Cravvr Go is for truck owners. Running a fleet?</p>
-              <Link to="/enterprise" className="go-btn-primary">
-                See Cravvr Enterprise
+              <p className="go-not-owner">Cravvr Go is for truck owners. Create an owner account to start your trial.</p>
+              <button className="go-btn-primary" onClick={() => openAuth?.('signup')}>
+                Create owner account → Start trial
                 <span className="go-btn-icon">{Icons.arrowRight}</span>
-              </Link>
+              </button>
             </>
           )}
         </div>
-
-        <p className="go-fineprint">
-          Have a fleet of 5+ trucks? <Link to="/enterprise">See Cravvr Enterprise →</Link>
-        </p>
       </div>
     </div>
   );
