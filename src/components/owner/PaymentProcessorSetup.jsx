@@ -41,7 +41,11 @@ const CHOICES = [
 
 const PaymentProcessorSetup = ({ truck, onUpdate }) => {
   const { showToast } = useToast();
-  const { isPlus, loading: subLoading, openCheckout } = useCravvrSubscription();
+  const { isPlus, plans, loading: subLoading, openCheckout } = useCravvrSubscription();
+  const plusPlan = plans?.find?.((p) => p.code === 'plus');
+  const plusPriceLabel = plusPlan
+    ? `$${(plusPlan.price_cents / 100).toFixed(plusPlan.price_cents % 100 === 0 ? 0 : 2)}/${plusPlan.interval || 'mo'}`
+    : '';
   const [updating, setUpdating] = useState(false);
   const processor = truck.payment_processor || 'pickup';
   // Online-checkout processors require an active Cravvr Go subscription.
@@ -51,7 +55,7 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
     if (next === processor || updating) return;
     if (requiresPlus(next) && !isPlus) {
       const ok = window.confirm(
-        'Online card payments require Cravvr Go ($29/mo). Start a 14-day free trial now?',
+        `Online card payments require Cravvr Go${plusPriceLabel ? ` (${plusPriceLabel})` : ''}. Start a 14-day free trial now?`,
       );
       if (!ok) return;
       try { await openCheckout('plus'); } catch (e) { showToast(e.message || 'Could not start checkout', 'error'); }

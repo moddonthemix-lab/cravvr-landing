@@ -15,30 +15,22 @@ export function useCravvrSubscription() {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState(null);
   const [plan, setPlan] = useState(null);
+  const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
-    if (!user) { setSubscription(null); setPlan(null); setLoading(false); return; }
+    if (!user) { setSubscription(null); setPlan(null); setPlans([]); setLoading(false); return; }
     setLoading(true);
     try {
-      const { data: sub } = await supabase
-        .from('cravvr_subscriptions')
-        .select('*')
-        .eq('owner_id', user.id)
-        .maybeSingle();
+      const [{ data: sub }, { data: allPlans }] = await Promise.all([
+        supabase.from('cravvr_subscriptions').select('*').eq('owner_id', user.id).maybeSingle(),
+        supabase.from('cravvr_plans').select('*').eq('is_active', true).order('display_order'),
+      ]);
       setSubscription(sub || null);
-
-      if (sub) {
-        const { data: p } = await supabase
-          .from('cravvr_plans')
-          .select('*')
-          .eq('code', sub.plan_code)
-          .maybeSingle();
-        setPlan(p || null);
-      } else {
-        setPlan(null);
-      }
+      setPlans(allPlans || []);
+      const myPlan = sub ? (allPlans || []).find((p) => p.code === sub.plan_code) : null;
+      setPlan(myPlan || null);
     } catch (e) {
       setError(e);
     } finally {
@@ -84,6 +76,7 @@ export function useCravvrSubscription() {
   return {
     subscription,
     plan,
+    plans,
     isPlus,
     isActive,
     loading,

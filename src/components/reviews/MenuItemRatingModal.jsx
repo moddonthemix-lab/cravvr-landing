@@ -51,26 +51,6 @@ const MenuItemRatingModal = ({ isOpen, onClose, item, userId, existingRating, on
     }
   };
 
-  const updateItemRating = async (itemId) => {
-    // Calculate new average rating
-    const { data: reviews } = await supabase
-      .from('menu_item_reviews')
-      .select('rating')
-      .eq('menu_item_id', itemId);
-
-    if (reviews && reviews.length > 0) {
-      const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-      await supabase
-        .from('menu_items')
-        .update({
-          average_rating: Math.round(avgRating * 10) / 10,
-          review_count: reviews.length
-        })
-        .eq('id', itemId);
-    }
-  };
-
   if (!isOpen) return null;
 
   return (

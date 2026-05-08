@@ -11,7 +11,7 @@ const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString(undefined, {
 
 const CravvrPlusBilling = () => {
   const { showToast } = useToast();
-  const { subscription, plan, isPlus, isActive, loading, openCheckout, openPortal } = useCravvrSubscription();
+  const { subscription, plan, plans, isPlus, isActive, loading, openCheckout, openPortal } = useCravvrSubscription();
   const [busy, setBusy] = useState(false);
 
   if (loading) {
@@ -68,14 +68,20 @@ const CravvrPlusBilling = () => {
         <li className="on">{Icons.check} Order tracking + customer notifications</li>
       </ul>
 
-      {onFree && (
-        <div className="cp-billing-actions">
-          <button className="cp-btn-primary" disabled={busy} onClick={handleUpgrade}>
-            {busy ? 'Loading…' : 'Start 14-day free trial — $29/mo after'}
-          </button>
-          <p className="cp-billing-fineprint">Cancel anytime in the billing portal. Cravvr never takes a cut of your truck's sales.</p>
-        </div>
-      )}
+      {onFree && (() => {
+        // Pull the Plus plan price live from the seeded `plans` lookup so the
+        // CTA copy never drifts from the actual Stripe Price.
+        const plusPrice = plans?.find?.((p) => p.code === 'plus');
+        const priceLabel = plusPrice ? `${formatCents(plusPrice.price_cents)}/${plusPrice.interval || 'mo'}` : '';
+        return (
+          <div className="cp-billing-actions">
+            <button className="cp-btn-primary" disabled={busy} onClick={handleUpgrade}>
+              {busy ? 'Loading…' : `Start 14-day free trial${priceLabel ? ` — ${priceLabel} after` : ''}`}
+            </button>
+            <p className="cp-billing-fineprint">Cancel anytime in the billing portal. Cravvr never takes a cut of your truck's sales.</p>
+          </div>
+        );
+      })()}
 
       {isPlus && (
         <div className="cp-billing-meta">
