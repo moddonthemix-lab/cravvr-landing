@@ -955,6 +955,79 @@
   flex-shrink: 0;
 }
 
+/* Wizard step bar */
+.modal.truck-wizard .modal-body { padding-top: 16px; }
+
+.wizard-progress {
+  display: flex;
+  gap: 0;
+  padding: 14px 24px 0;
+  background: white;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--owner-border, #e2e8f0);
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 10px 0 14px;
+  position: relative;
+  color: var(--owner-text-muted, #6b7280);
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.wizard-step.is-current {
+  color: var(--owner-text, #0f172a);
+  font-weight: 600;
+  border-bottom-color: var(--primary, #e11d48);
+}
+
+.wizard-step.is-done {
+  color: #16a34a;
+}
+
+.wizard-step-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--owner-bg, #f3f4f6);
+  color: var(--owner-text-muted, #6b7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.wizard-step-dot svg { width: 12px; height: 12px; }
+
+.wizard-step.is-current .wizard-step-dot {
+  background: var(--primary, #e11d48);
+  color: white;
+}
+
+.wizard-step.is-done .wizard-step-dot {
+  background: #16a34a;
+  color: white;
+}
+
+.wizard-step-label {
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .wizard-step-label { display: none; }
+  .wizard-step { justify-content: center; }
+}
+
+.form-group .req { color: var(--primary, #e11d48); margin-left: 2px; }
+
 /* Trucks Grid */
 .trucks-grid {
   display: grid;
