@@ -253,6 +253,7 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
               </button>
             </div>
             <form onSubmit={handleSave}>
+              <div className="modal-body">
               <div className="form-group">
                 <label>Truck Name</label>
                 <input
@@ -351,6 +352,7 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
                 folder={editingTruck ? `trucks/${editingTruck.id}` : 'trucks/temp'}
                 disabled={saving}
               />
+              </div>
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
                   Cancel
