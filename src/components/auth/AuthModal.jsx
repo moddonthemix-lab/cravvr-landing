@@ -11,6 +11,11 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState('customer');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [preferredProcessor, setPreferredProcessor] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,6 +31,11 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     setConfirmPassword('');
     setName('');
     setRole('customer');
+    setAge('');
+    setGender('');
+    setCity('');
+    setState('');
+    setPreferredProcessor('');
     setError('');
     setSuccess('');
   };
@@ -77,7 +87,25 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       return;
     }
 
-    const { error } = await signUp({ email, password, name, role });
+    if (role === 'owner' && !preferredProcessor) {
+      setError('Please select your current point-of-sale.');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await signUp({
+      email,
+      password,
+      name,
+      role,
+      extra: {
+        age,
+        gender,
+        city,
+        state,
+        ...(role === 'owner' ? { preferred_processor: preferredProcessor } : {}),
+      },
+    });
 
     if (error) {
       setError(error?.message || error || 'An error occurred');
@@ -308,6 +336,75 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
                 </button>
               </div>
             </div>
+
+            {/* Demographics — collected for both customers and owners */}
+            <div className="auth-row-2">
+              <div className="auth-field">
+                <label>Age</label>
+                <input
+                  type="number"
+                  min={13}
+                  max={120}
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  placeholder="e.g. 28"
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label>Gender</label>
+                <select value={gender} onChange={(e) => setGender(e.target.value)} required>
+                  <option value="">Select…</option>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                  <option value="non-binary">Non-binary</option>
+                  <option value="other">Other</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="auth-row-2">
+              <div className="auth-field auth-field-grow">
+                <label>City</label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g. Austin"
+                  required
+                />
+              </div>
+              <div className="auth-field auth-field-state">
+                <label>State</label>
+                <input
+                  type="text"
+                  value={state}
+                  onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
+                  placeholder="TX"
+                  maxLength={2}
+                  pattern="[A-Za-z]{2}"
+                  required
+                />
+              </div>
+            </div>
+
+            {role === 'owner' && (
+              <div className="auth-field">
+                <label>What point-of-sale do you currently use?</label>
+                <select value={preferredProcessor} onChange={(e) => setPreferredProcessor(e.target.value)} required>
+                  <option value="">Select your POS…</option>
+                  <option value="square">Square</option>
+                  <option value="stripe">Stripe</option>
+                  <option value="clover">Clover</option>
+                  <option value="other">Other / multiple</option>
+                  <option value="none">I don't have one yet</option>
+                </select>
+                <p className="auth-field-hint">
+                  This just tells us which integration to surface first. You can change it any time on each truck.
+                </p>
+              </div>
+            )}
 
             <button type="submit" className="auth-submit-btn" disabled={loading}>
               {loading ? (

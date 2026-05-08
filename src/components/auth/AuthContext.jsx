@@ -175,8 +175,12 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Sign up with email/password
-  const signUp = async ({ email, password, name, role = 'customer' }) => {
+  // Sign up with email/password. `extra` carries optional demographic fields
+  // (age, gender, city, state) for everyone, plus `preferred_processor` for
+  // owners only. They're persisted to the profiles row right after the auth
+  // user is created — the consolidated user-creation trigger has already
+  // inserted the profile row by the time signUp() resolves.
+  const signUp = async ({ email, password, name, role = 'customer', extra = {} }) => {
     setError(null);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -186,6 +190,10 @@ export const AuthProvider = ({ children }) => {
           data: {
             name,
             role,
+            // Mirror into raw_user_meta_data so a future trigger could pick
+            // them up server-side; we still write to profiles below for the
+            // current trigger.
+            ...extra,
           },
           emailRedirectTo: `${window.location.origin}/auth/confirm`,
         },
@@ -194,8 +202,28 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
 
       if (data?.user?.id) {
+        // Persist demographic fields. Service-role isn't available client-side,
+        // so this update only succeeds if the new user is auto-signed-in
+        // (default Supabase behavior unless email confirmation blocks it). If
+        // confirmation is required and there's no session yet, this no-ops
+        // silently — admin can re-run via /profile after confirmation.
+        const updates = {};
+        if (extra.age != null && extra.age !== '') updates.age = Number(extra.age);
+        if (extra.gender) updates.gender = extra.gender;
+        if (extra.city) updates.city = extra.city;
+        if (extra.state) updates.state = extra.state.toUpperCase();
+        if (role === 'owner' && extra.preferred_processor) {
+          updates.preferred_processor = extra.preferred_processor;
+        }
+        if (Object.keys(updates).length > 0) {
+          await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', data.user.id);
+        }
+
         await identifyVisitor(data.user.id);
-        trackEvent('signup', { role });
+        trackEvent('signup', { role, has_demographics: Object.keys(updates).length > 0 });
       }
 
       return { data, error: null };

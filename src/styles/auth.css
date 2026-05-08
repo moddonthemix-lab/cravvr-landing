@@ -136,6 +136,50 @@
   color: #374151;
 }
 
+/* Bare inputs and selects when not wrapped in .auth-input-wrapper
+   (e.g. demographics row, POS dropdown) */
+.auth-field > input:not([type="hidden"]),
+.auth-field > select {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  color: #0f172a;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-field > input:focus,
+.auth-field > select:focus {
+  outline: none;
+  border-color: #e11d48;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
+}
+
+.auth-field-hint {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+/* 2-column row used for Age/Gender + City/State pairs */
+.auth-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.auth-field-state { max-width: 90px; }
+.auth-field-grow { min-width: 0; }
+
+@media (max-width: 380px) {
+  .auth-row-2 { grid-template-columns: 1fr; }
+  .auth-field-state { max-width: none; }
+}
+
 /* Input Wrapper */
 .auth-input-wrapper {
   position: relative;

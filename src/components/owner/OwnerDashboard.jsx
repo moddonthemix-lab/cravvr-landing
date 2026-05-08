@@ -100,17 +100,29 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
             <h3>Quick Actions</h3>
           </div>
           <div className="quick-actions">
-            <button className="action-btn" onClick={() => setActiveTab('trucks')}>
-              {Icons.plus}
-              <span>Add New Truck</span>
+            <button className="action-btn action-btn--add" onClick={() => setActiveTab('trucks')}>
+              <span className="action-btn-chip">{Icons.plus}</span>
+              <span className="action-btn-text">
+                <strong>Add New Truck</strong>
+                <small>Create another listing</small>
+              </span>
+              <span className="action-btn-arrow">{Icons.chevronRight}</span>
             </button>
-            <button className="action-btn" onClick={() => setActiveTab('menu')}>
-              {Icons.edit}
-              <span>Update Menu</span>
+            <button className="action-btn action-btn--menu" onClick={() => setActiveTab('menu')}>
+              <span className="action-btn-chip">{Icons.edit}</span>
+              <span className="action-btn-text">
+                <strong>Update Menu</strong>
+                <small>Edit items, prices, photos</small>
+              </span>
+              <span className="action-btn-arrow">{Icons.chevronRight}</span>
             </button>
-            <button className="action-btn" onClick={() => setActiveTab('analytics')}>
-              {Icons.chart}
-              <span>View Reports</span>
+            <button className="action-btn action-btn--reports" onClick={() => setActiveTab('analytics')}>
+              <span className="action-btn-chip">{Icons.chart}</span>
+              <span className="action-btn-text">
+                <strong>View Reports</strong>
+                <small>Sales, revenue, top items</small>
+              </span>
+              <span className="action-btn-arrow">{Icons.chevronRight}</span>
             </button>
           </div>
         </div>
