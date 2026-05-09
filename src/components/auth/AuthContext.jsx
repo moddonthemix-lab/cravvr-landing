@@ -30,6 +30,10 @@ export const AuthProvider = ({ children }) => {
 
   // Ref to prevent double profile fetch on page refresh
   const initialLoadComplete = useRef(false);
+  // Track which user id we've already loaded a profile for, so tab-visibility
+  // re-emits of SIGNED_IN (and TOKEN_REFRESHED) don't trigger a redundant
+  // profile refetch that pins authLoading=true and blanks the dashboard.
+  const loadedUserIdRef = useRef(null);
 
   // Open auth modal from anywhere in the app
   const openAuth = (mode = 'login') => {
@@ -133,6 +137,7 @@ export const AuthProvider = ({ children }) => {
           setUser(session.user);
           const profileData = await fetchProfile(session.user.id);
           setProfile(profileData);
+          loadedUserIdRef.current = session.user.id;
         }
         // Mark initial load as complete AFTER profile fetch
         initialLoadComplete.current = true;
@@ -148,26 +153,40 @@ export const AuthProvider = ({ children }) => {
 
     // Listen for auth changes (but skip initial session event to avoid double fetch)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Skip SIGNED_IN during initial load - initAuth handles it
       if (event === 'SIGNED_IN' && session?.user) {
         if (!initialLoadComplete.current) {
           // Initial load in progress, skip to avoid double fetch
+          return;
+        }
+        // Tab-visibility re-emit: Supabase re-fires SIGNED_IN whenever the
+        // tab regains focus (and on every TOKEN_REFRESHED). If it's the same
+        // user we've already loaded, just keep the user reference fresh and
+        // bail — flipping loading=true here pins the page on a spinner if
+        // the follow-up fetchProfile races with the token refresh.
+        if (loadedUserIdRef.current === session.user.id) {
+          setUser(session.user);
           return;
         }
         setLoading(true);
         setUser(session.user);
         const profileData = await fetchProfile(session.user.id);
         setProfile(profileData);
+        loadedUserIdRef.current = session.user.id;
         setLoading(false);
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        // Just refresh the user reference — no profile refetch, no spinner.
+        setUser(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
+        loadedUserIdRef.current = null;
         setError(null);
       } else if (event === 'USER_UPDATED' && session?.user) {
         setLoading(true);
         setUser(session.user);
         const profileData = await fetchProfile(session.user.id);
         setProfile(profileData);
+        loadedUserIdRef.current = session.user.id;
         setLoading(false);
       }
     });
@@ -253,6 +272,7 @@ export const AuthProvider = ({ children }) => {
         const profileData = await fetchProfile(data.user.id);
         setProfile(profileData);
         initialLoadComplete.current = true;
+        loadedUserIdRef.current = data.user.id;
 
         await identifyVisitor(data.user.id);
         trackEvent('login');
@@ -278,6 +298,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setProfile(null);
       initialLoadComplete.current = false; // Reset for next login
+      loadedUserIdRef.current = null;
       setLoading(false);
       return { error: null };
     } catch (err) {

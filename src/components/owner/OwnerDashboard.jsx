@@ -446,15 +446,24 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
                     Cancel
                   </button>
                 )}
-                {formStep < STEP_LABELS.length - 1 ? (
-                  <button type="button" className="btn-primary" onClick={goNext}>
-                    Next
-                  </button>
-                ) : (
-                  <button type="submit" className="btn-primary" disabled={saving}>
-                    {saving ? 'Saving...' : (editingTruck ? 'Save Changes' : 'Create Truck')}
-                  </button>
-                )}
+                {/* Single always-type=button action: prevents React from reconciling
+                    Next and Submit into the same <button> and accidentally firing a
+                    submit on the click that just advanced the step. */}
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={saving}
+                  onClick={(e) => {
+                    if (formStep < STEP_LABELS.length - 1) goNext();
+                    else handleSave(e);
+                  }}
+                >
+                  {formStep < STEP_LABELS.length - 1
+                    ? 'Next'
+                    : saving
+                      ? 'Saving...'
+                      : (editingTruck ? 'Save Changes' : 'Create Truck')}
+                </button>
               </div>
             </form>
           </div>
