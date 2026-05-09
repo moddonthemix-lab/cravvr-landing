@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Icons } from '../components/common/Icons';
-import './AuthConfirmPage.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [status, setStatus] = useState('form'); // 'form', 'success', 'error'
+  const [status, setStatus] = useState('form');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +33,6 @@ const ResetPasswordPage = () => {
 
     try {
       const { error } = await supabase.auth.updateUser({ password });
-
       if (error) throw error;
 
       setStatus('success');
@@ -45,98 +47,83 @@ const ResetPasswordPage = () => {
     }
   };
 
+  const Shell = ({ children }) => (
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 via-background to-background flex items-center justify-center px-4 py-10">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardContent className="p-8 space-y-5">{children}</CardContent>
+      </Card>
+    </div>
+  );
+
   if (status === 'success') {
     return (
-      <div className="auth-confirm-page">
-        <div className="confirm-card">
-          <div className="confirm-icon success">{Icons.check}</div>
-          <h1>Password Updated!</h1>
-          <p>{message}</p>
+      <Shell>
+        <div className="text-center space-y-4">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-positive/10 text-positive">
+            <span className="h-8 w-8">{Icons.check}</span>
+          </span>
+          <h1 className="text-2xl font-bold tracking-tight">Password Updated!</h1>
+          <p className="text-sm text-muted-foreground">{message}</p>
         </div>
-      </div>
+      </Shell>
     );
   }
 
   if (status === 'error') {
     return (
-      <div className="auth-confirm-page">
-        <div className="confirm-card">
-          <div className="confirm-icon error">{Icons.x}</div>
-          <h1>Reset Failed</h1>
-          <p>{message}</p>
-          <button className="btn-primary" onClick={() => navigate('/eat')}>
+      <Shell>
+        <div className="text-center space-y-4">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <span className="h-8 w-8">{Icons.x}</span>
+          </span>
+          <h1 className="text-2xl font-bold tracking-tight">Reset Failed</h1>
+          <p className="text-sm text-muted-foreground">{message}</p>
+          <Button onClick={() => navigate('/eat')} className="w-full">
             Back to Home
-          </button>
+          </Button>
         </div>
-      </div>
+      </Shell>
     );
   }
 
   return (
-    <div className="auth-confirm-page">
-      <div className="confirm-card">
-        <h1>Reset Your Password</h1>
-        <p>Enter your new password below.</p>
-
-        <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#374151', fontSize: 14 }}>
-              New Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
-              required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '2px solid #e5e7eb',
-                borderRadius: 12,
-                fontSize: 16,
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#374151', fontSize: 14 }}>
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
-              required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '2px solid #e5e7eb',
-                borderRadius: 12,
-                fontSize: 16,
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          {message && (
-            <p style={{ color: '#ef4444', fontSize: 14, marginBottom: 16 }}>{message}</p>
-          )}
-
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={loading}
-            style={{ width: '100%' }}
-          >
-            {loading ? 'Updating...' : 'Update Password'}
-          </button>
-        </form>
+    <Shell>
+      <div className="space-y-2 text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Reset Your Password</h1>
+        <p className="text-sm text-muted-foreground">Enter your new password below.</p>
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="reset-password">New Password</Label>
+          <Input
+            id="reset-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="At least 6 characters"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="reset-password-confirm">Confirm Password</Label>
+          <Input
+            id="reset-password-confirm"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm your password"
+            required
+          />
+        </div>
+
+        {message && <p className="text-sm text-destructive">{message}</p>}
+
+        <Button type="submit" disabled={loading} size="lg" className="w-full">
+          {loading ? 'Updating…' : 'Update Password'}
+        </Button>
+      </form>
+    </Shell>
   );
 };
 

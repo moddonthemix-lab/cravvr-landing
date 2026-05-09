@@ -8,7 +8,6 @@ import MapView from '../map/MapView';
 import DiscoverView from '../discover/DiscoverView';
 import BoltView from '../bolt/BoltView';
 import HomePage from '../home/HomePage';
-import './TabContainer.css';
 
 const TabContainer = () => {
   const navigate = useNavigate();
@@ -17,15 +16,12 @@ const TabContainer = () => {
   const { favorites, toggleFavorite } = useFavorites();
   const [activeTab, setActiveTab] = useState('explore');
 
-  const handleToggleFavorite = (truckId) => {
-    toggleFavorite(truckId);
-  };
+  const handleToggleFavorite = (truckId) => toggleFavorite(truckId);
 
   const handleTruckClick = (truck) => {
     navigate(truck.slug ? `/t/${truck.slug}` : `/truck/${truck.id}`, { state: { truck } });
   };
 
-  // Render active tab content
   const renderContent = () => {
     switch (activeTab) {
       case 'explore':
@@ -52,19 +48,17 @@ const TabContainer = () => {
         );
       case 'bolt':
         return (
-          <BoltView
-            trucks={trucks}
-            loading={loading}
-            onTruckClick={handleTruckClick}
-          />
+          <BoltView trucks={trucks} loading={loading} onTruckClick={handleTruckClick} />
         );
       case 'events':
         return (
-          <div className="coming-soon-view">
-            <div className="coming-soon-content">
-              <span className="coming-soon-emoji">🎉</span>
-              <h2>Events Coming Soon</h2>
-              <p>Discover food truck festivals and gatherings near you.</p>
+          <div className="flex min-h-[60vh] items-center justify-center px-6">
+            <div className="text-center max-w-md space-y-3">
+              <span className="text-5xl">🎉</span>
+              <h2 className="text-2xl font-bold tracking-tight">Events Coming Soon</h2>
+              <p className="text-sm text-muted-foreground">
+                Discover food truck festivals and gatherings near you.
+              </p>
             </div>
           </div>
         );
@@ -74,8 +68,8 @@ const TabContainer = () => {
   };
 
   return (
-    <div className="tab-container">
-      <div className="tab-content">
+    <div className="flex min-h-screen flex-col pb-16">
+      <div className="flex-1">
         {renderContent()}
       </div>
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
