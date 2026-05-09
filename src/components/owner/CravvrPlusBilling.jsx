@@ -46,8 +46,8 @@ const CravvrPlusBilling = () => {
           <h3>Cravvr Go</h3>
           <p className="cp-billing-sub">
             {onFree
-              ? 'Unlock online card payments via Stripe, Square, and Clover.'
-              : 'Online card payments are unlocked across your trucks.'}
+              ? 'Unlock owner analytics — see trends, peak hours, and what drives revenue.'
+              : 'Owner analytics are unlocked across your trucks.'}
           </p>
         </div>
         <div className={`cp-plan-badge ${isPlus ? 'is-plus' : 'is-free'}`}>
@@ -59,11 +59,15 @@ const CravvrPlusBilling = () => {
 
       <ul className="cp-feature-list">
         <li className={isPlus ? 'on' : 'off'}>
-          {isPlus ? Icons.check : Icons.x} Online checkout (Stripe / Square / Clover)
+          {isPlus ? Icons.check : Icons.x} Revenue & order trends (week / month / year)
         </li>
         <li className={isPlus ? 'on' : 'off'}>
-          {isPlus ? Icons.check : Icons.x} Owner analytics dashboard
+          {isPlus ? Icons.check : Icons.x} Per-truck performance breakdowns
         </li>
+        <li className={isPlus ? 'on' : 'off'}>
+          {isPlus ? Icons.check : Icons.x} Customer & demand insights
+        </li>
+        <li className="on">{Icons.check} Online checkout — Stripe, Square, Clover (free)</li>
         <li className="on">{Icons.check} Pay-at-Pickup orders</li>
         <li className="on">{Icons.check} Order tracking + customer notifications</li>
       </ul>

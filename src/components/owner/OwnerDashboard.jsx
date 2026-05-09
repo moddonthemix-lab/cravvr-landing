@@ -32,6 +32,7 @@ import StripeOnboarding from './StripeOnboarding';
 import PaymentProcessorSetup from './PaymentProcessorSetup';
 import PaymentsDashboard from './PaymentsDashboard';
 import CravvrPlusBilling from './CravvrPlusBilling';
+import { useCravvrSubscription } from '../../hooks/useCravvrSubscription';
 import TruckEditDialog from './TruckEditDialog';
 import './OwnerDashboard.css';
 import './KitchenDisplay.css';
@@ -618,7 +619,28 @@ const OrdersTab = ({ orders, loading }) => {
 
 // Analytics Tab
 const AnalyticsTab = ({ trucks, orders }) => {
+  const { isPlus, plans, openCheckout, loading: subLoading } = useCravvrSubscription();
   const [period, setPeriod] = useState('week');
+  const [upgrading, setUpgrading] = useState(false);
+
+  // Free users are locked to the weekly view. If their state somehow holds
+  // a gated period (e.g. a stored preference from before the gate), snap back.
+  useEffect(() => {
+    if (!subLoading && !isPlus && period !== 'week') setPeriod('week');
+  }, [subLoading, isPlus, period]);
+
+  const plusPlan = plans?.find?.((p) => p.code === 'plus');
+  const plusPriceLabel = plusPlan
+    ? `$${(plusPlan.price_cents / 100).toFixed(plusPlan.price_cents % 100 === 0 ? 0 : 2)}/${plusPlan.interval || 'mo'}`
+    : '';
+
+  const handleUpgrade = async () => {
+    setUpgrading(true);
+    try { await openCheckout('plus'); }
+    catch { setUpgrading(false); }
+  };
+
+  const lockSuffix = isPlus ? '' : ' — Cravvr Go';
 
   // Get date range based on selected period
   const getDateRange = () => {
@@ -716,16 +738,30 @@ const AnalyticsTab = ({ trucks, orders }) => {
           <h1>Analytics</h1>
           <p>Track your performance and insights.</p>
         </div>
-        <select
-          className="period-select"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-        >
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="30days">Last 30 Days</option>
-          <option value="year">This Year</option>
-        </select>
+        <div className="analytics-period-controls">
+          <select
+            className="period-select"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+          >
+            <option value="week">This Week</option>
+            <option value="month" disabled={!isPlus && !subLoading}>This Month{lockSuffix}</option>
+            <option value="30days" disabled={!isPlus && !subLoading}>Last 30 Days{lockSuffix}</option>
+            <option value="year" disabled={!isPlus && !subLoading}>This Year{lockSuffix}</option>
+          </select>
+          {!isPlus && !subLoading && (
+            <button
+              type="button"
+              className="btn-primary analytics-upgrade-btn"
+              onClick={handleUpgrade}
+              disabled={upgrading}
+            >
+              {upgrading
+                ? 'Loading…'
+                : `Unlock Cravvr Go${plusPriceLabel ? ` — ${plusPriceLabel}` : ''}`}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="analytics-grid">

@@ -4,7 +4,6 @@ import { useToast } from '../../contexts/ToastContext';
 import { Icons } from '../common/Icons';
 import StripeOnboarding from './StripeOnboarding';
 import SquareOnboarding from './SquareOnboarding';
-import { useCravvrSubscription } from '../../hooks/useCravvrSubscription';
 import './PaymentProcessorSetup.css';
 
 const CHOICES = [
@@ -41,26 +40,11 @@ const CHOICES = [
 
 const PaymentProcessorSetup = ({ truck, onUpdate }) => {
   const { showToast } = useToast();
-  const { isPlus, plans, loading: subLoading, openCheckout } = useCravvrSubscription();
-  const plusPlan = plans?.find?.((p) => p.code === 'plus');
-  const plusPriceLabel = plusPlan
-    ? `$${(plusPlan.price_cents / 100).toFixed(plusPlan.price_cents % 100 === 0 ? 0 : 2)}/${plusPlan.interval || 'mo'}`
-    : '';
   const [updating, setUpdating] = useState(false);
   const processor = truck.payment_processor || 'pickup';
-  // Online-checkout processors require an active Cravvr Go subscription.
-  const requiresPlus = (code) => code === 'stripe' || code === 'square' || code === 'clover';
 
   const setProcessor = async (next) => {
     if (next === processor || updating) return;
-    if (requiresPlus(next) && !isPlus) {
-      const ok = window.confirm(
-        `Online card payments require Cravvr Go${plusPriceLabel ? ` (${plusPriceLabel})` : ''}. Start a 14-day free trial now?`,
-      );
-      if (!ok) return;
-      try { await openCheckout('plus'); } catch (e) { showToast(e.message || 'Could not start checkout', 'error'); }
-      return;
-    }
     setUpdating(true);
     try {
       await setTruckPaymentProcessor(truck.id, next);
@@ -79,14 +63,13 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
       <div className="processor-setup-header">
         <h3>Customer Payments</h3>
         <p>
-          Pick how customers pay you. Funds always go directly to you — Cravvr only charges your Cravvr Go subscription.
+          Pick how customers pay you. Connect your processor in minutes and start taking orders immediately — funds always go directly to you, and Cravvr never takes a cut of your sales.
         </p>
       </div>
 
       <div className="processor-grid">
         {CHOICES.map((choice) => {
           const selected = processor === choice.value;
-          const needsPlus = requiresPlus(choice.value) && !isPlus && !subLoading;
           const disabled = choice.disabled || updating;
           return (
             <button
@@ -96,7 +79,6 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
                 'processor-tile',
                 selected ? 'is-selected' : '',
                 choice.disabled ? 'is-soon' : '',
-                needsPlus ? 'is-locked' : '',
               ].filter(Boolean).join(' ')}
               disabled={disabled}
               onClick={() => !choice.disabled && setProcessor(choice.value)}
@@ -109,7 +91,6 @@ const PaymentProcessorSetup = ({ truck, onUpdate }) => {
                 <span className="processor-tile-name">
                   {choice.name}
                   {choice.disabled && <span className="processor-tile-soon-tag">Soon</span>}
-                  {needsPlus && <span className="processor-tile-plus-tag">Go</span>}
                 </span>
                 <span className="processor-tile-sub">{choice.sub}</span>
               </span>

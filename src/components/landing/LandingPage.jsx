@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: 'Do I need a POS system?',
-    a: 'No. Cravrr is designed to be simple. No complicated POS integrations required—just your phone and your food.'
+    a: 'Not at all — but if you already use Stripe, Square, or Clover, you can connect them for free in a few minutes and start accepting online orders immediately. No setup fees, no per-transaction commission from Cravvr.'
   },
   {
     q: 'How do customers find my truck?',

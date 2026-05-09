@@ -1,13 +1,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../components/auth/AuthContext';
+import {
+  fetchOwnerSubscription,
+  fetchActiveCravvrPlans,
+} from '../services/subscriptions';
 
 /**
  * Owner-side hook for the current user's Cravvr Go subscription.
  * Returns { subscription, plan, isPlus, loading, refresh, openCheckout, openPortal }.
  *
- * - `isPlus` is the entitlement gate: true when status ∈ {active, trialing}
- *   AND plan.features.online_checkout = true.
+ * - `isPlus` is the entitlement gate for Cravvr Go (the paid analytics tier):
+ *   true when status ∈ {active, trialing} AND plan.features.analytics = true.
  * - `openCheckout()` redirects the browser to Stripe Checkout for upgrade.
  * - `openPortal()` redirects the browser to the Stripe Customer Portal.
  */
@@ -23,13 +27,13 @@ export function useCravvrSubscription() {
     if (!user) { setSubscription(null); setPlan(null); setPlans([]); setLoading(false); return; }
     setLoading(true);
     try {
-      const [{ data: sub }, { data: allPlans }] = await Promise.all([
-        supabase.from('cravvr_subscriptions').select('*').eq('owner_id', user.id).maybeSingle(),
-        supabase.from('cravvr_plans').select('*').eq('is_active', true).order('display_order'),
+      const [sub, allPlans] = await Promise.all([
+        fetchOwnerSubscription(user.id),
+        fetchActiveCravvrPlans(),
       ]);
-      setSubscription(sub || null);
-      setPlans(allPlans || []);
-      const myPlan = sub ? (allPlans || []).find((p) => p.code === sub.plan_code) : null;
+      setSubscription(sub);
+      setPlans(allPlans);
+      const myPlan = sub ? allPlans.find((p) => p.code === sub.plan_code) : null;
       setPlan(myPlan || null);
     } catch (e) {
       setError(e);
@@ -71,7 +75,7 @@ export function useCravvrSubscription() {
   };
 
   const isActive = subscription?.status === 'active' || subscription?.status === 'trialing';
-  const isPlus = isActive && !!plan?.features?.online_checkout;
+  const isPlus = isActive && !!plan?.features?.analytics;
 
   return {
     subscription,
