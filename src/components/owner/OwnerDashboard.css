@@ -468,15 +468,14 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  container-type: inline-size;
+  gap: 12px;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 12px 14px;
   background: white;
   border: 1px solid var(--owner-border, #e2e8f0);
   border-radius: 12px;
@@ -492,9 +491,9 @@
 }
 
 .action-btn-chip {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -504,44 +503,19 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.action-btn-chip svg { width: 16px; height: 16px; }
+.action-btn-chip svg { width: 18px; height: 18px; }
 
-.action-btn-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1 1 auto;
+.action-btn-label {
+  flex: 1;
   min-width: 0;
-}
-
-.action-btn-text strong {
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--owner-text, #0f172a);
   line-height: 1.2;
   letter-spacing: -0.005em;
-  text-wrap: balance;
-  overflow-wrap: break-word;
-}
-
-.action-btn-text small {
-  font-size: 0.76rem;
-  font-weight: 400;
-  color: var(--owner-text-muted, #6b7280);
-  line-height: 1.25;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* When the Quick Actions column gets tight, drop the chevron
-   and description so the title has room to stay on one line. */
-@container (max-width: 260px) {
-  .action-btn { gap: 8px; padding: 10px; }
-  .action-btn-arrow { display: none; }
-  .action-btn-text small { display: none; }
 }
 
 .action-btn-arrow {
