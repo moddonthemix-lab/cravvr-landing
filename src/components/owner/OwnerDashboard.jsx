@@ -867,19 +867,163 @@ const getDerivedOrderStatus = (o) => {
   return o.status;
 };
 
+const ORDER_DATE_RANGES = [
+  { key: 'today', label: 'Today' },
+  { key: '7d', label: 'Last 7 days' },
+  { key: '30d', label: 'Last 30 days' },
+  { key: 'all', label: 'All time' },
+];
+
+const isOrderInRange = (order, range) => {
+  if (range === 'all') return true;
+  const created = new Date(order.created_at);
+  if (Number.isNaN(created.getTime())) return false;
+  const now = new Date();
+  if (range === 'today') {
+    return (
+      created.getFullYear() === now.getFullYear() &&
+      created.getMonth() === now.getMonth() &&
+      created.getDate() === now.getDate()
+    );
+  }
+  const days = range === '7d' ? 7 : 30;
+  return now.getTime() - created.getTime() <= days * 24 * 60 * 60 * 1000;
+};
+
+const PENDING_STATUSES = new Set(['pending', 'confirmed', 'preparing']);
+
 const OrdersTab = ({ orders, loading }) => {
   const [filter, setFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('today');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredOrders = filter === 'all'
-    ? orders
-    : orders.filter(o => getDerivedOrderStatus(o) === filter);
+  const dateScopedOrders = orders.filter(o => isOrderInRange(o, dateRange));
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredOrders = dateScopedOrders.filter(o => {
+    const statusOk =
+      filter === 'all' || getDerivedOrderStatus(o) === filter;
+    if (!statusOk) return false;
+    if (!normalizedQuery) return true;
+    return (
+      String(o.order_number || '').toLowerCase().includes(normalizedQuery) ||
+      String(o.customer_name || '').toLowerCase().includes(normalizedQuery)
+    );
+  });
+
+  const todaysOrders = orders.filter(o => isOrderInRange(o, 'today'));
+  const todaysRevenue = todaysOrders.reduce(
+    (sum, o) => sum + (parseFloat(o.total) || 0),
+    0
+  );
+  const pendingNow = orders.filter(o =>
+    PENDING_STATUSES.has(getDerivedOrderStatus(o))
+  ).length;
+  const completedCount = dateScopedOrders.filter(
+    o => getDerivedOrderStatus(o) === 'completed'
+  ).length;
+  const avgTicket = completedCount > 0
+    ? dateScopedOrders
+        .filter(o => getDerivedOrderStatus(o) === 'completed')
+        .reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0) / completedCount
+    : 0;
+
+  const stats = [
+    {
+      label: "Today's orders",
+      value: todaysOrders.length,
+      tone: 'info',
+      iconKey: 'orders',
+    },
+    {
+      label: "Today's revenue",
+      value: `$${todaysRevenue.toFixed(2)}`,
+      tone: 'positive',
+      iconKey: 'dollarSign',
+    },
+    {
+      label: 'Pending now',
+      value: pendingNow,
+      tone: 'warning',
+      iconKey: 'clock',
+    },
+    {
+      label: 'Avg ticket',
+      value: `$${avgTicket.toFixed(2)}`,
+      tone: 'info',
+      iconKey: 'chart',
+    },
+  ];
+
+  const dateRangeLabel =
+    ORDER_DATE_RANGES.find(r => r.key === dateRange)?.label || 'All time';
 
   return (
     <div className="tab-content">
-      <div className="content-header">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1>Orders</h1>
-          <p>Order history and reporting. Use the Kitchen tab to manage active orders.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
+          <p className="text-sm text-muted-foreground">
+            Order history and reporting. Use the Kitchen tab to manage active orders.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {stats.map(stat => (
+          <Card key={stat.label}>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-lg shrink-0',
+                  TONE_CHIP[stat.tone]
+                )}
+              >
+                <span className="h-4 w-4">{Icons[stat.iconKey] || Icons.orders}</span>
+              </div>
+              <div className="min-w-0">
+                <div className="text-xl font-bold tracking-tight leading-tight tabular-nums truncate">
+                  {stat.value}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">{stat.label}</div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full lg:max-w-xs">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+            {Icons.search}
+          </span>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by order # or customer…"
+            className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {ORDER_DATE_RANGES.map(range => {
+            const isActive = dateRange === range.key;
+            return (
+              <button
+                key={range.key}
+                onClick={() => setDateRange(range.key)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  isActive
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                )}
+              >
+                {range.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -887,8 +1031,8 @@ const OrdersTab = ({ orders, loading }) => {
         {ORDER_FILTER_KEYS.map(status => {
           const isActive = filter === status;
           const count = status === 'all'
-            ? orders.length
-            : orders.filter(o => getDerivedOrderStatus(o) === status).length;
+            ? dateScopedOrders.length
+            : dateScopedOrders.filter(o => getDerivedOrderStatus(o) === status).length;
           return (
             <button
               key={status}
@@ -928,55 +1072,105 @@ const OrdersTab = ({ orders, loading }) => {
               <span className="h-5 w-5">{Icons.orders}</span>
             </div>
             <h3 className="text-base font-semibold">
-              {filter === 'all' ? 'No orders yet' : `No ${filter} orders`}
+              {normalizedQuery
+                ? 'No matching orders'
+                : filter === 'all'
+                  ? `No orders ${dateRangeLabel.toLowerCase()}`
+                  : `No ${ORDER_STATUS_LABEL[filter]?.toLowerCase() || filter} orders ${dateRangeLabel.toLowerCase()}`}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {filter === 'all'
-                ? 'Orders placed by customers will appear here.'
-                : 'Try a different filter.'}
+              {normalizedQuery
+                ? 'Try a different search term or clear the filter.'
+                : 'Orders placed by customers will appear here.'}
             </p>
           </CardContent>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3">Order ID</th>
-                  <th className="px-4 py-3">Customer</th>
-                  <th className="px-4 py-3">Items</th>
-                  <th className="px-4 py-3">Total</th>
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredOrders.map(order => {
-                  const derived = getDerivedOrderStatus(order);
-                  return (
-                    <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 font-semibold">{order.order_number}</td>
-                      <td className="px-4 py-3">{order.customer_name || 'Customer'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{order.item_count || 0} items</td>
-                      <td className="px-4 py-3 font-semibold tabular-nums">
-                        ${parseFloat(order.total).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground tabular-nums">
+        <>
+          {/* Table view (md+) */}
+          <Card className="hidden md:block overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <th className="px-4 py-3">Order ID</th>
+                    <th className="px-4 py-3">Customer</th>
+                    <th className="px-4 py-3">Items</th>
+                    <th className="px-4 py-3">Total</th>
+                    <th className="px-4 py-3">Time</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredOrders.map(order => {
+                    const derived = getDerivedOrderStatus(order);
+                    return (
+                      <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 font-semibold">{order.order_number}</td>
+                        <td className="px-4 py-3">{order.customer_name || 'Customer'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {order.item_count || 0} items
+                        </td>
+                        <td className="px-4 py-3 font-semibold tabular-nums">
+                          ${parseFloat(order.total).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                          {formatRelativeTime(order.created_at, 'minutes')}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={ORDER_STATUS_BADGE[derived] || 'secondary'}>
+                            {ORDER_STATUS_LABEL[derived] || derived}
+                          </Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Stacked card view (mobile) */}
+          <div className="md:hidden flex flex-col gap-3">
+            {filteredOrders.map(order => {
+              const derived = getDerivedOrderStatus(order);
+              return (
+                <Card key={order.id}>
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-sm truncate">
+                          {order.order_number}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {order.customer_name || 'Customer'}
+                        </div>
+                      </div>
+                      <Badge
+                        variant={ORDER_STATUS_BADGE[derived] || 'secondary'}
+                        className="shrink-0"
+                      >
+                        {ORDER_STATUS_LABEL[derived] || derived}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{order.item_count || 0} items</span>
+                      <span className="tabular-nums">
                         {formatRelativeTime(order.created_at, 'minutes')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={ORDER_STATUS_BADGE[derived] || 'secondary'}>
-                          {ORDER_STATUS_LABEL[derived] || derived}
-                        </Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-t pt-2">
+                      <span className="text-xs text-muted-foreground">Total</span>
+                      <span className="text-sm font-bold tabular-nums">
+                        ${parseFloat(order.total).toFixed(2)}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </Card>
+        </>
       )}
     </div>
   );
