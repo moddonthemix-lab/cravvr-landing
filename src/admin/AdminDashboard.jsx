@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import {
+  fetchWaitlistEntries,
+  updateWaitlistEntry,
+  updateWaitlistEntries,
+  deleteWaitlistEntry,
+  insertWaitlistEntry,
+  fetchAdminUsers,
+  updateAdminUserProfile,
+  deleteAdminUser,
+  fetchAdminAllOrders,
+  fetchAdminCustomersForTestOrder,
+  fetchAdminTrucksForTestOrder,
+  fetchTruckAvailableMenuSample,
+  createAdminTestOrder,
+  fetchAdminDashboardStats,
+  fetchProfileNamesByIds,
+  fetchTruckNamesByIds,
+} from '../services/admin';
 import { useAuth } from '../components/auth/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirm } from '../contexts/ConfirmContext';
@@ -312,22 +330,14 @@ const WaitlistManagement = () => {
   const fetchWaitlist = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('waitlist')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setEntries(data || []);
-
-      // Calculate stats
-      const total = data?.length || 0;
-      const lovers = data?.filter(e => e.type === 'lover').length || 0;
-      const trucks = data?.filter(e => e.type === 'truck').length || 0;
+      const data = await fetchWaitlistEntries();
+      setEntries(data);
+      const total = data.length;
+      const lovers = data.filter(e => e.type === 'lover').length;
+      const trucks = data.filter(e => e.type === 'truck').length;
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
-      const thisWeek = data?.filter(e => new Date(e.created_at) > weekAgo).length || 0;
+      const thisWeek = data.filter(e => new Date(e.created_at) > weekAgo).length;
       setStats({ total, lovers, trucks, thisWeek });
     } catch (err) {
       console.error('Error fetching waitlist:', err);
@@ -355,13 +365,7 @@ const WaitlistManagement = () => {
       const updates = { status: newStatus };
       if (newStatus === 'invited') updates.invited_at = new Date().toISOString();
       if (newStatus === 'converted') updates.converted_at = new Date().toISOString();
-
-      const { error } = await supabase
-        .from('waitlist')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
+      await updateWaitlistEntry(id, updates);
       fetchWaitlist();
     } catch (err) {
       console.error('Error updating status:', err);
@@ -371,12 +375,7 @@ const WaitlistManagement = () => {
 
   const handleTypeChange = async (id, newType) => {
     try {
-      const { error } = await supabase
-        .from('waitlist')
-        .update({ type: newType })
-        .eq('id', id);
-
-      if (error) throw error;
+      await updateWaitlistEntry(id, { type: newType });
       fetchWaitlist();
       showToast('User type updated', 'success');
     } catch (err) {
@@ -392,13 +391,7 @@ const WaitlistManagement = () => {
       const updates = { status: newStatus };
       if (newStatus === 'invited') updates.invited_at = new Date().toISOString();
       if (newStatus === 'converted') updates.converted_at = new Date().toISOString();
-
-      const { error } = await supabase
-        .from('waitlist')
-        .update(updates)
-        .in('id', selectedEntries);
-
-      if (error) throw error;
+      await updateWaitlistEntries(selectedEntries, updates);
       setSelectedEntries([]);
       fetchWaitlist();
     } catch (err) {
@@ -418,12 +411,7 @@ const WaitlistManagement = () => {
     if (!confirmed) return;
 
     try {
-      const { error } = await supabase
-        .from('waitlist')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await deleteWaitlistEntry(id);
       fetchWaitlist();
     } catch (err) {
       console.error('Error deleting entry:', err);
@@ -492,20 +480,10 @@ const WaitlistManagement = () => {
           continue;
         }
 
-        try {
-          const { error } = await supabase
-            .from('waitlist')
-            .insert([{ name, email, type, status: 'pending' }]);
-
-          if (error) {
-            if (error.code === '23505') skipped++; // Duplicate
-            else errors++;
-          } else {
-            imported++;
-          }
-        } catch {
-          errors++;
-        }
+        const result = await insertWaitlistEntry({ name, email, type });
+        if (result.ok) imported++;
+        else if (result.code === '23505') skipped++;
+        else errors++;
       }
 
       setImportResults({ imported, skipped, errors });
@@ -776,30 +754,7 @@ const UsersManagement = ({ onViewAs }) => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          customers (phone, points, avatar_url),
-          owners (subscription_type)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const flattenedUsers = (profiles || []).map(profile => ({
-        id: profile.id,
-        name: profile.name,
-        email: profile.email,
-        role: profile.role,
-        created_at: profile.created_at,
-        phone: profile.customers?.phone || '',
-        points: profile.customers?.points || 0,
-        avatar_url: profile.customers?.avatar_url || '',
-        subscription_type: profile.owners?.subscription_type || '',
-      }));
-
-      setUsers(flattenedUsers);
+      setUsers(await fetchAdminUsers());
     } catch (err) {
       console.error('Error fetching users:', err);
       setUsers([]);
@@ -877,23 +832,11 @@ const UsersManagement = ({ onViewAs }) => {
   const handleSaveUser = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: selectedUser.name,
-          role: selectedUser.role,
-        })
-        .eq('id', selectedUser.id);
-
-      if (error) throw error;
-
-      if (selectedUser.role === 'customer' && selectedUser.phone) {
-        await supabase
-          .from('customers')
-          .update({ phone: selectedUser.phone })
-          .eq('id', selectedUser.id);
-      }
-
+      await updateAdminUserProfile(selectedUser.id, {
+        name: selectedUser.name,
+        role: selectedUser.role,
+        phone: selectedUser.role === 'customer' ? selectedUser.phone : undefined,
+      });
       setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
       setShowModal(false);
       setSelectedUser(null);
@@ -916,12 +859,7 @@ const UsersManagement = ({ onViewAs }) => {
     if (!confirmed) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (error) throw error;
+      await deleteAdminUser(userId);
       setUsers(users.filter(u => u.id !== userId));
     } catch (err) {
       console.error('Error deleting user:', err);
@@ -1331,19 +1269,7 @@ const OrdersManagement = () => {
     const fetchOrders = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select(`
-            *,
-            profiles:customer_id(name, email),
-            food_trucks:truck_id(name),
-            order_items(name, quantity, price)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        if (error) throw error;
-        setOrders(data || []);
+        setOrders(await fetchAdminAllOrders({ limit: 50 }));
       } catch (err) {
         console.error('Error fetching orders:', err);
       } finally {
@@ -1466,21 +1392,16 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
   // Fetch customers and trucks for test order creation
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch customers (including admins for testing)
-      const { data: customerData } = await supabase
-        .from('profiles')
-        .select('id, name, email, role')
-        .in('role', ['customer', 'admin'])
-        .order('created_at', { ascending: false })
-        .limit(30);
-      if (customerData) setCustomers(customerData);
-
-      // Fetch trucks
-      const { data: truckData } = await supabase
-        .from('food_trucks')
-        .select('id, name')
-        .order('name');
-      if (truckData) setTrucks(truckData);
+      try {
+        const [customerData, truckData] = await Promise.all([
+          fetchAdminCustomersForTestOrder({ limit: 30 }),
+          fetchAdminTrucksForTestOrder(),
+        ]);
+        setCustomers(customerData);
+        setTrucks(truckData);
+      } catch (err) {
+        console.error('Error fetching test order data:', err);
+      }
     };
     fetchData();
   }, []);
@@ -1520,17 +1441,9 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
 
     setCreatingTestOrder(true);
     try {
-      // Fetch menu items for the selected truck
-      const { data: menuItems, error: menuError } = await supabase
-        .from('menu_items')
-        .select('id, name, price')
-        .eq('truck_id', selectedTruckId)
-        .eq('is_available', true)
-        .limit(3);
+      const menuItems = await fetchTruckAvailableMenuSample(selectedTruckId, { limit: 3 });
 
-      if (menuError) throw menuError;
-
-      if (!menuItems || menuItems.length === 0) {
+      if (menuItems.length === 0) {
         showToast('No menu items found for this truck. Add some menu items first.', 'error');
         setCreatingTestOrder(false);
         return;
@@ -1540,41 +1453,17 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
       const subtotal = menuItems.reduce((sum, item) => sum + (parseFloat(item.price) || 9.99), 0);
       const tax = subtotal * 0.0825; // 8.25% tax
       const total = subtotal + tax;
-
-      // Create the order with 'completed' status
       const orderNumber = `TEST-${Date.now()}`;
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_id: selectedCustomerId,
-          truck_id: selectedTruckId,
-          order_number: orderNumber,
-          status: 'completed',
-          order_type: 'pickup',
-          subtotal: subtotal.toFixed(2),
-          tax: tax.toFixed(2),
-          total: total.toFixed(2),
-          completed_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
 
-      if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = menuItems.map(item => ({
-        order_id: order.id,
-        menu_item_id: item.id,
-        name: item.name,
-        price: parseFloat(item.price) || 9.99,
-        quantity: 1,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
+      await createAdminTestOrder({
+        customerId: selectedCustomerId,
+        truckId: selectedTruckId,
+        orderNumber,
+        subtotal,
+        tax,
+        total,
+        items: menuItems,
+      });
 
       const truckName = trucks.find(t => t.id === selectedTruckId)?.name || 'Unknown Truck';
       const customerName = customers.find(c => c.id === selectedCustomerId)?.name || 'Unknown Customer';
@@ -1798,7 +1687,7 @@ const AdminDashboard = () => {
       const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
       const oneYearAgo = subDays(new Date(), 365).toISOString();
 
-      const [
+      const {
         usersResult,
         trucksResult,
         reviewsResult,
@@ -1807,35 +1696,11 @@ const AdminDashboard = () => {
         recentReviewsResult,
         checkInsLast30Result,
         reviewsLast30Result,
-        usersWithDatesResult
-      ] = await Promise.all([
-        // Total counts
-        supabase.from('profiles').select('id, role', { count: 'exact' }),
-        supabase.from('food_trucks').select('id, cuisine', { count: 'exact' }),
-        supabase.from('reviews').select('*', { count: 'exact', head: true }),
-        supabase.from('check_ins').select('*', { count: 'exact', head: true }),
-        // Recent activity (simplified queries to avoid ambiguous joins)
-        supabase.from('check_ins')
-          .select('id, customer_id, truck_id, points_earned, created_at')
-          .order('created_at', { ascending: false })
-          .limit(5),
-        supabase.from('reviews')
-          .select('id, customer_id, truck_id, rating, created_at')
-          .order('created_at', { ascending: false })
-          .limit(5),
-        // All check-ins in last 30 days (for daily aggregation)
-        supabase.from('check_ins')
-          .select('created_at')
-          .gte('created_at', thirtyDaysAgo),
-        // All reviews in last 30 days (for daily aggregation)
-        supabase.from('reviews')
-          .select('created_at')
-          .gte('created_at', thirtyDaysAgo),
-        // Users with dates for growth chart
-        supabase.from('profiles')
-          .select('created_at')
-          .gte('created_at', oneYearAgo)
-      ]);
+        usersWithDatesResult,
+      } = await fetchAdminDashboardStats({
+        thirtyDaysAgoIso: thirtyDaysAgo,
+        oneYearAgoIso: oneYearAgo,
+      });
 
       // Process user roles
       const userRoles = usersResult.data || [];
@@ -1869,19 +1734,15 @@ const AdminDashboard = () => {
       ].filter(Boolean))];
 
       // Batch fetch names
-      const [profilesResult, trucksNamesResult] = await Promise.all([
-        customerIds.length > 0
-          ? supabase.from('profiles').select('id, name').in('id', customerIds)
-          : Promise.resolve({ data: [] }),
-        truckIds.length > 0
-          ? supabase.from('food_trucks').select('id, name').in('id', truckIds)
-          : Promise.resolve({ data: [] })
+      const [profileNames, truckNames] = await Promise.all([
+        fetchProfileNamesByIds(customerIds),
+        fetchTruckNamesByIds(truckIds),
       ]);
 
       const profilesMap = {};
-      (profilesResult.data || []).forEach(p => { profilesMap[p.id] = p.name; });
+      profileNames.forEach(p => { profilesMap[p.id] = p.name; });
       const trucksMap = {};
-      (trucksNamesResult.data || []).forEach(t => { trucksMap[t.id] = t.name; });
+      truckNames.forEach(t => { trucksMap[t.id] = t.name; });
 
       // Build recent activity
       const activity = [

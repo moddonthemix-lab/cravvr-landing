@@ -209,6 +209,257 @@ export const fetchAdminTruckReviews = async (truckId, { limit = 200 } = {}) => {
   return data || [];
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Waitlist (admin-side CRUD — public submissions are handled in services/waitlist.js)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const fetchWaitlistEntries = async () => {
+  const { data, error } = await supabase
+    .from('waitlist')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+};
+
+export const updateWaitlistEntry = async (id, updates) => {
+  const { error } = await supabase.from('waitlist').update(updates).eq('id', id);
+  if (error) throw error;
+};
+
+export const updateWaitlistEntries = async (ids, updates) => {
+  const { error } = await supabase.from('waitlist').update(updates).in('id', ids);
+  if (error) throw error;
+};
+
+export const deleteWaitlistEntry = async (id) => {
+  const { error } = await supabase.from('waitlist').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export const insertWaitlistEntry = async ({ name, email, type, status = 'pending' }) => {
+  const { error } = await supabase
+    .from('waitlist')
+    .insert([{ name, email, type, status }]);
+  if (error) {
+    return { ok: false, code: error.code, error };
+  }
+  return { ok: true };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Users management (admin profiles list + edit)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch all profiles with the role-specific embedded rows (customers + owners).
+ */
+export const fetchAdminUsers = async () => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(`
+      *,
+      customers (phone, points, avatar_url),
+      owners (subscription_type)
+    `)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map((profile) => ({
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    role: profile.role,
+    created_at: profile.created_at,
+    phone: profile.customers?.phone || '',
+    points: profile.customers?.points || 0,
+    avatar_url: profile.customers?.avatar_url || '',
+    subscription_type: profile.owners?.subscription_type || '',
+  }));
+};
+
+export const updateAdminUserProfile = async (userId, { name, role, phone }) => {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ name, role })
+    .eq('id', userId);
+  if (error) throw error;
+  if (role === 'customer' && phone !== undefined) {
+    await supabase.from('customers').update({ phone }).eq('id', userId);
+  }
+};
+
+export const deleteAdminUser = async (userId) => {
+  const { error } = await supabase.from('profiles').delete().eq('id', userId);
+  if (error) throw error;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Orders management (admin global orders view)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const fetchAdminAllOrders = async ({ limit = 50 } = {}) => {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      profiles:customer_id(name, email),
+      food_trucks:truck_id(name),
+      order_items(name, quantity, price)
+    `)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test data (admin Settings → developer tools)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const fetchAdminCustomersForTestOrder = async ({ limit = 30 } = {}) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, role')
+    .in('role', ['customer', 'admin'])
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+};
+
+export const fetchAdminTrucksForTestOrder = async () => {
+  const { data, error } = await supabase
+    .from('food_trucks')
+    .select('id, name')
+    .order('name');
+  if (error) throw error;
+  return data || [];
+};
+
+/** Fetch up to N available menu items for a truck (admin test-order seed). */
+export const fetchTruckAvailableMenuSample = async (truckId, { limit = 3 } = {}) => {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('id, name, price')
+    .eq('truck_id', truckId)
+    .eq('is_available', true)
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+};
+
+/** Insert a fully-formed test order + its items. Used in admin Settings. */
+export const createAdminTestOrder = async ({
+  customerId, truckId, orderNumber, subtotal, tax, total, items,
+}) => {
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .insert({
+      customer_id: customerId,
+      truck_id: truckId,
+      order_number: orderNumber,
+      status: 'completed',
+      order_type: 'pickup',
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      completed_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+  if (orderError) throw orderError;
+
+  const orderItems = items.map((item) => ({
+    order_id: order.id,
+    menu_item_id: item.id,
+    name: item.name,
+    price: parseFloat(item.price) || 9.99,
+    quantity: 1,
+  }));
+  const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+  if (itemsError) throw itemsError;
+  return order;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dashboard stats (admin home — single batch fetch)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch all the parallel stats the admin home page renders. Returns the raw
+ * shape — caller does aggregation (so the existing chart-prep logic stays put
+ * inside the AdminDashboard for now).
+ */
+export const fetchAdminDashboardStats = async ({ thirtyDaysAgoIso, oneYearAgoIso }) => {
+  const [
+    usersResult,
+    trucksResult,
+    reviewsResult,
+    checkInsResult,
+    recentCheckInsResult,
+    recentReviewsResult,
+    checkInsLast30Result,
+    reviewsLast30Result,
+    usersWithDatesResult,
+  ] = await Promise.all([
+    supabase.from('profiles').select('id, role', { count: 'exact' }),
+    supabase.from('food_trucks').select('id, cuisine', { count: 'exact' }),
+    supabase.from('reviews').select('*', { count: 'exact', head: true }),
+    supabase.from('check_ins').select('*', { count: 'exact', head: true }),
+    supabase.from('check_ins')
+      .select('id, customer_id, truck_id, points_earned, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase.from('reviews')
+      .select('id, customer_id, truck_id, rating, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase.from('check_ins')
+      .select('created_at')
+      .gte('created_at', thirtyDaysAgoIso),
+    supabase.from('reviews')
+      .select('created_at')
+      .gte('created_at', thirtyDaysAgoIso),
+    supabase.from('profiles')
+      .select('created_at')
+      .gte('created_at', oneYearAgoIso),
+  ]);
+
+  return {
+    usersResult,
+    trucksResult,
+    reviewsResult,
+    checkInsResult,
+    recentCheckInsResult,
+    recentReviewsResult,
+    checkInsLast30Result,
+    reviewsLast30Result,
+    usersWithDatesResult,
+  };
+};
+
+/** Fetch profile names by id (admin recent-activity hydration). */
+export const fetchProfileNamesByIds = async (ids) => {
+  if (!ids?.length) return [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name')
+    .in('id', ids);
+  if (error) throw error;
+  return data || [];
+};
+
+/** Fetch truck names by id (admin recent-activity hydration). */
+export const fetchTruckNamesByIds = async (ids) => {
+  if (!ids?.length) return [];
+  const { data, error } = await supabase
+    .from('food_trucks')
+    .select('id, name')
+    .in('id', ids);
+  if (error) throw error;
+  return data || [];
+};
+
 /**
  * Check whether a slug is taken by some OTHER truck. Returns true when the
  * slug is available (or unchanged from `excludeId`'s current slug).
