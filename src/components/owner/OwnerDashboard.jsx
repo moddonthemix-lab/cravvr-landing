@@ -133,7 +133,7 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
                 <img src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80'} alt={truck.name} />
                 <div className="truck-preview-info">
                   <h4>{truck.name}</h4>
-                  <span className="truck-cuisine">{truck.cuisine}</span>
+                  <span className="owner-truck-cuisine">{truck.cuisine}</span>
                   <div className="truck-stats">
                     <span className="truck-rating">{Icons.star} {truck.average_rating || 'N/A'}</span>
                     <span className="truck-orders">{truck.today_orders || 0} orders today</span>
@@ -208,39 +208,39 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
       {loading ? (
         <div className="loading-state">{Icons.loader} Loading trucks...</div>
       ) : (
-        <div className="trucks-grid">
+        <div className="owner-trucks-grid">
           {trucks.map(truck => (
-            <div className="truck-card" key={truck.id}>
-              <div className="truck-image">
+            <div className="owner-truck-card" key={truck.id}>
+              <div className="owner-truck-image">
                 <img src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80'} alt={truck.name} />
-                <span className={`status-badge ${truck.is_open ? 'active' : 'inactive'}`}>
+                <span className={`owner-status-badge ${truck.is_open ? 'active' : 'inactive'}`}>
                   {truck.is_open ? 'Open' : 'Closed'}
                 </span>
               </div>
-              <div className="truck-content">
+              <div className="owner-truck-content">
                 <h3>{truck.name}</h3>
-                <p className="truck-cuisine">{truck.cuisine} {truck.estimated_prep_time && `• ${truck.estimated_prep_time}`}</p>
-                <div className="truck-meta">
+                <p className="owner-truck-cuisine">{truck.cuisine} {truck.estimated_prep_time && `• ${truck.estimated_prep_time}`}</p>
+                <div className="owner-truck-meta">
                   <span>{Icons.star} {truck.average_rating || 'N/A'} ({truck.review_count || 0} reviews)</span>
                 </div>
-                <div className="truck-stats-row">
-                  <div className="mini-stat">
-                    <span className="mini-stat-value">{truck.total_orders || 0}</span>
-                    <span className="mini-stat-label">Total Orders</span>
+                <div className="owner-truck-stats-row">
+                  <div className="owner-mini-stat">
+                    <span className="owner-mini-stat-value">{truck.total_orders || 0}</span>
+                    <span className="owner-mini-stat-label">Total Orders</span>
                   </div>
-                  <div className="mini-stat">
-                    <span className="mini-stat-value">${truck.total_revenue?.toFixed(2) || '0.00'}</span>
-                    <span className="mini-stat-label">Total Revenue</span>
+                  <div className="owner-mini-stat">
+                    <span className="owner-mini-stat-value">${truck.total_revenue?.toFixed(2) || '0.00'}</span>
+                    <span className="owner-mini-stat-label">Total Revenue</span>
                   </div>
-                  <div className="mini-stat">
-                    <span className="mini-stat-value">${truck.today_revenue?.toFixed(2) || '0.00'}</span>
-                    <span className="mini-stat-label">Today</span>
+                  <div className="owner-mini-stat">
+                    <span className="owner-mini-stat-value">${truck.today_revenue?.toFixed(2) || '0.00'}</span>
+                    <span className="owner-mini-stat-label">Today</span>
                   </div>
                 </div>
               </div>
-              <div className="truck-actions">
+              <div className="owner-truck-actions">
                 <button
-                  className={`btn-action ${truck.accepting_orders !== false ? 'success' : 'warning'}`}
+                  className={`owner-btn-action ${truck.accepting_orders !== false ? 'success' : 'warning'}`}
                   onClick={async () => {
                     const newValue = !(truck.accepting_orders !== false);
                     await setTruckAcceptingOrders(truck.id, newValue);
@@ -249,14 +249,14 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
                 >
                   {truck.accepting_orders !== false ? '\u2713 Accepting Orders' : '\u23F8 Orders Paused'}
                 </button>
-                <button className="btn-action edit" onClick={() => openEditForm(truck)}>
+                <button className="owner-btn-action edit" onClick={() => openEditForm(truck)}>
                   {Icons.edit} Edit
                 </button>
-                <button className="btn-action danger" onClick={() => handleDelete(truck.id)}>
+                <button className="owner-btn-action danger" onClick={() => handleDelete(truck.id)}>
                   {Icons.trash} Delete
                 </button>
               </div>
-              <div className="truck-payment-setup" style={{ padding: '12px 16px', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
+              <div className="owner-truck-payment-setup" style={{ padding: '12px 16px', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
                 <PaymentProcessorSetup
                   truck={truck}
                   onUpdate={() => onTruckUpdate && onTruckUpdate(truck.id, {})}
@@ -265,8 +265,8 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
             </div>
           ))}
 
-          <div className="truck-card add-card" onClick={openAddForm}>
-            <div className="add-card-content">
+          <div className="owner-truck-card owner-add-card" onClick={openAddForm}>
+            <div className="owner-add-card-content">
               {Icons.plus}
               <span>Add New Truck</span>
             </div>

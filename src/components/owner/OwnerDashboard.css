@@ -586,7 +586,7 @@
   color: var(--owner-text);
 }
 
-.truck-cuisine {
+.owner-truck-cuisine {
   font-size: 13px;
   color: var(--owner-text-muted);
 }
@@ -1063,13 +1063,13 @@
 .form-group .req { color: var(--primary, #e11d48); margin-left: 2px; }
 
 /* Trucks Grid */
-.trucks-grid {
+.owner-trucks-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 20px;
 }
 
-.truck-card {
+.owner-truck-card {
   background: var(--owner-card-bg);
   border-radius: 16px;
   border: 1px solid var(--owner-border);
@@ -1077,18 +1077,18 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.truck-image {
+.owner-truck-image {
   position: relative;
   height: 160px;
 }
 
-.truck-image img {
+.owner-truck-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.status-badge {
+.owner-status-badge {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -1099,27 +1099,27 @@
   text-transform: capitalize;
 }
 
-.status-badge.active {
+.owner-status-badge.active {
   background: #dcfce7;
   color: #16a34a;
 }
 
-.truck-content {
+.owner-truck-content {
   padding: 20px;
 }
 
-.truck-content h3 {
+.owner-truck-content h3 {
   margin: 0 0 4px;
   font-size: 18px;
   font-weight: 600;
   color: var(--owner-text);
 }
 
-.truck-content .truck-cuisine {
+.owner-truck-content .owner-truck-cuisine {
   margin-bottom: 12px;
 }
 
-.truck-meta {
+.owner-truck-meta {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1128,33 +1128,33 @@
   margin-bottom: 16px;
 }
 
-.truck-meta svg {
+.owner-truck-meta svg {
   width: 16px;
   height: 16px;
 }
 
-.truck-stats-row {
+.owner-truck-stats-row {
   display: flex;
   gap: 24px;
 }
 
-.mini-stat {
+.owner-mini-stat {
   display: flex;
   flex-direction: column;
 }
 
-.mini-stat-value {
+.owner-mini-stat-value {
   font-size: 18px;
   font-weight: 700;
   color: var(--owner-text);
 }
 
-.mini-stat-label {
+.owner-mini-stat-label {
   font-size: 12px;
   color: var(--owner-text-muted);
 }
 
-.truck-actions {
+.owner-truck-actions {
   display: flex;
   gap: 10px;
   padding: 16px 20px;
@@ -1162,7 +1162,7 @@
   background: var(--owner-bg);
 }
 
-.btn-action {
+.owner-btn-action {
   flex: 1;
   display: flex;
   align-items: center;
@@ -1179,24 +1179,24 @@
   transition: all 0.2s;
 }
 
-.btn-action svg {
+.owner-btn-action svg {
   width: 18px;
   height: 18px;
 }
 
-.btn-action.edit:hover {
+.owner-btn-action.edit:hover {
   border-color: var(--owner-primary);
   color: var(--owner-primary);
   background: rgba(225, 29, 72, 0.04);
 }
 
-.btn-action.danger:hover {
+.owner-btn-action.danger:hover {
   border-color: var(--owner-danger);
   color: var(--owner-danger);
   background: rgba(239, 68, 68, 0.04);
 }
 
-.add-card {
+.owner-add-card {
   border: 2px dashed var(--owner-border);
   background: transparent;
   display: flex;
@@ -1207,23 +1207,23 @@
   transition: all 0.2s;
 }
 
-.add-card:hover {
+.owner-add-card:hover {
   border-color: var(--owner-primary);
   background: rgba(225, 29, 72, 0.02);
 }
 
-.add-card-content {
+.owner-add-card-content {
   text-align: center;
   color: var(--owner-text-muted);
 }
 
-.add-card-content svg {
+.owner-add-card-content svg {
   width: 48px;
   height: 48px;
   margin-bottom: 12px;
 }
 
-.add-card-content span {
+.owner-add-card-content span {
   display: block;
   font-size: 16px;
   font-weight: 500;
@@ -1874,7 +1874,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .trucks-grid {
+  .owner-trucks-grid {
     grid-template-columns: 1fr;
   }
 
