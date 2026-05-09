@@ -13,6 +13,7 @@ import { ConfirmProvider } from './contexts/ConfirmContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 import { validateConfig } from './lib/configValidation';
+import './styles/shadcn.css';
 import './index.css';
 
 validateConfig();

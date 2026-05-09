@@ -24,8 +24,6 @@ import { Icons } from '../common/Icons';
 import { formatRelativeTime } from '../../utils/formatters';
 import { useToast } from '../../contexts/ToastContext';
 import { useConfirm } from '../../contexts/ConfirmContext';
-import HoursInput, { getDefaultHours, parseHours } from '../truck-form/HoursInput';
-import LocationInput, { geocodeAddress } from '../truck-form/LocationInput';
 import MenuItemForm from '../truck-form/MenuItemForm';
 import { useMenuDragReorder } from '../truck-form/useMenuDragReorder';
 import MenuCsvImport from '../../admin/trucks/components/MenuCsvImport';
@@ -34,6 +32,7 @@ import StripeOnboarding from './StripeOnboarding';
 import PaymentProcessorSetup from './PaymentProcessorSetup';
 import PaymentsDashboard from './PaymentsDashboard';
 import CravvrPlusBilling from './CravvrPlusBilling';
+import TruckEditDialog from './TruckEditDialog';
 import './OwnerDashboard.css';
 import './KitchenDisplay.css';
 import './StripeOnboarding.css';
@@ -157,104 +156,14 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
   const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingTruck, setEditingTruck] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [formStep, setFormStep] = useState(0);
-  const [formData, setFormData] = useState({
-    name: '',
-    cuisine: '',
-    price_range: '$',
-    description: '',
-    location: '',
-    coordinates: null,
-    hours: getDefaultHours(),
-    phone: '',
-    image_url: '',
-    estimated_prep_time: '15-25 min',
-  });
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      cuisine: '',
-      price_range: '$',
-      description: '',
-      location: '',
-      coordinates: null,
-      hours: getDefaultHours(),
-      phone: '',
-      image_url: '',
-      estimated_prep_time: '15-25 min',
-    });
+  const openAddForm = () => {
     setEditingTruck(null);
-    setFormStep(0);
-  };
-
-  const openEditForm = (truck) => {
-    setFormData({
-      name: truck.name || '',
-      cuisine: truck.cuisine || '',
-      price_range: truck.price_range || '$',
-      description: truck.description || '',
-      location: truck.location || '',
-      coordinates: truck.coordinates || null,
-      hours: parseHours(truck.hours),
-      phone: truck.phone || '',
-      image_url: truck.image_url || '',
-      estimated_prep_time: truck.estimated_prep_time || '15-25 min',
-    });
-    setEditingTruck(truck);
-    setFormStep(0);
     setShowForm(true);
   };
-
-  // Wizard step validation. We validate the current step manually before
-  // letting the user advance so missing required fields don't get hidden
-  // behind a later step.
-  const STEP_LABELS = ['Basics', 'Location & Hours', 'Contact & Photo'];
-  const canAdvanceFrom = (step) => {
-    if (step === 0) return !!formData.name && !!formData.cuisine;
-    if (step === 1) return !!formData.location;
-    return true;
-  };
-  const goNext = () => {
-    if (canAdvanceFrom(formStep)) setFormStep((s) => Math.min(s + 1, STEP_LABELS.length - 1));
-    else showToast('Please fill in the required fields before continuing.', 'error');
-  };
-  const goBack = () => setFormStep((s) => Math.max(0, s - 1));
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      // If no coordinates yet, try to geocode the location before saving
-      let coords = formData.coordinates;
-      if (!coords && formData.location) {
-        const results = await geocodeAddress(formData.location);
-        if (results.length > 0) {
-          coords = { lat: results[0].lat, lng: results[0].lng };
-        }
-      }
-
-      // Convert hours object to JSON string for database storage
-      const dataToSave = {
-        ...formData,
-        coordinates: coords,
-        hours: JSON.stringify(formData.hours),
-      };
-
-      if (editingTruck) {
-        await onTruckUpdate(editingTruck.id, dataToSave);
-      } else {
-        await onTruckCreate(dataToSave);
-      }
-      setShowForm(false);
-      resetForm();
-    } catch (err) {
-      console.error('Failed to save truck:', err);
-      showToast('Failed to save truck. Please try again.', 'error');
-    } finally {
-      setSaving(false);
-    }
+  const openEditForm = (truck) => {
+    setEditingTruck(truck);
+    setShowForm(true);
   };
 
   const handleDelete = async (truckId) => {
@@ -282,193 +191,18 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
           <h1>My Trucks</h1>
           <p>Manage your food trucks and their details.</p>
         </div>
-        <button className="btn-primary" onClick={() => { resetForm(); setShowForm(true); }}>
+        <button className="btn-primary" onClick={openAddForm}>
           {Icons.plus} Add Truck
         </button>
       </div>
 
-      {showForm && (
-        <div className="modal-overlay">
-          <div className="modal truck-wizard">
-            <div className="modal-header">
-              <h2>{editingTruck ? 'Edit Truck' : 'Add New Truck'}</h2>
-              <button className="close-btn" onClick={() => { setShowForm(false); resetForm(); }}>
-                {Icons.x}
-              </button>
-            </div>
-
-            <div className="wizard-progress">
-              {STEP_LABELS.map((label, i) => (
-                <div
-                  key={label}
-                  className={`wizard-step ${i === formStep ? 'is-current' : ''} ${i < formStep ? 'is-done' : ''}`}
-                >
-                  <div className="wizard-step-dot">{i < formStep ? Icons.check : i + 1}</div>
-                  <span className="wizard-step-label">{label}</span>
-                </div>
-              ))}
-            </div>
-
-            <form onSubmit={(e) => {
-              // Only allow submit on final step. Otherwise treat Enter as Next.
-              if (formStep < STEP_LABELS.length - 1) {
-                e.preventDefault();
-                goNext();
-                return;
-              }
-              handleSave(e);
-            }}>
-              <div className="modal-body">
-                {formStep === 0 && (
-                  <>
-                    <div className="form-group">
-                      <label>Truck Name <span className="req">*</span></label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Taco Loco Express"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                        autoFocus
-                      />
-                    </div>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Cuisine Type <span className="req">*</span></label>
-                        <select
-                          value={formData.cuisine}
-                          onChange={(e) => setFormData({ ...formData, cuisine: e.target.value })}
-                          required
-                        >
-                          <option value="">Select cuisine</option>
-                          <option value="Mexican">Mexican</option>
-                          <option value="American">American</option>
-                          <option value="Asian">Asian</option>
-                          <option value="Italian">Italian</option>
-                          <option value="BBQ">BBQ</option>
-                          <option value="Seafood">Seafood</option>
-                          <option value="Indian">Indian</option>
-                          <option value="Mediterranean">Mediterranean</option>
-                          <option value="Fusion">Fusion</option>
-                          <option value="Other">Other</option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label>Price Range</label>
-                        <select
-                          value={formData.price_range}
-                          onChange={(e) => setFormData({ ...formData, price_range: e.target.value })}
-                        >
-                          <option value="$">$ (Budget)</option>
-                          <option value="$$">$$ (Moderate)</option>
-                          <option value="$$$">$$$ (Premium)</option>
-                          <option value="$$$$">$$$$ (Luxury)</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label>Description</label>
-                      <textarea
-                        placeholder="Describe your truck and cuisine..."
-                        rows={3}
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      ></textarea>
-                    </div>
-                  </>
-                )}
-
-                {formStep === 1 && (
-                  <>
-                    <div className="form-group">
-                      <label>Location <span className="req">*</span></label>
-                      <LocationInput
-                        value={formData.location}
-                        coordinates={formData.coordinates}
-                        onChange={({ location, coordinates }) =>
-                          setFormData({ ...formData, location, coordinates })
-                        }
-                      />
-                    </div>
-                    <HoursInput
-                      hours={formData.hours}
-                      onChange={(hours) => setFormData({ ...formData, hours })}
-                    />
-                  </>
-                )}
-
-                {formStep === 2 && (
-                  <>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Phone</label>
-                        <input
-                          type="tel"
-                          placeholder="Contact number"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Estimated Prep Time</label>
-                        <select
-                          value={formData.estimated_prep_time}
-                          onChange={(e) => setFormData({ ...formData, estimated_prep_time: e.target.value })}
-                        >
-                          <option value="5-10 min">5-10 min</option>
-                          <option value="10-15 min">10-15 min</option>
-                          <option value="15-25 min">15-25 min</option>
-                          <option value="20-30 min">20-30 min</option>
-                          <option value="30-45 min">30-45 min</option>
-                          <option value="45-60 min">45-60 min</option>
-                        </select>
-                      </div>
-                    </div>
-                    <ImageUpload
-                      label="Truck Photo"
-                      currentImage={formData.image_url}
-                      onUpload={(url) => setFormData({ ...formData, image_url: url })}
-                      bucket="images"
-                      folder={editingTruck ? `trucks/${editingTruck.id}` : 'trucks/temp'}
-                      disabled={saving}
-                    />
-                  </>
-                )}
-              </div>
-
-              <div className="form-actions wizard-actions">
-                {formStep > 0 ? (
-                  <button type="button" className="btn-secondary" onClick={goBack} disabled={saving}>
-                    Back
-                  </button>
-                ) : (
-                  <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
-                    Cancel
-                  </button>
-                )}
-                {/* Single always-type=button action: prevents React from reconciling
-                    Next and Submit into the same <button> and accidentally firing a
-                    submit on the click that just advanced the step. */}
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={saving}
-                  onClick={(e) => {
-                    if (formStep < STEP_LABELS.length - 1) goNext();
-                    else handleSave(e);
-                  }}
-                >
-                  {formStep < STEP_LABELS.length - 1
-                    ? 'Next'
-                    : saving
-                      ? 'Saving...'
-                      : (editingTruck ? 'Save Changes' : 'Create Truck')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <TruckEditDialog
+        open={showForm}
+        onOpenChange={setShowForm}
+        truck={editingTruck}
+        onCreate={onTruckCreate}
+        onUpdate={onTruckUpdate}
+      />
 
       {loading ? (
         <div className="loading-state">{Icons.loader} Loading trucks...</div>
@@ -530,7 +264,7 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
             </div>
           ))}
 
-          <div className="truck-card add-card" onClick={() => { resetForm(); setShowForm(true); }}>
+          <div className="truck-card add-card" onClick={openAddForm}>
             <div className="add-card-content">
               {Icons.plus}
               <span>Add New Truck</span>
