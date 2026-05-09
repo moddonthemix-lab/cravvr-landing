@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/dialog';
 import { DashboardSidebar, DashboardShell } from '@/components/ui/dashboard-sidebar';
 import { cn } from '@/lib/utils';
-import './CustomerProfile.css';
+import LoadingSplash from '../common/LoadingSplash';
 
 // Maps customer-side order status values to Badge variants for consistent styling.
 const CUSTOMER_ORDER_STATUS = {
@@ -56,12 +56,17 @@ const CUSTOMER_ORDER_STATUS = {
 
 // Header Component
 const ProfileHeader = ({ onBack, title }) => (
-  <header className="profile-header">
-    <button className="back-button" onClick={onBack}>
-      {Icons.chevronLeft}
+  <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/85 backdrop-blur px-4 py-3">
+    <button
+      type="button"
+      onClick={onBack}
+      aria-label="Back"
+      className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+    >
+      <span className="h-5 w-5">{Icons.chevronLeft}</span>
     </button>
-    <h1>{title}</h1>
-    <div className="header-spacer"></div>
+    <h1 className="flex-1 text-center text-lg font-bold tracking-tight">{title}</h1>
+    <div className="w-10" />
   </header>
 );
 
@@ -96,7 +101,7 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEdit
   const showMenuList = !showDesktopTitle;
 
   return (
-    <div className="profile-content">
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
       {showDesktopTitle && (
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -221,10 +226,10 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
     : orders.filter(o => getFilterGroup(o.status) === filter);
 
   return (
-    <div className="tab-page">
+    <div className="min-h-screen">
       <ProfileHeader onBack={onBack} title="Order History" />
 
-      <div className="tab-content">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
         <div className="flex flex-wrap items-center gap-1.5 mb-5">
           {[
             { key: 'all', label: 'All Orders' },
@@ -370,10 +375,10 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
 
 // Favorites Tab
 const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite, onViewMenu }) => (
-  <div className="tab-page">
+  <div className="min-h-screen">
     <ProfileHeader onBack={onBack} title="Favorites" />
 
-    <div className="tab-content">
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
       <p className="text-sm text-muted-foreground mb-5">Your saved food trucks</p>
 
       {loading ? (
@@ -468,10 +473,10 @@ const RewardsTab = ({ onBack, points, checkIns, loading, onClaimReward }) => {
   );
 
   return (
-    <div className="tab-page">
+    <div className="min-h-screen">
       <ProfileHeader onBack={onBack} title="Rewards & Points" />
 
-      <div className="tab-content space-y-5">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-5">
         <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-0 overflow-hidden">
           <CardContent className="flex flex-col items-center text-center pt-8 pb-6 px-6">
             <div className="flex items-baseline gap-2">
@@ -618,10 +623,10 @@ const AddressesTab = ({ onBack, userId }) => {
   };
 
   return (
-    <div className="tab-page">
+    <div className="min-h-screen">
       <ProfileHeader onBack={onBack} title="Saved Addresses" />
 
-      <div className="tab-content space-y-3">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-3">
         {loading ? (
           <Card>
             <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
@@ -763,10 +768,10 @@ const PaymentTab = ({ onBack, userId }) => {
   };
 
   return (
-    <div className="tab-page">
+    <div className="min-h-screen">
       <ProfileHeader onBack={onBack} title="Payment Methods" />
 
-      <div className="tab-content space-y-3">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-3">
         {loading ? (
           <Card>
             <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
@@ -881,10 +886,10 @@ const NotificationsTab = ({ onBack }) => {
   ];
 
   return (
-    <div className="tab-page">
+    <div className="min-h-screen">
       <ProfileHeader onBack={onBack} title="Notifications" />
 
-      <div className="tab-content">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
         <Card>
           <CardContent className="p-0 divide-y divide-border">
             {items.map(item => (
@@ -943,10 +948,10 @@ const SecurityRow = ({ icon, label, status, onClick }) => (
 );
 
 const SecurityTab = ({ onBack, onChangePassword }) => (
-  <div className="tab-page">
+  <div className="min-h-screen">
     <ProfileHeader onBack={onBack} title="Privacy & Security" />
 
-    <div className="tab-content space-y-5">
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-5">
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
           Account Security
@@ -992,10 +997,10 @@ const SecurityTab = ({ onBack, onChangePassword }) => (
 
 // Help Tab
 const HelpTab = ({ onBack }) => (
-  <div className="tab-page">
+  <div className="min-h-screen">
     <ProfileHeader onBack={onBack} title="Help & Support" />
 
-    <div className="tab-content space-y-5">
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-5">
       <div className="relative">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
           {Icons.search || Icons.help}
@@ -1946,53 +1951,53 @@ const CustomerProfile = ({ onBack }) => {
   }, [user?.id]);
 
   if (authLoading) {
-    return (
-      <div className="profile-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading profile...</p>
-      </div>
-    );
+    return <LoadingSplash tagline="LOADING PROFILE" />;
   }
 
   // Handle case where profile doesn't exist (e.g., admin without profile record)
   if (!profile && user) {
     const showFallbackHeader = isMobile || onBack;
     return (
-      <div className="customer-profile">
+      <div className="min-h-screen">
         {showFallbackHeader && (
-          <header className="main-profile-header">
+          <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/85 backdrop-blur px-4 py-3">
             {onBack ? (
-              <button className="back-button" onClick={onBack}>
-                {Icons.chevronLeft}
+              <button
+                type="button"
+                onClick={onBack}
+                aria-label="Back"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+              >
+                <span className="h-5 w-5">{Icons.chevronLeft}</span>
               </button>
             ) : (
-              <div className="header-spacer"></div>
+              <div className="w-10" />
             )}
-            <h1>Account</h1>
-            <div className="header-spacer"></div>
+            <h1 className="flex-1 text-center text-lg font-bold tracking-tight">Account</h1>
+            <div className="w-10" />
           </header>
         )}
-        <div className="profile-content">
-          <div className="profile-hero">
-            <div className="profile-avatar-large">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-4">
+          <div className="flex flex-col items-center text-center py-6 space-y-2">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-bold">
               {user.email?.charAt(0).toUpperCase() || '?'}
             </div>
-            <h2 className="profile-name">{user.user_metadata?.name || 'User'}</h2>
-            <p className="profile-email">{user.email}</p>
+            <h2 className="text-lg font-bold tracking-tight">{user.user_metadata?.name || 'User'}</h2>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
-          <div className="profile-notice">
-            <p>Your profile is being set up. Some features may be limited.</p>
+          <div className="rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning text-center">
+            Your profile is being set up. Some features may be limited.
           </div>
-          <button className="logout-button" onClick={async () => {
-            try {
-              await signOut();
-            } catch (err) {
-              console.error('Logout failed:', err);
-            }
-          }}>
-            {Icons.logout}
-            <span>Log Out</span>
-          </button>
+          <Button
+            variant="outline"
+            className="w-full gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={async () => {
+              try { await signOut(); } catch (err) { console.error('Logout failed:', err); }
+            }}
+          >
+            <span className="h-4 w-4">{Icons.logout}</span>
+            Log Out
+          </Button>
         </div>
       </div>
     );
@@ -2144,7 +2149,7 @@ const CustomerProfile = ({ onBack }) => {
 
   if (showDesktopShell) {
     return (
-      <div className="customer-profile">
+      <div className="min-h-screen">
         <DashboardShell
           sidebar={
             <DashboardSidebar
@@ -2163,19 +2168,29 @@ const CustomerProfile = ({ onBack }) => {
   }
 
   return (
-    <div className="customer-profile">
+    <div className="min-h-screen">
       {showMainHeader && (
-        <header className="main-profile-header">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/85 backdrop-blur px-4 py-3">
           {onBack ? (
-            <button className="back-button" onClick={onBack}>
-              {Icons.chevronLeft}
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Back"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+            >
+              <span className="h-5 w-5">{Icons.chevronLeft}</span>
             </button>
           ) : (
-            <div className="header-spacer"></div>
+            <div className="w-10" />
           )}
-          <h1>Account</h1>
-          <button className="settings-button" onClick={() => handleTabChange('notifications')}>
-            {Icons.bell}
+          <h1 className="flex-1 text-center text-lg font-bold tracking-tight">Account</h1>
+          <button
+            type="button"
+            onClick={() => handleTabChange('notifications')}
+            aria-label="Notifications"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+          >
+            <span className="h-5 w-5">{Icons.bell}</span>
           </button>
         </header>
       )}
