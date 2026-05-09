@@ -44,7 +44,6 @@ import { BarChart, BarList } from '@tremor/react';
 import { cn } from '@/lib/utils';
 import LoadingSplash from '../common/LoadingSplash';
 import './OwnerDashboard.css';
-import './KitchenDisplay.css';
 import './StripeOnboarding.css';
 
 // Maps order status (including the synthesized 'abandoned' status) to a Badge variant.
@@ -91,9 +90,11 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
 
   return (
     <div className="tab-content">
-      <div className="content-header">
-        <h1>Welcome back!</h1>
-        <p>Here's what's happening with your trucks today.</p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Welcome back!</h1>
+        <p className="text-sm text-muted-foreground">
+          Here's what's happening with your trucks today.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
@@ -279,10 +280,12 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
 
   return (
     <div className="tab-content">
-      <div className="content-header">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1>My Trucks</h1>
-          <p>Manage your food trucks and their details.</p>
+          <h1 className="text-2xl font-bold tracking-tight">My Trucks</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your food trucks and their details.
+          </p>
         </div>
         <Button onClick={openAddForm} className="gap-2">
           <span className="h-4 w-4 shrink-0">{Icons.plus}</span>
@@ -1299,10 +1302,12 @@ const AnalyticsTab = ({ trucks, orders }) => {
 
   return (
     <div className="tab-content">
-      <div className="content-header">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1>Analytics</h1>
-          <p>Track your performance and insights.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
+          <p className="text-sm text-muted-foreground">
+            Track your performance and insights.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select
@@ -1579,10 +1584,12 @@ const SettingsTab = () => {
 
   return (
     <div className="tab-content">
-      <div className="content-header">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1>Settings</h1>
-          <p>Manage your account and preferences.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your account and preferences.
+          </p>
         </div>
       </div>
 
@@ -2129,9 +2136,21 @@ const OwnerDashboard = () => {
       {/* Tab Content */}
       <div className="owner-tab-content">
         {error && (
-          <div className="error-banner">
-            {Icons.alertCircle} {error}
-            <button onClick={() => setError(null)}>{Icons.x}</button>
+          <div className="mx-auto max-w-7xl px-4 pt-4">
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
+              <span className="h-5 w-5 shrink-0 mt-0.5">{Icons.alertCircle}</span>
+              <p className="flex-1 leading-snug">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                aria-label="Dismiss error"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-destructive/70 transition-colors hover:bg-destructive/15 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <span className="h-4 w-4">{Icons.x}</span>
+              </button>
+            </div>
           </div>
         )}
         {renderTab()}
