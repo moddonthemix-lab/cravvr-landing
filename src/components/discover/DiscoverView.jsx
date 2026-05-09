@@ -5,7 +5,6 @@ import { Icons } from '../common/Icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import './DiscoverView.css';
 
 const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruckClick }) => {
   const [currentIndex, setCurrentIndex] = useState(-1);
@@ -14,38 +13,31 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
   const [popularItemsMap, setPopularItemsMap] = useState({});
   const [swipeProgress, setSwipeProgress] = useState({ direction: null, progress: 0 });
 
-  // Create refs for each card to enable programmatic swiping
   const currentIndexRef = useRef(currentIndex);
   const childRefs = useMemo(
     () => trucks.length > 0 ? Array(trucks.length).fill(0).map(() => React.createRef()) : [],
     [trucks.length]
   );
 
-  // Keep ref in sync with state
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
 
-  // Reset index when trucks change
   useEffect(() => {
     if (trucks.length > 0) {
       setCurrentIndex(trucks.length - 1);
     }
   }, [trucks.length]);
 
-  // Fetch popular items for visible trucks (current and a few behind)
   useEffect(() => {
     const fetchPopularItems = async () => {
       if (!trucks.length) return;
-
-      // Get items for current and next few trucks
       const indicesToFetch = [];
       for (let i = currentIndex; i >= Math.max(0, currentIndex - 3); i--) {
         if (trucks[i] && !popularItemsMap[trucks[i].id]) {
           indicesToFetch.push(i);
         }
       }
-
       for (const idx of indicesToFetch) {
         const truck = trucks[idx];
         try {
@@ -74,7 +66,6 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
         }
       }
     };
-
     fetchPopularItems();
   }, [currentIndex, trucks]);
 
@@ -88,17 +79,14 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
   const swiped = (direction, truck, index) => {
     setLastDirection(direction);
     setSwipeProgress({ direction: null, progress: 0 });
-
     if (direction === 'right') {
       toggleFavorite(truck.id);
       setLikedCount(prev => prev + 1);
     }
-
     updateCurrentIndex(index - 1);
   };
 
   const outOfFrame = (name, idx) => {
-    // Card has left the screen
     if (currentIndexRef.current >= idx && childRefs[idx].current) {
       childRefs[idx].current.restoreCard();
     }
@@ -110,33 +98,19 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
     }
   };
 
-  // Handle card drag for visual feedback
-  const handleCardDrag = (direction, xMovement) => {
-    const progress = Math.min(Math.abs(xMovement) / 100, 1);
-    setSwipeProgress({
-      direction: xMovement > 0 ? 'right' : 'left',
-      progress
-    });
-  };
-
   if (loading || trucks.length === 0) {
     return (
-      <div className="discover-view">
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
-          <div className="h-10 w-10 rounded-full border-[3px] border-muted border-t-primary animate-spin" />
-          <p className="text-sm text-muted-foreground">Finding trucks to discover…</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
+        <div className="h-10 w-10 rounded-full border-[3px] border-muted border-t-primary animate-spin" />
+        <p className="text-sm text-muted-foreground">Finding trucks to discover…</p>
       </div>
     );
   }
 
-  const canGoBack = currentIndex < trucks.length - 1;
-  const progressPercent = ((trucks.length - currentIndex) / trucks.length) * 100;
-
   return (
-    <div className="discover-view">
+    <div className="flex flex-col min-h-screen px-4 sm:px-6 pb-6">
       {/* Header */}
-      <div className="discover-header">
+      <div className="pt-5 pb-3">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Discover</h1>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
@@ -149,16 +123,14 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
         </p>
       </div>
 
-      {/* Card + Actions Container */}
-      <div className="discover-content">
-        {/* Card Stack */}
-        <div className="discover-stack">
-          <div className="card-container">
-            {trucks.length > 0 && trucks.map((truck, index) => (
+      {/* Card stack */}
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="relative h-[520px] w-full max-w-sm mx-auto">
+          {trucks.map((truck, index) => (
             <TinderCard
               ref={childRefs[index]}
               key={truck.id}
-              className="swipe-card"
+              className="absolute inset-0"
               onSwipe={(dir) => swiped(dir, truck, index)}
               onCardLeftScreen={() => outOfFrame(truck.name, index)}
               preventSwipe={['up', 'down']}
@@ -166,122 +138,120 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
               swipeThreshold={100}
             >
               <div
-                className={`discover-card ${index === currentIndex ? 'active' : ''}`}
+                className="absolute inset-0 overflow-hidden rounded-3xl bg-card shadow-xl ring-1 ring-black/10"
                 style={{
                   zIndex: trucks.length - index,
                   transform: index < currentIndex
                     ? `scale(${1 - (currentIndex - index) * 0.05}) translateY(${(currentIndex - index) * 8}px)`
                     : 'none',
-                  opacity: index < currentIndex - 2 ? 0 : 1
+                  opacity: index < currentIndex - 2 ? 0 : 1,
                 }}
               >
-                {/* Swipe Indicators - Show based on drag progress */}
-                {index === currentIndex && (
-                  <>
-                    <div
-                      className={`swipe-indicator like ${swipeProgress.direction === 'right' ? 'show' : ''}`}
-                      style={{
-                        opacity: swipeProgress.direction === 'right' ? swipeProgress.progress : 0,
-                        transform: `scale(${0.8 + (swipeProgress.direction === 'right' ? swipeProgress.progress * 0.4 : 0)}) rotate(-15deg)`
-                      }}
-                    >
-                      <span className="indicator-icon">{Icons.heartFilled}</span>
-                      <span>LIKE</span>
-                    </div>
-                    <div
-                      className={`swipe-indicator nope ${swipeProgress.direction === 'left' ? 'show' : ''}`}
-                      style={{
-                        opacity: swipeProgress.direction === 'left' ? swipeProgress.progress : 0,
-                        transform: `scale(${0.8 + (swipeProgress.direction === 'left' ? swipeProgress.progress * 0.4 : 0)}) rotate(15deg)`
-                      }}
-                    >
-                      <span className="indicator-icon">{Icons.x}</span>
-                      <span>NOPE</span>
-                    </div>
-                  </>
-                )}
+                {/* Image */}
+                <div className="relative h-2/3 overflow-hidden bg-muted">
+                  <img
+                    src={truck.image}
+                    alt={truck.name}
+                    draggable={false}
+                    className="h-full w-full object-cover select-none"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-                {/* Card Image */}
-                <div className="card-image-container">
-                  <img src={truck.image} alt={truck.name} draggable={false} />
-                  <div className="card-image-overlay"></div>
-
-                  {/* Status Badges */}
-                  <div className="card-badges flex items-center gap-1.5">
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
                     {truck.featured && (
                       <Badge variant="warning" className="shadow-sm gap-1">
                         <span className="h-3 w-3">{Icons.star}</span>
                         Featured
                       </Badge>
                     )}
-                    <Badge
-                      variant={truck.isOpen ? 'positive' : 'secondary'}
-                      className="shadow-sm"
-                    >
+                    <Badge variant={truck.isOpen ? 'positive' : 'secondary'} className="shadow-sm">
                       {truck.isOpen ? 'Open Now' : 'Closed'}
                     </Badge>
                   </div>
 
-                  {/* Prep Time */}
                   {truck.prepTime && (
-                    <div className="card-prep-info">
-                      <span className="prep-time">
-                        {Icons.clock}
-                        {truck.prepTime}
-                      </span>
+                    <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur px-2.5 py-1 text-xs font-semibold text-white">
+                      <span className="h-3 w-3">{Icons.clock}</span>
+                      {truck.prepTime}
                     </div>
                   )}
                 </div>
 
-                {/* Card Info */}
-                <div className="card-info">
-                  <div className="card-header">
-                    <div>
-                      <h2>{truck.name}</h2>
-                      <p className="card-cuisine">{truck.cuisine} • {truck.priceRange}</p>
+                {/* Info */}
+                <div className="h-1/3 overflow-y-auto p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-lg font-bold leading-tight truncate">{truck.name}</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {truck.cuisine} • {truck.priceRange}
+                      </p>
                     </div>
-                    <div className="card-rating">
-                      {Icons.star}
-                      <span>{truck.rating}</span>
+                    <div className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-1 text-xs font-semibold text-warning">
+                      <span className="h-3.5 w-3.5">{Icons.star}</span>
+                      <span className="tabular-nums">{truck.rating}</span>
                     </div>
                   </div>
 
-                  <p className="card-description">
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-snug">
                     {truck.description || `Delicious ${truck.cuisine} food made fresh daily.`}
                   </p>
 
-                  <div className="card-location">
-                    <span className="distance">{truck.distance}</span>
-                    <span className="location">{truck.location}</span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground">{truck.distance}</span>
+                    <span aria-hidden>•</span>
+                    <span className="truncate">{truck.location}</span>
                   </div>
 
-                  {/* Popular Items */}
                   {popularItemsMap[truck.id]?.length > 0 && (
-                    <div className="card-popular-items">
-                      <span className="popular-label">Popular</span>
-                      <div className="popular-items-list">
+                    <div className="pt-1">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                        Popular
+                      </span>
+                      <div className="space-y-1">
                         {popularItemsMap[truck.id].map(item => (
-                          <div key={item.id} className="popular-item">
-                            <span className="popular-emoji">{item.emoji}</span>
-                            <span className="popular-name">{item.name}</span>
-                            <span className="popular-price">{item.price}</span>
+                          <div
+                            key={item.id}
+                            className="flex items-center gap-2 rounded-lg bg-muted/40 px-2 py-1.5 text-xs"
+                          >
+                            <span className="text-base">{item.emoji}</span>
+                            <span className="flex-1 truncate font-medium">{item.name}</span>
+                            <span className="font-bold tabular-nums text-primary">{item.price}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
+
+                {/* Like / Nope overlays — only on top card */}
+                {index === currentIndex && swipeProgress.direction && (
+                  <>
+                    <div
+                      className="absolute top-8 left-6 -rotate-12 rounded-xl border-4 border-positive bg-positive/10 px-4 py-2 text-2xl font-extrabold uppercase tracking-wider text-positive pointer-events-none"
+                      style={{
+                        opacity: swipeProgress.direction === 'right' ? swipeProgress.progress : 0,
+                      }}
+                    >
+                      Like
+                    </div>
+                    <div
+                      className="absolute top-8 right-6 rotate-12 rounded-xl border-4 border-destructive bg-destructive/10 px-4 py-2 text-2xl font-extrabold uppercase tracking-wider text-destructive pointer-events-none"
+                      style={{
+                        opacity: swipeProgress.direction === 'left' ? swipeProgress.progress : 0,
+                      }}
+                    >
+                      Nope
+                    </div>
+                  </>
+                )}
               </div>
             </TinderCard>
           ))}
 
-          {/* Empty state when all cards swiped */}
           {currentIndex < 0 && (
-            <div className="discover-empty flex flex-col items-center justify-center text-center px-6 py-12 gap-3">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 py-12 gap-3">
               <div className="text-5xl">🎉</div>
-              <h3 className="text-xl font-bold tracking-tight">
-                You've seen them all!
-              </h3>
+              <h3 className="text-xl font-bold tracking-tight">You've seen them all!</h3>
               <p className="text-sm text-muted-foreground">
                 Check back later for more food trucks
               </p>
@@ -295,12 +265,11 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
                 Start Over
               </Button>
             </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Action Buttons */}
-        <div className="discover-actions flex items-center justify-center gap-5 py-4">
+        <div className="flex items-center justify-center gap-5 py-6">
           <button
             type="button"
             onClick={() => swipe('left')}
@@ -311,7 +280,7 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
               !canSwipe && 'opacity-40 cursor-not-allowed hover:scale-100 hover:bg-white'
             )}
           >
-            <span className="h-6 w-6">{Icons.xBold}</span>
+            <span className="h-6 w-6">{Icons.xBold || Icons.x}</span>
           </button>
           <button
             type="button"
@@ -323,7 +292,7 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
               currentIndex < 0 && 'opacity-40 cursor-not-allowed hover:scale-100 hover:bg-white'
             )}
           >
-            <span className="h-5 w-5">{Icons.infoBold}</span>
+            <span className="h-5 w-5">{Icons.infoBold || Icons.info}</span>
           </button>
           <button
             type="button"
@@ -340,8 +309,8 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
         </div>
       </div>
 
-      {/* Progress Indicator */}
-      <div className="discover-progress flex flex-col items-center gap-2 pb-4">
+      {/* Progress */}
+      <div className="flex flex-col items-center gap-2 pb-2">
         <div className="flex items-center gap-1.5">
           {currentIndex >= 0 && trucks.slice(Math.max(0, currentIndex - 2), Math.min(trucks.length, currentIndex + 3)).map((truck, i) => {
             const actualIndex = Math.max(0, currentIndex - 2) + i;
