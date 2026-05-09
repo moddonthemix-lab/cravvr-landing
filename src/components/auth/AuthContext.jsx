@@ -245,6 +245,15 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
 
       if (data?.user?.id) {
+        // Update context state synchronously instead of waiting on the async
+        // onAuthStateChange listener — otherwise navigate() after login lands
+        // on the next route while user is still null and shows the
+        // unauthenticated view until the user refreshes.
+        setUser(data.user);
+        const profileData = await fetchProfile(data.user.id);
+        setProfile(profileData);
+        initialLoadComplete.current = true;
+
         await identifyVisitor(data.user.id);
         trackEvent('login');
       }
