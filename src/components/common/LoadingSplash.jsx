@@ -37,7 +37,7 @@ const LoadingSplash = ({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center bg-primary text-primary-foreground',
+        'flex flex-col items-center justify-center bg-background text-foreground',
         preset.container,
         className
       )}
@@ -48,14 +48,14 @@ const LoadingSplash = ({
         <img
           src="/logo/cravrr-logo-transparent.png"
           alt="Cravvr"
-          className={cn('w-auto select-none drop-shadow-sm', preset.logo)}
+          className={cn('w-auto select-none', preset.logo)}
           draggable={false}
         />
-        <div className={cn('bg-white/40', preset.divider)} />
+        <div className={cn('bg-primary/30', preset.divider)} />
         {tagline && (
           <span
             className={cn(
-              'font-bold uppercase text-white/90',
+              'font-bold uppercase text-primary',
               preset.tagline
             )}
           >
