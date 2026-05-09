@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { submitTruckReview, submitMenuItemRating } from '../services/reviews';
 
 /**
  * Hook for managing rating state and submission
@@ -40,47 +40,8 @@ export const useRating = ({
     setSuccess(false);
   }, [existingRating]);
 
-  // Update truck's average rating
-  const updateTruckRating = useCallback(async (truckId) => {
-    const { data: reviews } = await supabase
-      .from('reviews')
-      .select('rating')
-      .eq('truck_id', truckId);
-
-    if (reviews && reviews.length > 0) {
-      const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-      await supabase
-        .from('food_trucks')
-        .update({
-          rating: Math.round(avgRating * 10) / 10,
-          review_count: reviews.length
-        })
-        .eq('id', truckId);
-    }
-  }, []);
-
-  // Update menu item's average rating
-  const updateItemRating = useCallback(async (itemId) => {
-    const { data: reviews } = await supabase
-      .from('menu_item_reviews')
-      .select('rating')
-      .eq('menu_item_id', itemId);
-
-    if (reviews && reviews.length > 0) {
-      const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-      await supabase
-        .from('menu_items')
-        .update({
-          average_rating: Math.round(avgRating * 10) / 10,
-          review_count: reviews.length
-        })
-        .eq('id', itemId);
-    }
-  }, []);
-
-  // Handle form submission
+  // Handle form submission. Routes through services so the canonical menu_item_ratings
+  // table is used (the prior inline path wrote to a non-existent menu_item_reviews table).
   const handleSubmit = useCallback(async (e) => {
     e?.preventDefault();
 
@@ -94,49 +55,15 @@ export const useRating = ({
 
     try {
       if (type === 'truck') {
-        // Handle truck review
-        if (existingRating) {
-          const { error: updateError } = await supabase
-            .from('reviews')
-            .update({
-              rating,
-              comment: comment.trim() || null,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', existingRating.id);
-
-          if (updateError) throw updateError;
-        } else {
-          const { error: insertError } = await supabase
-            .from('reviews')
-            .insert({
-              truck_id: target.id,
-              customer_id: userId,
-              rating,
-              comment: comment.trim() || null
-            });
-
-          if (insertError) throw insertError;
-        }
-
-        await updateTruckRating(target.id);
-
+        await submitTruckReview({
+          truckId: target.id,
+          userId,
+          rating,
+          comment,
+          existingReviewId: existingRating?.id,
+        });
       } else if (type === 'menuItem') {
-        // Handle menu item rating
-        const { error: upsertError } = await supabase
-          .from('menu_item_reviews')
-          .upsert({
-            menu_item_id: target.id,
-            customer_id: userId,
-            rating,
-            comment: comment.trim() || null
-          }, {
-            onConflict: 'menu_item_id,customer_id'
-          });
-
-        if (upsertError) throw upsertError;
-
-        await updateItemRating(target.id);
+        await submitMenuItemRating({ itemId: target.id, userId, rating });
       }
 
       setSuccess(true);
@@ -151,7 +78,7 @@ export const useRating = ({
     } finally {
       setLoading(false);
     }
-  }, [type, target, userId, rating, comment, existingRating, updateTruckRating, updateItemRating, onSuccess, onClose]);
+  }, [type, target, userId, rating, comment, existingRating, onSuccess, onClose]);
 
   // Reset the form
   const reset = useCallback(() => {
