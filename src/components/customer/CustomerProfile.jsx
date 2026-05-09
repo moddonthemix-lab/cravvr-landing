@@ -40,6 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { DashboardSidebar, DashboardShell } from '@/components/ui/dashboard-sidebar';
 import { cn } from '@/lib/utils';
 import './CustomerProfile.css';
 
@@ -90,20 +91,20 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEdit
     { icon: Icons.help, label: 'Help & Support', tab: 'help' },
   ];
 
+  // On desktop the sidebar handles navigation; the menu list is redundant.
+  // Mobile keeps the menu-list-as-home pattern (drill into a tab from here).
+  const showMenuList = !showDesktopTitle;
+
   return (
     <div className="profile-content">
       {showDesktopTitle && (
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">My Account</h1>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => setActiveTab('notifications')}
-          >
-            {Icons.bell}
-            Notifications
-          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">My Account</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage your profile, orders, and preferences.
+            </p>
+          </div>
         </div>
       )}
 
@@ -142,6 +143,7 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEdit
         </CardContent>
       </Card>
 
+      {showMenuList && (
       <div className="mb-4">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
           Account Settings
@@ -171,6 +173,7 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEdit
           </CardContent>
         </Card>
       </div>
+      )}
 
       <Button
         variant="outline"
@@ -2067,27 +2070,54 @@ const CustomerProfile = ({ onBack }) => {
 
   // Show main header only on mobile when using AppLayout (no onBack provided on desktop)
   const showMainHeader = activeTab === 'account' && (isMobile || onBack);
+  const showDesktopShell = !isMobile && !onBack;
 
-  return (
-    <div className="customer-profile">
-      {showMainHeader && (
-        <header className="main-profile-header">
-          {onBack ? (
-            <button className="back-button" onClick={onBack}>
-              {Icons.chevronLeft}
-            </button>
-          ) : (
-            <div className="header-spacer"></div>
-          )}
-          <h1>Account</h1>
-          <button className="settings-button" onClick={() => handleTabChange('notifications')}>
-            {Icons.bell}
-          </button>
-        </header>
-      )}
-      {renderTab()}
+  // Sidebar nav for desktop. Mirrors the AccountTab menu list so customers
+  // see the same options whether they navigate via the sidebar or via the
+  // mobile menu-list-as-home pattern.
+  const sidebarNavItems = [
+    { id: 'account', label: 'Account', icon: Icons.user },
+    {
+      id: 'orders',
+      label: 'Order History',
+      icon: Icons.orders,
+      badge: orders.length > 0 ? orders.length : null,
+    },
+    {
+      id: 'favorites',
+      label: 'Favorites',
+      icon: Icons.heart,
+      badge: favorites.length > 0 ? favorites.length : null,
+    },
+    {
+      id: 'rewards',
+      label: 'Rewards',
+      icon: Icons.gift,
+      badge: profile?.points ? `${profile.points} pts` : null,
+    },
+    { id: 'addresses', label: 'Addresses', icon: Icons.mapPin },
+    { id: 'payment', label: 'Payment', icon: Icons.creditCard },
+    { id: 'notifications', label: 'Notifications', icon: Icons.bell },
+    { id: 'security', label: 'Security', icon: Icons.shield },
+    { id: 'help', label: 'Help', icon: Icons.help },
+  ];
 
-      {/* Modals */}
+  const sidebarBrand = (
+    <div className="flex items-center gap-3">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-sm">
+        {profile?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || 'U'}
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-sm font-bold tracking-tight leading-tight truncate">
+          {profile?.name || 'My Account'}
+        </h2>
+        <p className="text-[11px] text-muted-foreground truncate">{profile?.email || user?.email}</p>
+      </div>
+    </div>
+  );
+
+  const modals = (
+    <>
       <EditProfileModal
         isOpen={showEditProfile}
         onClose={() => setShowEditProfile(false)}
@@ -2109,6 +2139,48 @@ const CustomerProfile = ({ onBack }) => {
         onClose={() => setShowTrackModal(false)}
         order={selectedOrder}
       />
+    </>
+  );
+
+  if (showDesktopShell) {
+    return (
+      <div className="customer-profile">
+        <DashboardShell
+          sidebar={
+            <DashboardSidebar
+              brand={sidebarBrand}
+              navItems={sidebarNavItems}
+              activeId={activeTab}
+              onNavigate={handleTabChange}
+            />
+          }
+        >
+          {renderTab()}
+        </DashboardShell>
+        {modals}
+      </div>
+    );
+  }
+
+  return (
+    <div className="customer-profile">
+      {showMainHeader && (
+        <header className="main-profile-header">
+          {onBack ? (
+            <button className="back-button" onClick={onBack}>
+              {Icons.chevronLeft}
+            </button>
+          ) : (
+            <div className="header-spacer"></div>
+          )}
+          <h1>Account</h1>
+          <button className="settings-button" onClick={() => handleTabChange('notifications')}>
+            {Icons.bell}
+          </button>
+        </header>
+      )}
+      {renderTab()}
+      {modals}
     </div>
   );
 };

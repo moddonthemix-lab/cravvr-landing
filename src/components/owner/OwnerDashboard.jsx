@@ -40,6 +40,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  DashboardSidebar,
+  DashboardMobileNav,
+  DashboardShell,
+} from '@/components/ui/dashboard-sidebar';
 
 // Code-split: Analytics pulls in Tremor + recharts (~300 KB gzipped). Loading
 // it on demand keeps every other tab's initial bundle slim.
@@ -1832,50 +1837,59 @@ const OwnerDashboard = () => {
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];
 
-  return (
-    <div className="owner-dashboard-content">
-      {/* Horizontal Tab Navigation */}
-      <div className="owner-tabs">
-        <div className="owner-tabs-header">
-          <h1 className="owner-title">Owner Dashboard</h1>
-        </div>
-        <nav className="owner-tabs-nav">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              className={`owner-tab ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(item.id)}
-            >
-              <span className="tab-icon">{item.icon}</span>
-              <span className="tab-label">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      <div className="owner-tab-content">
-        {error && (
-          <div className="mx-auto max-w-7xl px-4 pt-4">
-            <div
-              role="alert"
-              className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-            >
-              <span className="h-5 w-5 shrink-0 mt-0.5">{Icons.alertCircle}</span>
-              <p className="flex-1 leading-snug">{error}</p>
-              <button
-                onClick={() => setError(null)}
-                aria-label="Dismiss error"
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-destructive/70 transition-colors hover:bg-destructive/15 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <span className="h-4 w-4">{Icons.x}</span>
-              </button>
-            </div>
-          </div>
-        )}
-        {renderTab()}
+  const sidebarBrand = (
+    <div className="flex items-center gap-3">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+        <span className="h-4 w-4">{Icons.truck}</span>
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-sm font-bold tracking-tight leading-tight">Owner Dashboard</h2>
+        <p className="text-[11px] text-muted-foreground truncate">
+          {profile?.business_name || profile?.name || 'Manage your trucks'}
+        </p>
       </div>
     </div>
+  );
+
+  return (
+    <DashboardShell
+      sidebar={
+        <DashboardSidebar
+          brand={sidebarBrand}
+          navItems={navItems}
+          activeId={activeTab}
+          onNavigate={setActiveTab}
+        />
+      }
+      mobileNav={
+        <DashboardMobileNav
+          navItems={navItems}
+          activeId={activeTab}
+          onNavigate={setActiveTab}
+        />
+      }
+      className="owner-dashboard-content"
+    >
+      {error && (
+        <div className="mb-4">
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            <span className="h-5 w-5 shrink-0 mt-0.5">{Icons.alertCircle}</span>
+            <p className="flex-1 leading-snug">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              aria-label="Dismiss error"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-destructive/70 transition-colors hover:bg-destructive/15 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <span className="h-4 w-4">{Icons.x}</span>
+            </button>
+          </div>
+        </div>
+      )}
+      {renderTab()}
+    </DashboardShell>
   );
 };
 

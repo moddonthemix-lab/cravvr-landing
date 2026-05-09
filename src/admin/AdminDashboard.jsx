@@ -29,6 +29,11 @@ import {
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Icons } from '../components/common/Icons';
 import MarketingPage from '../components/admin/MarketingPage';
+import {
+  DashboardSidebar,
+  DashboardMobileNav,
+  DashboardShell,
+} from '@/components/ui/dashboard-sidebar';
 import './AdminDashboard.css';
 
 // Chart colors
@@ -1953,41 +1958,52 @@ const AdminDashboard = () => {
     }
   };
 
-  return (
-    <div className="admin-dashboard-content">
-      {/* Horizontal Tab Navigation */}
-      <div className="admin-tabs">
-        <div className="admin-tabs-header">
-          <h1 className="admin-title">Admin Dashboard</h1>
-          <span className="admin-badge">{Icons.shield} Admin</span>
-        </div>
-        <nav className="admin-tabs-nav">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className={`admin-tab ${currentPage === item.id ? 'active' : ''}`}
-              onClick={() => {
-                if (item.id === 'trucks') {
-                  navigate('/admin/trucks');
-                } else if (item.id === 'growth') {
-                  navigate('/admin/growth');
-                } else {
-                  setCurrentPage(item.id);
-                }
-              }}
-            >
-              <span className="tab-icon">{item.icon}</span>
-              <span className="tab-label">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
+  // Map nav item clicks: trucks/growth navigate to dedicated routes, the rest
+  // are local state changes. Pre-bind onClick on the items that need it so the
+  // shared sidebar primitive can stay logic-free.
+  const sidebarNavItems = navItems.map((item) => {
+    if (item.id === 'trucks') {
+      return { ...item, onClick: () => navigate('/admin/trucks') };
+    }
+    if (item.id === 'growth') {
+      return { ...item, onClick: () => navigate('/admin/growth') };
+    }
+    return item;
+  });
 
-      {/* Tab Content */}
-      <div className="admin-tab-content">
-        {renderPage()}
+  const sidebarBrand = (
+    <div className="flex items-center gap-3">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+        <span className="h-4 w-4">{Icons.shield}</span>
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-sm font-bold tracking-tight leading-tight">Admin Dashboard</h2>
+        <p className="text-[11px] text-muted-foreground truncate">Cravvr operations</p>
       </div>
     </div>
+  );
+
+  return (
+    <DashboardShell
+      sidebar={
+        <DashboardSidebar
+          brand={sidebarBrand}
+          navItems={sidebarNavItems}
+          activeId={currentPage}
+          onNavigate={setCurrentPage}
+        />
+      }
+      mobileNav={
+        <DashboardMobileNav
+          navItems={sidebarNavItems}
+          activeId={currentPage}
+          onNavigate={setCurrentPage}
+        />
+      }
+      className="admin-dashboard-content"
+    >
+      {renderPage()}
+    </DashboardShell>
   );
 };
 
