@@ -14,10 +14,22 @@ dist/
 # Environment
 .env
 .env.local
+.env.smoke
 
 # Logs
 *.log
 .vercel
+
+# Smoke test artifacts
+screenshots/
+
+# Local-only smoke test tooling (not part of the repo)
+scripts/smoke.mjs
+scripts/smoke-ui.mjs
+.env.smoke.example
+
+# Local status reports / exports
+cravvr-status-*.pdf
 
 # Supabase CLI cache
 supabase/.temp/
