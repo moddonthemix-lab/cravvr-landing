@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Icons } from '../common/Icons';
 import { subscribeToOrder } from '../../services/orderTracking';
+import LoadingSplash from '../common/LoadingSplash';
 import {
   fetchOrderForCustomer,
   fetchOrderTransitions,
@@ -87,14 +88,7 @@ const OrderTracker = () => {
   const isCompleted = order?.status === 'completed';
 
   if (loading) {
-    return (
-      <div className="order-tracker">
-        <div className="tracker-loading">
-          <div className="loading-spinner" />
-          <p>Loading order...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSplash tagline="LOADING ORDER" />;
   }
 
   if (error || !order) {

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import LoadingSplash from '../common/LoadingSplash';
 
 /**
  * ProtectedRoute component - Wraps routes that require authentication
@@ -26,11 +27,7 @@ const ProtectedRoute = ({
 
   // Show loading state while checking auth
   if (loading) {
-    return (
-      <div className="protected-route-loading">
-        <div className="loading-spinner" />
-      </div>
-    );
+    return <LoadingSplash />;
   }
 
   // Not logged in - redirect to home (modal will open via useEffect)
