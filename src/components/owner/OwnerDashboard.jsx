@@ -100,20 +100,20 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
             <h3>Quick Actions</h3>
           </div>
           <div className="quick-actions">
-            <button className="action-btn action-btn--add" onClick={() => setActiveTab('trucks')}>
-              <span className="action-btn-chip">{Icons.plus}</span>
-              <span className="action-btn-label">Add New Truck</span>
-              <span className="action-btn-arrow">{Icons.chevronRight}</span>
+            <button className="qa-btn qa-btn--add" onClick={() => setActiveTab('trucks')}>
+              <span className="qa-btn-chip">{Icons.plus}</span>
+              <span className="qa-btn-label">Add New Truck</span>
+              <span className="qa-btn-arrow">{Icons.chevronRight}</span>
             </button>
-            <button className="action-btn action-btn--menu" onClick={() => setActiveTab('menu')}>
-              <span className="action-btn-chip">{Icons.edit}</span>
-              <span className="action-btn-label">Update Menu</span>
-              <span className="action-btn-arrow">{Icons.chevronRight}</span>
+            <button className="qa-btn qa-btn--menu" onClick={() => setActiveTab('menu')}>
+              <span className="qa-btn-chip">{Icons.edit}</span>
+              <span className="qa-btn-label">Update Menu</span>
+              <span className="qa-btn-arrow">{Icons.chevronRight}</span>
             </button>
-            <button className="action-btn action-btn--reports" onClick={() => setActiveTab('analytics')}>
-              <span className="action-btn-chip">{Icons.chart}</span>
-              <span className="action-btn-label">View Reports</span>
-              <span className="action-btn-arrow">{Icons.chevronRight}</span>
+            <button className="qa-btn qa-btn--reports" onClick={() => setActiveTab('analytics')}>
+              <span className="qa-btn-chip">{Icons.chart}</span>
+              <span className="qa-btn-label">View Reports</span>
+              <span className="qa-btn-arrow">{Icons.chevronRight}</span>
             </button>
           </div>
         </div>

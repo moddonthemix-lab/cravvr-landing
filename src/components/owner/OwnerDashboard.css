@@ -463,7 +463,11 @@
 .order-status.cancelled { background: #fee2e2; color: #dc2626; }
 .order-status.abandoned { background: #f1f5f9; color: #94a3b8; }
 
-/* Quick Actions */
+/* Quick Actions
+   NOTE: classes are prefixed `qa-btn` instead of `action-btn` because
+   AdminDashboard.css and DiscoverView.css both define a global
+   `.action-btn` (32x32 icon button / 58px circle) that hijacks ours
+   when their stylesheet is loaded. */
 .quick-actions {
   padding: 20px;
   display: flex;
@@ -471,7 +475,7 @@
   gap: 12px;
 }
 
-.action-btn {
+.qa-btn {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -490,7 +494,7 @@
   font-family: inherit;
 }
 
-.action-btn-chip {
+.qa-btn-chip {
   width: 36px;
   height: 36px;
   border-radius: 10px;
@@ -503,10 +507,10 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.action-btn-chip svg { width: 18px; height: 18px; }
+.qa-btn-chip svg { width: 18px; height: 18px; }
 
-.action-btn-label {
-  flex: 1;
+.qa-btn-label {
+  flex: 1 1 auto;
   min-width: 0;
   font-size: 0.92rem;
   font-weight: 600;
@@ -518,37 +522,37 @@
   text-overflow: ellipsis;
 }
 
-.action-btn-arrow {
+.qa-btn-arrow {
   flex-shrink: 0;
   color: #cbd5e1;
   display: flex;
   transition: transform 0.15s ease, color 0.15s ease;
 }
 
-.action-btn-arrow svg { width: 16px; height: 16px; }
+.qa-btn-arrow svg { width: 16px; height: 16px; }
 
-.action-btn:hover {
+.qa-btn:hover {
   border-color: var(--owner-primary, #e11d48);
   box-shadow: 0 4px 12px -2px rgba(225, 29, 72, 0.12);
   transform: translateY(-1px);
 }
 
-.action-btn:hover .action-btn-arrow {
+.qa-btn:hover .qa-btn-arrow {
   color: var(--owner-primary, #e11d48);
   transform: translateX(2px);
 }
 
-.action-btn:active { transform: translateY(0); }
+.qa-btn:active { transform: translateY(0); }
 
-.action-btn:focus-visible {
+.qa-btn:focus-visible {
   outline: 2px solid var(--owner-primary, #e11d48);
   outline-offset: 2px;
 }
 
 /* Brand-tinted icon chips per action */
-.action-btn--add .action-btn-chip { background: #ecfdf5; color: #16a34a; }
-.action-btn--menu .action-btn-chip { background: #fef3c7; color: #d97706; }
-.action-btn--reports .action-btn-chip { background: #dbeafe; color: #2563eb; }
+.qa-btn--add .qa-btn-chip { background: #ecfdf5; color: #16a34a; }
+.qa-btn--menu .qa-btn-chip { background: #fef3c7; color: #d97706; }
+.qa-btn--reports .qa-btn-chip { background: #dbeafe; color: #2563eb; }
 
 /* Trucks Preview */
 .trucks-preview {
