@@ -2,14 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthContext';
 import { Icons } from '../components/common/Icons';
-import './LoginPage.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+
+const InputWithIcon = ({ icon, type = 'text', rightAdornment, ...props }) => (
+  <div className="relative">
+    {icon && (
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+        {icon}
+      </span>
+    )}
+    <Input
+      type={type}
+      className={cn(icon && 'pl-9', rightAdornment && 'pr-10')}
+      {...props}
+    />
+    {rightAdornment && (
+      <div className="absolute right-1 top-1/2 -translate-y-1/2">{rightAdornment}</div>
+    )}
+  </div>
+);
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signIn, signUp, resetPassword } = useAuth();
 
-  const [mode, setMode] = useState('login'); // 'login', 'signup', 'forgot'
+  const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -19,15 +41,11 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Get the intended destination from state
   const from = location.state?.from?.pathname || '/';
   const fromTab = location.state?.from?.search || '';
 
-  // If already logged in, redirect
   useEffect(() => {
-    if (user) {
-      navigate(from + fromTab, { replace: true });
-    }
+    if (user) navigate(from + fromTab, { replace: true });
   }, [user, navigate, from, fromTab]);
 
   const resetForm = () => {
@@ -49,16 +67,13 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     const { error } = await signIn({ email, password });
-
     if (error) {
       setError(error?.message || error || 'Invalid email or password');
     } else {
       resetForm();
       navigate(from + fromTab, { replace: true });
     }
-
     setLoading(false);
   };
 
@@ -80,13 +95,11 @@ const LoginPage = () => {
     }
 
     const { error } = await signUp({ email, password, name, role: 'customer' });
-
     if (error) {
       setError(error?.message || error || 'Could not create account');
     } else {
       setSuccess('Check your email for a confirmation link!');
     }
-
     setLoading(false);
   };
 
@@ -94,88 +107,100 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     const { error } = await resetPassword(email);
-
     if (error) {
       setError(error?.message || error || 'Could not send reset email');
     } else {
       setSuccess('Password reset email sent! Check your inbox.');
     }
-
     setLoading(false);
   };
 
-  return (
-    <div className="login-page">
-      {/* Background */}
-      <div className="login-bg">
-        <div className="login-bg-gradient"></div>
-        <div className="login-bg-pattern"></div>
-      </div>
+  const passwordToggle = (
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      aria-label={showPassword ? 'Hide password' : 'Show password'}
+      className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted"
+    >
+      <span className="h-4 w-4">{showPassword ? Icons.eyeOff : Icons.eye}</span>
+    </button>
+  );
 
-      {/* Content */}
-      <div className="login-content">
-        {/* Logo & Back */}
-        <header className="login-header">
-          <Link to="/" className="login-back">
-            {Icons.chevronLeft}
-            <span>Back</span>
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-rose-100 via-rose-50 to-background">
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 opacity-50"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 25% 20%, rgba(225, 29, 72, 0.15) 0px, transparent 50%), radial-gradient(circle at 75% 80%, rgba(225, 29, 72, 0.10) 0px, transparent 50%)',
+        }}
+      />
+
+      <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 py-8">
+        <header className="flex items-center justify-between mb-8">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <span className="h-4 w-4">{Icons.chevronLeft}</span>
+            Back
           </Link>
-          <div className="login-logo">
-            <div className="login-logo-icon">
-              {Icons.truck}
-            </div>
-            <span className="login-logo-text">Cravrr</span>
-          </div>
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo/cravvr-logo.png" alt="Cravvr" className="h-9 w-auto" />
+          </Link>
         </header>
 
-        {/* Card */}
-        <div className="login-card">
-          {/* Title */}
-          <div className="login-title">
+        <Card className="shadow-xl">
+          <CardContent className="p-6 sm:p-8 space-y-5">
+            <div className="text-center space-y-1.5">
+              {mode === 'login' && (
+                <>
+                  <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Sign in to access your favorites, orders, and more
+                  </p>
+                </>
+              )}
+              {mode === 'signup' && (
+                <>
+                  <h1 className="text-2xl font-bold tracking-tight">Create account</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Join Cravrr to discover the best food trucks near you
+                  </p>
+                </>
+              )}
+              {mode === 'forgot' && (
+                <>
+                  <h1 className="text-2xl font-bold tracking-tight">Reset password</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Enter your email and we'll send you a reset link
+                  </p>
+                </>
+              )}
+            </div>
+
+            {error && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                <span className="h-4 w-4 shrink-0 mt-0.5">{Icons.alertCircle}</span>
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="flex items-start gap-2 rounded-lg border border-positive/30 bg-positive/10 px-4 py-3 text-sm text-positive">
+                <span className="h-4 w-4 shrink-0 mt-0.5">{Icons.check}</span>
+                {success}
+              </div>
+            )}
+
             {mode === 'login' && (
-              <>
-                <h1>Welcome back</h1>
-                <p>Sign in to access your favorites, orders, and more</p>
-              </>
-            )}
-            {mode === 'signup' && (
-              <>
-                <h1>Create account</h1>
-                <p>Join Cravrr to discover the best food trucks near you</p>
-              </>
-            )}
-            {mode === 'forgot' && (
-              <>
-                <h1>Reset password</h1>
-                <p>Enter your email and we'll send you a reset link</p>
-              </>
-            )}
-          </div>
-
-          {/* Error/Success Messages */}
-          {error && (
-            <div className="login-message error">
-              {Icons.alertCircle}
-              <span>{error}</span>
-            </div>
-          )}
-          {success && (
-            <div className="login-message success">
-              {Icons.check}
-              <span>{success}</span>
-            </div>
-          )}
-
-          {/* Login Form */}
-          {mode === 'login' && (
-            <form onSubmit={handleLogin} className="login-form">
-              <div className="form-group">
-                <label>Email</label>
-                <div className="input-wrapper">
-                  <span className="input-icon">{Icons.email}</span>
-                  <input
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <InputWithIcon
+                    id="login-email"
+                    icon={Icons.email}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -184,71 +209,60 @@ const LoginPage = () => {
                     autoComplete="email"
                   />
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Password</label>
-                <div className="input-wrapper">
-                  <span className="input-icon">{Icons.lock}</span>
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Password</Label>
+                  <InputWithIcon
+                    id="login-password"
+                    icon={Icons.lock}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
                     autoComplete="current-password"
+                    rightAdornment={passwordToggle}
                   />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => switchMode('forgot')}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+
+                <Button type="submit" size="lg" disabled={loading} className="w-full">
+                  {loading ? 'Signing in…' : 'Sign In'}
+                </Button>
+
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" />
+                  or
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+
+                <p className="text-center text-sm text-muted-foreground">
+                  Don't have an account?{' '}
                   <button
                     type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => switchMode('signup')}
+                    className="font-semibold text-primary hover:underline"
                   >
-                    {showPassword ? Icons.eyeOff : Icons.eye}
+                    Create one
                   </button>
-                </div>
-              </div>
+                </p>
+              </form>
+            )}
 
-              <button
-                type="button"
-                className="forgot-link"
-                onClick={() => switchMode('forgot')}
-              >
-                Forgot password?
-              </button>
-
-              <button type="submit" className="login-btn primary" disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="btn-spinner"></span>
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <span>Sign In</span>
-                )}
-              </button>
-
-              <div className="login-divider">
-                <span>or</span>
-              </div>
-
-              <p className="login-switch">
-                Don't have an account?{' '}
-                <button type="button" onClick={() => switchMode('signup')}>
-                  Create one
-                </button>
-              </p>
-            </form>
-          )}
-
-          {/* Signup Form */}
-          {mode === 'signup' && (
-            <form onSubmit={handleSignup} className="login-form">
-              <div className="form-group">
-                <label>Full Name</label>
-                <div className="input-wrapper">
-                  <span className="input-icon">{Icons.user}</span>
-                  <input
-                    type="text"
+            {mode === 'signup' && (
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <InputWithIcon
+                    id="signup-name"
+                    icon={Icons.user}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
@@ -256,13 +270,12 @@ const LoginPage = () => {
                     autoComplete="name"
                   />
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Email</label>
-                <div className="input-wrapper">
-                  <span className="input-icon">{Icons.email}</span>
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <InputWithIcon
+                    id="signup-email"
+                    icon={Icons.email}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -271,13 +284,12 @@ const LoginPage = () => {
                     autoComplete="email"
                   />
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Password</label>
-                <div className="input-wrapper">
-                  <span className="input-icon">{Icons.lock}</span>
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <InputWithIcon
+                    id="signup-password"
+                    icon={Icons.lock}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -285,22 +297,15 @@ const LoginPage = () => {
                     required
                     minLength={6}
                     autoComplete="new-password"
+                    rightAdornment={passwordToggle}
                   />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? Icons.eyeOff : Icons.eye}
-                  </button>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Confirm Password</label>
-                <div className="input-wrapper">
-                  <span className="input-icon">{Icons.lock}</span>
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm">Confirm Password</Label>
+                  <InputWithIcon
+                    id="signup-confirm"
+                    icon={Icons.lock}
                     type={showPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -309,40 +314,37 @@ const LoginPage = () => {
                     autoComplete="new-password"
                   />
                 </div>
-              </div>
 
-              <button type="submit" className="login-btn primary" disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="btn-spinner"></span>
-                    <span>Creating account...</span>
-                  </>
-                ) : (
-                  <span>Create Account</span>
-                )}
-              </button>
+                <Button type="submit" size="lg" disabled={loading} className="w-full">
+                  {loading ? 'Creating account…' : 'Create Account'}
+                </Button>
 
-              <div className="login-divider">
-                <span>or</span>
-              </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" />
+                  or
+                  <span className="h-px flex-1 bg-border" />
+                </div>
 
-              <p className="login-switch">
-                Already have an account?{' '}
-                <button type="button" onClick={() => switchMode('login')}>
-                  Sign in
-                </button>
-              </p>
-            </form>
-          )}
+                <p className="text-center text-sm text-muted-foreground">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => switchMode('login')}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              </form>
+            )}
 
-          {/* Forgot Password Form */}
-          {mode === 'forgot' && (
-            <form onSubmit={handleForgotPassword} className="login-form">
-              <div className="form-group">
-                <label>Email</label>
-                <div className="input-wrapper">
-                  <span className="input-icon">{Icons.email}</span>
-                  <input
+            {mode === 'forgot' && (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <InputWithIcon
+                    id="forgot-email"
+                    icon={Icons.email}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -351,33 +353,29 @@ const LoginPage = () => {
                     autoComplete="email"
                   />
                 </div>
-              </div>
 
-              <button type="submit" className="login-btn primary" disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="btn-spinner"></span>
-                    <span>Sending...</span>
-                  </>
-                ) : (
-                  <span>Send Reset Link</span>
-                )}
-              </button>
+                <Button type="submit" size="lg" disabled={loading} className="w-full">
+                  {loading ? 'Sending…' : 'Send Reset Link'}
+                </Button>
 
-              <button
-                type="button"
-                className="login-btn secondary"
-                onClick={() => switchMode('login')}
-              >
-                Back to Sign In
-              </button>
-            </form>
-          )}
-        </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => switchMode('login')}
+                  className="w-full"
+                >
+                  Back to Sign In
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* Footer */}
-        <footer className="login-footer">
-          <p>By continuing, you agree to our Terms of Service and Privacy Policy</p>
+        <footer className="mt-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </p>
         </footer>
       </div>
     </div>
