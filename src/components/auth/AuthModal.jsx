@@ -11,10 +11,8 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState('customer');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
+  const [phone, setPhone] = useState('');
+  const [birthday, setBirthday] = useState('');
   const [preferredProcessor, setPreferredProcessor] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,10 +29,8 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     setConfirmPassword('');
     setName('');
     setRole('customer');
-    setAge('');
-    setGender('');
-    setCity('');
-    setState('');
+    setPhone('');
+    setBirthday('');
     setPreferredProcessor('');
     setError('');
     setSuccess('');
@@ -93,16 +89,34 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       return;
     }
 
+    // Derive age from birthday so we can keep storing it in the existing
+    // profiles.age column without a schema change.
+    const birth = new Date(birthday);
+    if (Number.isNaN(birth.getTime())) {
+      setError('Please enter a valid birthday.');
+      setLoading(false);
+      return;
+    }
+    const today = new Date();
+    let derivedAge = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      derivedAge--;
+    }
+    if (derivedAge < 13) {
+      setError('You must be at least 13 to sign up.');
+      setLoading(false);
+      return;
+    }
+
     const { error } = await signUp({
       email,
       password,
       name,
       role,
       extra: {
-        age,
-        gender,
-        city,
-        state,
+        age: derivedAge,
+        phone,
         ...(role === 'owner' ? { preferred_processor: preferredProcessor } : {}),
       },
     });
@@ -337,56 +351,30 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
               </div>
             </div>
 
-            {/* Demographics — collected for both customers and owners */}
-            <div className="auth-row-2">
-              <div className="auth-field">
-                <label>Age</label>
+            <div className="auth-field">
+              <label>Phone</label>
+              <div className="auth-input-wrapper">
+                <span className="auth-input-icon">{Icons.phone || Icons.user}</span>
                 <input
-                  type="number"
-                  min={13}
-                  max={120}
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                  placeholder="e.g. 28"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="(555) 123-4567"
+                  autoComplete="tel"
                   required
                 />
-              </div>
-              <div className="auth-field">
-                <label>Gender</label>
-                <select value={gender} onChange={(e) => setGender(e.target.value)} required>
-                  <option value="">Select…</option>
-                  <option value="female">Female</option>
-                  <option value="male">Male</option>
-                  <option value="non-binary">Non-binary</option>
-                  <option value="other">Other</option>
-                  <option value="prefer-not-to-say">Prefer not to say</option>
-                </select>
               </div>
             </div>
 
-            <div className="auth-row-2">
-              <div className="auth-field auth-field-grow">
-                <label>City</label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g. Austin"
-                  required
-                />
-              </div>
-              <div className="auth-field auth-field-state">
-                <label>State</label>
-                <input
-                  type="text"
-                  value={state}
-                  onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
-                  placeholder="TX"
-                  maxLength={2}
-                  pattern="[A-Za-z]{2}"
-                  required
-                />
-              </div>
+            <div className="auth-field">
+              <label>Birthday</label>
+              <input
+                type="date"
+                value={birthday}
+                onChange={(e) => setBirthday(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
+                required
+              />
             </div>
 
             {role === 'owner' && (

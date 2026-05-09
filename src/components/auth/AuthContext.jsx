@@ -241,6 +241,16 @@ export const AuthProvider = ({ children }) => {
             .eq('id', data.user.id);
         }
 
+        // Phone lives on the customers row (every user gets one via the
+        // signup trigger). Update it here in the same auto-signed-in window
+        // the demographic update relies on.
+        if (extra.phone) {
+          await supabase
+            .from('customers')
+            .update({ phone: extra.phone })
+            .eq('id', data.user.id);
+        }
+
         await identifyVisitor(data.user.id);
         trackEvent('signup', { role, has_demographics: Object.keys(updates).length > 0 });
       }
