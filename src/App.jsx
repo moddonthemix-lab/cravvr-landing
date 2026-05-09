@@ -4,6 +4,7 @@ import CartDrawer from './components/cart/Cart';
 import ProtectedRoute, { RequireOwner, RequireAdmin } from './components/auth/ProtectedRoute';
 import AuthModal from './components/auth/AuthModal';
 import ViewAsBanner from './components/admin/ViewAsBanner';
+import LoadingSplash from './components/common/LoadingSplash';
 import { useAuth } from './components/auth/AuthContext';
 
 const LandingPage = lazy(() => import('./components/landing/LandingPage'));
@@ -86,7 +87,7 @@ const App = () => {
       <ViewAsBanner />
       <CartDrawer />
       <AuthModal isOpen={showAuthModal} onClose={closeAuth} initialMode={authMode} />
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingSplash />}>
       <Routes>
         {/* Main app - responsive: TabContainer on mobile, HomePage on desktop */}
         <Route path="/" element={<ResponsiveApp />} />

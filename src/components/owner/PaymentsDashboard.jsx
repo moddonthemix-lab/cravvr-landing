@@ -4,6 +4,7 @@ import { Icons } from '../common/Icons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import LoadingSplash from '../common/LoadingSplash';
 
 const TIME_RANGES = [
   { key: 'today', label: 'Today' },
@@ -116,12 +117,7 @@ const PaymentsDashboard = ({ trucks }) => {
       </div>
 
       {loading ? (
-        <Card>
-          <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-            <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
-            Loading payments…
-          </CardContent>
-        </Card>
+        <LoadingSplash size="inline" tagline="LOADING PAYMENTS" />
       ) : payments.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
