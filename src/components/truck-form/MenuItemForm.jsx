@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import ImageUpload from '../common/ImageUpload';
-import { Icons } from '../common/Icons';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 const DEFAULT_FORM = {
   name: '',
@@ -10,6 +21,18 @@ const DEFAULT_FORM = {
   emoji: '',
   image_url: '',
 };
+
+const CATEGORY_OPTIONS = [
+  'Appetizers',
+  'Mains',
+  'Tacos',
+  'Burritos',
+  'Bowls',
+  'Sides',
+  'Desserts',
+  'Drinks',
+  'Specials',
+];
 
 const MenuItemForm = ({ initialItem, truckId, onSubmit, onCancel, saving }) => {
   const [formData, setFormData] = useState(() => ({
@@ -33,97 +56,164 @@ const MenuItemForm = ({ initialItem, truckId, onSubmit, onCancel, saving }) => {
     onSubmit(data);
   };
 
+  const handleOpenChange = (open) => {
+    if (!open && !saving) onCancel();
+  };
+
+  const previewPrice =
+    formData.price !== '' && !Number.isNaN(parseFloat(formData.price))
+      ? `$${parseFloat(formData.price).toFixed(2)}`
+      : '$0.00';
+
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal-header">
-          <h2>{isEditing ? 'Edit Menu Item' : 'Add Menu Item'}</h2>
-          <button className="close-btn" onClick={onCancel} type="button">
-            {Icons.x}
-          </button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Item Name</label>
-            <input
-              type="text"
-              placeholder="Enter item name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Price</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+    <Dialog open onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <DialogTitle className="text-xl">
+            {isEditing ? 'Edit menu item' : 'Add menu item'}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? 'Update the details, photo, and category for this item.'
+              : 'Add a new dish to your menu. Photos help orders convert better.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <div className="px-6 py-5 space-y-6">
+            <div className="rounded-xl border bg-muted/30 p-3 flex items-center gap-3">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 ring-1 ring-black/5">
+                {formData.image_url ? (
+                  <img
+                    src={formData.image_url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : formData.emoji ? (
+                  <div className="flex h-full w-full items-center justify-center text-3xl">
+                    {formData.emoji}
+                  </div>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-muted-foreground text-xs">
+                    Preview
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-bold text-sm truncate">
+                  {formData.name || 'Untitled item'}
+                </p>
+                <p className="text-xs text-muted-foreground capitalize truncate">
+                  {formData.category || 'No category'}
+                </p>
+              </div>
+              <span className="text-base font-bold tabular-nums shrink-0">
+                {previewPrice}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="menu-item-name">Item name</Label>
+              <Input
+                id="menu-item-name"
+                type="text"
+                placeholder="e.g. Carne asada taco"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                autoFocus
               />
             </div>
-            <div className="form-group">
-              <label>Category</label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              >
-                <option value="">Select category</option>
-                <option value="Appetizers">Appetizers</option>
-                <option value="Mains">Mains</option>
-                <option value="Tacos">Tacos</option>
-                <option value="Burritos">Burritos</option>
-                <option value="Bowls">Bowls</option>
-                <option value="Sides">Sides</option>
-                <option value="Desserts">Desserts</option>
-                <option value="Drinks">Drinks</option>
-                <option value="Specials">Specials</option>
-              </select>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="menu-item-price">Price</Label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    $
+                  </span>
+                  <Input
+                    id="menu-item-price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    required
+                    className="pl-7 tabular-nums"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="menu-item-category">Category</Label>
+                <select
+                  id="menu-item-category"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Select category</option>
+                  {CATEGORY_OPTIONS.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="menu-item-description">Description</Label>
+              <Textarea
+                id="menu-item-description"
+                placeholder="Describe the dish — ingredients, prep style, anything that makes it crave-worthy."
+                rows={3}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Photo</Label>
+              <ImageUpload
+                currentImage={formData.image_url}
+                onUpload={(url) => setFormData({ ...formData, image_url: url })}
+                bucket="images"
+                folder={truckId ? `menu-items/${truckId}` : 'menu-items/temp'}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="menu-item-emoji">Emoji fallback</Label>
+              <p className="text-xs text-muted-foreground">
+                Shown when there is no photo. Use a single emoji.
+              </p>
+              <Input
+                id="menu-item-emoji"
+                type="text"
+                placeholder="🌮"
+                value={formData.emoji}
+                onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
+                maxLength={4}
+                className="w-20 text-center text-2xl"
+              />
             </div>
           </div>
-          <div className="form-group">
-            <label>Description</label>
-            <textarea
-              placeholder="Describe this item..."
-              rows={2}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-          </div>
-          <ImageUpload
-            label="Item Photo (optional)"
-            currentImage={formData.image_url}
-            onUpload={(url) => setFormData({ ...formData, image_url: url })}
-            bucket="images"
-            folder={truckId ? `menu-items/${truckId}` : 'menu-items/temp'}
-            disabled={saving}
-          />
-          <div className="form-group" style={{ maxWidth: '120px' }}>
-            <label>Emoji (fallback if no photo)</label>
-            <input
-              type="text"
-              placeholder="🌮"
-              value={formData.emoji}
-              onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-              maxLength={4}
-              style={{ textAlign: 'center', fontSize: '1.5rem' }}
-            />
-          </div>
-          <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={onCancel}>
+
+          <DialogFooter className="px-6 py-4 border-t bg-muted/20 sm:space-x-0 gap-2">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
               Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : (isEditing ? 'Save Changes' : 'Add Item')}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Saving…' : isEditing ? 'Save changes' : 'Add item'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
