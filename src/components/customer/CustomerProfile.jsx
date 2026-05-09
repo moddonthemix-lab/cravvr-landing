@@ -26,7 +26,21 @@ import { Icons } from '../common/Icons';
 import { formatDate } from '../../utils/formatters';
 import PunchCard from './PunchCard';
 import { useCart } from '../../contexts/CartContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import './CustomerProfile.css';
+
+// Maps customer-side order status values to Badge variants for consistent styling.
+const CUSTOMER_ORDER_STATUS = {
+  pending: { variant: 'info', label: 'Order Received' },
+  confirmed: { variant: 'info', label: 'Confirmed' },
+  preparing: { variant: 'warning', label: 'Being Prepared' },
+  ready: { variant: 'positive', label: 'Ready for Pickup' },
+  completed: { variant: 'secondary', label: 'Completed' },
+  cancelled: { variant: 'destructive', label: 'Cancelled' },
+};
 
 // Header Component
 const ProfileHeader = ({ onBack, title }) => (
@@ -68,63 +82,96 @@ const AccountTab = ({ profile, setActiveTab, ordersCount, favoritesCount, onEdit
   return (
     <div className="profile-content">
       {showDesktopTitle && (
-        <div className="profile-desktop-title">
-          <h1>My Account</h1>
-          <button className="desktop-settings-btn" onClick={() => setActiveTab('notifications')}>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">My Account</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setActiveTab('notifications')}
+          >
             {Icons.bell}
-            <span>Notifications</span>
-          </button>
+            Notifications
+          </Button>
         </div>
       )}
-      <div className="profile-hero">
-        <div className="profile-avatar-large">
-          {profile?.name?.charAt(0) || 'U'}
-        </div>
-        <h2 className="profile-name">{profile?.name || 'User'}</h2>
-        <p className="profile-email">{profile?.email}</p>
-        <button className="edit-profile-btn" onClick={onEditProfile}>
-          {Icons.edit}
-          <span>Edit Profile</span>
-        </button>
-      </div>
 
-      <div className="points-banner">
-        <div className="points-info">
-          <span className="points-icon">{Icons.gift}</span>
-          <div className="points-text">
-            <span className="points-value">{profile?.points || 0} Points</span>
-            <span className="points-label">Earn more with every order!</span>
+      <Card className="mb-4 overflow-hidden">
+        <CardContent className="flex flex-col items-center text-center pt-8 pb-6 px-6">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-bold mb-3">
+            {profile?.name?.charAt(0) || 'U'}
           </div>
-        </div>
-        <button className="view-rewards-btn" onClick={() => setActiveTab('rewards')}>
-          View Rewards
-        </button>
+          <h2 className="text-lg font-semibold leading-tight">{profile?.name || 'User'}</h2>
+          <p className="text-sm text-muted-foreground mb-4">{profile?.email}</p>
+          <Button variant="outline" size="sm" className="gap-2" onClick={onEditProfile}>
+            {Icons.edit}
+            Edit Profile
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-4 border-primary/20 bg-primary/5">
+        <CardContent className="flex items-center justify-between gap-3 p-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary shrink-0">
+              {Icons.gift}
+            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-base font-semibold tabular-nums leading-tight">
+                {profile?.points || 0} Points
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Earn more with every order!
+              </span>
+            </div>
+          </div>
+          <Button size="sm" onClick={() => setActiveTab('rewards')}>
+            View Rewards
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="mb-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
+          Account Settings
+        </h3>
+        <Card>
+          <CardContent className="p-0 divide-y divide-border">
+            {menuItems.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveTab(item.tab)}
+                className="group w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                  {item.icon}
+                </span>
+                <span className="flex-1 text-sm font-medium">{item.label}</span>
+                {item.badge && (
+                  <Badge variant="secondary" className="tabular-nums">
+                    {item.badge}
+                  </Badge>
+                )}
+                <span className="text-muted-foreground transition-transform group-hover:translate-x-0.5">
+                  {Icons.chevronRight}
+                </span>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="menu-section">
-        <h3>Account Settings</h3>
-        <div className="menu-list">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              className="menu-item"
-              onClick={() => setActiveTab(item.tab)}
-            >
-              <span className="menu-icon">{item.icon}</span>
-              <span className="menu-label">{item.label}</span>
-              {item.badge && <span className="menu-badge">{item.badge}</span>}
-              <span className="menu-chevron">{Icons.chevronRight}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <button className="logout-button" onClick={handleLogout} disabled={loggingOut}>
+      <Button
+        variant="outline"
+        className="w-full gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+        onClick={handleLogout}
+        disabled={loggingOut}
+      >
         {Icons.logout}
-        <span>{loggingOut ? 'Logging out...' : 'Log Out'}</span>
-      </button>
+        {loggingOut ? 'Logging out...' : 'Log Out'}
+      </Button>
 
-      <p className="version-text">Cravrr v1.0.0</p>
+      <p className="text-center text-xs text-muted-foreground mt-4">Cravvr v1.0.0</p>
     </div>
   );
 };
@@ -164,97 +211,142 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
       <ProfileHeader onBack={onBack} title="Order History" />
 
       <div className="tab-content">
-        <div className="orders-filters">
+        <div className="flex flex-wrap items-center gap-1.5 mb-5">
           {[
             { key: 'all', label: 'All Orders' },
             { key: 'active', label: 'Active' },
             { key: 'completed', label: 'Completed' },
-          ].map(f => (
-            <button
-              key={f.key}
-              className={`filter-chip ${filter === f.key ? 'active' : ''}`}
-              onClick={() => setFilter(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
+          ].map(f => {
+            const isActive = filter === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={cn(
+                  'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  isActive
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                )}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
 
         {loading ? (
-          <div className="loading-state">{Icons.loader} Loading orders...</div>
+          <Card>
+            <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+              <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+              Loading orders…
+            </CardContent>
+          </Card>
         ) : filteredOrders.length === 0 ? (
-          <div className="empty-state">
-            <p>{filter === 'all' ? 'No orders yet. Start ordering to see your history!' : `No ${filter} orders`}</p>
-          </div>
-        ) : (
-          <div className="orders-list">
-            {filteredOrders.map(order => (
-              <div className="order-card" key={order.id}>
-                <div className="order-header">
-                  <img
-                    src={order.truck_image || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=100&q=80'}
-                    alt={order.truck_name}
-                    className="order-truck-img"
-                  />
-                  <div className="order-truck-info">
-                    <h4>{order.truck_name || 'Food Truck'}</h4>
-                    <span className="order-date">{formatDate(order.created_at)}</span>
-                  </div>
-                  <span className={`order-status ${order.status}`}>
-                    {getDisplayStatus(order.status)}
-                  </span>
-                </div>
-                <div className="order-items">
-                  {order.items && order.items.length > 0 ? (
-                    order.items.map((item, i) => (
-                      <span key={i}>{item.name}{i < order.items.length - 1 ? ', ' : ''}</span>
-                    ))
-                  ) : (
-                    <span className="order-items-count">{order.item_count || 0} items</span>
-                  )}
-                </div>
-                <div className="order-footer">
-                  <span className="order-total">${parseFloat(order.total).toFixed(2)}</span>
-                  <div className="order-actions">
-                    {order.status === 'completed' && (
-                      <>
-                        <button className="order-btn secondary" onClick={() => onReorder(order)}>
-                          {Icons.repeat}
-                          Reorder
-                        </button>
-                        {!order.has_review && (
-                          <button className="order-btn primary" onClick={() => onReview(order)}>
-                            {Icons.star}
-                            Rate
-                          </button>
-                        )}
-                      </>
-                    )}
-                    {getFilterGroup(order.status) === 'active' && (
-                      <button className="order-btn primary" onClick={() => onTrack(order)}>
-                        {Icons.truck}
-                        Track Order
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {order.review_rating && (
-                  <div className="order-rating">
-                    <span>Your rating:</span>
-                    <div className="rating-stars">
-                      {[1, 2, 3, 4, 5].map(star => (
-                        <span
-                          key={star}
-                          className={`star ${star <= order.review_rating ? 'filled' : ''}`}
-                        >
-                          {Icons.star}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+                <span className="h-5 w-5">{Icons.orders}</span>
               </div>
-            ))}
+              <p className="text-sm text-muted-foreground max-w-xs">
+                {filter === 'all'
+                  ? 'No orders yet. Start ordering to see your history!'
+                  : `No ${filter} orders`}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {filteredOrders.map(order => {
+              const statusInfo = CUSTOMER_ORDER_STATUS[order.status] || {
+                variant: 'secondary',
+                label: order.status,
+              };
+              return (
+                <Card key={order.id} className="overflow-hidden">
+                  <CardContent className="p-4 flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={
+                          order.truck_image ||
+                          'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=100&q=80'
+                        }
+                        alt={order.truck_name}
+                        className="h-12 w-12 rounded-md object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm leading-tight truncate">
+                          {order.truck_name || 'Food Truck'}
+                        </h4>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(order.created_at)}
+                        </span>
+                      </div>
+                      <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                    </div>
+
+                    <div className="text-sm text-muted-foreground line-clamp-2">
+                      {order.items && order.items.length > 0
+                        ? order.items.map(i => i.name).join(', ')
+                        : `${order.item_count || 0} items`}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <span className="text-base font-bold tabular-nums">
+                        ${parseFloat(order.total).toFixed(2)}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {order.status === 'completed' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5"
+                              onClick={() => onReorder(order)}
+                            >
+                              {Icons.repeat}
+                              Reorder
+                            </Button>
+                            {!order.has_review && (
+                              <Button size="sm" className="gap-1.5" onClick={() => onReview(order)}>
+                                {Icons.star}
+                                Rate
+                              </Button>
+                            )}
+                          </>
+                        )}
+                        {getFilterGroup(order.status) === 'active' && (
+                          <Button size="sm" className="gap-1.5" onClick={() => onTrack(order)}>
+                            {Icons.truck}
+                            Track Order
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {order.review_rating && (
+                      <div className="flex items-center gap-2 pt-2 border-t border-border text-xs text-muted-foreground">
+                        <span>Your rating:</span>
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span
+                              key={star}
+                              className={
+                                star <= order.review_rating
+                                  ? 'text-warning'
+                                  : 'text-muted-foreground/30'
+                              }
+                            >
+                              {Icons.star}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
