@@ -11,7 +11,10 @@ import { checkTruckAcceptingOrders } from '../../services/throttle';
 import { fetchTruckPaymentInfo } from '../../services/trucks';
 import { createOrderWithItems, cancelPendingOrder } from '../../services/orders';
 import { Icons } from '../common/Icons';
-import './Checkout.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 const Checkout = ({ onBack, onOrderComplete }) => {
   const navigate = useNavigate();
@@ -41,13 +44,12 @@ const Checkout = ({ onBack, onOrderComplete }) => {
   const [orderId, setOrderId] = useState(null);
   const [error, setError] = useState('');
 
-  // Truck capability + payment method selection
   const [truckOnlineEnabled, setTruckOnlineEnabled] = useState(false);
-  const [truckProcessor, setTruckProcessor] = useState('pickup'); // 'stripe' | 'square' | 'pickup'
-  const [squareConfig, setSquareConfig] = useState(null); // { applicationId, locationId, environment }
-  const [paymentMethod, setPaymentMethod] = useState('pickup'); // 'online' | 'pickup'
-  const [paymentStep, setPaymentStep] = useState('details'); // 'details' | 'card' | 'processing'
-  const [clientSecret, setClientSecret] = useState(null); // Stripe only
+  const [truckProcessor, setTruckProcessor] = useState('pickup');
+  const [squareConfig, setSquareConfig] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('pickup');
+  const [paymentStep, setPaymentStep] = useState('details');
+  const [clientSecret, setClientSecret] = useState(null);
   const [pendingOrderId, setPendingOrderId] = useState(null);
   const stripeRef = useRef(null);
   const elementsRef = useRef(null);
@@ -64,7 +66,6 @@ const Checkout = ({ onBack, onOrderComplete }) => {
 
   const finalTotal = total + calculateTip();
 
-  // Fetch truck payment capability — works for any processor
   useEffect(() => {
     if (!currentTruckId) return;
     let cancelled = false;
@@ -93,8 +94,6 @@ const Checkout = ({ onBack, onOrderComplete }) => {
     return () => { cancelled = true; };
   }, [currentTruckId]);
 
-  // Mount Stripe card element when entering card step (Stripe path only —
-  // Square card mounts inside SquarePaymentForm via its own effect)
   useEffect(() => {
     if (paymentStep !== 'card' || truckProcessor !== 'stripe' || !clientSecret) return;
     let mounted = true;
@@ -112,9 +111,7 @@ const Checkout = ({ onBack, onOrderComplete }) => {
         elementsRef.current = elements;
         const paymentEl = elements.create('payment', { layout: 'tabs' });
         cardElementRef.current = paymentEl;
-        if (cardMountRef.current) {
-          paymentEl.mount(cardMountRef.current);
-        }
+        if (cardMountRef.current) paymentEl.mount(cardMountRef.current);
       } catch (err) {
         console.error('Failed to load Stripe:', err);
         setError('Could not load payment form. Please try again.');
@@ -190,7 +187,6 @@ const Checkout = ({ onBack, onOrderComplete }) => {
 
       if (paymentMethod === 'online') {
         const amountCents = Math.round(finalTotal * 100);
-
         if (truckProcessor === 'stripe') {
           const piResp = await callStripeFunction('stripe-create-payment-intent', {
             order_id: orderData.id,
@@ -199,13 +195,9 @@ const Checkout = ({ onBack, onOrderComplete }) => {
           });
           if (!piResp?.client_secret) throw new Error('Failed to initialize payment');
           setClientSecret(piResp.client_secret);
-        } else if (truckProcessor === 'square') {
-          // No payment intent needed up front — Square tokenizes on submit.
-          // We just transition to the card form.
-        } else {
+        } else if (truckProcessor !== 'square') {
           throw new Error('Online payment is not supported for this truck');
         }
-
         setPendingOrderId(orderData.id);
         setOrderNumber(orderData.order_number);
         setPaymentStep('card');
@@ -288,76 +280,93 @@ const Checkout = ({ onBack, onOrderComplete }) => {
     setError('');
   };
 
+  // Order complete screen
   if (orderComplete) {
     return (
-      <div className="checkout-page">
-        <div className="order-success">
-          <div className="success-icon">
-            {Icons.check}
-          </div>
-          <h1>Order Placed!</h1>
-          <p className="order-number">Order #{orderNumber}</p>
-          <p className="success-message">
-            Your order has been sent to <strong>{currentTruckName}</strong>.
-            You'll receive updates as they prepare your food.
-          </p>
-          <div className="success-details">
-            <div className="detail-row">
-              <span>{Icons.shoppingBag}</span>
-              <span>{items.length} items</span>
+      <div className="mx-auto max-w-md px-4 sm:px-6 py-10">
+        <Card className="shadow-xl">
+          <CardContent className="p-8 text-center space-y-5">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-positive/10 text-positive">
+              <span className="h-8 w-8">{Icons.check}</span>
+            </span>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold tracking-tight">Order Placed!</h1>
+              <p className="text-base font-bold text-primary tabular-nums">Order #{orderNumber}</p>
             </div>
-            <div className="detail-row">
-              <span>{Icons.clock}</span>
-              <span>Estimated: 15-25 min</span>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Your order has been sent to <strong className="text-foreground">{currentTruckName}</strong>.
+              You'll receive updates as they prepare your food.
+            </p>
+            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 text-left">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="h-4 w-4 text-muted-foreground">{Icons.shoppingBag}</span>
+                <span>{items.length} items</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="h-4 w-4 text-muted-foreground">{Icons.clock}</span>
+                <span>Estimated: 15-25 min</span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-border text-base font-bold">
+                <span>Total</span>
+                <span className="tabular-nums">${finalTotal.toFixed(2)}</span>
+              </div>
             </div>
-            <div className="detail-row total">
-              <span>Total</span>
-              <span>${finalTotal.toFixed(2)}</span>
-            </div>
-          </div>
-          <button className="btn-primary" onClick={() => {
-            if (orderId) {
-              navigate(`/order/${orderId}`);
-            } else if (onOrderComplete) {
-              onOrderComplete();
-            } else {
-              onBack();
-            }
-          }}>
-            Track Your Order
-          </button>
-          <button className="btn-secondary" onClick={onBack}>
-            Back to Browsing
-          </button>
-        </div>
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                if (orderId) navigate(`/order/${orderId}`);
+                else if (onOrderComplete) onOrderComplete();
+                else onBack();
+              }}
+            >
+              Track Your Order
+            </Button>
+            <Button variant="outline" size="lg" className="w-full" onClick={onBack}>
+              Back to Browsing
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Card collection step
+  // Payment card step
   if (paymentStep === 'card') {
     return (
-      <div className="checkout-page">
-        <header className="checkout-header">
-          <button className="back-btn" onClick={cancelPaymentAndOrder} disabled={submitting}>
-            {Icons.chevronLeft}
+      <div className="mx-auto max-w-md px-4 sm:px-6 py-6 space-y-6">
+        <header className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={cancelPaymentAndOrder}
+            disabled={submitting}
+            aria-label="Back"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+          >
+            <span className="h-5 w-5">{Icons.chevronLeft}</span>
           </button>
-          <h1>Payment</h1>
-          <div className="header-spacer" />
+          <h1 className="flex-1 text-center text-xl font-bold tracking-tight">Payment</h1>
+          <div className="w-10" />
         </header>
-        <div className="checkout-content">
-          <section className="checkout-section">
-            <div className="truck-banner">
-              {Icons.creditCard}
-              <span>Pay <strong>${finalTotal.toFixed(2)}</strong> to {currentTruckName}</span>
-            </div>
-          </section>
-          <section className="checkout-section">
-            <h3>Card Details</h3>
+
+        <Card>
+          <CardContent className="p-4 flex items-center gap-2.5">
+            <span className="h-5 w-5 text-primary">{Icons.creditCard}</span>
+            <span className="text-sm">
+              Pay <strong className="tabular-nums">${finalTotal.toFixed(2)}</strong> to {currentTruckName}
+            </span>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-5 space-y-3">
+            <h3 className="font-bold text-base">Card Details</h3>
             {truckProcessor === 'stripe' && (
               <>
-                <div ref={cardMountRef} className="stripe-card-mount" style={{ minHeight: 240 }} />
-                <p className="payment-note">Your card is processed securely by Stripe. You won't be charged until the truck confirms your order.</p>
+                <div ref={cardMountRef} className="min-h-[240px]" />
+                <p className="text-xs text-muted-foreground">
+                  Your card is processed securely by Stripe. You won't be charged until the truck confirms your order.
+                </p>
               </>
             )}
             {truckProcessor === 'square' && squareConfig && (
@@ -370,196 +379,254 @@ const Checkout = ({ onBack, onOrderComplete }) => {
                   amount={finalTotal}
                   onError={(e) => setError(e.message || 'Could not load payment form')}
                 />
-                <p className="payment-note">Your card is processed securely by Square. Funds go directly to the truck.</p>
+                <p className="text-xs text-muted-foreground">
+                  Your card is processed securely by Square. Funds go directly to the truck.
+                </p>
               </>
             )}
-          </section>
-          {error && <div className="checkout-error">{error}</div>}
-        </div>
-        <div className="checkout-footer">
-          <button
-            className="place-order-btn"
-            onClick={handleConfirmCardPayment}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <>{Icons.loader} Processing...</>
-            ) : (
-              <>Pay ${finalTotal.toFixed(2)}</>
-            )}
-          </button>
-        </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <span className="h-4 w-4 shrink-0 mt-0.5">{Icons.alertCircle}</span>
+            {error}
+          </div>
+        )}
+
+        <Button
+          size="lg"
+          onClick={handleConfirmCardPayment}
+          disabled={submitting}
+          className="w-full gap-2"
+        >
+          {submitting ? (
+            <>
+              <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+              Processing…
+            </>
+          ) : (
+            <>Pay ${finalTotal.toFixed(2)}</>
+          )}
+        </Button>
       </div>
     );
   }
 
+  // Default checkout details step
   return (
-    <div className="checkout-page">
-      <header className="checkout-header">
-        <button className="back-btn" onClick={onBack}>
-          {Icons.chevronLeft}
+    <div className="mx-auto max-w-md px-4 sm:px-6 py-6 space-y-5">
+      <header className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Back"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+        >
+          <span className="h-5 w-5">{Icons.chevronLeft}</span>
         </button>
-        <h1>Checkout</h1>
-        <div className="header-spacer" />
+        <h1 className="flex-1 text-center text-xl font-bold tracking-tight">Checkout</h1>
+        <div className="w-10" />
       </header>
 
-      <div className="checkout-content">
-        {/* Truck Info */}
-        <section className="checkout-section">
-          <div className="truck-banner">
-            {Icons.truck}
-            <span>Ordering from <strong>{currentTruckName}</strong></span>
-          </div>
-        </section>
+      <Card>
+        <CardContent className="p-4 flex items-center gap-2.5">
+          <span className="h-5 w-5 text-primary">{Icons.truck}</span>
+          <span className="text-sm">
+            Ordering from <strong>{currentTruckName}</strong>
+          </span>
+        </CardContent>
+      </Card>
 
-        {/* Order Type */}
-        <section className="checkout-section">
-          <div className="order-type-info-banner">
-            {Icons.mapPin}
-            <span>Pickup Order</span>
-          </div>
-        </section>
+      <div className="flex items-center gap-2 rounded-lg border border-info/30 bg-info/10 px-4 py-2.5 text-sm text-info">
+        <span className="h-4 w-4">{Icons.mapPin}</span>
+        Pickup Order
+      </div>
 
-        {/* Order Items */}
-        <section className="checkout-section">
-          <h3>Your Order ({items.length} items)</h3>
-          <div className="checkout-items">
+      {/* Items */}
+      <Card>
+        <CardContent className="p-5 space-y-3">
+          <h3 className="font-bold text-base">Your Order ({items.length} items)</h3>
+          <div className="divide-y divide-border">
             {items.map(item => (
-              <div className="checkout-item" key={item.id}>
-                <div className="item-qty">{item.quantity}x</div>
-                <div className="item-details">
-                  <span className="item-name">{item.name}</span>
-                  <span className="item-price">${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
-                </div>
+              <div key={item.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 text-sm">
+                <span className="font-bold text-primary tabular-nums min-w-[2rem]">
+                  {item.quantity}×
+                </span>
+                <span className="flex-1 truncate">{item.name}</span>
+                <span className="font-semibold tabular-nums">
+                  ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                </span>
               </div>
             ))}
           </div>
-        </section>
+        </CardContent>
+      </Card>
 
-        {/* Special Instructions */}
-        <section className="checkout-section">
-          <h3>Special Instructions</h3>
-          <textarea
-            className="notes-input"
-            placeholder="Any allergies or special requests?"
+      {/* Notes */}
+      <Card>
+        <CardContent className="p-5 space-y-2">
+          <h3 className="font-bold text-base">Special Instructions</h3>
+          <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any allergies or special requests?"
             rows={3}
           />
-        </section>
+        </CardContent>
+      </Card>
 
-        {/* Tip */}
-        <section className="checkout-section">
-          <h3>Add a Tip</h3>
-          <div className="tip-options">
-            {tipOptions.map(pct => (
-              <button
-                key={pct}
-                className={`tip-btn ${tip === pct && !customTip ? 'active' : ''}`}
-                onClick={() => { setTip(pct); setCustomTip(''); }}
-              >
-                {pct === 0 ? 'No tip' : `${pct}%`}
-                {pct > 0 && <span className="tip-amount">${(subtotal * pct / 100).toFixed(2)}</span>}
-              </button>
-            ))}
-            <div className="custom-tip">
-              <span>$</span>
-              <input
-                type="number"
-                placeholder="Custom"
-                value={customTip}
-                onChange={(e) => { setCustomTip(e.target.value); setTip(0); }}
-                min="0"
-                step="0.50"
-              />
-            </div>
+      {/* Tip */}
+      <Card>
+        <CardContent className="p-5 space-y-3">
+          <h3 className="font-bold text-base">Add a Tip</h3>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {tipOptions.map(pct => {
+              const isActive = tip === pct && !customTip;
+              return (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => { setTip(pct); setCustomTip(''); }}
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    isActive
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-background text-foreground hover:border-primary/40'
+                  )}
+                >
+                  <span>{pct === 0 ? 'No tip' : `${pct}%`}</span>
+                  {pct > 0 && (
+                    <span className="text-[10px] font-normal text-muted-foreground tabular-nums">
+                      ${(subtotal * pct / 100).toFixed(2)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-        </section>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+              $
+            </span>
+            <input
+              type="number"
+              placeholder="Custom"
+              value={customTip}
+              onChange={(e) => { setCustomTip(e.target.value); setTip(0); }}
+              min="0"
+              step="0.50"
+              className="h-10 w-full rounded-md border border-input bg-background pl-7 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 tabular-nums"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Payment Method */}
-        <section className="checkout-section">
-          <h3>Payment Method</h3>
+      {/* Payment method */}
+      <Card>
+        <CardContent className="p-5 space-y-3">
+          <h3 className="font-bold text-base">Payment Method</h3>
           {truckOnlineEnabled && (
-            <div
-              className={`payment-option ${paymentMethod === 'online' ? 'selected' : ''}`}
+            <button
+              type="button"
               onClick={() => setPaymentMethod('online')}
-              role="button"
-              tabIndex={0}
+              className={cn(
+                'w-full flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-colors',
+                paymentMethod === 'online'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/40'
+              )}
             >
-              {Icons.creditCard}
-              <span>
+              <span className="h-5 w-5 text-primary">{Icons.creditCard}</span>
+              <span className="flex-1 text-sm font-medium">
                 Pay Online (Card)
-                {truckProcessor === 'square' && <span className="payment-processor-badge"> via Square</span>}
-                {truckProcessor === 'stripe' && <span className="payment-processor-badge"> via Stripe</span>}
+                {truckProcessor === 'square' && (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">via Square</span>
+                )}
+                {truckProcessor === 'stripe' && (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">via Stripe</span>
+                )}
               </span>
-              {paymentMethod === 'online' && <span className="check-icon">{Icons.check}</span>}
-            </div>
+              {paymentMethod === 'online' && (
+                <span className="h-5 w-5 text-primary">{Icons.check}</span>
+              )}
+            </button>
           )}
-          <div
-            className={`payment-option ${paymentMethod === 'pickup' ? 'selected' : ''}`}
+          <button
+            type="button"
             onClick={() => setPaymentMethod('pickup')}
-            role="button"
-            tabIndex={0}
-          >
-            {Icons.shoppingBag}
-            <span>Pay at Pickup (Cash/Card at truck)</span>
-            {paymentMethod === 'pickup' && <span className="check-icon">{Icons.check}</span>}
-          </div>
-          {!truckOnlineEnabled && (
-            <p className="payment-note">This truck has not enabled online payment yet.</p>
-          )}
-        </section>
-
-        {/* Order Summary */}
-        <section className="checkout-section summary-section">
-          <h3>Order Summary</h3>
-          <div className="summary-rows">
-            <div className="summary-row">
-              <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
-            </div>
-            <div className="summary-row">
-              <span>Tax (8%)</span>
-              <span>${tax.toFixed(2)}</span>
-            </div>
-            {calculateTip() > 0 && (
-              <div className="summary-row">
-                <span>Tip</span>
-                <span>${calculateTip().toFixed(2)}</span>
-              </div>
+            className={cn(
+              'w-full flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-colors',
+              paymentMethod === 'pickup'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/40'
             )}
-            <div className="summary-row total">
-              <span>Total</span>
-              <span>${finalTotal.toFixed(2)}</span>
-            </div>
-          </div>
-        </section>
-
-        {error && (
-          <div className="checkout-error">
-            {error}
-          </div>
-        )}
-      </div>
-
-      <div className="checkout-footer">
-        <button
-          className="place-order-btn"
-          onClick={handleSubmitOrder}
-          disabled={submitting || items.length === 0}
-        >
-          {submitting ? (
-            <>
-              {Icons.loader}
-              {paymentMethod === 'online' ? 'Preparing payment...' : 'Placing Order...'}
-            </>
-          ) : (
-            <>
-              {paymentMethod === 'online' ? `Continue to Payment - $${finalTotal.toFixed(2)}` : `Place Order - $${finalTotal.toFixed(2)}`}
-            </>
+          >
+            <span className="h-5 w-5 text-primary">{Icons.shoppingBag}</span>
+            <span className="flex-1 text-sm font-medium">
+              Pay at Pickup (Cash/Card at truck)
+            </span>
+            {paymentMethod === 'pickup' && (
+              <span className="h-5 w-5 text-primary">{Icons.check}</span>
+            )}
+          </button>
+          {!truckOnlineEnabled && (
+            <p className="text-xs text-muted-foreground">
+              This truck has not enabled online payment yet.
+            </p>
           )}
-        </button>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary */}
+      <Card>
+        <CardContent className="p-5 space-y-1.5">
+          <h3 className="font-bold text-base mb-2">Order Summary</h3>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Subtotal</span>
+            <span className="tabular-nums">${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Tax (8%)</span>
+            <span className="tabular-nums">${tax.toFixed(2)}</span>
+          </div>
+          {calculateTip() > 0 && (
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Tip</span>
+              <span className="tabular-nums">${calculateTip().toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-base font-bold pt-2 border-t border-border">
+            <span>Total</span>
+            <span className="tabular-nums">${finalTotal.toFixed(2)}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <span className="h-4 w-4 shrink-0 mt-0.5">{Icons.alertCircle}</span>
+          {error}
+        </div>
+      )}
+
+      <Button
+        size="lg"
+        onClick={handleSubmitOrder}
+        disabled={submitting || items.length === 0}
+        className="w-full gap-2"
+      >
+        {submitting ? (
+          <>
+            <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+            {paymentMethod === 'online' ? 'Preparing payment…' : 'Placing Order…'}
+          </>
+        ) : paymentMethod === 'online' ? (
+          `Continue to Payment — $${finalTotal.toFixed(2)}`
+        ) : (
+          `Place Order — $${finalTotal.toFixed(2)}`
+        )}
+      </Button>
     </div>
   );
 };
