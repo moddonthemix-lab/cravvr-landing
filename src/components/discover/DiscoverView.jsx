@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TinderCard from 'react-tinder-card';
 import { fetchMenuItems } from '../../services/menu';
 import { Icons } from '../common/Icons';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import './DiscoverView.css';
 
 const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruckClick }) => {
@@ -119,9 +122,9 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
   if (loading || trucks.length === 0) {
     return (
       <div className="discover-view">
-        <div className="discover-loading">
-          <div className="loading-spinner"></div>
-          <p>Finding trucks to discover...</p>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
+          <div className="h-10 w-10 rounded-full border-[3px] border-muted border-t-primary animate-spin" />
+          <p className="text-sm text-muted-foreground">Finding trucks to discover…</p>
         </div>
       </div>
     );
@@ -134,14 +137,16 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
     <div className="discover-view">
       {/* Header */}
       <div className="discover-header">
-        <div className="discover-title">
-          <h1>Discover</h1>
-          <span className="liked-badge">
-            {Icons.heartFilled}
-            {likedCount}
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">Discover</h1>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+            <span className="h-4 w-4">{Icons.heartFilled}</span>
+            <span className="tabular-nums">{likedCount}</span>
           </span>
         </div>
-        <p>Swipe right to save, left to skip</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Swipe right to save, left to skip
+        </p>
       </div>
 
       {/* Card + Actions Container */}
@@ -202,15 +207,19 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
                   <div className="card-image-overlay"></div>
 
                   {/* Status Badges */}
-                  <div className="card-badges">
+                  <div className="card-badges flex items-center gap-1.5">
                     {truck.featured && (
-                      <span className="badge featured">
-                        {Icons.star} Featured
-                      </span>
+                      <Badge variant="warning" className="shadow-sm gap-1">
+                        <span className="h-3 w-3">{Icons.star}</span>
+                        Featured
+                      </Badge>
                     )}
-                    <span className={`badge status ${truck.isOpen ? 'open' : 'closed'}`}>
+                    <Badge
+                      variant={truck.isOpen ? 'positive' : 'secondary'}
+                      className="shadow-sm"
+                    >
                       {truck.isOpen ? 'Open Now' : 'Closed'}
-                    </span>
+                    </Badge>
                   </div>
 
                   {/* Prep Time */}
@@ -268,64 +277,89 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
 
           {/* Empty state when all cards swiped */}
           {currentIndex < 0 && (
-            <div className="discover-empty">
-              <div className="empty-icon">🎉</div>
-              <h3>You've seen them all!</h3>
-              <p>Check back later for more food trucks</p>
-              <button
-                className="reset-btn"
+            <div className="discover-empty flex flex-col items-center justify-center text-center px-6 py-12 gap-3">
+              <div className="text-5xl">🎉</div>
+              <h3 className="text-xl font-bold tracking-tight">
+                You've seen them all!
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Check back later for more food trucks
+              </p>
+              <Button
                 onClick={() => {
                   setCurrentIndex(trucks.length - 1);
                   setLikedCount(favorites?.length || 0);
                 }}
+                className="mt-2"
               >
                 Start Over
-              </button>
+              </Button>
             </div>
             )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="discover-actions">
+        <div className="discover-actions flex items-center justify-center gap-5 py-4">
           <button
-            className={`action-btn nope ${!canSwipe ? 'disabled' : ''}`}
+            type="button"
             onClick={() => swipe('left')}
             disabled={!canSwipe}
+            aria-label="Skip"
+            className={cn(
+              'flex h-14 w-14 items-center justify-center rounded-full border-2 border-destructive/40 bg-white text-destructive shadow-md transition-all hover:scale-110 hover:bg-destructive/5 active:scale-95',
+              !canSwipe && 'opacity-40 cursor-not-allowed hover:scale-100 hover:bg-white'
+            )}
           >
-            {Icons.xBold}
+            <span className="h-6 w-6">{Icons.xBold}</span>
           </button>
           <button
-            className="action-btn info"
+            type="button"
             onClick={() => currentIndex >= 0 && onTruckClick(trucks[currentIndex])}
             disabled={currentIndex < 0}
+            aria-label="More info"
+            className={cn(
+              'flex h-12 w-12 items-center justify-center rounded-full border-2 border-info/40 bg-white text-info shadow-md transition-all hover:scale-110 hover:bg-info/5 active:scale-95',
+              currentIndex < 0 && 'opacity-40 cursor-not-allowed hover:scale-100 hover:bg-white'
+            )}
           >
-            {Icons.infoBold}
+            <span className="h-5 w-5">{Icons.infoBold}</span>
           </button>
           <button
-            className={`action-btn like ${!canSwipe ? 'disabled' : ''}`}
+            type="button"
             onClick={() => swipe('right')}
             disabled={!canSwipe}
+            aria-label="Like"
+            className={cn(
+              'flex h-14 w-14 items-center justify-center rounded-full border-2 border-positive/40 bg-white text-positive shadow-md transition-all hover:scale-110 hover:bg-positive/5 active:scale-95',
+              !canSwipe && 'opacity-40 cursor-not-allowed hover:scale-100 hover:bg-white'
+            )}
           >
-            {Icons.heartFilled}
+            <span className="h-6 w-6">{Icons.heartFilled}</span>
           </button>
         </div>
       </div>
 
       {/* Progress Indicator */}
-      <div className="discover-progress">
-        <div className="progress-dots">
+      <div className="discover-progress flex flex-col items-center gap-2 pb-4">
+        <div className="flex items-center gap-1.5">
           {currentIndex >= 0 && trucks.slice(Math.max(0, currentIndex - 2), Math.min(trucks.length, currentIndex + 3)).map((truck, i) => {
             const actualIndex = Math.max(0, currentIndex - 2) + i;
+            const isActive = actualIndex === currentIndex;
+            const isUpcoming = actualIndex > currentIndex;
             return (
               <span
                 key={truck.id}
-                className={`progress-dot ${actualIndex === currentIndex ? 'active' : ''} ${actualIndex > currentIndex ? 'upcoming' : 'passed'}`}
+                className={cn(
+                  'h-1.5 rounded-full transition-all',
+                  isActive ? 'w-6 bg-primary' : 'w-1.5',
+                  !isActive && (isUpcoming ? 'bg-muted' : 'bg-primary/30')
+                )}
               />
             );
           })}
         </div>
-        <span className="progress-text">
+        <span className="text-xs text-muted-foreground tabular-nums">
           {Math.max(0, trucks.length - currentIndex - 1)} of {trucks.length} explored
         </span>
       </div>

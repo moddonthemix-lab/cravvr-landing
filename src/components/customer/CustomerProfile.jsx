@@ -29,6 +29,17 @@ import { useCart } from '../../contexts/CartContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import './CustomerProfile.css';
 
@@ -360,45 +371,72 @@ const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite, onViewMenu
     <ProfileHeader onBack={onBack} title="Favorites" />
 
     <div className="tab-content">
-      <p className="tab-subtitle">Your saved food trucks</p>
+      <p className="text-sm text-muted-foreground mb-5">Your saved food trucks</p>
 
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading favorites...</div>
+        <Card>
+          <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+            <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+            Loading favorites…
+          </CardContent>
+        </Card>
       ) : favorites.length === 0 ? (
-        <div className="empty-state">
-          <p>No favorites yet. Explore food trucks and add your favorites!</p>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+              <span className="h-5 w-5">{Icons.heart}</span>
+            </div>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              No favorites yet. Explore food trucks and add your favorites!
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="favorites-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {favorites.map(truck => (
-            <div className="favorite-card" key={truck.id}>
-              <div className="favorite-image">
+            <Card key={truck.id} className="overflow-hidden flex flex-col">
+              <div className="relative aspect-[16/9] bg-muted">
                 <img
-                  src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=200&q=80'}
+                  src={
+                    truck.image_url ||
+                    'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=200&q=80'
+                  }
                   alt={truck.name}
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
                 <button
-                  className="favorite-heart active"
                   onClick={() => onRemoveFavorite(truck.id)}
+                  aria-label="Remove from favorites"
+                  className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-primary shadow-sm backdrop-blur transition-colors hover:bg-white"
                 >
                   {Icons.heartFilled}
                 </button>
-                {truck.is_open ? (
-                  <span className="open-badge">Open</span>
-                ) : (
-                  <span className="closed-badge">Closed</span>
-                )}
+                <Badge
+                  variant={truck.is_open ? 'positive' : 'secondary'}
+                  className="absolute top-2 left-2 shadow-sm"
+                >
+                  {truck.is_open ? 'Open' : 'Closed'}
+                </Badge>
               </div>
-              <div className="favorite-info">
-                <h4>{truck.name}</h4>
-                <span className="favorite-cuisine">{truck.cuisine}</span>
-                <div className="favorite-rating">
-                  {Icons.star}
-                  <span>{truck.average_rating || 'N/A'}</span>
+              <CardContent className="flex flex-col gap-2 p-4 flex-1">
+                <div>
+                  <h4 className="font-semibold text-sm leading-tight truncate">{truck.name}</h4>
+                  <span className="text-xs text-muted-foreground">{truck.cuisine}</span>
                 </div>
-              </div>
-              <button className="view-menu-btn" onClick={() => onViewMenu(truck.id)}>View Menu</button>
-            </div>
+                <div className="flex items-center gap-1 text-sm">
+                  <span className="text-warning">{Icons.star}</span>
+                  <span className="font-medium">{truck.average_rating || 'N/A'}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-auto"
+                  onClick={() => onViewMenu(truck.id)}
+                >
+                  View Menu
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
@@ -430,39 +468,56 @@ const RewardsTab = ({ onBack, points, checkIns, loading, onClaimReward }) => {
     <div className="tab-page">
       <ProfileHeader onBack={onBack} title="Rewards & Points" />
 
-      <div className="tab-content">
-        <div className="rewards-hero">
-          <div className="rewards-points-display">
-            <span className="points-number">{points || 0}</span>
-            <span className="points-suffix">Points</span>
-          </div>
-          <p className="rewards-subtitle">Keep ordering to earn more points!</p>
-          <div className="points-info-row">
-            <div className="points-info-item">
-              <span className="info-value">10</span>
-              <span className="info-label">pts per $1</span>
+      <div className="tab-content space-y-5">
+        <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-0 overflow-hidden">
+          <CardContent className="flex flex-col items-center text-center pt-8 pb-6 px-6">
+            <div className="flex items-baseline gap-2">
+              <span className="text-5xl font-bold tabular-nums leading-none">{points || 0}</span>
+              <span className="text-base font-semibold opacity-90">Points</span>
             </div>
-            <div className="points-divider"></div>
-            <div className="points-info-item">
-              <span className="info-value">500</span>
-              <span className="info-label">pts = $5 off</span>
+            <p className="text-sm opacity-90 mt-2">Keep ordering to earn more points!</p>
+            <div className="flex items-center gap-6 mt-5">
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-bold tabular-nums">10</span>
+                <span className="text-xs opacity-90">pts per $1</span>
+              </div>
+              <div className="h-8 w-px bg-white/30" />
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-bold tabular-nums">500</span>
+                <span className="text-xs opacity-90">pts = $5 off</span>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="rewards-section">
-          <h3>Punch Cards</h3>
-          <p className="section-subtitle">Get rewards from your favorite trucks</p>
+        <div>
+          <h3 className="text-base font-semibold mb-1">Punch Cards</h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            Get rewards from your favorite trucks
+          </p>
 
           {loading ? (
-            <div className="loading-state">{Icons.loader} Loading...</div>
+            <Card>
+              <CardContent className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+                Loading…
+              </CardContent>
+            </Card>
           ) : punchCards.length === 0 ? (
-            <div className="empty-punch-card-preview">
-              <img src="/logo/apple-touch-icon.png" alt="Cravrr" className="preview-logo" />
-              <p className="preview-text">No punch cards yet. Check in at food trucks to start earning rewards!</p>
-            </div>
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                <img
+                  src="/logo/apple-touch-icon.png"
+                  alt="Cravvr"
+                  className="h-12 w-12 rounded-lg mb-3 opacity-80"
+                />
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  No punch cards yet. Check in at food trucks to start earning rewards!
+                </p>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="punch-cards">
+            <div className="flex flex-col gap-3">
               {punchCards.map(card => (
                 <PunchCard
                   key={card.id}
@@ -477,31 +532,34 @@ const RewardsTab = ({ onBack, points, checkIns, loading, onClaimReward }) => {
           )}
         </div>
 
-        <div className="rewards-section">
-          <h3>How to Earn</h3>
-          <div className="earn-methods">
-            <div className="earn-item">
-              <span className="earn-icon">{Icons.orders}</span>
-              <div className="earn-info">
-                <span className="earn-title">Place Orders</span>
-                <span className="earn-desc">Earn 10 points per $1 spent</span>
-              </div>
-            </div>
-            <div className="earn-item">
-              <span className="earn-icon">{Icons.star}</span>
-              <div className="earn-info">
-                <span className="earn-title">Leave Reviews</span>
-                <span className="earn-desc">Earn 50 points per review</span>
-              </div>
-            </div>
-            <div className="earn-item">
-              <span className="earn-icon">{Icons.mapPin}</span>
-              <div className="earn-info">
-                <span className="earn-title">Check In</span>
-                <span className="earn-desc">Earn 10 points per check-in</span>
-              </div>
-            </div>
-          </div>
+        <div>
+          <h3 className="text-base font-semibold mb-3">How to Earn</h3>
+          <Card>
+            <CardContent className="p-0 divide-y divide-border">
+              {[
+                { icon: Icons.orders, tone: 'positive', title: 'Place Orders', desc: 'Earn 10 points per $1 spent' },
+                { icon: Icons.star, tone: 'warning', title: 'Leave Reviews', desc: 'Earn 50 points per review' },
+                { icon: Icons.mapPin, tone: 'info', title: 'Check In', desc: 'Earn 10 points per check-in' },
+              ].map((m, i) => (
+                <div key={i} className="flex items-center gap-3 p-4">
+                  <span
+                    className={cn(
+                      'flex h-10 w-10 items-center justify-center rounded-lg shrink-0',
+                      m.tone === 'positive' && 'bg-positive/10 text-positive',
+                      m.tone === 'warning' && 'bg-warning/10 text-warning',
+                      m.tone === 'info' && 'bg-info/10 text-info'
+                    )}
+                  >
+                    {m.icon}
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium leading-tight">{m.title}</span>
+                    <span className="text-xs text-muted-foreground">{m.desc}</span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -560,47 +618,86 @@ const AddressesTab = ({ onBack, userId }) => {
     <div className="tab-page">
       <ProfileHeader onBack={onBack} title="Saved Addresses" />
 
-      <div className="tab-content">
+      <div className="tab-content space-y-3">
         {loading ? (
-          <div className="loading-state">{Icons.loader} Loading addresses...</div>
+          <Card>
+            <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+              <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+              Loading addresses…
+            </CardContent>
+          </Card>
         ) : addresses.length === 0 ? (
-          <div className="empty-state">
-            <p>No saved addresses yet. Add one to make checkout faster!</p>
-          </div>
-        ) : (
-          <div className="addresses-list">
-            {addresses.map(addr => (
-              <div className={`address-card ${addr.is_default ? 'default' : ''}`} key={addr.id}>
-                <div className="address-icon">{Icons.mapPin}</div>
-                <div className="address-info">
-                  <div className="address-label">
-                    {addr.label}
-                    {addr.is_default && <span className="default-badge">Default</span>}
-                  </div>
-                  <p className="address-text">
-                    {addr.address_line1}
-                    {addr.address_line2 && `, ${addr.address_line2}`}
-                    <br />
-                    {addr.city}, {addr.state} {addr.zip_code}
-                  </p>
-                </div>
-                <div className="address-actions">
-                  <button className="address-edit" onClick={() => handleEdit(addr)}>
-                    {Icons.edit}
-                  </button>
-                  <button className="address-delete" onClick={() => handleDelete(addr.id)}>
-                    {Icons.trash}
-                  </button>
-                </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+                <span className="h-5 w-5">{Icons.mapPin}</span>
               </div>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                No saved addresses yet. Add one to make checkout faster!
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {addresses.map(addr => (
+              <Card
+                key={addr.id}
+                className={cn(addr.is_default && 'border-primary/40 bg-primary/5')}
+              >
+                <CardContent className="flex items-start gap-3 p-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground shrink-0">
+                    {Icons.mapPin}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm">{addr.label}</span>
+                      {addr.is_default && (
+                        <Badge variant="positive" className="text-[10px] py-0 px-1.5">
+                          Default
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
+                      {addr.address_line1}
+                      {addr.address_line2 && `, ${addr.address_line2}`}
+                      <br />
+                      {addr.city}, {addr.state} {addr.zip_code}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => handleEdit(addr)}
+                      aria-label="Edit address"
+                    >
+                      <span className="h-4 w-4">{Icons.edit}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(addr.id)}
+                      aria-label="Delete address"
+                    >
+                      <span className="h-4 w-4">{Icons.trash}</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
 
-        <button className="add-address-btn" onClick={handleAdd}>
+        <Button
+          variant="outline"
+          className="w-full gap-2 border-dashed"
+          onClick={handleAdd}
+        >
           {Icons.plus}
           Add New Address
-        </button>
+        </Button>
       </div>
 
       <AddressModal
@@ -666,44 +763,85 @@ const PaymentTab = ({ onBack, userId }) => {
     <div className="tab-page">
       <ProfileHeader onBack={onBack} title="Payment Methods" />
 
-      <div className="tab-content">
+      <div className="tab-content space-y-3">
         {loading ? (
-          <div className="loading-state">{Icons.loader} Loading payment methods...</div>
+          <Card>
+            <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+              <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+              Loading payment methods…
+            </CardContent>
+          </Card>
         ) : payments.length === 0 ? (
-          <div className="empty-state">
-            <p>No payment methods saved yet. Add one for faster checkout!</p>
-          </div>
-        ) : (
-          <div className="payment-list">
-            {payments.map(card => (
-              <div className={`payment-card ${card.is_default ? 'default' : ''}`} key={card.id}>
-                <div className="card-icon">{Icons.creditCard}</div>
-                <div className="card-info">
-                  <div className="card-type">
-                    {card.card_type} •••• {card.last_four}
-                    {card.is_default && <span className="default-badge">Default</span>}
-                  </div>
-                  <span className="card-expiry">
-                    Expires {String(card.expiry_month).padStart(2, '0')}/{card.expiry_year}
-                  </span>
-                </div>
-                <div className="card-actions">
-                  <button className="card-edit" onClick={() => handleEdit(card)}>
-                    {Icons.edit}
-                  </button>
-                  <button className="card-delete" onClick={() => handleDelete(card.id)}>
-                    {Icons.trash}
-                  </button>
-                </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+                <span className="h-5 w-5">{Icons.creditCard}</span>
               </div>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                No payment methods saved yet. Add one for faster checkout!
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {payments.map(card => (
+              <Card
+                key={card.id}
+                className={cn(card.is_default && 'border-primary/40 bg-primary/5')}
+              >
+                <CardContent className="flex items-center gap-3 p-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground shrink-0">
+                    {Icons.creditCard}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm tabular-nums">
+                        {card.card_type} •••• {card.last_four}
+                      </span>
+                      {card.is_default && (
+                        <Badge variant="positive" className="text-[10px] py-0 px-1.5">
+                          Default
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      Expires {String(card.expiry_month).padStart(2, '0')}/{card.expiry_year}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => handleEdit(card)}
+                      aria-label="Edit payment method"
+                    >
+                      <span className="h-4 w-4">{Icons.edit}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(card.id)}
+                      aria-label="Delete payment method"
+                    >
+                      <span className="h-4 w-4">{Icons.trash}</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
 
-        <button className="add-payment-btn" onClick={handleAdd}>
+        <Button
+          variant="outline"
+          className="w-full gap-2 border-dashed"
+          onClick={handleAdd}
+        >
           {Icons.plus}
           Add Payment Method
-        </button>
+        </Button>
       </div>
 
       <PaymentModal
@@ -731,135 +869,119 @@ const NotificationsTab = ({ onBack }) => {
     setSettings({ ...settings, [key]: !settings[key] });
   };
 
+  const items = [
+    { key: 'orderUpdates', title: 'Order Updates', desc: 'Get notified about your order status' },
+    { key: 'promotions', title: 'Promotions & Deals', desc: 'Special offers from food trucks' },
+    { key: 'newTrucks', title: 'New Trucks Nearby', desc: 'Discover new trucks in your area' },
+    { key: 'favorites', title: 'Favorite Truck Updates', desc: 'When your favorites are nearby or have deals' },
+    { key: 'rewards', title: 'Rewards & Points', desc: 'Updates about your rewards status' },
+  ];
+
   return (
     <div className="tab-page">
       <ProfileHeader onBack={onBack} title="Notifications" />
 
       <div className="tab-content">
-        <div className="settings-list">
-          <div className="setting-item">
-            <div className="setting-info">
-              <span className="setting-title">Order Updates</span>
-              <span className="setting-desc">Get notified about your order status</span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={settings.orderUpdates}
-                onChange={() => toggle('orderUpdates')}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div className="setting-item">
-            <div className="setting-info">
-              <span className="setting-title">Promotions & Deals</span>
-              <span className="setting-desc">Special offers from food trucks</span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={settings.promotions}
-                onChange={() => toggle('promotions')}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div className="setting-item">
-            <div className="setting-info">
-              <span className="setting-title">New Trucks Nearby</span>
-              <span className="setting-desc">Discover new trucks in your area</span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={settings.newTrucks}
-                onChange={() => toggle('newTrucks')}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div className="setting-item">
-            <div className="setting-info">
-              <span className="setting-title">Favorite Truck Updates</span>
-              <span className="setting-desc">When your favorites are nearby or have deals</span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={settings.favorites}
-                onChange={() => toggle('favorites')}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div className="setting-item">
-            <div className="setting-info">
-              <span className="setting-title">Rewards & Points</span>
-              <span className="setting-desc">Updates about your rewards status</span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={settings.rewards}
-                onChange={() => toggle('rewards')}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
+        <Card>
+          <CardContent className="p-0 divide-y divide-border">
+            {items.map(item => (
+              <label
+                key={item.key}
+                className="flex items-center justify-between gap-3 p-4 cursor-pointer transition-colors hover:bg-muted/40"
+              >
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium leading-tight">{item.title}</span>
+                  <span className="text-xs text-muted-foreground">{item.desc}</span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={settings[item.key]}
+                  onClick={() => toggle(item.key)}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    settings[item.key] ? 'bg-primary' : 'bg-muted'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                      settings[item.key] ? 'translate-x-[22px]' : 'translate-x-0.5'
+                    )}
+                  />
+                </button>
+              </label>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
 
 // Security Tab
+const SecurityRow = ({ icon, label, status, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="group w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted"
+  >
+    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+      {icon}
+    </span>
+    <span className="flex-1 text-sm font-medium">{label}</span>
+    {status && (
+      <span className="text-xs text-muted-foreground">{status}</span>
+    )}
+    <span className="text-muted-foreground transition-transform group-hover:translate-x-0.5">
+      {Icons.chevronRight}
+    </span>
+  </button>
+);
+
 const SecurityTab = ({ onBack, onChangePassword }) => (
   <div className="tab-page">
     <ProfileHeader onBack={onBack} title="Privacy & Security" />
 
-    <div className="tab-content">
-      <div className="security-section">
-        <h3>Account Security</h3>
-        <div className="security-list">
-          <button className="security-item" onClick={onChangePassword}>
-            <span className="security-icon">{Icons.edit}</span>
-            <span className="security-label">Change Password</span>
-            {Icons.chevronRight}
-          </button>
-          <button className="security-item">
-            <span className="security-icon">{Icons.shield}</span>
-            <span className="security-label">Two-Factor Authentication</span>
-            <span className="security-status off">Off</span>
-            {Icons.chevronRight}
-          </button>
-        </div>
+    <div className="tab-content space-y-5">
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
+          Account Security
+        </h3>
+        <Card>
+          <CardContent className="p-0 divide-y divide-border">
+            <SecurityRow icon={Icons.edit} label="Change Password" onClick={onChangePassword} />
+            <SecurityRow icon={Icons.shield} label="Two-Factor Authentication" status="Off" />
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="security-section">
-        <h3>Privacy</h3>
-        <div className="security-list">
-          <button className="security-item">
-            <span className="security-icon">{Icons.mapPin}</span>
-            <span className="security-label">Location Permissions</span>
-            {Icons.chevronRight}
-          </button>
-          <button className="security-item">
-            <span className="security-icon">{Icons.user}</span>
-            <span className="security-label">Data & Personalization</span>
-            {Icons.chevronRight}
-          </button>
-        </div>
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
+          Privacy
+        </h3>
+        <Card>
+          <CardContent className="p-0 divide-y divide-border">
+            <SecurityRow icon={Icons.mapPin} label="Location Permissions" />
+            <SecurityRow icon={Icons.user} label="Data & Personalization" />
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="security-section danger-zone">
-        <h3>Danger Zone</h3>
-        <button className="delete-account-btn">Delete Account</button>
-        <p className="delete-warning">This will permanently delete your account and all associated data.</p>
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive mb-2 px-1">
+          Danger Zone
+        </h3>
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="p-4 flex flex-col gap-2 items-start">
+            <Button variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive">
+              Delete Account
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              This will permanently delete your account and all associated data.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   </div>
@@ -870,44 +992,62 @@ const HelpTab = ({ onBack }) => (
   <div className="tab-page">
     <ProfileHeader onBack={onBack} title="Help & Support" />
 
-    <div className="tab-content">
-      <div className="help-search">
-        <input type="text" placeholder="Search for help..." />
+    <div className="tab-content space-y-5">
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+          {Icons.search || Icons.help}
+        </span>
+        <Input
+          type="search"
+          placeholder="Search for help…"
+          className="pl-9"
+        />
       </div>
 
-      <div className="help-section">
-        <h3>Quick Help</h3>
-        <div className="help-list">
-          <button className="help-item">
-            <span>How do I track my order?</span>
-            {Icons.chevronRight}
-          </button>
-          <button className="help-item">
-            <span>How do rewards work?</span>
-            {Icons.chevronRight}
-          </button>
-          <button className="help-item">
-            <span>How to update payment method?</span>
-            {Icons.chevronRight}
-          </button>
-          <button className="help-item">
-            <span>Cancellation & refund policy</span>
-            {Icons.chevronRight}
-          </button>
-        </div>
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
+          Quick Help
+        </h3>
+        <Card>
+          <CardContent className="p-0 divide-y divide-border">
+            {[
+              'How do I track my order?',
+              'How do rewards work?',
+              'How to update payment method?',
+              'Cancellation & refund policy',
+            ].map(q => (
+              <button
+                key={q}
+                type="button"
+                className="group w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted"
+              >
+                <span className="flex-1">{q}</span>
+                <span className="text-muted-foreground transition-transform group-hover:translate-x-0.5">
+                  {Icons.chevronRight}
+                </span>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="help-section">
-        <h3>Contact Us</h3>
-        <div className="contact-options">
-          <button className="contact-btn">
-            <span className="contact-icon">{Icons.help}</span>
-            <span>Chat with Support</span>
-          </button>
-          <button className="contact-btn">
-            <span className="contact-icon">{Icons.edit}</span>
-            <span>Send Email</span>
-          </button>
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1">
+          Contact Us
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Button variant="outline" className="h-auto justify-start gap-3 py-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/10 text-info">
+              {Icons.help}
+            </span>
+            <span className="font-medium">Chat with Support</span>
+          </Button>
+          <Button variant="outline" className="h-auto justify-start gap-3 py-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-positive/10 text-positive">
+              {Icons.edit}
+            </span>
+            <span className="font-medium">Send Email</span>
+          </Button>
         </div>
       </div>
     </div>
@@ -940,103 +1080,130 @@ const ReviewModal = ({ isOpen, onClose, order, onSubmit }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Rate Your Order</h2>
-          <button className="modal-close" onClick={onClose}>{Icons.close}</button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="order-review-info">
-            <p><strong>{order?.truck_name}</strong></p>
-            <p className="review-date">{formatDate(order?.created_at)}</p>
-          </div>
-          <div className="form-group">
-            <label>Your Rating</label>
-            <div className="star-rating">
+    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Rate Your Order</DialogTitle>
+          <DialogDescription>
+            <strong className="text-foreground">{order?.truck_name}</strong>
+            <br />
+            <span className="text-xs">{formatDate(order?.created_at)}</span>
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label>Your Rating</Label>
+            <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map(star => (
                 <button
                   key={star}
                   type="button"
-                  className={`star-btn ${star <= rating ? 'filled' : ''}`}
                   onClick={() => setRating(star)}
+                  className={cn(
+                    'h-9 w-9 flex items-center justify-center rounded-md transition-colors hover:bg-muted',
+                    star <= rating ? 'text-warning' : 'text-muted-foreground/40'
+                  )}
+                  aria-label={`Rate ${star} stars`}
                 >
                   {Icons.star}
                 </button>
               ))}
             </div>
           </div>
-          <div className="form-group">
-            <label>Your Review (Optional)</label>
-            <textarea
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="review-comment">Your Review (Optional)</Label>
+            <Textarea
+              id="review-comment"
               value={comment}
               onChange={e => setComment(e.target.value)}
-              placeholder="Share your experience..."
-              rows="4"
+              placeholder="Share your experience…"
+              rows={4}
             />
           </div>
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? 'Submitting...' : 'Submit Review'}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Submitting…' : 'Submit Review'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
 // Track Order Modal
 const TrackOrderModal = ({ isOpen, onClose, order }) => {
-  if (!isOpen) return null;
-
   const statusSteps = [
-    { status: 'pending', label: 'Order Placed', icon: Icons.check },
-    { status: 'confirmed', label: 'Confirmed', icon: Icons.check },
-    { status: 'preparing', label: 'Preparing', icon: Icons.loader },
-    { status: 'ready', label: 'Ready', icon: Icons.check },
-    { status: 'completed', label: 'Completed', icon: Icons.check },
+    { status: 'pending', label: 'Order Placed' },
+    { status: 'confirmed', label: 'Confirmed' },
+    { status: 'preparing', label: 'Preparing' },
+    { status: 'ready', label: 'Ready' },
+    { status: 'completed', label: 'Completed' },
   ];
 
   const currentStatusIndex = statusSteps.findIndex(s => s.status === order?.status);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content track-order-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Track Order</h2>
-          <button className="modal-close" onClick={onClose}>{Icons.close}</button>
-        </div>
-        <div className="track-order-content">
-          <div className="order-track-info">
-            <p><strong>{order?.truck_name}</strong></p>
-            <p>Order #{order?.id?.slice(0, 8)}</p>
-          </div>
-          <div className="status-timeline">
-            {statusSteps.map((step, index) => (
+    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Track Order</DialogTitle>
+          <DialogDescription>
+            <strong className="text-foreground">{order?.truck_name}</strong>
+            <br />
+            <span className="text-xs tabular-nums">Order #{order?.id?.slice(0, 8)}</span>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-2">
+          {statusSteps.map((step, index) => {
+            const completed = index <= currentStatusIndex;
+            const current = index === currentStatusIndex;
+            return (
               <div
                 key={step.status}
-                className={`status-step ${index <= currentStatusIndex ? 'completed' : ''} ${index === currentStatusIndex ? 'current' : ''}`}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg',
+                  current && 'bg-primary/5 border border-primary/20',
+                  completed && !current && 'opacity-100',
+                  !completed && 'opacity-50'
+                )}
               >
-                <div className="step-icon">{step.icon}</div>
-                <div className="step-label">{step.label}</div>
+                <span
+                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-full shrink-0 transition-colors',
+                    completed
+                      ? 'bg-positive text-positive-foreground'
+                      : 'bg-muted text-muted-foreground',
+                    current && 'bg-primary text-primary-foreground'
+                  )}
+                >
+                  {current ? (
+                    <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+                  ) : (
+                    <span className="h-4 w-4">{Icons.check}</span>
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    'text-sm font-medium',
+                    completed ? 'text-foreground' : 'text-muted-foreground'
+                  )}
+                >
+                  {step.label}
+                </span>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-        <div className="modal-actions">
-          <button className="btn-primary" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -1098,23 +1265,26 @@ const AddressModal = ({ isOpen, onClose, address, onSave, userId }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{address ? 'Edit Address' : 'Add New Address'}</h2>
-          <button className="modal-close" onClick={onClose}>{Icons.close}</button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
-          <div className="form-group">
-            <label>Label</label>
+    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{address ? 'Edit Address' : 'Add New Address'}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="addr-label">Label</Label>
             <select
+              id="addr-label"
               value={formData.label}
               onChange={e => setFormData({ ...formData, label: e.target.value })}
               required
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="">Select a label</option>
               <option value="Home">Home</option>
@@ -1122,9 +1292,10 @@ const AddressModal = ({ isOpen, onClose, address, onSave, userId }) => {
               <option value="Other">Other</option>
             </select>
           </div>
-          <div className="form-group">
-            <label>Address Line 1</label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="addr-line1">Address Line 1</Label>
+            <Input
+              id="addr-line1"
               type="text"
               value={formData.address_line1}
               onChange={e => setFormData({ ...formData, address_line1: e.target.value })}
@@ -1132,19 +1303,21 @@ const AddressModal = ({ isOpen, onClose, address, onSave, userId }) => {
               required
             />
           </div>
-          <div className="form-group">
-            <label>Address Line 2 (Optional)</label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="addr-line2">Address Line 2 (Optional)</Label>
+            <Input
+              id="addr-line2"
               type="text"
               value={formData.address_line2}
               onChange={e => setFormData({ ...formData, address_line2: e.target.value })}
               placeholder="Apt, Suite, Unit, etc."
             />
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>City</label>
-              <input
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <Label htmlFor="addr-city">City</Label>
+              <Input
+                id="addr-city"
                 type="text"
                 value={formData.city}
                 onChange={e => setFormData({ ...formData, city: e.target.value })}
@@ -1152,48 +1325,51 @@ const AddressModal = ({ isOpen, onClose, address, onSave, userId }) => {
                 required
               />
             </div>
-            <div className="form-group">
-              <label>State</label>
-              <input
-                type="text"
-                value={formData.state}
-                onChange={e => setFormData({ ...formData, state: e.target.value })}
-                placeholder="OR"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>ZIP Code</label>
-              <input
-                type="text"
-                value={formData.zip_code}
-                onChange={e => setFormData({ ...formData, zip_code: e.target.value })}
-                placeholder="97201"
-                required
-              />
+            <div className="grid grid-cols-2 gap-3 sm:contents">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="addr-state">State</Label>
+                <Input
+                  id="addr-state"
+                  type="text"
+                  value={formData.state}
+                  onChange={e => setFormData({ ...formData, state: e.target.value })}
+                  placeholder="OR"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="addr-zip">ZIP Code</Label>
+                <Input
+                  id="addr-zip"
+                  type="text"
+                  value={formData.zip_code}
+                  onChange={e => setFormData({ ...formData, zip_code: e.target.value })}
+                  placeholder="97201"
+                  required
+                />
+              </div>
             </div>
           </div>
-          <div className="form-group checkbox-group">
-            <label>
-              <input
-                type="checkbox"
-                checked={formData.is_default}
-                onChange={e => setFormData({ ...formData, is_default: e.target.checked })}
-              />
-              <span>Set as default address</span>
-            </label>
-          </div>
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.is_default}
+              onChange={e => setFormData({ ...formData, is_default: e.target.checked })}
+              className="h-4 w-4 rounded border-input accent-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+            <span className="text-sm">Set as default address</span>
+          </label>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : (address ? 'Update Address' : 'Add Address')}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Saving…' : (address ? 'Update Address' : 'Add Address')}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -1252,23 +1428,28 @@ const PaymentModal = ({ isOpen, onClose, payment, onSave, userId }) => {
     }
   };
 
-  if (!isOpen) return null;
+  const selectClass = 'h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{payment ? 'Edit Payment Method' : 'Add Payment Method'}</h2>
-          <button className="modal-close" onClick={onClose}>{Icons.close}</button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
-          <div className="form-group">
-            <label>Card Type</label>
+    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{payment ? 'Edit Payment Method' : 'Add Payment Method'}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="pay-type">Card Type</Label>
             <select
+              id="pay-type"
               value={formData.card_type}
               onChange={e => setFormData({ ...formData, card_type: e.target.value })}
               required
+              className={selectClass}
             >
               <option value="">Select card type</option>
               <option value="Visa">Visa</option>
@@ -1277,9 +1458,10 @@ const PaymentModal = ({ isOpen, onClose, payment, onSave, userId }) => {
               <option value="Discover">Discover</option>
             </select>
           </div>
-          <div className="form-group">
-            <label>Cardholder Name</label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="pay-name">Cardholder Name</Label>
+            <Input
+              id="pay-name"
               type="text"
               value={formData.cardholder_name}
               onChange={e => setFormData({ ...formData, cardholder_name: e.target.value })}
@@ -1287,9 +1469,10 @@ const PaymentModal = ({ isOpen, onClose, payment, onSave, userId }) => {
               required
             />
           </div>
-          <div className="form-group">
-            <label>Last 4 Digits</label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="pay-last4">Last 4 Digits</Label>
+            <Input
+              id="pay-last4"
               type="text"
               value={formData.last_four}
               onChange={e => setFormData({ ...formData, last_four: e.target.value })}
@@ -1299,13 +1482,15 @@ const PaymentModal = ({ isOpen, onClose, payment, onSave, userId }) => {
               required
             />
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Expiry Month</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="pay-month">Expiry Month</Label>
               <select
+                id="pay-month"
                 value={formData.expiry_month}
                 onChange={e => setFormData({ ...formData, expiry_month: parseInt(e.target.value) })}
                 required
+                className={selectClass}
               >
                 <option value="">MM</option>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
@@ -1315,12 +1500,14 @@ const PaymentModal = ({ isOpen, onClose, payment, onSave, userId }) => {
                 ))}
               </select>
             </div>
-            <div className="form-group">
-              <label>Expiry Year</label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="pay-year">Expiry Year</Label>
               <select
+                id="pay-year"
                 value={formData.expiry_year}
                 onChange={e => setFormData({ ...formData, expiry_year: parseInt(e.target.value) })}
                 required
+                className={selectClass}
               >
                 <option value="">YYYY</option>
                 {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
@@ -1331,27 +1518,26 @@ const PaymentModal = ({ isOpen, onClose, payment, onSave, userId }) => {
               </select>
             </div>
           </div>
-          <div className="form-group checkbox-group">
-            <label>
-              <input
-                type="checkbox"
-                checked={formData.is_default}
-                onChange={e => setFormData({ ...formData, is_default: e.target.checked })}
-              />
-              <span>Set as default payment method</span>
-            </label>
-          </div>
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.is_default}
+              onChange={e => setFormData({ ...formData, is_default: e.target.checked })}
+              className="h-4 w-4 rounded border-input accent-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+            <span className="text-sm">Set as default payment method</span>
+          </label>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : (payment ? 'Update Payment' : 'Add Payment')}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Saving…' : (payment ? 'Update Payment' : 'Add Payment')}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -1388,46 +1574,49 @@ const EditProfileModal = ({ isOpen, onClose, profile, onSave }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Edit Profile</h2>
-          <button className="modal-close" onClick={onClose}>{Icons.close}</button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
-          <div className="form-group">
-            <label>Name</label>
-            <input
+    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Profile</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-name">Name</Label>
+            <Input
+              id="edit-name"
               type="text"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               required
             />
           </div>
-          <div className="form-group">
-            <label>Phone</label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-phone">Phone</Label>
+            <Input
+              id="edit-phone"
               type="tel"
               value={formData.phone}
               onChange={e => setFormData({ ...formData, phone: e.target.value })}
               placeholder="(555) 123-4567"
             />
           </div>
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Saving…' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -1481,21 +1670,27 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Change Password</h2>
-          <button className="modal-close" onClick={onClose}>{Icons.close}</button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
-          <div className="form-group">
-            <label>New Password</label>
-            <input
+    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Change Password</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="rounded-md border border-positive/30 bg-positive/10 px-3 py-2 text-sm text-positive">
+              {success}
+            </div>
+          )}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="new-password">New Password</Label>
+            <Input
+              id="new-password"
               type="password"
               value={formData.newPassword}
               onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
@@ -1503,9 +1698,10 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
               minLength={6}
             />
           </div>
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="confirm-password">Confirm Password</Label>
+            <Input
+              id="confirm-password"
               type="password"
               value={formData.confirmPassword}
               onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -1513,17 +1709,17 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
               minLength={6}
             />
           </div>
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Updating...' : 'Update Password'}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Updating…' : 'Update Password'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
