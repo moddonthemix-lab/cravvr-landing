@@ -34,9 +34,56 @@ import PaymentsDashboard from './PaymentsDashboard';
 import CravvrPlusBilling from './CravvrPlusBilling';
 import { useCravvrSubscription } from '../../hooks/useCravvrSubscription';
 import TruckEditDialog from './TruckEditDialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { BarChart, BarList } from '@tremor/react';
+import { cn } from '@/lib/utils';
+import LoadingSplash from '../common/LoadingSplash';
 import './OwnerDashboard.css';
 import './KitchenDisplay.css';
 import './StripeOnboarding.css';
+
+// Maps order status (including the synthesized 'abandoned' status) to a Badge variant.
+const ORDER_STATUS_BADGE = {
+  new: 'info',
+  pending: 'info',
+  confirmed: 'info',
+  preparing: 'warning',
+  ready: 'positive',
+  completed: 'secondary',
+  cancelled: 'destructive',
+  rejected: 'destructive',
+  abandoned: 'outline',
+};
+
+const ORDER_STATUS_LABEL = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  preparing: 'Preparing',
+  ready: 'Ready',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  rejected: 'Rejected',
+  abandoned: 'Abandoned Cart',
+};
+
+const QUICK_ACTIONS = [
+  { key: 'trucks', label: 'Add New Truck', iconKey: 'plus', tone: 'positive' },
+  { key: 'menu', label: 'Update Menu', iconKey: 'edit', tone: 'warning' },
+  { key: 'analytics', label: 'View Reports', iconKey: 'chart', tone: 'info' },
+];
+
+// Tailwind chip color classes per accent tone. Defined as full strings so
+// Tailwind's content scanner picks them up at build time.
+const TONE_CHIP = {
+  positive: 'bg-positive/10 text-positive',
+  warning: 'bg-warning/10 text-warning',
+  info: 'bg-info/10 text-info',
+};
 
 // Overview Tab
 const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
@@ -49,104 +96,149 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
         <p>Here's what's happening with your trucks today.</p>
       </div>
 
-      <div className="stats-grid">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         {stats.map((stat, i) => (
-          <div className="stat-card" key={i}>
-            <div className="stat-icon" style={{ background: `${stat.color}15`, color: stat.color }}>
-              {stat.icon}
-            </div>
-            <div className="stat-info">
-              <span className="stat-value">{stat.value}</span>
-              <span className="stat-label">{stat.label}</span>
-            </div>
-            {stat.change && <span className="stat-change positive">{stat.change}</span>}
-          </div>
+          <Card key={i} className="overflow-hidden">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-lg shrink-0"
+                style={{ background: `${stat.color}15`, color: stat.color }}
+              >
+                {stat.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-2xl font-bold tracking-tight leading-tight">{stat.value}</div>
+                <div className="text-sm text-muted-foreground truncate">{stat.label}</div>
+              </div>
+              {stat.change && <Badge variant="positive">{stat.change}</Badge>}
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="content-grid">
-        <div className="card">
-          <div className="card-header">
-            <h3>Recent Orders</h3>
-            <button className="btn-link" onClick={() => setActiveTab('orders')}>View All</button>
-          </div>
-          <div className="orders-list">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Recent Orders</CardTitle>
+            <button
+              className="text-sm font-medium text-primary hover:underline"
+              onClick={() => setActiveTab('orders')}
+            >
+              View All
+            </button>
+          </CardHeader>
+          <CardContent>
             {recentOrders.length === 0 ? (
-              <p className="empty-state">No orders yet</p>
+              <p className="text-sm text-muted-foreground py-4">No orders yet</p>
             ) : (
-              recentOrders.map(order => {
-                const isAbandoned = order.status === 'cancelled' && order.payment_status === 'failed';
-                const displayStatus = isAbandoned ? 'abandoned' : order.status;
-                const displayLabel = isAbandoned ? 'abandoned cart' : order.status;
-                return (
-                  <div className="order-item" key={order.id}>
-                    <div className="order-info">
-                      <span className="order-id">{order.order_number}</span>
-                      <span className="order-customer">{order.customer_name || 'Customer'}</span>
-                    </div>
-                    <div className="order-details">
-                      <span className="order-total">${parseFloat(order.total).toFixed(2)}</span>
-                      <span className={`order-status ${displayStatus}`}>{displayLabel}</span>
-                    </div>
-                  </div>
-                );
-              })
+              <ul className="divide-y divide-border">
+                {recentOrders.map(order => {
+                  const isAbandoned =
+                    order.status === 'cancelled' && order.payment_status === 'failed';
+                  const displayStatus = isAbandoned ? 'abandoned' : order.status;
+                  const displayLabel = isAbandoned ? 'abandoned cart' : order.status;
+                  return (
+                    <li key={order.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-semibold text-sm">{order.order_number}</span>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {order.customer_name || 'Customer'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="font-semibold text-sm tabular-nums">
+                          ${parseFloat(order.total).toFixed(2)}
+                        </span>
+                        <Badge variant={ORDER_STATUS_BADGE[displayStatus] || 'secondary'}>
+                          {displayLabel}
+                        </Badge>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="card">
-          <div className="card-header">
-            <h3>Quick Actions</h3>
-          </div>
-          <div className="quick-actions">
-            <button className="qa-btn qa-btn--add" onClick={() => setActiveTab('trucks')}>
-              <span className="qa-btn-chip">{Icons.plus}</span>
-              <span className="qa-btn-label">Add New Truck</span>
-              <span className="qa-btn-arrow">{Icons.chevronRight}</span>
-            </button>
-            <button className="qa-btn qa-btn--menu" onClick={() => setActiveTab('menu')}>
-              <span className="qa-btn-chip">{Icons.edit}</span>
-              <span className="qa-btn-label">Update Menu</span>
-              <span className="qa-btn-arrow">{Icons.chevronRight}</span>
-            </button>
-            <button className="qa-btn qa-btn--reports" onClick={() => setActiveTab('analytics')}>
-              <span className="qa-btn-chip">{Icons.chart}</span>
-              <span className="qa-btn-label">View Reports</span>
-              <span className="qa-btn-arrow">{Icons.chevronRight}</span>
-            </button>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2">
+              {QUICK_ACTIONS.map(action => (
+                <button
+                  key={action.key}
+                  onClick={() => setActiveTab(action.key)}
+                  className="group flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:bg-muted hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <span
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg shrink-0 ${TONE_CHIP[action.tone]}`}
+                  >
+                    {Icons[action.iconKey]}
+                  </span>
+                  <span className="flex-1 font-medium text-sm">{action.label}</span>
+                  <span className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5">
+                    {Icons.chevronRight}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <h3>My Trucks</h3>
-          <button className="btn-link" onClick={() => setActiveTab('trucks')}>Manage</button>
-        </div>
-        <div className="trucks-preview">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle>My Trucks</CardTitle>
+          <button
+            className="text-sm font-medium text-primary hover:underline"
+            onClick={() => setActiveTab('trucks')}
+          >
+            Manage
+          </button>
+        </CardHeader>
+        <CardContent>
           {trucks.length === 0 ? (
-            <p className="empty-state">No trucks yet. Add your first truck to get started!</p>
+            <p className="text-sm text-muted-foreground py-4">
+              No trucks yet. Add your first truck to get started!
+            </p>
           ) : (
-            trucks.map(truck => (
-              <div className="truck-preview-card" key={truck.id}>
-                <img src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80'} alt={truck.name} />
-                <div className="truck-preview-info">
-                  <h4>{truck.name}</h4>
-                  <span className="owner-truck-cuisine">{truck.cuisine}</span>
-                  <div className="truck-stats">
-                    <span className="truck-rating">{Icons.star} {truck.average_rating || 'N/A'}</span>
-                    <span className="truck-orders">{truck.today_orders || 0} orders today</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {trucks.map(truck => (
+                <div
+                  key={truck.id}
+                  className="flex items-center gap-3 rounded-lg border bg-card p-3"
+                >
+                  <img
+                    src={
+                      truck.image_url ||
+                      'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80'
+                    }
+                    alt={truck.name}
+                    className="h-14 w-14 rounded-md object-cover shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm truncate">{truck.name}</h4>
+                    <p className="text-xs text-muted-foreground truncate">{truck.cuisine}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="h-3 w-3 shrink-0 text-warning">{Icons.star}</span>
+                        {truck.average_rating || 'N/A'}
+                      </span>
+                      <span>{truck.today_orders || 0} today</span>
+                    </div>
                   </div>
+                  <Badge variant={truck.is_open ? 'positive' : 'secondary'}>
+                    {truck.is_open ? 'Open' : 'Closed'}
+                  </Badge>
                 </div>
-                <span className={`truck-status ${truck.is_open ? 'active' : 'inactive'}`}>
-                  {truck.is_open ? 'Open' : 'Closed'}
-                </span>
-              </div>
-            ))
+              ))}
+            </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -192,9 +284,10 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
           <h1>My Trucks</h1>
           <p>Manage your food trucks and their details.</p>
         </div>
-        <button className="btn-primary" onClick={openAddForm}>
-          {Icons.plus} Add Truck
-        </button>
+        <Button onClick={openAddForm} className="gap-2">
+          <span className="h-4 w-4 shrink-0">{Icons.plus}</span>
+          Add Truck
+        </Button>
       </div>
 
       <TruckEditDialog
@@ -206,71 +299,135 @@ const TrucksTab = ({ trucks, setTrucks, onTruckCreate, onTruckUpdate, onTruckDel
       />
 
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading trucks...</div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
+          <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+          Loading trucks...
+        </div>
       ) : (
-        <div className="owner-trucks-grid">
-          {trucks.map(truck => (
-            <div className="owner-truck-card" key={truck.id}>
-              <div className="owner-truck-image">
-                <img src={truck.image_url || 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80'} alt={truck.name} />
-                <span className={`owner-status-badge ${truck.is_open ? 'active' : 'inactive'}`}>
-                  {truck.is_open ? 'Open' : 'Closed'}
-                </span>
-              </div>
-              <div className="owner-truck-content">
-                <h3>{truck.name}</h3>
-                <p className="owner-truck-cuisine">{truck.cuisine} {truck.estimated_prep_time && `• ${truck.estimated_prep_time}`}</p>
-                <div className="owner-truck-meta">
-                  <span>{Icons.star} {truck.average_rating || 'N/A'} ({truck.review_count || 0} reviews)</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {trucks.map(truck => {
+            const accepting = truck.accepting_orders !== false;
+            return (
+              <Card key={truck.id} className="overflow-hidden flex flex-col">
+                <div className="relative aspect-[16/9] bg-muted">
+                  <img
+                    src={
+                      truck.image_url ||
+                      'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=400&q=80'
+                    }
+                    alt={truck.name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <Badge
+                    variant={truck.is_open ? 'positive' : 'secondary'}
+                    className="absolute top-3 right-3 shadow-sm"
+                  >
+                    {truck.is_open ? 'Open' : 'Closed'}
+                  </Badge>
                 </div>
-                <div className="owner-truck-stats-row">
-                  <div className="owner-mini-stat">
-                    <span className="owner-mini-stat-value">{truck.total_orders || 0}</span>
-                    <span className="owner-mini-stat-label">Total Orders</span>
-                  </div>
-                  <div className="owner-mini-stat">
-                    <span className="owner-mini-stat-value">${truck.total_revenue?.toFixed(2) || '0.00'}</span>
-                    <span className="owner-mini-stat-label">Total Revenue</span>
-                  </div>
-                  <div className="owner-mini-stat">
-                    <span className="owner-mini-stat-value">${truck.today_revenue?.toFixed(2) || '0.00'}</span>
-                    <span className="owner-mini-stat-label">Today</span>
-                  </div>
-                </div>
-              </div>
-              <div className="owner-truck-actions">
-                <button
-                  className={`owner-btn-action ${truck.accepting_orders !== false ? 'success' : 'warning'}`}
-                  onClick={async () => {
-                    const newValue = !(truck.accepting_orders !== false);
-                    await setTruckAcceptingOrders(truck.id, newValue);
-                    setTrucks(prev => prev.map(t => t.id === truck.id ? { ...t, accepting_orders: newValue } : t));
-                  }}
-                >
-                  {truck.accepting_orders !== false ? '\u2713 Accepting Orders' : '\u23F8 Orders Paused'}
-                </button>
-                <button className="owner-btn-action edit" onClick={() => openEditForm(truck)}>
-                  {Icons.edit} Edit
-                </button>
-                <button className="owner-btn-action danger" onClick={() => handleDelete(truck.id)}>
-                  {Icons.trash} Delete
-                </button>
-              </div>
-              <div className="owner-truck-payment-setup" style={{ padding: '12px 16px', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
-                <PaymentProcessorSetup
-                  truck={truck}
-                  onUpdate={() => onTruckUpdate && onTruckUpdate(truck.id, {})}
-                />
-              </div>
-            </div>
-          ))}
 
-          <div className="owner-truck-card owner-add-card" onClick={openAddForm}>
-            <div className="owner-add-card-content">
+                <CardContent className="flex flex-col gap-3 p-5 flex-1">
+                  <div>
+                    <h3 className="font-semibold text-base leading-tight">{truck.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {truck.cuisine}
+                      {truck.estimated_prep_time && ` • ${truck.estimated_prep_time}`}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <span className="h-4 w-4 shrink-0 text-warning">{Icons.star}</span>
+                    <span className="font-medium text-foreground">
+                      {truck.average_rating || 'N/A'}
+                    </span>
+                    <span>({truck.review_count || 0} reviews)</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/50 p-3">
+                    <div className="flex flex-col">
+                      <span className="text-base font-bold tabular-nums">
+                        {truck.total_orders || 0}
+                      </span>
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Total Orders
+                      </span>
+                    </div>
+                    <div className="flex flex-col border-l border-border pl-2">
+                      <span className="text-base font-bold tabular-nums">
+                        ${truck.total_revenue?.toFixed(2) || '0.00'}
+                      </span>
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Revenue
+                      </span>
+                    </div>
+                    <div className="flex flex-col border-l border-border pl-2">
+                      <span className="text-base font-bold tabular-nums text-positive">
+                        ${truck.today_revenue?.toFixed(2) || '0.00'}
+                      </span>
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                        Today
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant={accepting ? 'secondary' : 'outline'}
+                    size="sm"
+                    className={`w-full justify-center ${accepting ? 'bg-positive/10 text-positive hover:bg-positive/15' : 'bg-warning/10 text-warning hover:bg-warning/15 border-warning/20'}`}
+                    onClick={async () => {
+                      const newValue = !accepting;
+                      await setTruckAcceptingOrders(truck.id, newValue);
+                      setTrucks(prev =>
+                        prev.map(t =>
+                          t.id === truck.id ? { ...t, accepting_orders: newValue } : t
+                        )
+                      );
+                    }}
+                  >
+                    {accepting ? '\u2713 Accepting Orders' : '\u23F8 Orders Paused'}
+                  </Button>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5"
+                      onClick={() => openEditForm(truck)}
+                    >
+                      <span className="h-4 w-4 shrink-0">{Icons.edit}</span>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleDelete(truck.id)}
+                    >
+                      <span className="h-4 w-4 shrink-0">{Icons.trash}</span>
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+
+                <div className="border-t bg-muted/30 px-5 py-3">
+                  <PaymentProcessorSetup
+                    truck={truck}
+                    onUpdate={() => onTruckUpdate && onTruckUpdate(truck.id, {})}
+                  />
+                </div>
+              </Card>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={openAddForm}
+            className="group flex min-h-[280px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-card/50 p-6 text-muted-foreground transition-colors hover:border-primary hover:text-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-primary/10">
               {Icons.plus}
-              <span>Add New Truck</span>
-            </div>
-          </div>
+            </span>
+            <span className="font-medium">Add New Truck</span>
+          </button>
         </div>
       )}
     </div>
@@ -286,6 +443,7 @@ const MenuTab = ({ menuItems, setMenuItems, refetchMenu, trucks, selectedTruckId
   const [editingItem, setEditingItem] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { reordering, onDragStart, onDragOver, onDrop } = useMenuDragReorder(menuItems, setMenuItems, {
     onSuccess: () => showToast('Order saved', 'success'),
@@ -296,12 +454,25 @@ const MenuTab = ({ menuItems, setMenuItems, refetchMenu, trucks, selectedTruckId
     },
   });
 
-  const categories = ['all', ...new Set(menuItems.filter(item => item.category).map(item => item.category))];
+  const categoriesRaw = [...new Set(menuItems.filter(item => item.category).map(item => item.category))];
+  const categories = ['all', ...categoriesRaw];
 
-  const filteredItems = activeCategory === 'all'
+  const itemsByCategory = activeCategory === 'all'
     ? menuItems
     : menuItems.filter(item => item.category === activeCategory);
-  const dragEnabled = activeCategory === 'all';
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredItems = normalizedQuery
+    ? itemsByCategory.filter(item =>
+        item.name?.toLowerCase().includes(normalizedQuery) ||
+        item.description?.toLowerCase().includes(normalizedQuery) ||
+        item.category?.toLowerCase().includes(normalizedQuery))
+    : itemsByCategory;
+  const dragEnabled = activeCategory === 'all' && !normalizedQuery;
+
+  const totalCount = menuItems.length;
+  const availableCount = menuItems.filter(i => i.is_available).length;
+  const unavailableCount = totalCount - availableCount;
+  const categoryCount = categoriesRaw.length;
 
   const closeForm = () => {
     setShowForm(false);
@@ -361,62 +532,132 @@ const MenuTab = ({ menuItems, setMenuItems, refetchMenu, trucks, selectedTruckId
     }
   };
 
+  const stats = [
+    { label: 'Total items', value: totalCount, tone: 'info', iconKey: 'menu' },
+    { label: 'Available', value: availableCount, tone: 'positive', iconKey: 'check' },
+    { label: 'Unavailable', value: unavailableCount, tone: 'warning', iconKey: 'alertCircle' },
+    { label: 'Categories', value: categoryCount, tone: 'info', iconKey: 'filter' },
+  ];
+
+  const headerActions = (
+    <div className="flex flex-wrap items-center gap-2">
+      {trucks.length > 0 && (
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          value={selectedTruckId || ''}
+          onChange={(e) => onTruckSelect(e.target.value)}
+        >
+          <option value="">Select a truck</option>
+          {trucks.map(truck => (
+            <option key={truck.id} value={truck.id}>{truck.name}</option>
+          ))}
+        </select>
+      )}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setShowImport(true)}
+        disabled={!selectedTruckId}
+        className="gap-1.5"
+      >
+        <span className="h-4 w-4">{Icons.plus}</span>
+        Import CSV
+      </Button>
+      <Button
+        size="sm"
+        onClick={() => { setEditingItem(null); setShowForm(true); }}
+        disabled={!selectedTruckId}
+        className="gap-1.5"
+      >
+        <span className="h-4 w-4">{Icons.plus}</span>
+        Add Item
+      </Button>
+    </div>
+  );
+
   return (
     <div className="tab-content">
-      <div className="content-header">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1>Menu Management</h1>
-          <p>Add, edit, and manage your menu items.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Menu Management</h1>
+          <p className="text-sm text-muted-foreground">Add, edit, and manage your menu items.</p>
         </div>
-        <div className="header-actions">
-          {trucks.length > 0 && (
-            <select
-              className="truck-select"
-              value={selectedTruckId || ''}
-              onChange={(e) => onTruckSelect(e.target.value)}
-            >
-              <option value="">Select a truck</option>
-              {trucks.map(truck => (
-                <option key={truck.id} value={truck.id}>{truck.name}</option>
-              ))}
-            </select>
-          )}
-          <button
-            className="btn-secondary"
-            onClick={() => setShowImport(true)}
-            disabled={!selectedTruckId}
-          >
-            {Icons.plus} Import CSV
-          </button>
-          <button
-            className="btn-primary"
-            onClick={() => { setEditingItem(null); setShowForm(true); }}
-            disabled={!selectedTruckId}
-          >
-            {Icons.plus} Add Item
-          </button>
-        </div>
+        {headerActions}
       </div>
 
       {!selectedTruckId ? (
-        <div className="empty-state-card">
-          <p>Please select a truck to manage its menu</p>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+              <span className="h-5 w-5">{Icons.menu}</span>
+            </div>
+            <h3 className="text-base font-semibold">Select a truck</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Choose a truck above to manage its menu.</p>
+          </CardContent>
+        </Card>
       ) : (
         <>
-          {categories.length > 1 && (
-            <div className="category-tabs">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  className={`category-tab ${activeCategory === cat ? 'active' : ''}`}
-                  onClick={() => setActiveCategory(cat)}
-                >
-                  {cat === 'all' ? 'All Items' : cat}
-                </button>
-              ))}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            {stats.map(stat => (
+              <Card key={stat.label}>
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg shrink-0', TONE_CHIP[stat.tone])}>
+                    <span className="h-4 w-4">{Icons[stat.iconKey] || Icons.menu}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xl font-bold tracking-tight leading-tight tabular-nums">{stat.value}</div>
+                    <div className="text-xs text-muted-foreground truncate">{stat.label}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3 mb-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full lg:max-w-xs">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+                {Icons.search}
+              </span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search items, descriptions, categories…"
+                className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              />
             </div>
-          )}
+
+            {categories.length > 1 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {categories.map(cat => {
+                  const isActive = activeCategory === cat;
+                  const count = cat === 'all' ? totalCount : menuItems.filter(i => i.category === cat).length;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                        isActive
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                      )}
+                    >
+                      {cat === 'all' ? 'All items' : cat}
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-px text-[10px] font-semibold tabular-nums',
+                          isActive ? 'bg-white/25 text-white' : 'bg-muted text-muted-foreground'
+                        )}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {showForm && (
             <MenuItemForm
@@ -438,64 +679,162 @@ const MenuTab = ({ menuItems, setMenuItems, refetchMenu, trucks, selectedTruckId
           )}
 
           {loading ? (
-            <div className="loading-state">{Icons.loader} Loading menu items...</div>
+            <Card>
+              <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+                <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+                Loading menu items…
+              </CardContent>
+            </Card>
           ) : filteredItems.length === 0 ? (
-            <div className="empty-state-card">
-              <p>No menu items yet. Add your first item to get started!</p>
-            </div>
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+                  <span className="h-5 w-5">{Icons.menu}</span>
+                </div>
+                <h3 className="text-base font-semibold">
+                  {normalizedQuery ? 'No matches' : 'No menu items yet'}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {normalizedQuery
+                    ? 'Try a different search term or clear the filter.'
+                    : 'Add your first item to get started.'}
+                </p>
+                {!normalizedQuery && (
+                  <Button
+                    size="sm"
+                    onClick={() => { setEditingItem(null); setShowForm(true); }}
+                    className="mt-4 gap-1.5"
+                  >
+                    <span className="h-4 w-4">{Icons.plus}</span>
+                    Add Item
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ) : (
-            <div className={`menu-grid ${reordering ? 'is-reordering' : ''}`}>
+            <div
+              className={cn(
+                'grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 transition-opacity',
+                reordering && 'opacity-60 pointer-events-none'
+              )}
+            >
               {filteredItems.map(item => (
                 <div
-                  className={`menu-item-card ${!item.is_available ? 'unavailable' : ''}`}
                   key={item.id}
                   onDragOver={dragEnabled ? onDragOver : undefined}
                   onDrop={dragEnabled ? onDrop(item.id) : undefined}
-                >
-                  {dragEnabled && (
-                    <span
-                      className="menu-card-drag-handle"
-                      draggable
-                      onDragStart={onDragStart(item.id)}
-                      title="Drag to reorder"
-                    >
-                      ⋮⋮
-                    </span>
+                  className={cn(
+                    'group relative flex flex-col gap-3 transition-all',
+                    !item.is_available && 'opacity-60'
                   )}
-                  <div className="menu-item-image">
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : item.emoji ? (
-                      <div className="menu-item-emoji">{item.emoji}</div>
-                    ) : (
-                      <div className="menu-item-placeholder">{Icons.menu}</div>
-                    )}
-                  </div>
-                  <div className="menu-item-content">
-                    <div className="menu-item-header">
-                      <h4>{item.name}</h4>
-                      <span className="menu-item-price">${parseFloat(item.price).toFixed(2)}</span>
-                    </div>
-                    {item.category && <span className="menu-item-category">{item.category}</span>}
-                    {item.description && <p className="menu-item-desc">{item.description}</p>}
-                    <div className="menu-item-actions">
-                      <label className="toggle">
-                        <input
-                          type="checkbox"
-                          checked={item.is_available}
-                          onChange={() => toggleAvailability(item)}
+                >
+                  <div className="relative">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 shadow-sm ring-1 ring-black/5 transition-shadow group-hover:shadow-md">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                         />
-                        <span className="toggle-slider"></span>
-                        <span className="toggle-label">{item.is_available ? 'Available' : 'Unavailable'}</span>
-                      </label>
-                      <div className="action-buttons">
-                        <button className="btn-icon small" onClick={() => openEditForm(item)}>
-                          {Icons.edit}
-                        </button>
-                        <button className="btn-icon small danger" onClick={() => handleDelete(item.id)}>
-                          {Icons.trash}
-                        </button>
-                      </div>
+                      ) : item.emoji ? (
+                        <div className="flex h-full w-full items-center justify-center text-6xl">{item.emoji}</div>
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                          <span className="h-10 w-10 opacity-40">{Icons.image || Icons.menu}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {dragEnabled && (
+                      <span
+                        draggable
+                        onDragStart={onDragStart(item.id)}
+                        title="Drag to reorder"
+                        className="absolute top-2 left-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 backdrop-blur text-muted-foreground shadow-md cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity select-none text-sm font-bold tracking-tighter"
+                      >
+                        ⋮⋮
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={item.is_available}
+                      aria-label={item.is_available ? 'Mark as unavailable' : 'Mark as available'}
+                      onClick={() => toggleAvailability(item)}
+                      className={cn(
+                        'absolute top-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 backdrop-blur shadow-md transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                        item.is_available ? 'text-primary' : 'text-muted-foreground'
+                      )}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill={item.is_available ? 'currentColor' : 'none'}
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-5 w-5"
+                      >
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 px-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h4 className="font-bold text-base leading-tight truncate">{item.name}</h4>
+                      <span className="text-base font-bold tabular-nums shrink-0">
+                        ${parseFloat(item.price).toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      {item.category && (
+                        <>
+                          <span className="capitalize">{item.category}</span>
+                          <span className="text-border">•</span>
+                        </>
+                      )}
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-1 font-medium',
+                          item.is_available ? 'text-positive' : 'text-muted-foreground'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'h-1.5 w-1.5 rounded-full',
+                            item.is_available ? 'bg-positive' : 'bg-muted-foreground'
+                          )}
+                        />
+                        {item.is_available ? 'Available' : 'Hidden'}
+                      </span>
+                    </div>
+
+                    {item.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-1 leading-snug">
+                        {item.description}
+                      </p>
+                    )}
+
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openEditForm(item)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <span className="h-3.5 w-3.5">{Icons.edit}</span>
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item.id)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <span className="h-3.5 w-3.5">{Icons.trash}</span>
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -509,42 +848,31 @@ const MenuTab = ({ menuItems, setMenuItems, refetchMenu, trucks, selectedTruckId
 };
 
 // Orders Tab
+const ORDER_FILTER_KEYS = [
+  'all',
+  'pending',
+  'confirmed',
+  'preparing',
+  'ready',
+  'completed',
+  'rejected',
+  'abandoned',
+];
+
+// Cancelled-with-failed-payment means the customer started online checkout
+// but never submitted a card — display these as "Abandoned" so they don't
+// get conflated with real owner/customer cancellations of placed orders.
+const getDerivedOrderStatus = (o) => {
+  if (o.status === 'cancelled' && o.payment_status === 'failed') return 'abandoned';
+  return o.status;
+};
+
 const OrdersTab = ({ orders, loading }) => {
   const [filter, setFilter] = useState('all');
 
-  // Cancelled-with-failed-payment means the customer started online checkout
-  // but never submitted a card — display these as "Abandoned" so they don't
-  // get conflated with real owner/customer cancellations of placed orders.
-  const getDerivedStatus = (o) => {
-    if (o.status === 'cancelled' && o.payment_status === 'failed') return 'abandoned';
-    return o.status;
-  };
-
-  const statusColors = {
-    pending: '#6366f1',
-    confirmed: '#3b82f6',
-    preparing: '#f59e0b',
-    ready: '#16a34a',
-    completed: '#64748b',
-    cancelled: '#ef4444',
-    rejected: '#ef4444',
-    abandoned: '#94a3b8',
-  };
-
-  const statusLabels = {
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    preparing: 'Preparing',
-    ready: 'Ready',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-    rejected: 'Rejected',
-    abandoned: 'Abandoned Cart',
-  };
-
   const filteredOrders = filter === 'all'
     ? orders
-    : orders.filter(o => getDerivedStatus(o) === filter);
+    : orders.filter(o => getDerivedOrderStatus(o) === filter);
 
   return (
     <div className="tab-content">
@@ -555,63 +883,100 @@ const OrdersTab = ({ orders, loading }) => {
         </div>
       </div>
 
-      <div className="orders-filters">
-        {['all', 'pending', 'confirmed', 'preparing', 'ready', 'completed', 'rejected', 'abandoned'].map(status => (
-          <button
-            key={status}
-            className={`filter-btn ${filter === status ? 'active' : ''}`}
-            onClick={() => setFilter(status)}
-          >
-            {status === 'all' ? 'All Orders' : statusLabels[status]}
-            {status !== 'all' && (
-              <span className="filter-count" style={{ background: statusColors[status] }}>
-                {orders.filter(o => getDerivedStatus(o) === status).length}
+      <div className="flex flex-wrap items-center gap-1.5 mb-5">
+        {ORDER_FILTER_KEYS.map(status => {
+          const isActive = filter === status;
+          const count = status === 'all'
+            ? orders.length
+            : orders.filter(o => getDerivedOrderStatus(o) === status).length;
+          return (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                isActive
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
+              )}
+            >
+              {status === 'all' ? 'All Orders' : ORDER_STATUS_LABEL[status]}
+              <span
+                className={cn(
+                  'rounded-full px-1.5 py-px text-[10px] font-semibold tabular-nums',
+                  isActive ? 'bg-white/25 text-white' : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {count}
               </span>
-            )}
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading orders...</div>
+        <Card>
+          <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+            <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
+            Loading orders…
+          </CardContent>
+        </Card>
       ) : filteredOrders.length === 0 ? (
-        <div className="empty-state-card">
-          <p>{filter === 'all' ? 'No orders yet' : `No ${filter} orders`}</p>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+              <span className="h-5 w-5">{Icons.orders}</span>
+            </div>
+            <h3 className="text-base font-semibold">
+              {filter === 'all' ? 'No orders yet' : `No ${filter} orders`}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {filter === 'all'
+                ? 'Orders placed by customers will appear here.'
+                : 'Try a different filter.'}
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="orders-table-wrapper">
-          <table className="orders-table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Time</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map(order => {
-                const derived = getDerivedStatus(order);
-                return (
-                  <tr key={order.id}>
-                    <td className="order-id-cell">{order.order_number}</td>
-                    <td>{order.customer_name || 'Customer'}</td>
-                    <td>{order.item_count || 0} items</td>
-                    <td className="order-total-cell">${parseFloat(order.total).toFixed(2)}</td>
-                    <td className="order-time-cell">{formatRelativeTime(order.created_at, 'minutes')}</td>
-                    <td>
-                      <span className="status-pill" style={{ background: `${statusColors[derived]}20`, color: statusColors[derived] }}>
-                        {statusLabels[derived] || derived}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3">Order ID</th>
+                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">Items</th>
+                  <th className="px-4 py-3">Total</th>
+                  <th className="px-4 py-3">Time</th>
+                  <th className="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredOrders.map(order => {
+                  const derived = getDerivedOrderStatus(order);
+                  return (
+                    <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-semibold">{order.order_number}</td>
+                      <td className="px-4 py-3">{order.customer_name || 'Customer'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{order.item_count || 0} items</td>
+                      <td className="px-4 py-3 font-semibold tabular-nums">
+                        ${parseFloat(order.total).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                        {formatRelativeTime(order.created_at, 'minutes')}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={ORDER_STATUS_BADGE[derived] || 'secondary'}>
+                          {ORDER_STATUS_LABEL[derived] || derived}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
   );
@@ -703,7 +1068,6 @@ const AnalyticsTab = ({ trucks, orders }) => {
   };
 
   const chartData = getChartData();
-  const maxRevenue = Math.max(...chartData.map(d => d.revenue), 1);
   const totalRevenue = periodOrders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
   const totalOrders = periodOrders.length;
 
@@ -731,6 +1095,14 @@ const AnalyticsTab = ({ trucks, orders }) => {
 
   const chartTitle = period === 'week' ? 'Daily Revenue' : period === 'year' ? 'Monthly Revenue' : 'Weekly Revenue';
 
+  // Tremor BarChart expects data with a categorical axis key + value keys.
+  const chartDataForTremor = chartData.map(d => ({ date: d.label, Revenue: d.revenue }));
+
+  // Tremor BarList expects { name, value } items.
+  const truckPerformanceData = trucks
+    .map(t => ({ name: t.name, value: Math.round(t.today_revenue || 0) }))
+    .sort((a, b) => b.value - a.value);
+
   return (
     <div className="tab-content">
       <div className="content-header">
@@ -738,9 +1110,9 @@ const AnalyticsTab = ({ trucks, orders }) => {
           <h1>Analytics</h1>
           <p>Track your performance and insights.</p>
         </div>
-        <div className="analytics-period-controls">
+        <div className="flex flex-wrap items-center gap-2">
           <select
-            className="period-select"
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
           >
@@ -750,121 +1122,140 @@ const AnalyticsTab = ({ trucks, orders }) => {
             <option value="year" disabled={!isPlus && !subLoading}>This Year{lockSuffix}</option>
           </select>
           {!isPlus && !subLoading && (
-            <button
-              type="button"
-              className="btn-primary analytics-upgrade-btn"
+            <Button
+              size="sm"
               onClick={handleUpgrade}
               disabled={upgrading}
             >
               {upgrading
                 ? 'Loading…'
                 : `Unlock Cravvr Go${plusPriceLabel ? ` — ${plusPriceLabel}` : ''}`}
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
-      <div className="analytics-grid">
-        <div className="card chart-card">
-          <div className="card-header">
-            <h3>{chartTitle}</h3>
-            <span className="chart-total">${totalRevenue.toFixed(0)} total</span>
-          </div>
-          <div className="bar-chart">
-            {chartData.map((d, i) => (
-              <div className="bar-group" key={i}>
-                <div
-                  className="bar"
-                  style={{ height: `${maxRevenue > 0 ? (d.revenue / maxRevenue) * 100 : 0}%` }}
-                >
-                  <span className="bar-value">${d.revenue.toFixed(0)}</span>
-                </div>
-                <span className="bar-label">{d.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>{chartTitle}</CardTitle>
+            <span className="text-sm font-semibold tabular-nums text-positive">
+              ${totalRevenue.toFixed(0)} total
+            </span>
+          </CardHeader>
+          <CardContent>
+            <BarChart
+              data={chartDataForTremor}
+              index="date"
+              categories={['Revenue']}
+              colors={['rose']}
+              valueFormatter={(v) => `$${v.toFixed(0)}`}
+              yAxisWidth={48}
+              showLegend={false}
+              className="h-64"
+            />
+          </CardContent>
+        </Card>
 
-        <div className="card">
-          <div className="card-header">
-            <h3>Truck Performance</h3>
-          </div>
-          <div className="top-items-list">
-            {trucks.length === 0 ? (
-              <p className="empty-state">No trucks yet</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Truck Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {truckPerformanceData.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No trucks yet</p>
             ) : (
-              trucks.map((truck, i) => (
-                <div className="top-item" key={truck.id}>
-                  <span className="top-item-rank">#{i + 1}</span>
-                  <div className="top-item-info">
-                    <span className="top-item-name">{truck.name}</span>
-                    <span className="top-item-orders">{truck.today_orders || 0} orders today</span>
-                  </div>
-                  <span className="top-item-revenue">${(truck.today_revenue || 0).toFixed(0)}</span>
-                </div>
-              ))
+              <BarList
+                data={truckPerformanceData}
+                valueFormatter={(v) => `$${v}`}
+                color="rose"
+                className="text-sm"
+              />
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="card">
-          <div className="card-header">
-            <h3>Performance Metrics</h3>
-          </div>
-          <div className="metrics-list">
-            <div className="metric-item">
-              <span className="metric-label">Average Order Value</span>
-              <span className="metric-value">${avgOrderValue.toFixed(2)}</span>
-            </div>
-            <div className="metric-item">
-              <span className="metric-label">Orders Per Day</span>
-              <span className="metric-value">{ordersPerDay}</span>
-            </div>
-            <div className="metric-item">
-              <span className="metric-label">{periodLabels[period]} Orders</span>
-              <span className="metric-value">{totalOrders}</span>
-            </div>
-            <div className="metric-item">
-              <span className="metric-label">Active Trucks</span>
-              <span className="metric-value">{trucks.filter(t => t.is_open).length}/{trucks.length}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h3>Insights</h3>
-          </div>
-          <div className="insights-list">
-            <div className="insight-item">
-              <div className="insight-icon peak">{Icons.chart}</div>
-              <div className="insight-content">
-                <span className="insight-title">Total Orders</span>
-                <span className="insight-value">{orders.length} all time</span>
-              </div>
-            </div>
-            {bestTruck && (
-              <div className="insight-item">
-                <div className="insight-icon location">{Icons.truck}</div>
-                <div className="insight-content">
-                  <span className="insight-title">Best Performer Today</span>
-                  <span className="insight-value">{bestTruck.name}</span>
-                </div>
-              </div>
-            )}
-            <div className="insight-item">
-              <div className="insight-icon rating">{Icons.star}</div>
-              <div className="insight-content">
-                <span className="insight-title">Average Rating</span>
-                <span className="insight-value">
-                  {trucks.filter(t => t.average_rating).length > 0
-                    ? (trucks.filter(t => t.average_rating).reduce((sum, t) => sum + parseFloat(t.average_rating), 0) / trucks.filter(t => t.average_rating).length).toFixed(1)
-                    : 'N/A'}
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance Metrics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y divide-border">
+              <li className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                <span className="text-sm text-muted-foreground">Average Order Value</span>
+                <span className="text-sm font-semibold tabular-nums">
+                  ${avgOrderValue.toFixed(2)}
                 </span>
+              </li>
+              <li className="flex items-center justify-between py-2.5">
+                <span className="text-sm text-muted-foreground">Orders Per Day</span>
+                <span className="text-sm font-semibold tabular-nums">{ordersPerDay}</span>
+              </li>
+              <li className="flex items-center justify-between py-2.5">
+                <span className="text-sm text-muted-foreground">
+                  {periodLabels[period]} Orders
+                </span>
+                <span className="text-sm font-semibold tabular-nums">{totalOrders}</span>
+              </li>
+              <li className="flex items-center justify-between py-2.5 last:pb-0">
+                <span className="text-sm text-muted-foreground">Active Trucks</span>
+                <span className="text-sm font-semibold tabular-nums">
+                  {trucks.filter(t => t.is_open).length}/{trucks.length}
+                </span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Insights</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info shrink-0">
+                  {Icons.chart}
+                </span>
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground">Total Orders</div>
+                  <div className="text-sm font-semibold truncate">
+                    {orders.length} all time
+                  </div>
+                </div>
+              </div>
+              {bestTruck && (
+                <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-positive/10 text-positive shrink-0">
+                    {Icons.truck}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-xs text-muted-foreground">Best Today</div>
+                    <div className="text-sm font-semibold truncate">{bestTruck.name}</div>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10 text-warning shrink-0">
+                  {Icons.star}
+                </span>
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground">Average Rating</div>
+                  <div className="text-sm font-semibold">
+                    {trucks.filter(t => t.average_rating).length > 0
+                      ? (
+                          trucks
+                            .filter(t => t.average_rating)
+                            .reduce((sum, t) => sum + parseFloat(t.average_rating), 0) /
+                          trucks.filter(t => t.average_rating).length
+                        ).toFixed(1)
+                      : 'N/A'}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -1001,184 +1392,201 @@ const SettingsTab = () => {
         </div>
       </div>
 
-      <div className="settings-grid">
-        <CravvrPlusBilling />
-
-        <div className="card">
-          <div className="card-header">
-            <h3>Profile Information</h3>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <ImageUpload
-              label="Profile Picture"
-              currentImage={profileData.avatar_url}
-              onUpload={(url) => setProfileData({ ...profileData, avatar_url: url })}
-              bucket="images"
-              folder={user?.id ? `profiles/${user.id}` : 'profiles/temp'}
-              disabled={saving}
-            />
-            <div className="form-group">
-              <label>Full Name</label>
-              <input
-                type="text"
-                value={profileData.name}
-                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input type="email" defaultValue={user?.email} disabled />
-            </div>
-            <div className="form-group">
-              <label>Phone</label>
-              <input
-                type="tel"
-                placeholder="Enter phone number"
-                value={profileData.phone}
-                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-              />
-            </div>
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </form>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="lg:col-span-2">
+          <CravvrPlusBilling />
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <h3>Business Information</h3>
-          </div>
-          <form onSubmit={handleBusinessSubmit}>
-            <div className="form-group">
-              <label>Business Name</label>
-              <input
-                type="text"
-                placeholder="Your business name"
-                value={businessData.business_name}
-                onChange={(e) => setBusinessData({ ...businessData, business_name: e.target.value })}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <ImageUpload
+                label="Profile Picture"
+                currentImage={profileData.avatar_url}
+                onUpload={(url) => setProfileData({ ...profileData, avatar_url: url })}
+                bucket="images"
+                folder={user?.id ? `profiles/${user.id}` : 'profiles/temp'}
+                disabled={saving}
               />
-            </div>
-            <div className="form-group">
-              <label>Tax ID (EIN)</label>
-              <input
-                type="text"
-                placeholder="XX-XXXXXXX"
-                value={businessData.tax_id}
-                onChange={(e) => setBusinessData({ ...businessData, tax_id: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Business Address</label>
-              <textarea
-                placeholder="Enter business address"
-                rows={2}
-                value={businessData.business_address}
-                onChange={(e) => setBusinessData({ ...businessData, business_address: e.target.value })}
-              ></textarea>
-            </div>
-            <button type="submit" className="btn-primary" disabled={savingBusiness}>
-              {savingBusiness ? 'Saving...' : 'Save Changes'}
-            </button>
-          </form>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h3>Notifications</h3>
-          </div>
-          <div className="settings-options">
-            <label className="setting-option">
-              <input
-                type="checkbox"
-                checked={notificationPrefs.new_order_alerts}
-                onChange={(e) => handleNotificationChange('new_order_alerts', e.target.checked)}
-                disabled={savingNotifications}
-              />
-              <span className="option-info">
-                <span className="option-title">New Order Alerts</span>
-                <span className="option-desc">Get notified when you receive a new order</span>
-              </span>
-            </label>
-            <label className="setting-option">
-              <input
-                type="checkbox"
-                checked={notificationPrefs.daily_summary}
-                onChange={(e) => handleNotificationChange('daily_summary', e.target.checked)}
-                disabled={savingNotifications}
-              />
-              <span className="option-info">
-                <span className="option-title">Daily Summary</span>
-                <span className="option-desc">Receive daily sales summary email</span>
-              </span>
-            </label>
-            <label className="setting-option">
-              <input
-                type="checkbox"
-                checked={notificationPrefs.marketing_emails}
-                onChange={(e) => handleNotificationChange('marketing_emails', e.target.checked)}
-                disabled={savingNotifications}
-              />
-              <span className="option-info">
-                <span className="option-title">Marketing Emails</span>
-                <span className="option-desc">Tips and updates from Cravrr</span>
-              </span>
-            </label>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h3>Kitchen Capacity</h3>
-          </div>
-          <form onSubmit={handleQueueSettingsSave}>
-            <div className="form-group">
-              <label>Max Active Orders (Queue Size)</label>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={queueSettings.maxQueueSize}
-                onChange={(e) => setQueueSettings(prev => ({ ...prev, maxQueueSize: parseInt(e.target.value) || 20 }))}
-              />
-              <span className="form-hint">Maximum number of active orders before auto-pausing</span>
-            </div>
-            <div className="form-group">
-              <label className="toggle-label">
-                <span>Auto-pause when queue is full</span>
-                <input
-                  type="checkbox"
-                  checked={queueSettings.autoPauseEnabled}
-                  onChange={(e) => setQueueSettings(prev => ({ ...prev, autoPauseEnabled: e.target.checked }))}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="profile-name">Full Name</Label>
+                <Input
+                  id="profile-name"
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                 />
-              </label>
-              <span className="form-hint">Automatically stop accepting orders when the queue reaches the max size</span>
-            </div>
-            <button type="submit" className="btn-primary" disabled={savingQueue}>
-              {savingQueue ? 'Saving...' : 'Save Changes'}
-            </button>
-          </form>
-        </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="profile-email">Email</Label>
+                <Input id="profile-email" type="email" defaultValue={user?.email} disabled />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="profile-phone">Phone</Label>
+                <Input
+                  id="profile-phone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                />
+              </div>
+              <Button type="submit" disabled={saving} className="self-start">
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-        <div className="card">
-          <div className="card-header">
-            <h3>Subscription</h3>
-          </div>
-          <div className="subscription-info">
-            <div className="current-plan">
-              <span className="plan-badge free">Free Plan</span>
-              <p>You're on the free plan with basic features.</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Business Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleBusinessSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="business-name">Business Name</Label>
+                <Input
+                  id="business-name"
+                  type="text"
+                  placeholder="Your business name"
+                  value={businessData.business_name}
+                  onChange={(e) => setBusinessData({ ...businessData, business_name: e.target.value })}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="business-tax">Tax ID (EIN)</Label>
+                <Input
+                  id="business-tax"
+                  type="text"
+                  placeholder="XX-XXXXXXX"
+                  value={businessData.tax_id}
+                  onChange={(e) => setBusinessData({ ...businessData, tax_id: e.target.value })}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="business-address">Business Address</Label>
+                <Textarea
+                  id="business-address"
+                  placeholder="Enter business address"
+                  rows={2}
+                  value={businessData.business_address}
+                  onChange={(e) => setBusinessData({ ...businessData, business_address: e.target.value })}
+                />
+              </div>
+              <Button type="submit" disabled={savingBusiness} className="self-start">
+                {savingBusiness ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col divide-y divide-border">
+              {[
+                { key: 'new_order_alerts', title: 'New Order Alerts', desc: 'Get notified when you receive a new order' },
+                { key: 'daily_summary', title: 'Daily Summary', desc: 'Receive daily sales summary email' },
+                { key: 'marketing_emails', title: 'Marketing Emails', desc: 'Tips and updates from Cravvr' },
+              ].map(opt => (
+                <label
+                  key={opt.key}
+                  className="flex items-start gap-3 py-3 first:pt-0 last:pb-0 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={notificationPrefs[opt.key]}
+                    onChange={(e) => handleNotificationChange(opt.key, e.target.checked)}
+                    disabled={savingNotifications}
+                    className="mt-0.5 h-4 w-4 rounded border-input text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 accent-primary"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium leading-tight">{opt.title}</span>
+                    <span className="text-xs text-muted-foreground">{opt.desc}</span>
+                  </div>
+                </label>
+              ))}
             </div>
-            <button className="btn-primary upgrade-btn" onClick={() => showToast('Pro plan coming soon!', 'info')}>
-              {Icons.trendingUp} Upgrade to Pro
-            </button>
-            <ul className="pro-features">
-              <li>{Icons.check} Priority support</li>
-              <li>{Icons.check} Advanced analytics</li>
-              <li>{Icons.check} Multiple truck management</li>
-              <li>{Icons.check} Custom branding</li>
-            </ul>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Kitchen Capacity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleQueueSettingsSave} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="queue-size">Max Active Orders (Queue Size)</Label>
+                <Input
+                  id="queue-size"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={queueSettings.maxQueueSize}
+                  onChange={(e) => setQueueSettings(prev => ({ ...prev, maxQueueSize: parseInt(e.target.value) || 20 }))}
+                />
+                <span className="text-xs text-muted-foreground">
+                  Maximum number of active orders before auto-pausing
+                </span>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <span className="text-sm font-medium">Auto-pause when queue is full</span>
+                  <input
+                    type="checkbox"
+                    checked={queueSettings.autoPauseEnabled}
+                    onChange={(e) => setQueueSettings(prev => ({ ...prev, autoPauseEnabled: e.target.checked }))}
+                    className="h-4 w-4 rounded border-input text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 accent-primary"
+                  />
+                </label>
+                <span className="text-xs text-muted-foreground">
+                  Automatically stop accepting orders when the queue reaches the max size
+                </span>
+              </div>
+              <Button type="submit" disabled={savingQueue} className="self-start">
+                {savingQueue ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Subscription</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col gap-2 max-w-md">
+                <Badge variant="secondary" className="self-start">Free Plan</Badge>
+                <p className="text-sm text-muted-foreground">
+                  You're on the free plan with basic features.
+                </p>
+                <ul className="flex flex-col gap-1.5 mt-2">
+                  {['Priority support', 'Advanced analytics', 'Multiple truck management', 'Custom branding'].map(feat => (
+                    <li key={feat} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="h-4 w-4 shrink-0 text-positive">{Icons.check}</span>
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Button
+                onClick={() => showToast('Pro plan coming soon!', 'info')}
+                className="gap-2 self-start"
+              >
+                <span className="h-4 w-4 shrink-0">{Icons.trendingUp}</span>
+                Upgrade to Pro
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -1420,12 +1828,7 @@ const OwnerDashboard = () => {
   };
 
   if (authLoading) {
-    return (
-      <div className="owner-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading your dashboard...</p>
-      </div>
-    );
+    return <LoadingSplash />;
   }
 
   const renderTab = () => {

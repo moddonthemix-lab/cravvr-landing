@@ -5,21 +5,22 @@
 @layer base {
   :root {
     /* shadcn theme tokens — HSL values without hsl() wrapper.
-       Mapped to Cravvr's brand: rose primary, near-black foreground.
-       These coexist with the legacy --primary, --bg, etc. variables in
-       index.css (different names, no collision). */
+       Namespaced with --shadcn-* on three vars (--primary, --card, --border)
+       that previously collided with hex vars in index.css. The collision
+       caused Tailwind classes like bg-primary to resolve to hsl(#e11d48),
+       invalid CSS that silently fell through. */
     --background: 0 0% 100%;
     --foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
-    --card: 0 0% 100%;
+    --shadcn-card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
-    --border: 214.3 31.8% 91.4%;
+    --shadcn-border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --primary: 346.8 77.2% 49.8%;        /* rose-600, matches Cravvr brand */
-    --primary-foreground: 355.7 100% 97.3%;
+    --shadcn-primary: 346.8 77.2% 49.8%;        /* rose-600, matches Cravvr brand */
+    --shadcn-primary-foreground: 355.7 100% 97.3%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --accent: 210 40% 96.1%;
@@ -28,5 +29,14 @@
     --destructive-foreground: 210 40% 98%;
     --ring: 346.8 77.2% 49.8%;
     --radius: 0.5rem;
+
+    /* Cravvr accent tokens — semantic colors for dashboard UI.
+       Use via Tailwind: bg-positive, text-warning, etc. */
+    --positive: 142 71% 45%;             /* emerald-500: revenue, success */
+    --positive-foreground: 138 76% 97%;
+    --warning: 38 92% 50%;               /* amber-500: alerts, low-stock */
+    --warning-foreground: 48 100% 96%;
+    --info: 217 91% 60%;                 /* blue-500: neutral info */
+    --info-foreground: 214 100% 97%;
   }
 }

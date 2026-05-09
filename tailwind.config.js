@@ -1,7 +1,24 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class'],
-  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  content: [
+    './index.html',
+    './src/**/*.{js,jsx,ts,tsx}',
+    './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
+  ],
+  // Tremor builds chart classes dynamically from the `colors` prop
+  // (e.g. `colors={['rose']}` → `bg-rose-500`). Tailwind never sees those
+  // strings in source, so they get purged unless safelisted.
+  safelist: [
+    {
+      pattern:
+        /^(bg|text|border|ring|fill|stroke|shadow|outline)-(rose|emerald|amber|blue|slate|gray)-(50|100|200|300|400|500|600|700|800|900)$/,
+      variants: ['hover', 'ui-selected'],
+    },
+    {
+      pattern: /^(bg|text|border)-(rose|emerald|amber|blue|slate|gray)$/,
+    },
+  ],
   theme: {
     container: {
       center: true,
@@ -10,14 +27,14 @@ export default {
     },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
+        border: 'hsl(var(--shadcn-border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: 'hsl(var(--shadcn-primary))',
+          foreground: 'hsl(var(--shadcn-primary-foreground))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -40,8 +57,20 @@ export default {
           foreground: 'hsl(var(--popover-foreground))',
         },
         card: {
-          DEFAULT: 'hsl(var(--card))',
+          DEFAULT: 'hsl(var(--shadcn-card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+        positive: {
+          DEFAULT: 'hsl(var(--positive))',
+          foreground: 'hsl(var(--positive-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))',
         },
       },
       borderRadius: {
