@@ -13,6 +13,10 @@ import { useMenuDragReorder } from '../../../components/truck-form/useMenuDragRe
 import { Icons } from '../../../components/common/Icons';
 import { useToast } from '../../../contexts/ToastContext';
 import { useConfirm } from '../../../contexts/ConfirmContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import LoadingSplash from '../../../components/common/LoadingSplash';
+import { cn } from '@/lib/utils';
 
 const MenuTab = () => {
   const { truck } = useOutletContext();
@@ -57,7 +61,6 @@ const MenuTab = () => {
         await updateMenuItem(editing.id, data);
         showToast('Menu item updated', 'success');
       } else {
-        // Append to bottom: next display_order
         const next = (items[items.length - 1]?.display_order ?? -1) + 1;
         await createMenuItem({ ...data, display_order: next });
         showToast('Menu item added', 'success');
@@ -98,79 +101,137 @@ const MenuTab = () => {
   };
 
   return (
-    <div className="admin-tab-form">
-      <div className="admin-tab-header">
-        <h2>Menu</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-secondary" onClick={() => setShowImport(true)}>
-            {Icons.upload || Icons.plus} Import CSV
-          </button>
-          <button className="btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}>
-            {Icons.plus} Add item
-          </button>
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-bold tracking-tight">Menu</h2>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowImport(true)}
+            className="gap-1.5"
+          >
+            <span className="h-4 w-4">{Icons.upload || Icons.plus}</span>
+            Import CSV
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => { setEditing(null); setShowForm(true); }}
+            className="gap-1.5"
+          >
+            <span className="h-4 w-4">{Icons.plus}</span>
+            Add item
+          </Button>
         </div>
       </div>
 
       {items.length > 1 && (
-        <p className="cell-sub">Drag the {Icons.menu || '☰'} handle to reorder. Order is saved instantly.</p>
+        <p className="text-xs text-muted-foreground">
+          Drag the ⋮⋮ handle to reorder. Order is saved instantly.
+        </p>
       )}
 
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading...</div>
+        <LoadingSplash size="inline" tagline="LOADING MENU" />
       ) : items.length === 0 ? (
-        <p className="cell-sub">No menu items yet.</p>
+        <Card>
+          <CardContent className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+            No menu items yet.
+          </CardContent>
+        </Card>
       ) : (
-        <table className={`admin-trucks-table ${reordering ? 'is-reordering' : ''}`}>
-          <thead>
-            <tr>
-              <th style={{ width: 28 }}></th>
-              <th></th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Available</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map(item => (
-              <tr
-                key={item.id}
-                onDragOver={onDragOver}
-                onDrop={onDrop(item.id)}
-              >
-                <td
-                  className="drag-handle"
-                  draggable
-                  onDragStart={onDragStart(item.id)}
-                  title="Drag to reorder"
-                >
-                  ⋮⋮
-                </td>
-                <td>
-                  {item.image_url ? (
-                    <img src={item.image_url} alt="" className="truck-thumb" />
-                  ) : (
-                    <span className="menu-item-emoji" style={{ fontSize: 24 }}>{item.emoji || '🍽️'}</span>
-                  )}
-                </td>
-                <td>{item.name}</td>
-                <td>{item.category || '—'}</td>
-                <td>${parseFloat(item.price || 0).toFixed(2)}</td>
-                <td>
-                  <label className="toggle">
-                    <input type="checkbox" checked={item.is_available !== false} onChange={() => toggleAvailable(item)} />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </td>
-                <td>
-                  <button className="btn-link" onClick={() => { setEditing(item); setShowForm(true); }}>Edit</button>
-                  <button className="btn-link danger" onClick={() => handleDelete(item)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Card className={cn('overflow-hidden transition-opacity', reordering && 'opacity-60')}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="w-10"></th>
+                  <th className="w-14"></th>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3">Price</th>
+                  <th className="px-4 py-3">Available</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {items.map(item => (
+                  <tr
+                    key={item.id}
+                    onDragOver={onDragOver}
+                    onDrop={onDrop(item.id)}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <td
+                      draggable
+                      onDragStart={onDragStart(item.id)}
+                      title="Drag to reorder"
+                      className="cursor-grab select-none text-center text-muted-foreground hover:text-foreground active:cursor-grabbing"
+                    >
+                      ⋮⋮
+                    </td>
+                    <td className="px-3 py-2">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt=""
+                          className="h-10 w-10 rounded-md object-cover ring-1 ring-black/5"
+                        />
+                      ) : (
+                        <span className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-xl">
+                          {item.emoji || '🍽️'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-medium">{item.name}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {item.category || '—'}
+                    </td>
+                    <td className="px-4 py-3 font-semibold tabular-nums">
+                      ${parseFloat(item.price || 0).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={item.is_available !== false}
+                        onClick={() => toggleAvailable(item)}
+                        className={cn(
+                          'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors',
+                          item.is_available !== false ? 'bg-positive' : 'bg-muted'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                            item.is_available !== false ? 'translate-x-[18px]' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setEditing(item); setShowForm(true); }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(item)}
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
 
       {showForm && (

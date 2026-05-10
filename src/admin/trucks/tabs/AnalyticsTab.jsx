@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { fetchAdminTruckAnalytics } from '../../../services/admin';
-import { Icons } from '../../../components/common/Icons';
+import { Card, CardContent } from '@/components/ui/card';
+import LoadingSplash from '../../../components/common/LoadingSplash';
+import { cn } from '@/lib/utils';
 
 const RANGES = [
   { value: 7, label: '7 days' },
@@ -11,6 +13,24 @@ const RANGES = [
 ];
 
 const fmtMoney = (cents) => `$${(cents / 100).toFixed(2)}`;
+
+const Metric = ({ label, value, tone = 'neutral' }) => (
+  <Card>
+    <CardContent className="p-4 space-y-1">
+      <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <span
+        className={cn(
+          'block text-2xl font-bold tabular-nums tracking-tight',
+          tone === 'warning' && 'text-warning'
+        )}
+      >
+        {value}
+      </span>
+    </CardContent>
+  </Card>
+);
 
 const AnalyticsTab = () => {
   const { truck } = useOutletContext();
@@ -60,7 +80,6 @@ const AnalyticsTab = () => {
     };
   }, [orders, reviews]);
 
-  // Build daily revenue spark
   const dailyRevenue = useMemo(() => {
     const map = new Map();
     for (let i = days - 1; i >= 0; i--) {
@@ -80,47 +99,61 @@ const AnalyticsTab = () => {
   const peak = Math.max(1, ...dailyRevenue.map(([, v]) => v));
 
   return (
-    <div className="admin-tab-form">
-      <div className="admin-tab-header">
-        <h2>Analytics</h2>
-        <select value={days} onChange={(e) => setDays(Number(e.target.value))}>
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-bold tracking-tight">Analytics</h2>
+        <select
+          value={days}
+          onChange={(e) => setDays(Number(e.target.value))}
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
           {RANGES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
       </div>
 
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading...</div>
+        <LoadingSplash size="inline" tagline="LOADING ANALYTICS" />
       ) : (
         <>
-          <div className="metric-grid">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
             <Metric label="Revenue" value={fmtMoney(stats.revenue)} />
             <Metric label="Completed orders" value={stats.completedCount} />
             <Metric label="Avg order value" value={fmtMoney(stats.aov)} />
-            <Metric label="Cancelled / rejected" value={stats.cancelledCount} tone={stats.cancelledCount > 0 ? 'warning' : 'neutral'} />
+            <Metric
+              label="Cancelled / rejected"
+              value={stats.cancelledCount}
+              tone={stats.cancelledCount > 0 ? 'warning' : 'neutral'}
+            />
             <Metric label="Reviews" value={stats.reviewCount} />
             <Metric label="Avg rating" value={stats.avgRating ?? '—'} />
           </div>
 
-          <h3 style={{ marginTop: 24 }}>Daily revenue</h3>
-          <div className="spark-bars">
-            {dailyRevenue.map(([day, v]) => (
-              <div key={day} className="spark-col" title={`${day}: ${fmtMoney(v)}`}>
-                <div className="spark-bar" style={{ height: `${(v / peak) * 100}%` }} />
+          <Card>
+            <CardContent className="p-5 space-y-3">
+              <h3 className="text-base font-bold">Daily revenue</h3>
+              <div className="flex h-32 items-end gap-1">
+                {dailyRevenue.map(([day, v]) => (
+                  <div
+                    key={day}
+                    className="flex-1 min-w-[2px] flex flex-col justify-end"
+                    title={`${day}: ${fmtMoney(v)}`}
+                  >
+                    <div
+                      className="w-full rounded-t-sm bg-primary/70 transition-all hover:bg-primary"
+                      style={{ height: `${(v / peak) * 100}%`, minHeight: v > 0 ? '2px' : 0 }}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <p className="cell-sub">Peak: {fmtMoney(peak)} on best day in window.</p>
+              <p className="text-xs text-muted-foreground tabular-nums">
+                Peak: {fmtMoney(peak)} on best day in window.
+              </p>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
   );
 };
-
-const Metric = ({ label, value, tone = 'neutral' }) => (
-  <div className={`admin-metric tone-${tone}`}>
-    <span className="admin-metric-label">{label}</span>
-    <span className="admin-metric-value">{value}</span>
-  </div>
-);
 
 export default AnalyticsTab;

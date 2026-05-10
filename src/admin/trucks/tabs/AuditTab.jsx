@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { fetchAdminAuditLog, fetchProfilesByIds } from '../../../services/admin';
-import { Icons } from '../../../components/common/Icons';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import LoadingSplash from '../../../components/common/LoadingSplash';
 
 const PAGE_SIZE = 25;
 
@@ -51,51 +53,75 @@ const AuditTab = () => {
   };
 
   return (
-    <div className="admin-tab-form">
-      <h2>Audit log</h2>
-      <p className="cell-sub">Every admin write is recorded here.</p>
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-5">
+      <div>
+        <h2 className="text-xl font-bold tracking-tight">Audit log</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          Every admin write is recorded here.
+        </p>
+      </div>
 
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading...</div>
+        <LoadingSplash size="inline" tagline="LOADING AUDIT LOG" />
       ) : rows.length === 0 ? (
-        <p className="cell-sub">No admin changes recorded yet.</p>
+        <Card>
+          <CardContent className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+            No admin changes recorded yet.
+          </CardContent>
+        </Card>
       ) : (
-        <ul className="audit-list">
+        <ul className="space-y-3">
           {rows.map(row => {
             const changed = row.action === 'update' ? diffKeys(row.before, row.after) : [];
             const admin = admins[row.admin_id];
             const isOpen = expanded.has(row.id);
             return (
-              <li key={row.id} className="audit-item">
-                <div className="audit-row">
-                  <div>
-                    <strong>{row.action}</strong>
-                    {row.action === 'update' && changed.length > 0 && (
-                      <span className="cell-sub"> · {changed.join(', ')}</span>
-                    )}
+              <Card key={row.id}>
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <strong className="font-semibold capitalize">{row.action}</strong>
+                      {row.action === 'update' && changed.length > 0 && (
+                        <span className="text-xs text-muted-foreground"> · {changed.join(', ')}</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground tabular-nums shrink-0">
+                      {admin?.email || row.admin_id} · {new Date(row.created_at).toLocaleString()}
+                    </div>
                   </div>
-                  <div className="cell-sub">
-                    {admin?.email || row.admin_id} · {new Date(row.created_at).toLocaleString()}
-                  </div>
-                </div>
-                {row.reason && <p className="audit-reason">"{row.reason}"</p>}
-                <button type="button" className="btn-link" onClick={() => toggle(row.id)}>
-                  {isOpen ? 'Hide details' : 'Show details'}
-                </button>
-                {isOpen && (
-                  <pre className="audit-detail">
+                  {row.reason && (
+                    <p className="text-xs text-muted-foreground italic">"{row.reason}"</p>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => toggle(row.id)}>
+                    {isOpen ? 'Hide details' : 'Show details'}
+                  </Button>
+                  {isOpen && (
+                    <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs leading-relaxed">
 {JSON.stringify({ before: row.before, after: row.after }, null, 2)}
-                  </pre>
-                )}
-              </li>
+                    </pre>
+                  )}
+                </CardContent>
+              </Card>
             );
           })}
         </ul>
       )}
 
-      <div className="form-actions">
-        <button className="btn-secondary" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>Previous</button>
-        <button className="btn-secondary" disabled={!hasMore} onClick={() => setPage(p => p + 1)}>Next</button>
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          disabled={page === 0}
+          onClick={() => setPage(p => Math.max(0, p - 1))}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          disabled={!hasMore}
+          onClick={() => setPage(p => p + 1)}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

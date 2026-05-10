@@ -5,6 +5,10 @@ import ImageUpload from '../../../components/common/ImageUpload';
 import { Icons } from '../../../components/common/Icons';
 import { isTruckSlugAvailable } from '../../../services/admin';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const PRICE_RANGES = ['$', '$$', '$$$', '$$$$'];
 const SLUG_RE = /^[a-z0-9-]+$/;
@@ -18,7 +22,7 @@ const ProfileTab = () => {
     location: '', coordinates: null, phone: '', website: '', instagram: '', image_url: '',
   });
   const [reason, setReason] = useState('');
-  const [slugStatus, setSlugStatus] = useState('idle'); // idle | checking | ok | conflict | invalid
+  const [slugStatus, setSlugStatus] = useState('idle');
 
   useEffect(() => {
     setForm({
@@ -36,7 +40,6 @@ const ProfileTab = () => {
     });
   }, [truck]);
 
-  // Debounced slug check
   useEffect(() => {
     if (!form.slug || form.slug === truck.slug) {
       setSlugStatus('idle');
@@ -75,50 +78,80 @@ const ProfileTab = () => {
     refetch();
   };
 
-  return (
-    <form className="admin-tab-form" onSubmit={handleSubmit}>
-      <h2>Profile</h2>
+  const slugHint = (() => {
+    if (slugStatus === 'checking') return <span className="text-xs text-muted-foreground">Checking…</span>;
+    if (slugStatus === 'invalid') return <span className="text-xs text-destructive">Use lowercase letters, digits, hyphens only</span>;
+    if (slugStatus === 'conflict') return <span className="text-xs text-destructive">Slug already in use</span>;
+    if (slugStatus === 'ok') return <span className="text-xs text-positive font-semibold">Available</span>;
+    return null;
+  })();
 
-      <div className="form-group">
-        <label>Truck name</label>
-        <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-5"
+    >
+      <h2 className="text-xl font-bold tracking-tight">Profile</h2>
+
+      <div className="space-y-2">
+        <Label htmlFor="profile-name">Truck name</Label>
+        <Input
+          id="profile-name"
+          type="text"
+          required
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
       </div>
 
-      <div className="form-group">
-        <label>
-          Slug <span className="cell-sub">(URL handle — lowercase letters, digits, hyphens)</span>
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="profile-slug">
+          Slug <span className="font-normal text-xs text-muted-foreground">(URL handle — lowercase letters, digits, hyphens)</span>
+        </Label>
+        <Input
+          id="profile-slug"
           type="text"
           value={form.slug}
           onChange={(e) => setForm({ ...form, slug: e.target.value.trim() })}
         />
-        {slugStatus === 'checking' && <span className="cell-sub">Checking…</span>}
-        {slugStatus === 'invalid' && <span className="form-error">Use lowercase letters, digits, hyphens only</span>}
-        {slugStatus === 'conflict' && <span className="form-error">Slug already in use</span>}
-        {slugStatus === 'ok' && <span className="form-ok">Available</span>}
+        {slugHint}
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label>Cuisine</label>
-          <input type="text" value={form.cuisine} onChange={(e) => setForm({ ...form, cuisine: e.target.value })} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="profile-cuisine">Cuisine</Label>
+          <Input
+            id="profile-cuisine"
+            type="text"
+            value={form.cuisine}
+            onChange={(e) => setForm({ ...form, cuisine: e.target.value })}
+          />
         </div>
-        <div className="form-group">
-          <label>Price range</label>
-          <select value={form.price_range} onChange={(e) => setForm({ ...form, price_range: e.target.value })}>
+        <div className="space-y-2">
+          <Label htmlFor="profile-price-range">Price range</Label>
+          <select
+            id="profile-price-range"
+            value={form.price_range}
+            onChange={(e) => setForm({ ...form, price_range: e.target.value })}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
             {PRICE_RANGES.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
       </div>
 
-      <div className="form-group">
-        <label>Description</label>
-        <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+      <div className="space-y-2">
+        <Label htmlFor="profile-description">Description</Label>
+        <Textarea
+          id="profile-description"
+          rows={3}
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+        />
       </div>
 
-      <div className="form-group">
-        <label>Location</label>
+      <div className="space-y-2">
+        <Label>Location</Label>
         <LocationInput
           value={form.location}
           coordinates={form.coordinates}
@@ -127,20 +160,36 @@ const ProfileTab = () => {
         />
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label>Phone</label>
-          <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="profile-phone">Phone</Label>
+          <Input
+            id="profile-phone"
+            type="tel"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
         </div>
-        <div className="form-group">
-          <label>Website</label>
-          <input type="url" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} />
+        <div className="space-y-2">
+          <Label htmlFor="profile-website">Website</Label>
+          <Input
+            id="profile-website"
+            type="url"
+            value={form.website}
+            onChange={(e) => setForm({ ...form, website: e.target.value })}
+          />
         </div>
       </div>
 
-      <div className="form-group">
-        <label>Instagram handle</label>
-        <input type="text" placeholder="@handle" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
+      <div className="space-y-2">
+        <Label htmlFor="profile-instagram">Instagram handle</Label>
+        <Input
+          id="profile-instagram"
+          type="text"
+          placeholder="@handle"
+          value={form.instagram}
+          onChange={(e) => setForm({ ...form, instagram: e.target.value })}
+        />
       </div>
 
       <ImageUpload
@@ -152,15 +201,34 @@ const ProfileTab = () => {
         disabled={busy}
       />
 
-      <div className="form-group">
-        <label>Audit reason <span className="cell-sub">(optional, recorded in audit log)</span></label>
-        <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. owner email request 2026-05-04" />
+      <div className="space-y-2">
+        <Label htmlFor="profile-audit-reason">
+          Audit reason <span className="font-normal text-xs text-muted-foreground">(optional, recorded in audit log)</span>
+        </Label>
+        <Input
+          id="profile-audit-reason"
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="e.g. owner email request 2026-05-04"
+        />
       </div>
 
-      <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={busy || slugStatus === 'conflict' || slugStatus === 'invalid'}>
-          {busy ? 'Saving...' : <>{Icons.check} Save profile</>}
-        </button>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          disabled={busy || slugStatus === 'conflict' || slugStatus === 'invalid'}
+          className="gap-1.5"
+        >
+          {busy ? (
+            'Saving…'
+          ) : (
+            <>
+              <span className="h-4 w-4">{Icons.check}</span>
+              Save profile
+            </>
+          )}
+        </Button>
       </div>
     </form>
   );

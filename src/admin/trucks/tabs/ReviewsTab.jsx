@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { fetchAdminTruckReviews } from '../../../services/admin';
-import { Icons } from '../../../components/common/Icons';
 import { useConfirm } from '../../../contexts/ConfirmContext';
 import { useAuth } from '../../../components/auth/AuthContext';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import LoadingSplash from '../../../components/common/LoadingSplash';
+import { cn } from '@/lib/utils';
 
 const ReviewsTab = () => {
   const { truck } = useOutletContext();
@@ -53,38 +57,59 @@ const ReviewsTab = () => {
   };
 
   return (
-    <div className="admin-tab-form">
-      <h2>Reviews</h2>
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-5">
+      <h2 className="text-xl font-bold tracking-tight">Reviews</h2>
+
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading...</div>
+        <LoadingSplash size="inline" tagline="LOADING REVIEWS" />
       ) : reviews.length === 0 ? (
-        <p className="cell-sub">No reviews yet.</p>
+        <Card>
+          <CardContent className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+            No reviews yet.
+          </CardContent>
+        </Card>
       ) : (
-        <ul className="audit-list">
+        <ul className="space-y-3">
           {reviews.map(r => {
             const hidden = r.hidden_at || r.is_hidden;
             return (
-              <li key={r.id} className="audit-item" style={hidden ? { opacity: 0.6 } : null}>
-                <div className="audit-row">
-                  <div>
-                    <strong>{'★'.repeat(r.rating || 0)}{'☆'.repeat(5 - (r.rating || 0))}</strong>
-                    {hidden && <span className="admin-badge admin-badge-danger" style={{ marginLeft: 8 }}>Hidden</span>}
+              <Card key={r.id} className={cn(hidden && 'opacity-60')}>
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-warning text-base font-semibold tabular-nums">
+                        {'★'.repeat(r.rating || 0)}
+                        <span className="text-muted-foreground/40">
+                          {'☆'.repeat(5 - (r.rating || 0))}
+                        </span>
+                      </span>
+                      {hidden && <Badge variant="destructive">Hidden</Badge>}
+                    </div>
+                    <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </span>
                   </div>
-                  <div className="cell-sub">{new Date(r.created_at).toLocaleDateString()}</div>
-                </div>
-                {r.comment && <p>{r.comment}</p>}
-                {r.hidden_reason && <p className="audit-reason">Hidden: {r.hidden_reason}</p>}
-                {canHide && (
-                  <button
-                    type="button"
-                    className={`btn-link ${hidden ? '' : 'danger'}`}
-                    disabled={busy}
-                    onClick={() => handleHide(r, !hidden)}
-                  >
-                    {hidden ? 'Restore' : 'Hide'}
-                  </button>
-                )}
-              </li>
+                  {r.comment && <p className="text-sm leading-relaxed">{r.comment}</p>}
+                  {r.hidden_reason && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Hidden: {r.hidden_reason}
+                    </p>
+                  )}
+                  {canHide && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => handleHide(r, !hidden)}
+                      className={cn(
+                        !hidden && 'text-destructive hover:bg-destructive/10 hover:text-destructive'
+                      )}
+                    >
+                      {hidden ? 'Restore' : 'Hide'}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
             );
           })}
         </ul>

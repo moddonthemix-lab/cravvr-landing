@@ -3,6 +3,9 @@ import { useOutletContext } from 'react-router-dom';
 import HoursInput, { parseHours } from '../../../components/truck-form/HoursInput';
 import { Icons } from '../../../components/common/Icons';
 import { useTruckAdmin } from '../hooks/useTruckAdmin';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const HoursTab = () => {
   const { truck, refetch } = useOutletContext();
@@ -20,17 +23,34 @@ const HoursTab = () => {
   };
 
   return (
-    <form className="admin-tab-form" onSubmit={handleSubmit}>
-      <h2>Hours of Operation</h2>
+    <form
+      onSubmit={handleSubmit}
+      className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-5"
+    >
+      <h2 className="text-xl font-bold tracking-tight">Hours of Operation</h2>
       <HoursInput hours={hours} onChange={setHours} label={null} />
-      <div className="form-group">
-        <label>Audit reason</label>
-        <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} />
+
+      <div className="space-y-2">
+        <Label htmlFor="hours-reason">Audit reason</Label>
+        <Input
+          id="hours-reason"
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
       </div>
-      <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={busy}>
-          {busy ? 'Saving...' : <>{Icons.check} Save hours</>}
-        </button>
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={busy} className="gap-1.5">
+          {busy ? (
+            'Saving…'
+          ) : (
+            <>
+              <span className="h-4 w-4">{Icons.check}</span>
+              Save hours
+            </>
+          )}
+        </Button>
       </div>
     </form>
   );

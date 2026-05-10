@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../../../lib/supabase';
 import ImageUpload from '../../../components/common/ImageUpload';
-import { Icons } from '../../../components/common/Icons';
 import { useToast } from '../../../contexts/ToastContext';
 import { useConfirm } from '../../../contexts/ConfirmContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import LoadingSplash from '../../../components/common/LoadingSplash';
 
 const PhotosTab = () => {
   const { truck } = useOutletContext();
@@ -64,9 +66,13 @@ const PhotosTab = () => {
   };
 
   return (
-    <div className="admin-tab-form">
-      <h2>Photos</h2>
-      <p className="cell-sub">Files in <code>images/{folder}/</code></p>
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-5">
+      <div>
+        <h2 className="text-xl font-bold tracking-tight">Photos</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          Files in <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">images/{folder}/</code>
+        </p>
+      </div>
 
       <ImageUpload
         label="Upload a new photo"
@@ -77,19 +83,36 @@ const PhotosTab = () => {
       />
 
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading...</div>
+        <LoadingSplash size="inline" tagline="LOADING PHOTOS" />
       ) : photos.length === 0 ? (
-        <p className="cell-sub">No photos uploaded yet.</p>
+        <Card>
+          <CardContent className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+            No photos uploaded yet.
+          </CardContent>
+        </Card>
       ) : (
-        <div className="photo-grid">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {photos.map(p => (
-            <div className="photo-tile" key={p.path}>
-              <img src={p.url} alt={p.name} />
-              <div className="photo-tile-actions">
-                <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn-link">Open</a>
-                <button type="button" className="btn-link danger" onClick={() => handleDelete(p.path)}>Delete</button>
+            <Card key={p.path} className="overflow-hidden">
+              <div className="aspect-square overflow-hidden bg-muted">
+                <img src={p.url} alt={p.name} className="h-full w-full object-cover" />
               </div>
-            </div>
+              <CardContent className="p-2 flex items-center justify-between gap-1">
+                <Button asChild variant="ghost" size="sm">
+                  <a href={p.url} target="_blank" rel="noopener noreferrer">
+                    Open
+                  </a>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(p.path)}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  Delete
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
