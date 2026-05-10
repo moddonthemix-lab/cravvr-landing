@@ -7,7 +7,11 @@ import { useConfirm } from '../../contexts/ConfirmContext';
 import { useAuth } from '../../components/auth/AuthContext';
 import { useTruckAdmin } from './hooks/useTruckAdmin';
 import CreateTruckModal from './components/CreateTruckModal';
-import './AdminTrucks.css';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import LoadingSplash from '../../components/common/LoadingSplash';
+import { cn } from '@/lib/utils';
 
 const STATUS_FILTERS = [
   { value: 'active', label: 'Active' },
@@ -15,10 +19,6 @@ const STATUS_FILTERS = [
   { value: 'deleted', label: 'Trash' },
   { value: 'all', label: 'All' },
 ];
-
-const Badge = ({ tone, children }) => (
-  <span className={`admin-badge admin-badge-${tone}`}>{children}</span>
-);
 
 const AdminTrucksListPage = () => {
   const navigate = useNavigate();
@@ -87,9 +87,7 @@ const AdminTrucksListPage = () => {
     const ids = [...selected];
     if (ids.length === 0) return;
     try {
-      for (const id of ids) {
-        await setFlag(id, flag, value);
-      }
+      for (const id of ids) await setFlag(id, flag, value);
       showToast(`${ids.length} trucks updated`, 'success');
       setSelected(new Set());
       await fetchTrucks();
@@ -119,62 +117,117 @@ const AdminTrucksListPage = () => {
   };
 
   return (
-    <div className="admin-trucks-page">
-      <div className="admin-trucks-header">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1>Food Trucks</h1>
-          <p>Browse, edit, and moderate every truck.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Food Trucks</h1>
+          <p className="text-sm text-muted-foreground">Browse, edit, and moderate every truck.</p>
         </div>
-        <div className="admin-trucks-actions">
+        <div className="flex flex-wrap items-center gap-2">
           {canCreate && (
-            <button className="btn-primary" onClick={() => setShowCreate(true)}>
-              {Icons.plus} New truck
-            </button>
+            <Button onClick={() => setShowCreate(true)} size="sm" className="gap-1.5">
+              <span className="h-4 w-4">{Icons.plus}</span>
+              New truck
+            </Button>
           )}
-          <Link to="/admin" className="btn-secondary">{Icons.chevronLeft} Back to dashboard</Link>
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link to="/admin">
+              <span className="h-4 w-4">{Icons.chevronLeft}</span>
+              Back to dashboard
+            </Link>
+          </Button>
         </div>
       </div>
 
-      <div className="admin-trucks-controls">
+      {/* Controls */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <input
           type="search"
-          className="admin-search"
-          placeholder="Search by name, cuisine, owner, or location..."
+          placeholder="Search by name, cuisine, owner, or location…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 lg:max-w-md"
         />
-        <div className="admin-filter-group">
-          {STATUS_FILTERS.map(s => (
-            <button
-              key={s.value}
-              className={`admin-filter ${statusFilter === s.value ? 'active' : ''}`}
-              onClick={() => setStatusFilter(s.value)}
-            >
-              {s.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {STATUS_FILTERS.map(s => {
+            const isActive = statusFilter === s.value;
+            return (
+              <button
+                key={s.value}
+                onClick={() => setStatusFilter(s.value)}
+                className={cn(
+                  'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                  isActive
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                )}
+              >
+                {s.label}
+              </button>
+            );
+          })}
         </div>
         <select
-          className="admin-cuisine-filter"
           value={cuisineFilter}
           onChange={(e) => setCuisineFilter(e.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           <option value="">All cuisines</option>
           {cuisines.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 
+      {/* Bulk bar */}
       {selected.size > 0 && (
-        <div className="admin-bulk-bar">
-          <span>{selected.size} selected</span>
-          {canFlags && <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('featured', true)}>Feature</button>}
-          {canFlags && <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('featured', false)}>Unfeature</button>}
-          {canFlags && <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('verified', true)}>Verify</button>}
-          {canFlags && <button className="btn-link" disabled={busy} onClick={() => bulkSetFlag('verified', false)}>Unverify</button>}
-          {canSuspend && <button className="btn-link danger" disabled={busy} onClick={bulkSuspend}>Suspend</button>}
-          {canSuspend && <button className="btn-link" disabled={busy} onClick={bulkRestore}>Restore</button>}
-          <button className="btn-link" onClick={() => setSelected(new Set())}>Clear</button>
-        </div>
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-wrap items-center gap-2 p-3 text-sm">
+            <span className="font-semibold tabular-nums">
+              {selected.size} selected
+            </span>
+            <span className="text-border">·</span>
+            {canFlags && (
+              <>
+                <Button variant="ghost" size="sm" disabled={busy} onClick={() => bulkSetFlag('featured', true)}>
+                  Feature
+                </Button>
+                <Button variant="ghost" size="sm" disabled={busy} onClick={() => bulkSetFlag('featured', false)}>
+                  Unfeature
+                </Button>
+                <Button variant="ghost" size="sm" disabled={busy} onClick={() => bulkSetFlag('verified', true)}>
+                  Verify
+                </Button>
+                <Button variant="ghost" size="sm" disabled={busy} onClick={() => bulkSetFlag('verified', false)}>
+                  Unverify
+                </Button>
+              </>
+            )}
+            {canSuspend && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={busy}
+                  onClick={bulkSuspend}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  Suspend
+                </Button>
+                <Button variant="ghost" size="sm" disabled={busy} onClick={bulkRestore}>
+                  Restore
+                </Button>
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelected(new Set())}
+              className="ml-auto"
+            >
+              Clear
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {showCreate && (
@@ -187,75 +240,104 @@ const AdminTrucksListPage = () => {
         />
       )}
 
+      {/* Table */}
       {loading ? (
-        <div className="loading-state">{Icons.loader} Loading trucks...</div>
+        <LoadingSplash size="inline" tagline="LOADING TRUCKS" />
       ) : (
-        <div className="admin-trucks-table-wrapper">
-          <table className="admin-trucks-table">
-            <thead>
-              <tr>
-                <th style={{ width: 32 }}>
-                  <input
-                    type="checkbox"
-                    checked={filtered.length > 0 && selected.size === filtered.length}
-                    onChange={toggleSelectAll}
-                  />
-                </th>
-                <th>Name</th>
-                <th>Cuisine</th>
-                <th>Owner</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={7} className="empty-row">No trucks match these filters.</td></tr>
-              )}
-              {filtered.map(t => (
-                <tr key={t.id} className={t.deleted_at ? 'row-deleted' : t.suspended_at ? 'row-suspended' : ''}>
-                  <td>
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="w-10 px-4 py-3">
                     <input
                       type="checkbox"
-                      checked={selected.has(t.id)}
-                      onChange={() => toggleOne(t.id)}
+                      checked={filtered.length > 0 && selected.size === filtered.length}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border-input text-primary accent-primary"
                     />
-                  </td>
-                  <td>
-                    <Link to={`/admin/trucks/${t.id}`} className="truck-name-link">
-                      {t.image_url && <img src={t.image_url} alt="" className="truck-thumb" />}
-                      <span>{t.name || '(unnamed)'}</span>
-                    </Link>
-                  </td>
-                  <td>{t.cuisine || '—'}</td>
-                  <td>
-                    <div className="cell-stack">
-                      <span>{t.owner_name}</span>
-                      {t.owner_email && <span className="cell-sub">{t.owner_email}</span>}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="badge-row">
-                      {t.deleted_at && <Badge tone="danger">Deleted</Badge>}
-                      {t.suspended_at && <Badge tone="warning">Suspended</Badge>}
-                      {!t.deleted_at && !t.suspended_at && t.is_open && <Badge tone="success">Open</Badge>}
-                      {!t.deleted_at && !t.suspended_at && !t.is_open && <Badge tone="neutral">Closed</Badge>}
-                      {t.featured && <Badge tone="accent">Featured</Badge>}
-                      {t.verified && <Badge tone="info">Verified</Badge>}
-                    </div>
-                  </td>
-                  <td className="cell-sub">
-                    {t.updated_at ? new Date(t.updated_at).toLocaleDateString() : '—'}
-                  </td>
-                  <td>
-                    <Link to={`/admin/trucks/${t.id}`} className="btn-link">Open</Link>
-                  </td>
+                  </th>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Cuisine</th>
+                  <th className="px-4 py-3">Owner</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Updated</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                      No trucks match these filters.
+                    </td>
+                  </tr>
+                )}
+                {filtered.map(t => (
+                  <tr
+                    key={t.id}
+                    className={cn(
+                      'hover:bg-muted/30 transition-colors',
+                      t.deleted_at && 'opacity-50',
+                      t.suspended_at && 'bg-warning/5'
+                    )}
+                  >
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(t.id)}
+                        onChange={() => toggleOne(t.id)}
+                        className="h-4 w-4 rounded border-input text-primary accent-primary"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        to={`/admin/trucks/${t.id}`}
+                        className="inline-flex items-center gap-2.5 font-semibold text-foreground hover:text-primary transition-colors"
+                      >
+                        {t.image_url && (
+                          <img
+                            src={t.image_url}
+                            alt=""
+                            className="h-9 w-9 rounded-md object-cover ring-1 ring-black/5"
+                          />
+                        )}
+                        <span>{t.name || '(unnamed)'}</span>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{t.cuisine || '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col leading-tight">
+                        <span>{t.owner_name}</span>
+                        {t.owner_email && (
+                          <span className="text-xs text-muted-foreground">{t.owner_email}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {t.deleted_at && <Badge variant="destructive">Deleted</Badge>}
+                        {t.suspended_at && <Badge variant="warning">Suspended</Badge>}
+                        {!t.deleted_at && !t.suspended_at && t.is_open && <Badge variant="positive">Open</Badge>}
+                        {!t.deleted_at && !t.suspended_at && !t.is_open && <Badge variant="secondary">Closed</Badge>}
+                        {t.featured && <Badge variant="warning">Featured</Badge>}
+                        {t.verified && <Badge variant="info">Verified</Badge>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground tabular-nums">
+                      {t.updated_at ? new Date(t.updated_at).toLocaleDateString() : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <Button asChild variant="ghost" size="sm">
+                        <Link to={`/admin/trucks/${t.id}`}>Open</Link>
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
   );
