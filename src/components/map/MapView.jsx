@@ -4,7 +4,10 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icons } from '../common/Icons';
 import { useTrucks } from '../../contexts/TruckContext';
-import './MapView.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import '../../styles/leaflet.css';
 
 // Map controller to handle view updates
 const MapController = ({ center }) => {
@@ -26,25 +29,22 @@ const MapController = ({ center }) => {
 };
 
 // Generate truck positions around center using spiral pattern
-// Handles any number of trucks without stacking at center
 const getTruckPositions = (center, count) => {
   if (count === 0) return [];
-
   const positions = [];
-  const baseRadius = 0.008; // ~800m at equator
+  const baseRadius = 0.008;
   const positionsPerRing = 6;
 
   for (let i = 0; i < count; i++) {
-    // Spiral outward: increase radius every ring
     const ring = Math.floor(i / positionsPerRing);
     const positionInRing = i % positionsPerRing;
     const radius = baseRadius * (1 + ring * 0.5);
     const angleStep = (2 * Math.PI) / positionsPerRing;
-    const angle = positionInRing * angleStep + (ring * 0.5); // Offset each ring
+    const angle = positionInRing * angleStep + (ring * 0.5);
 
     positions.push([
       center[0] + radius * Math.cos(angle),
-      center[1] + radius * Math.sin(angle) * 1.3, // Adjust for lat/lng ratio
+      center[1] + radius * Math.sin(angle) * 1.3,
     ]);
   }
 
@@ -55,58 +55,79 @@ const getTruckPositions = (center, count) => {
 // SUB-COMPONENTS
 // ============================================
 
-// Shared truck card component with accessibility
-const TruckListCard = ({ truck, onClick, variant = 'mobile' }) => {
-  return (
-    <button
-      type="button"
-      className="truck-list-card"
-      onClick={onClick}
-      aria-label={`View ${truck.name}, ${truck.cuisine}, ${truck.isOpen ? 'Open now' : 'Closed'}`}
-    >
-      <div className="tlc-image">
-        <img src={truck.image} alt="" aria-hidden="true" />
-        {truck.featured && <span className="tlc-featured">Featured</span>}
-      </div>
-      <div className="tlc-body">
-        <div className="tlc-top">
-          <h3 className="tlc-name">{truck.name}</h3>
-          <span className={`tlc-status ${truck.isOpen ? 'open' : 'closed'}`}>
-            {truck.isOpen ? 'Open' : 'Closed'}
-          </span>
-        </div>
-        <p className="tlc-cuisine">{truck.cuisine} <span className="tlc-dot">&middot;</span> {truck.priceRange}</p>
-        <div className="tlc-bottom">
-          <span className="tlc-rating">{Icons.star} {truck.rating}</span>
-          {truck.location && truck.location !== 'Portland, OR' && (
-            <span className="tlc-location">{Icons.mapPin || '📍'} {truck.location.split(',')[0]}</span>
+const TruckListCard = ({ truck, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-label={`View ${truck.name}, ${truck.cuisine}, ${truck.isOpen ? 'Open now' : 'Closed'}`}
+    className="group flex w-full gap-3.5 rounded-2xl border border-border/60 bg-card p-3 text-left transition-all hover:border-border hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+  >
+    <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl bg-muted">
+      <img src={truck.image} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+      {truck.featured && (
+        <span className="absolute top-1 left-1 rounded-md bg-warning/95 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-warning-foreground">
+          Featured
+        </span>
+      )}
+    </div>
+    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-semibold text-sm leading-tight truncate capitalize">{truck.name}</h3>
+        <span
+          className={cn(
+            'shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold',
+            truck.isOpen
+              ? 'bg-positive/15 text-positive'
+              : 'bg-destructive/10 text-destructive'
           )}
-        </div>
+        >
+          {truck.isOpen ? 'Open' : 'Closed'}
+        </span>
       </div>
-    </button>
-  );
-};
+      <p className="text-xs text-muted-foreground truncate">
+        {truck.cuisine} <span className="text-border mx-0.5">·</span> {truck.priceRange}
+      </p>
+      <div className="flex items-center gap-3 mt-0.5">
+        <span className="inline-flex items-center gap-1 text-xs font-semibold">
+          <span className="h-3 w-3 text-warning">{Icons.star}</span>
+          {truck.rating}
+        </span>
+        {truck.location && truck.location !== 'Portland, OR' && (
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground truncate">
+            <span className="h-3 w-3 shrink-0">{Icons.mapPin}</span>
+            {truck.location.split(',')[0]}
+          </span>
+        )}
+      </div>
+    </div>
+  </button>
+);
 
-// Mobile list overlay component
 const MobileTruckList = ({ trucks, onTruckClick, onClose }) => (
   <div
-    className="map-list-overlay-leaflet"
     role="dialog"
     aria-label="Food truck list"
     aria-modal="true"
+    className="absolute inset-0 z-[1001] flex flex-col bg-background"
   >
-    <div className="map-list-header">
-      <h2 id="truck-list-title">{trucks.length} Food Trucks</h2>
+    <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-5 py-4">
+      <h2 id="truck-list-title" className="text-lg font-bold tracking-tight">
+        {trucks.length} Food Trucks
+      </h2>
       <button
         type="button"
-        className="close-list-btn"
         onClick={onClose}
         aria-label="Close truck list"
+        className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
       >
-        {Icons.x}
+        <span className="h-4 w-4">{Icons.x}</span>
       </button>
     </div>
-    <div className="map-list-content" role="list" aria-labelledby="truck-list-title">
+    <div
+      role="list"
+      aria-labelledby="truck-list-title"
+      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3"
+    >
       {trucks.map((truck) => (
         <TruckListCard
           key={truck.id}
@@ -121,14 +142,23 @@ const MobileTruckList = ({ trucks, onTruckClick, onClose }) => (
   </div>
 );
 
-// Desktop sidebar list component
 const DesktopTruckList = ({ trucks, onTruckClick }) => (
-  <aside className="map-desktop-list" aria-label="Nearby food trucks">
-    <div className="desktop-list-header">
-      <h2 id="desktop-truck-list-title">{trucks.length} Food Trucks Nearby</h2>
-      <p>Click a truck to view details</p>
+  <aside
+    aria-label="Nearby food trucks"
+    className="hidden xl:flex flex-col bg-card border-l border-border overflow-hidden"
+    style={{ gridColumn: 2, gridRow: 2 }}
+  >
+    <div className="border-b border-border px-6 py-5">
+      <h2 id="desktop-truck-list-title" className="text-lg font-bold tracking-tight">
+        {trucks.length} Food Trucks Nearby
+      </h2>
+      <p className="text-sm text-muted-foreground mt-0.5">Click a truck to view details</p>
     </div>
-    <div className="desktop-list-content" role="list" aria-labelledby="desktop-truck-list-title">
+    <div
+      role="list"
+      aria-labelledby="desktop-truck-list-title"
+      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3"
+    >
       {trucks.map((truck) => (
         <TruckListCard
           key={truck.id}
@@ -140,55 +170,47 @@ const DesktopTruckList = ({ trucks, onTruckClick }) => (
   </aside>
 );
 
-// Location prompt component
+// Location prompt (inc. loading state)
 const LocationPrompt = ({ status, onEnable, onSkip }) => {
-  if (status === 'loading') {
-    return (
-      <div className="map-view-leaflet">
-        <div className="location-prompt">
-          <div className="location-prompt-content">
-            <div className="location-loading">
+  const isLoading = status === 'loading';
+  return (
+    <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-white to-muted/40 px-5 min-h-[60vh]">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardContent className="flex flex-col items-center text-center py-10 px-6 space-y-4">
+          {isLoading ? (
+            <>
               <div
-                className="loading-spinner"
+                className="h-12 w-12 rounded-full border-[3px] border-muted border-t-primary animate-spin"
                 role="status"
                 aria-label="Finding your location"
               />
-            </div>
-            <h2>Finding your location...</h2>
-            <p>This may take a moment.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="map-view-leaflet">
-      <div className="location-prompt">
-        <div className="location-prompt-content">
-          <div className="location-icon-wrapper">
-            <span className="location-icon" aria-hidden="true">{Icons.mapPin}</span>
-          </div>
-          <h2>Find Food Trucks Near You</h2>
-          <p>Enable location to see nearby food trucks on the map.</p>
-          <div className="location-buttons">
-            <button
-              type="button"
-              className="location-btn primary"
-              onClick={onEnable}
-            >
-              Enable Location
-            </button>
-            <button
-              type="button"
-              className="location-btn secondary"
-              onClick={onSkip}
-            >
-              Use Portland, OR
-            </button>
-          </div>
-        </div>
-      </div>
+              <h2 className="text-2xl font-bold tracking-tight">Finding your location…</h2>
+              <p className="text-sm text-muted-foreground">This may take a moment.</p>
+            </>
+          ) : (
+            <>
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary animate-pulse">
+                <span className="h-9 w-9">{Icons.mapPin}</span>
+              </span>
+              <div className="space-y-1.5">
+                <h2 className="text-2xl font-bold tracking-tight">Find Food Trucks Near You</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Enable location to see nearby food trucks on the map.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 w-full pt-2">
+                <Button size="lg" onClick={onEnable} className="flex-1 gap-2">
+                  <span className="h-4 w-4">{Icons.mapPin}</span>
+                  Enable Location
+                </Button>
+                <Button size="lg" variant="outline" onClick={onSkip} className="flex-1">
+                  Use Portland, OR
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -200,22 +222,18 @@ const LocationPrompt = ({ status, onEnable, onSkip }) => {
 const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) => {
   const [showList, setShowList] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
-  const [locationStatus, setLocationStatus] = useState('prompt'); // 'prompt', 'loading', 'granted', 'denied'
+  const [locationStatus, setLocationStatus] = useState('prompt');
   const [isLargeDesktop, setIsLargeDesktop] = useState(window.innerWidth >= 1200);
   const [geocodedTrucks, setGeocodedTrucks] = useState({});
   const { loadNearbyTrucks } = useTrucks();
   const [spatialTrucks, setSpatialTrucks] = useState(null);
 
-  // Listen for resize to toggle desktop mode
   useEffect(() => {
-    const handleResize = () => {
-      setIsLargeDesktop(window.innerWidth >= 1200);
-    };
+    const handleResize = () => setIsLargeDesktop(window.innerWidth >= 1200);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Geocode trucks that have a location text but no coordinates
   useEffect(() => {
     const geocodeMissing = async () => {
       for (const truck of trucks) {
@@ -240,7 +258,6 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
     if (trucks.length > 0) geocodeMissing();
   }, [trucks]);
 
-  // Merge geocoded positions into trucks for marker placement
   const getTruckPosition = (truck, index) => {
     if (truck.lat && truck.lng) return [truck.lat, truck.lng];
     const geo = geocodedTrucks[truck.id];
@@ -248,21 +265,16 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
     return truckPositions[index] || mapCenter;
   };
 
-  // Load nearby trucks via PostGIS when user location is available
   useEffect(() => {
     if (userLocation && loadNearbyTrucks) {
       loadNearbyTrucks(userLocation[0], userLocation[1], 15).then(result => {
-        if (result && result.length > 0) {
-          setSpatialTrucks(result);
-        }
+        if (result && result.length > 0) setSpatialTrucks(result);
       });
     }
   }, [userLocation, loadNearbyTrucks]);
 
-  // Use PostGIS results if available, otherwise fall back to passed-in trucks
   const displayTrucks = spatialTrucks || trucks;
 
-  // Default to Portland
   const defaultCenter = [45.5152, -122.6784];
   const mapCenter = userLocation || defaultCenter;
   const truckPositions = getTruckPositions(mapCenter, displayTrucks.length);
@@ -275,9 +287,7 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
           setUserLocation([position.coords.latitude, position.coords.longitude]);
           setLocationStatus('granted');
         },
-        () => {
-          setLocationStatus('denied');
-        },
+        () => setLocationStatus('denied'),
         { enableHighAccuracy: true, timeout: 10000 }
       );
     } else {
@@ -285,27 +295,21 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
     }
   };
 
-  const skipLocation = () => {
-    setLocationStatus('denied');
-  };
+  const skipLocation = () => setLocationStatus('denied');
 
-  // Create custom truck marker icon
-  const createTruckIcon = (truck) => {
-    return L.divIcon({
-      className: 'custom-truck-marker',
-      html: `
-        <div class="leaflet-marker-content ${truck.featured ? 'featured' : ''} ${truck.isOpen ? 'open' : 'closed'}">
-          <img src="${truck.image}" alt="${truck.name}" class="marker-img" />
-          ${truck.featured ? '<span class="marker-star">★</span>' : ''}
-        </div>
-      `,
-      iconSize: [50, 50],
-      iconAnchor: [25, 50],
-      popupAnchor: [0, -50],
-    });
-  };
+  const createTruckIcon = (truck) => L.divIcon({
+    className: 'custom-truck-marker',
+    html: `
+      <div class="leaflet-marker-content ${truck.featured ? 'featured' : ''} ${truck.isOpen ? 'open' : 'closed'}">
+        <img src="${truck.image}" alt="${truck.name}" class="marker-img" />
+        ${truck.featured ? '<span class="marker-star">★</span>' : ''}
+      </div>
+    `,
+    iconSize: [50, 50],
+    iconAnchor: [25, 50],
+    popupAnchor: [0, -50],
+  });
 
-  // User location icon
   const userLocationIcon = L.divIcon({
     className: 'user-location-marker',
     html: `
@@ -316,48 +320,58 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
     iconAnchor: [12, 12],
   });
 
-  // Handle popup click with keyboard support
   const handlePopupClick = (truck, event) => {
-    // Allow Enter and Space keys as well as clicks
     if (event.type === 'click' || event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       onTruckClick(truck);
     }
   };
 
-  // Show location prompt if needed
+  // Show location prompt or loading state
   if (locationStatus === 'prompt' || locationStatus === 'loading') {
     return (
-      <LocationPrompt
-        status={locationStatus}
-        onEnable={requestLocation}
-        onSkip={skipLocation}
-      />
+      <div className="flex flex-col h-[calc(100vh-65px)] min-h-[400px] bg-muted/40">
+        <LocationPrompt
+          status={locationStatus}
+          onEnable={requestLocation}
+          onSkip={skipLocation}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="map-view-leaflet">
+    <div
+      className={cn(
+        'flex flex-col bg-muted/40',
+        'h-[calc(100vh-65px)] min-h-[400px]',
+        'xl:grid xl:grid-cols-[1fr_420px] xl:grid-rows-[auto_1fr]'
+      )}
+    >
       {/* Map Header */}
-      <div className="map-header-leaflet">
-        <h1>
-          <span aria-hidden="true">{Icons.mapPin}</span>
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-5 py-4 sm:px-8 sm:py-5 xl:col-span-full">
+        <h1 className="flex items-center gap-2 text-lg font-bold tracking-tight sm:text-xl">
+          <span aria-hidden="true" className="h-5 w-5 text-primary sm:h-6 sm:w-6">
+            {Icons.mapPin}
+          </span>
           <span>Food Trucks Near You</span>
         </h1>
         <button
           type="button"
-          className="map-list-toggle"
           onClick={() => setShowList(!showList)}
           aria-expanded={showList}
           aria-controls="mobile-truck-list"
+          className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/70 xl:hidden"
         >
-          <span aria-hidden="true">{showList ? Icons.mapPin : Icons.list}</span>
-          <span>{showList ? 'Map' : 'List'}</span>
+          <span aria-hidden="true" className="h-4 w-4">
+            {showList ? Icons.mapPin : Icons.list}
+          </span>
+          {showList ? 'Map' : 'List'}
         </button>
       </div>
 
       {/* Map Container */}
-      <div className="leaflet-map-wrapper">
+      <div className="relative flex-1 xl:col-start-1 xl:row-start-2">
         <MapContainer
           center={mapCenter}
           zoom={14}
@@ -372,7 +386,6 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
             maxZoom={19}
           />
 
-          {/* User Location Marker */}
           {userLocation && (
             <Marker position={userLocation} icon={userLocationIcon}>
               <Popup>
@@ -381,7 +394,6 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
             </Marker>
           )}
 
-          {/* Truck Markers */}
           {displayTrucks.map((truck, index) => (
             <Marker
               key={truck.id}
@@ -390,25 +402,48 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
             >
               <Popup>
                 <div
-                  className="popup-content"
                   onClick={(e) => handlePopupClick(truck, e)}
                   onKeyDown={(e) => handlePopupClick(truck, e)}
                   tabIndex={0}
                   role="button"
                   aria-label={`View details for ${truck.name}`}
+                  className="cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-lg"
                 >
-                  <div className="popup-image">
-                    <img src={truck.image} alt="" aria-hidden="true" />
-                    {truck.featured && <span className="popup-featured">Featured</span>}
+                  <div className="relative h-24 sm:h-32 overflow-hidden">
+                    <img
+                      src={truck.image}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-full w-full object-cover"
+                    />
+                    {truck.featured && (
+                      <span className="absolute top-2 left-2 rounded-md bg-warning px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-warning-foreground">
+                        Featured
+                      </span>
+                    )}
                   </div>
-                  <div className="popup-info">
-                    <h4>{truck.name}</h4>
-                    <p className="popup-cuisine">{truck.cuisine} • {truck.priceRange}</p>
-                    <div className="popup-meta">
-                      <span className="popup-rating">{Icons.star} {truck.rating}</span>
-                      <span className="popup-distance">{truck.distance}</span>
+                  <div className="p-3 sm:p-4 space-y-2">
+                    <div>
+                      <h4 className="font-bold text-sm sm:text-base leading-tight">{truck.name}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {truck.cuisine} • {truck.priceRange}
+                      </p>
                     </div>
-                    <span className={`popup-status ${truck.isOpen ? 'open' : 'closed'}`}>
+                    <div className="flex items-center gap-2.5">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold">
+                        <span className="h-3.5 w-3.5 text-warning">{Icons.star}</span>
+                        {truck.rating}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{truck.distance}</span>
+                    </div>
+                    <span
+                      className={cn(
+                        'inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
+                        truck.isOpen
+                          ? 'bg-positive/15 text-positive'
+                          : 'bg-destructive/10 text-destructive'
+                      )}
+                    >
                       {truck.isOpen ? 'Open Now' : 'Closed'}
                     </span>
                   </div>
@@ -419,30 +454,34 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
         </MapContainer>
 
         {/* Map Legend */}
-        <div className="map-legend-leaflet" aria-label="Map legend">
-          <div className="legend-item">
-            <span className="legend-marker featured" aria-hidden="true"></span>
-            <span>Featured</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-marker regular" aria-hidden="true"></span>
-            <span>Open</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-marker user" aria-hidden="true"></span>
-            <span>You</span>
-          </div>
+        <div
+          aria-label="Map legend"
+          className="absolute bottom-3 left-3 z-[1000] flex flex-col gap-2 rounded-xl bg-white p-3 shadow-md sm:bottom-6 sm:left-6 sm:p-4 sm:gap-2.5"
+        >
+          {[
+            { color: 'border-warning bg-white', label: 'Featured' },
+            { color: 'border-primary bg-white', label: 'Open' },
+            { color: 'border-primary bg-primary', label: 'You' },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-2 text-xs text-foreground/80">
+              <span
+                aria-hidden="true"
+                className={cn('h-3 w-3 rounded-full border-2', item.color)}
+              />
+              {item.label}
+            </div>
+          ))}
         </div>
 
         {/* Recenter Button */}
-        <div className="map-controls-leaflet">
+        <div className="absolute right-3 top-3 z-[1000] sm:right-6 sm:top-6">
           <button
             type="button"
-            className="map-control-btn"
             onClick={requestLocation}
             aria-label="Center map on your location"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-foreground shadow-md transition-all hover:bg-muted hover:shadow-lg sm:h-13 sm:w-13"
           >
-            {Icons.target}
+            <span className="h-5 w-5">{Icons.target}</span>
           </button>
         </div>
       </div>
@@ -456,12 +495,9 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
         />
       )}
 
-      {/* Desktop Sidebar List (always visible on large screens) */}
+      {/* Desktop Sidebar List (always visible at xl+) */}
       {isLargeDesktop && (
-        <DesktopTruckList
-          trucks={displayTrucks}
-          onTruckClick={onTruckClick}
-        />
+        <DesktopTruckList trucks={displayTrucks} onTruckClick={onTruckClick} />
       )}
     </div>
   );
