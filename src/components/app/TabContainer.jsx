@@ -8,6 +8,9 @@ import MapView from '../map/MapView';
 import DiscoverView from '../discover/DiscoverView';
 import BoltView from '../bolt/BoltView';
 import HomePage from '../home/HomePage';
+import NotificationBell from '../common/NotificationBell';
+import { Icons } from '../common/Icons';
+import MobileNavDrawer from './MobileNavDrawer';
 
 const TabContainer = () => {
   const navigate = useNavigate();
@@ -15,6 +18,7 @@ const TabContainer = () => {
   const { trucks, loading } = useTrucks();
   const { favorites, toggleFavorite } = useFavorites();
   const [activeTab, setActiveTab] = useState('explore');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const handleToggleFavorite = (truckId) => toggleFavorite(truckId);
 
@@ -69,6 +73,38 @@ const TabContainer = () => {
 
   return (
     <div className="flex min-h-screen flex-col pb-16">
+      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/85 backdrop-blur px-4 py-3">
+        <button
+          type="button"
+          aria-label="Open menu"
+          onClick={() => setMobileNavOpen(true)}
+          className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+        >
+          <span className="h-5 w-5">{Icons.menu}</span>
+        </button>
+        <div className="cursor-pointer shrink-0" onClick={() => navigate('/')}>
+          <img src="/logo/cravvr-logo.png" alt="Cravvr" className="h-9 w-auto" />
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <NotificationBell />
+          <button
+            type="button"
+            onClick={openCart}
+            aria-label="Open cart"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+          >
+            <span className="h-5 w-5">{Icons.shoppingBag}</span>
+            {itemCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground tabular-nums">
+                {itemCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </header>
+
+      <MobileNavDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
+
       <div className="flex-1">
         {renderContent()}
       </div>

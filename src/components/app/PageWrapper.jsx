@@ -5,6 +5,7 @@ import { useCart } from '../../contexts/CartContext';
 import { Icons } from '../common/Icons';
 import NotificationBell from '../common/NotificationBell';
 import useUserLocation from '../../hooks/useUserLocation';
+import MobileNavDrawer from './MobileNavDrawer';
 import { cn } from '@/lib/utils';
 
 // Shared customer-facing app chrome: header (logo + search + city + bell + cart),
@@ -48,9 +49,6 @@ const PageWrapper = ({ children, activeNav }) => {
   const userCity = typeof rawCity === 'string' ? rawCity : (rawCity?.city || 'Your Location');
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
-  const closeMobileNav = () => setMobileNavOpen(false);
-  const goto = (path) => { navigate(path); closeMobileNav(); };
 
   const isActive = (path) => {
     if (activeNav) return activeNav === path;
@@ -240,95 +238,7 @@ const PageWrapper = ({ children, activeNav }) => {
         <main className="flex-1 min-w-0">{children}</main>
       </div>
 
-      {/* Mobile slide-in drawer */}
-      {mobileNavOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
-          <div
-            className="absolute inset-0 bg-background/60 backdrop-blur-sm"
-            onClick={closeMobileNav}
-          />
-          <aside className="absolute left-0 top-0 bottom-0 flex w-72 max-w-[85vw] flex-col border-r border-border bg-card shadow-xl">
-            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-              <img src="/logo/cravvr-logo.png" alt="Cravvr" className="h-8 w-auto" />
-              <button
-                type="button"
-                aria-label="Close menu"
-                onClick={closeMobileNav}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
-              >
-                <span className="h-5 w-5">{Icons.x}</span>
-              </button>
-            </div>
-            <nav className="flex flex-col gap-1 p-3 overflow-y-auto">
-              <button className={cn(sidebarItem, isActive('/') && sidebarItemActive)} onClick={() => goto('/')}>
-                <span className="h-5 w-5 shrink-0">{Icons.home}</span>
-                <span>Home</span>
-              </button>
-              <button className={cn(sidebarItem, isActive('/map') && sidebarItemActive)} onClick={() => goto('/map')}>
-                <span className="h-5 w-5 shrink-0">{Icons.map}</span>
-                <span>Map</span>
-              </button>
-              <button className={cn(sidebarItem, isActive('/discover') && sidebarItemActive)} onClick={() => goto('/discover')}>
-                <span className="h-5 w-5 shrink-0">{Icons.compass}</span>
-                <span>Discover</span>
-              </button>
-              <button className={cn(sidebarItem, isActive('/bolt') && sidebarItemActive)} onClick={() => goto('/bolt')}>
-                <span className="h-5 w-5 shrink-0">{Icons.bolt}</span>
-                <span>Bolt</span>
-              </button>
-
-              <div className="my-2 border-t border-border" />
-
-              <button className={sidebarItem} onClick={() => goto('/profile?tab=favorites')}>
-                <span className="h-5 w-5 shrink-0">{Icons.heart}</span>
-                <span>Favorites</span>
-              </button>
-              <button className={sidebarItem} onClick={() => goto('/profile?tab=orders')}>
-                <span className="h-5 w-5 shrink-0">{Icons.orders}</span>
-                <span>Orders</span>
-              </button>
-
-              <div className="my-2 border-t border-border" />
-
-              {user ? (
-                <>
-                  <button className={cn(sidebarItem, isActive('/profile') && sidebarItemActive)} onClick={() => goto('/profile')}>
-                    <span className="h-5 w-5 shrink-0">{Icons.user}</span>
-                    <span>Account</span>
-                  </button>
-                  {isOwner && (
-                    <button className={cn(sidebarItem, isActive('/owner') && sidebarItemActive)} onClick={() => goto('/owner')}>
-                      <span className="h-5 w-5 shrink-0">{Icons.truck}</span>
-                      <span>My Trucks</span>
-                    </button>
-                  )}
-                  {isAdmin && (
-                    <button className={cn(sidebarItem, isActive('/admin') && sidebarItemActive)} onClick={() => goto('/admin')}>
-                      <span className="h-5 w-5 shrink-0">{Icons.settings}</span>
-                      <span>Admin</span>
-                    </button>
-                  )}
-                  <button
-                    className={cn(sidebarItem, 'text-destructive hover:bg-destructive/10 hover:text-destructive')}
-                    onClick={() => { closeMobileNav(); handleSignOut(); }}
-                  >
-                    <span className="h-5 w-5 shrink-0">{Icons.logOut}</span>
-                    <span>Sign Out</span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  className={cn(sidebarItem, 'text-primary')}
-                  onClick={() => { closeMobileNav(); openAuth('login'); }}
-                >
-                  <span className="h-5 w-5 shrink-0">{Icons.user}</span>
-                  <span>Sign In</span>
-                </button>
-              )}
-            </nav>
-          </aside>
-        </div>
-      )}
+      <MobileNavDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
       {/* Mobile Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur lg:hidden">
