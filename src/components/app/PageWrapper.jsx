@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { Icons } from '../common/Icons';
+import NotificationBell from '../common/NotificationBell';
 import useUserLocation from '../../hooks/useUserLocation';
 import { cn } from '@/lib/utils';
 
@@ -99,13 +100,7 @@ const PageWrapper = ({ children, activeNav }) => {
             <span className="font-medium truncate max-w-[10rem]">{userCity}</span>
           </div>
 
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
-          >
-            <span className="h-5 w-5">{Icons.bell}</span>
-          </button>
+          <NotificationBell />
 
           <button
             type="button"

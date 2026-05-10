@@ -99,6 +99,17 @@ Many old classes (`.btn-primary`, `.toggle`, `.form-group`, `.modal-*`) are stil
 
 Run `npm run build` and `npm test` before pushing. Both must pass. The user has been bitten by the `--no-verify` shortcut in this codebase — don't use it.
 
+## App-level chrome — single source of truth
+
+**Every authenticated route renders through `PageWrapper`** (`src/components/app/PageWrapper.jsx`). It owns:
+- Desktop top header (logo + search + city + notifications + cart)
+- Desktop left sidebar (Home/Map/Discover/Bolt + Favorites/Orders + Account/My Trucks/Admin/Sign Out)
+- Mobile bottom nav
+
+Route wrappers in `src/components/wrappers/index.jsx` (`OwnerDashboardWrapper`, `AdminDashboardWrapper`, `CustomerProfileWrapper`, `AdminAreaWrapper`) all use `PageWrapper`. **Do not add a second sidebar/header layer.** Inner pages render plain content; the chrome is the wrapper's job.
+
+If you find yourself building an "app shell" or "sidebar" component, you're solving a problem that's already solved — extend `PageWrapper` instead.
+
 ## Pages NOT to touch without asking
 
 - `src/components/social/SocialGraphics.css` — html2canvas pixel-perfect exports rely on this; Tailwind purge could silently break image generation.
