@@ -265,7 +265,7 @@ const PageWrapper = ({ children, activeNav }) => {
             icon={Icons.user}
             label={user ? 'Account' : 'Sign In'}
             active={isActive('/profile')}
-            onClick={() => (user ? navigate('/profile') : navigate('/eat'))}
+            onClick={() => (user ? navigate('/profile') : openAuth('login'))}
           />
         </div>
       </nav>

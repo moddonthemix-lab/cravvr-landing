@@ -42,7 +42,7 @@ const GoPage = () => {
 
   const startTrial = async () => {
     if (!user) {
-      openAuth?.('signin');
+      openAuth?.('login');
       return;
     }
     if (!isOwner) {
@@ -144,7 +144,7 @@ const GoPage = () => {
                   Create owner account → Start trial
                   <span className="h-4 w-4">{Icons.arrowRight}</span>
                 </Button>
-                <Button variant="ghost" onClick={() => openAuth?.('signin')}>
+                <Button variant="ghost" onClick={() => openAuth?.('login')}>
                   Already have an account? Sign in
                 </Button>
               </>

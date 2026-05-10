@@ -56,7 +56,7 @@ const CUSTOMER_ORDER_STATUS = {
 
 // Header Component
 const ProfileHeader = ({ onBack, title }) => (
-  <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/85 backdrop-blur px-4 py-3">
+  <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/85 backdrop-blur px-4 py-3">
     <button
       type="button"
       onClick={onBack}
@@ -703,7 +703,7 @@ const AddressesTab = ({ onBack, userId }) => {
           className="w-full gap-2 border-dashed"
           onClick={handleAdd}
         >
-          {Icons.plus}
+          <span className="h-4 w-4">{Icons.plus}</span>
           Add New Address
         </Button>
       </div>
@@ -847,7 +847,7 @@ const PaymentTab = ({ onBack, userId }) => {
           className="w-full gap-2 border-dashed"
           onClick={handleAdd}
         >
-          {Icons.plus}
+          <span className="h-4 w-4">{Icons.plus}</span>
           Add Payment Method
         </Button>
       </div>

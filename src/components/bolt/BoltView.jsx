@@ -32,7 +32,7 @@ const setUsageData = (userId, data) => {
 };
 
 const BoltView = ({ trucks, loading, onTruckClick }) => {
-  const { user } = useAuth();
+  const { user, openAuth } = useAuth();
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generated, setGenerated] = useState(null);
@@ -194,7 +194,7 @@ const BoltView = ({ trucks, loading, onTruckClick }) => {
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       Sign up for a free account to get 5 Bolt picks every day!
                     </p>
-                    <Button size="lg" onClick={() => navigate('/eat')} className="gap-2 w-full">
+                    <Button size="lg" onClick={() => openAuth('signup')} className="gap-2 w-full">
                       <span className="h-4 w-4">{Icons.user}</span>
                       Sign Up Free
                     </Button>
@@ -202,7 +202,7 @@ const BoltView = ({ trucks, loading, onTruckClick }) => {
                       Already have an account?{' '}
                       <button
                         type="button"
-                        onClick={() => navigate('/eat')}
+                        onClick={() => openAuth('login')}
                         className="font-semibold text-primary hover:underline"
                       >
                         Sign in
@@ -363,7 +363,7 @@ const BoltView = ({ trucks, loading, onTruckClick }) => {
                 <p className="text-xs text-muted-foreground text-center">
                   <button
                     type="button"
-                    onClick={() => navigate('/eat')}
+                    onClick={() => openAuth('signup')}
                     className="font-semibold text-primary hover:underline"
                   >
                     Sign up

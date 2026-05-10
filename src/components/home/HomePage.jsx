@@ -300,7 +300,7 @@ const HomePage = ({ embedded = false }) => {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => navigate('/eat')}
+                    onClick={() => openAuth('signup')}
                     className="mt-3 bg-white text-primary hover:bg-white/90"
                   >
                     Sign Up Now
@@ -432,7 +432,7 @@ const HomePage = ({ embedded = false }) => {
             <BottomNavItem
               icon={Icons.user}
               label={user ? 'Account' : 'Sign In'}
-              onClick={() => user ? navigate('/profile') : navigate('/eat')}
+              onClick={() => user ? navigate('/profile') : openAuth('login')}
             />
           </div>
         </nav>
