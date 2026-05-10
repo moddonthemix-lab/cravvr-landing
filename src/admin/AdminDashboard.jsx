@@ -70,49 +70,62 @@ const AdminLogin = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="admin-login">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="login-logo">
-            <span className="logo-icon">C</span>
-            <span className="logo-text">Cravvr Admin</span>
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-background to-rose-100/40 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl">
+        <div className="text-center space-y-2 mb-6">
+          <div className="flex items-center justify-center gap-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-md shadow-primary/30">
+              C
+            </span>
+            <span className="text-xl font-bold tracking-tight">Cravvr Admin</span>
           </div>
-          <p>Sign in to your admin account</p>
+          <p className="text-sm text-muted-foreground">Sign in to your admin account</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {error && <div className="login-error">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <span className="h-4 w-4 shrink-0 mt-0.5">{Icons.alertCircle}</span>
+              {error}
+            </div>
+          )}
 
-          <div className="form-group">
-            <label>Email</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your admin email"
               required
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             />
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             />
           </div>
 
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-11 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:opacity-50"
+          >
+            {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
-        <div className="login-footer">
-          <p className="login-hint">
-            {Icons.shield}
+        <div className="mt-6 pt-5 border-t border-border">
+          <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span className="h-3.5 w-3.5">{Icons.shield}</span>
             <span>Admin access only. Contact support if you need access.</span>
           </p>
         </div>
@@ -131,10 +144,10 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
   ];
 
   return (
-    <div className="dashboard-overview">
-      <div className="page-header">
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <h1>Dashboard Overview</h1>
-        <div className="header-actions">
+        <div className="flex flex-wrap items-center gap-2">
           <button className="btn-secondary" onClick={onRefresh} disabled={loading}>
             {Icons.refresh}
             {loading ? 'Refreshing...' : 'Refresh'}
@@ -143,23 +156,23 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
       </div>
 
       {/* Stats Cards */}
-      <div className="stats-grid">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {statCards.map((stat, index) => (
-          <div key={index} className="stat-card">
-            <div className="stat-icon">{stat.icon}</div>
-            <div className="stat-content">
-              <span className="stat-label">{stat.label}</span>
-              <span className="stat-value" style={loading ? { opacity: 0.6 } : {}}>{stat.value}</span>
-              <span className="stat-change neutral">{stat.change}</span>
+          <div key={index} className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">{stat.icon}</div>
+            <div className="min-w-0 flex flex-col">
+              <span className="text-xs text-muted-foreground">{stat.label}</span>
+              <span className="text-2xl font-bold tracking-tight tabular-nums leading-tight" style={loading ? { opacity: 0.6 } : {}}>{stat.value}</span>
+              <span className="text-xs text-muted-foreground mt-0.5">{stat.change}</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Charts Row - Using Real Data */}
-      <div className="charts-grid">
-        <div className="chart-card large">
-          <div className="chart-header">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mb-3">
             <h3>Activity (Last 30 Days)</h3>
           </div>
           {chartData.dailyActivity.length > 0 ? (
@@ -180,14 +193,14 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="chart-empty">
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground text-center">
               <p>No activity data yet. Data will appear as users interact with the app.</p>
             </div>
           )}
         </div>
 
-        <div className="chart-card">
-          <div className="chart-header">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mb-3">
             <h3>Trucks by Cuisine</h3>
           </div>
           {chartData.cuisineBreakdown.length > 0 ? (
@@ -211,7 +224,7 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="chart-empty">
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground text-center">
               <p>No food trucks registered yet.</p>
             </div>
           )}
@@ -219,9 +232,9 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
       </div>
 
       {/* Second Charts Row */}
-      <div className="charts-grid">
-        <div className="chart-card">
-          <div className="chart-header">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mb-3">
             <h3>User Registrations (Last 12 Months)</h3>
           </div>
           {chartData.userGrowth.length > 0 ? (
@@ -235,14 +248,14 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="chart-empty">
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground text-center">
               <p>No user registration data yet.</p>
             </div>
           )}
         </div>
 
-        <div className="chart-card">
-          <div className="chart-header">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mb-3">
             <h3>User Types</h3>
           </div>
           {chartData.userTypes.length > 0 ? (
@@ -264,7 +277,7 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="chart-empty">
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground text-center">
               <p>No users registered yet.</p>
             </div>
           )}
@@ -272,11 +285,11 @@ const DashboardOverview = ({ stats, recentActivity, chartData, loading, onRefres
       </div>
 
       {/* Recent Activity */}
-      <div className="table-card">
-        <div className="table-header">
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm mb-6">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
           <h3>Recent Activity</h3>
         </div>
-        <table className="data-table">
+        <table className="w-full text-sm">
           <thead>
             <tr>
               <th>Activity ID</th>
@@ -519,9 +532,9 @@ const WaitlistManagement = () => {
 
   return (
     <div className="waitlist-management">
-      <div className="page-header">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <h1>Waitlist Management</h1>
-        <div className="header-actions">
+        <div className="flex flex-wrap items-center gap-2">
           <button className="btn-secondary" onClick={handleExportCSV}>
             {Icons.download}
             Export CSV
@@ -534,40 +547,40 @@ const WaitlistManagement = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="stats-grid waitlist-stats">
-        <div className="stat-card">
-          <div className="stat-icon">{Icons.users}</div>
-          <div className="stat-content">
-            <span className="stat-value">{stats.total}</span>
-            <span className="stat-label">Total Signups</span>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">{Icons.users}</div>
+          <div className="min-w-0 flex flex-col">
+            <span className="text-2xl font-bold tracking-tight tabular-nums leading-tight">{stats.total}</span>
+            <span className="text-xs text-muted-foreground">Total Signups</span>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ color: '#10b981' }}>{Icons.trendUp}</div>
-          <div className="stat-content">
-            <span className="stat-value">{stats.thisWeek}</span>
-            <span className="stat-label">This Week</span>
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0" style={{ color: '#10b981' }}>{Icons.trendUp}</div>
+          <div className="min-w-0 flex flex-col">
+            <span className="text-2xl font-bold tracking-tight tabular-nums leading-tight">{stats.thisWeek}</span>
+            <span className="text-xs text-muted-foreground">This Week</span>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ color: '#f59e0b' }}>🍔</div>
-          <div className="stat-content">
-            <span className="stat-value">{stats.lovers}</span>
-            <span className="stat-label">Food Lovers</span>
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0" style={{ color: '#f59e0b' }}>🍔</div>
+          <div className="min-w-0 flex flex-col">
+            <span className="text-2xl font-bold tracking-tight tabular-nums leading-tight">{stats.lovers}</span>
+            <span className="text-xs text-muted-foreground">Food Lovers</span>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ color: '#3b82f6' }}>🚚</div>
-          <div className="stat-content">
-            <span className="stat-value">{stats.trucks}</span>
-            <span className="stat-label">Truck Owners</span>
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0" style={{ color: '#3b82f6' }}>🚚</div>
+          <div className="min-w-0 flex flex-col">
+            <span className="text-2xl font-bold tracking-tight tabular-nums leading-tight">{stats.trucks}</span>
+            <span className="text-xs text-muted-foreground">Truck Owners</span>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="filters-bar">
-        <div className="search-box">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative w-full sm:max-w-md">
           {Icons.search}
           <input
             type="text"
@@ -576,7 +589,7 @@ const WaitlistManagement = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="filter-group">
+        <div className="flex items-center gap-1.5">
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="all">All Types</option>
             <option value="lover">Food Lovers</option>
@@ -590,7 +603,7 @@ const WaitlistManagement = () => {
           </select>
         </div>
         {selectedEntries.length > 0 && (
-          <div className="bulk-actions">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 mb-4 text-sm">
             <span>{selectedEntries.length} selected</span>
             <button className="btn-sm" onClick={() => handleBulkStatusChange('invited')}>
               Mark Invited
@@ -603,7 +616,7 @@ const WaitlistManagement = () => {
       </div>
 
       {/* Table */}
-      <div className="data-table">
+      <div className="w-full text-sm">
         <table>
           <thead>
             <tr>
@@ -625,13 +638,13 @@ const WaitlistManagement = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" className="loading-cell">
+                <td colSpan="7" className="px-4 py-12 text-center text-sm text-muted-foreground">
                   Loading waitlist entries...
                 </td>
               </tr>
             ) : filteredEntries.length === 0 ? (
               <tr>
-                <td colSpan="7" className="empty-cell">
+                <td colSpan="7" className="px-4 py-12 text-center text-sm text-muted-foreground">
                   No waitlist entries found.
                 </td>
               </tr>
@@ -693,20 +706,20 @@ const WaitlistManagement = () => {
             </div>
             <div className="modal-body">
               <p>Upload a CSV file with waitlist entries. Required column: <strong>email</strong>. Optional columns: <strong>name</strong>, <strong>type</strong>.</p>
-              <div className="file-upload">
+              <div className="rounded-lg border border-dashed border-border bg-muted/40 p-6 text-center">
                 <input
                   type="file"
                   accept=".csv"
                   onChange={(e) => setImportFile(e.target.files[0])}
                   id="csv-upload"
                 />
-                <label htmlFor="csv-upload" className="file-label">
+                <label htmlFor="csv-upload" className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
                   {Icons.upload}
                   {importFile ? importFile.name : 'Choose CSV file'}
                 </label>
               </div>
               {importResults && (
-                <div className="import-results">
+                <div className="rounded-lg border border-info/30 bg-info/5 p-4 mb-4">
                   <p>✅ Imported: <strong>{importResults.imported}</strong></p>
                   <p>⏭️ Skipped (duplicates): <strong>{importResults.skipped}</strong></p>
                   {importResults.errors > 0 && <p>❌ Errors: <strong>{importResults.errors}</strong></p>}
@@ -878,8 +891,8 @@ const UsersManagement = ({ onViewAs }) => {
   };
 
   return (
-    <div className="users-management">
-      <div className="page-header">
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <h1>Users Management</h1>
         <button className="btn-primary" onClick={() => setShowInviteModal(true)}>
           {Icons.mail}
@@ -888,8 +901,8 @@ const UsersManagement = ({ onViewAs }) => {
       </div>
 
       {/* Filters */}
-      <div className="filters-bar">
-        <div className="search-box">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative w-full sm:max-w-md">
           {Icons.search}
           <input
             type="text"
@@ -898,7 +911,7 @@ const UsersManagement = ({ onViewAs }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="filter-group">
+        <div className="flex items-center gap-1.5">
           <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
             <option value="all">All Roles</option>
             <option value="customer">Customers</option>
@@ -908,13 +921,13 @@ const UsersManagement = ({ onViewAs }) => {
       </div>
 
       {/* Users Table */}
-      <div className="table-card">
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm mb-6">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
             Loading users...
           </div>
         ) : (
-          <table className="data-table">
+          <table className="w-full text-sm">
             <thead>
               <tr>
                 <th>User</th>
@@ -930,16 +943,16 @@ const UsersManagement = ({ onViewAs }) => {
               {filteredUsers.length > 0 ? filteredUsers.map((user) => (
                 <tr key={user.id}>
                   <td>
-                    <div className="user-cell">
-                      <div className="user-avatar">{getInitials(user.name)}</div>
-                      <div className="user-info">
-                        <span className="user-name">{user.name || 'No name'}</span>
-                        <span className="user-email">{user.email}</span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{getInitials(user.name)}</div>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-sm font-semibold truncate">{user.name || 'No name'}</span>
+                        <span className="text-xs text-muted-foreground truncate">{user.email}</span>
                       </div>
                     </div>
                   </td>
                   <td>
-                    <div className="contact-cell">
+                    <div className="flex flex-col leading-tight">
                       <span>{user.phone || 'No phone'}</span>
                     </div>
                   </td>
@@ -950,7 +963,7 @@ const UsersManagement = ({ onViewAs }) => {
                   <td>{user.role === 'owner' ? (user.subscription_type || 'free') : '-'}</td>
                   <td>{user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : 'N/A'}</td>
                   <td>
-                    <div className="action-buttons">
+                    <div className="flex items-center gap-1">
                       <button className="icon-btn" onClick={() => handleViewUser(user)} title="View">
                         {Icons.eye}
                       </button>
@@ -994,7 +1007,7 @@ const UsersManagement = ({ onViewAs }) => {
             </div>
             <div className="modal-body">
               {inviteSuccess && (
-                <div className="success-message" style={{
+                <div className="flex items-center gap-2 rounded-lg border border-positive/30 bg-positive/10 px-4 py-3 text-sm text-positive mb-4" style={{
                   background: '#dcfce7',
                   color: '#166534',
                   padding: '12px',
@@ -1004,8 +1017,8 @@ const UsersManagement = ({ onViewAs }) => {
                   {inviteSuccess}
                 </div>
               )}
-              <div className="form-grid">
-                <div className="form-group">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2 mb-4">
                   <label>Full Name *</label>
                   <input
                     type="text"
@@ -1015,7 +1028,7 @@ const UsersManagement = ({ onViewAs }) => {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="space-y-2 mb-4">
                   <label>Email Address *</label>
                   <input
                     type="email"
@@ -1025,7 +1038,7 @@ const UsersManagement = ({ onViewAs }) => {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="space-y-2 mb-4">
                   <label>Role</label>
                   <select
                     value={inviteRole}
@@ -1036,7 +1049,7 @@ const UsersManagement = ({ onViewAs }) => {
                   </select>
                 </div>
               </div>
-              <p className="form-hint" style={{ marginTop: '16px', color: '#64748b' }}>
+              <p className="text-xs text-muted-foreground" style={{ marginTop: '16px', color: '#64748b' }}>
                 The user will receive an email with a link to set up their account.
               </p>
             </div>
@@ -1068,8 +1081,8 @@ const UsersManagement = ({ onViewAs }) => {
             </div>
             <div className="modal-body">
               {editMode ? (
-                <div className="form-grid">
-                  <div className="form-group">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-2 mb-4">
                     <label>Name *</label>
                     <input
                       type="text"
@@ -1079,7 +1092,7 @@ const UsersManagement = ({ onViewAs }) => {
                       required
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="space-y-2 mb-4">
                     <label>Email</label>
                     <input
                       type="email"
@@ -1087,9 +1100,9 @@ const UsersManagement = ({ onViewAs }) => {
                       disabled
                       className="disabled"
                     />
-                    <span className="form-hint">Email cannot be changed (linked to auth)</span>
+                    <span className="text-xs text-muted-foreground">Email cannot be changed (linked to auth)</span>
                   </div>
-                  <div className="form-group">
+                  <div className="space-y-2 mb-4">
                     <label>Phone</label>
                     <input
                       type="tel"
@@ -1098,7 +1111,7 @@ const UsersManagement = ({ onViewAs }) => {
                       placeholder="Enter phone number"
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="space-y-2 mb-4">
                     <label>Role</label>
                     <select
                       value={selectedUser.role || 'customer'}
@@ -1110,37 +1123,37 @@ const UsersManagement = ({ onViewAs }) => {
                   </div>
                 </div>
               ) : (
-                <div className="user-details">
-                  <div className="detail-header">
+                <div className="min-w-0 flex flex-col leading-tight">
+                  <div className="border-b border-border pb-3 mb-4">
                     <div className="user-avatar large">{getInitials(selectedUser.name)}</div>
                     <div>
                       <h3>{selectedUser.name || 'No name'}</h3>
                       <span className={`role-badge ${selectedUser.role || 'customer'}`}>{selectedUser.role || 'customer'}</span>
                     </div>
                   </div>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Email</span>
-                      <span className="detail-value">{selectedUser.email}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-border bg-card p-3">
+                      <span className="block text-xs text-muted-foreground mb-1">Email</span>
+                      <span className="font-semibold text-sm">{selectedUser.email}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Phone</span>
-                      <span className="detail-value">{selectedUser.phone || 'Not provided'}</span>
+                    <div className="rounded-lg border border-border bg-card p-3">
+                      <span className="block text-xs text-muted-foreground mb-1">Phone</span>
+                      <span className="font-semibold text-sm">{selectedUser.phone || 'Not provided'}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Joined</span>
-                      <span className="detail-value">{selectedUser.created_at ? format(new Date(selectedUser.created_at), 'MMM dd, yyyy') : 'N/A'}</span>
+                    <div className="rounded-lg border border-border bg-card p-3">
+                      <span className="block text-xs text-muted-foreground mb-1">Joined</span>
+                      <span className="font-semibold text-sm">{selectedUser.created_at ? format(new Date(selectedUser.created_at), 'MMM dd, yyyy') : 'N/A'}</span>
                     </div>
                     {selectedUser.role === 'customer' && (
-                      <div className="detail-item">
-                        <span className="detail-label">Points</span>
-                        <span className="detail-value">{selectedUser.points || 0}</span>
+                      <div className="rounded-lg border border-border bg-card p-3">
+                        <span className="block text-xs text-muted-foreground mb-1">Points</span>
+                        <span className="font-semibold text-sm">{selectedUser.points || 0}</span>
                       </div>
                     )}
                     {selectedUser.role === 'owner' && (
-                      <div className="detail-item">
-                        <span className="detail-label">Subscription</span>
-                        <span className="detail-value">{selectedUser.subscription_type || 'free'}</span>
+                      <div className="rounded-lg border border-border bg-card p-3">
+                        <span className="block text-xs text-muted-foreground mb-1">Subscription</span>
+                        <span className="font-semibold text-sm">{selectedUser.subscription_type || 'free'}</span>
                       </div>
                     )}
                   </div>
@@ -1172,43 +1185,43 @@ const UsersManagement = ({ onViewAs }) => {
 // Analytics Component - Real Data Only
 const AnalyticsPage = ({ stats, chartData }) => {
   return (
-    <div className="analytics-page">
-      <div className="page-header">
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <h1>Analytics</h1>
       </div>
 
       {/* Key Metrics */}
       <div className="metrics-grid">
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-title">Total Users</span>
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Users</span>
           </div>
-          <div className="metric-value">{(stats.totalUsers || 0).toLocaleString()}</div>
+          <div className="text-3xl font-bold tracking-tight tabular-nums">{(stats.totalUsers || 0).toLocaleString()}</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-title">Food Trucks</span>
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Food Trucks</span>
           </div>
-          <div className="metric-value">{(stats.totalTrucks || 0).toLocaleString()}</div>
+          <div className="text-3xl font-bold tracking-tight tabular-nums">{(stats.totalTrucks || 0).toLocaleString()}</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-title">Total Reviews</span>
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Reviews</span>
           </div>
-          <div className="metric-value">{(stats.totalReviews || 0).toLocaleString()}</div>
+          <div className="text-3xl font-bold tracking-tight tabular-nums">{(stats.totalReviews || 0).toLocaleString()}</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-header">
-            <span className="metric-title">Total Check-ins</span>
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Check-ins</span>
           </div>
-          <div className="metric-value">{(stats.totalCheckIns || 0).toLocaleString()}</div>
+          <div className="text-3xl font-bold tracking-tight tabular-nums">{(stats.totalCheckIns || 0).toLocaleString()}</div>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="charts-grid">
-        <div className="chart-card large">
-          <div className="chart-header">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mb-3">
             <h3>Daily Activity (Last 30 Days)</h3>
           </div>
           {chartData.dailyActivity.length > 0 ? (
@@ -1224,14 +1237,14 @@ const AnalyticsPage = ({ stats, chartData }) => {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="chart-empty">
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground text-center">
               <p>No activity data yet. Charts will populate as users interact with the app.</p>
             </div>
           )}
         </div>
 
-        <div className="chart-card">
-          <div className="chart-header">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="mb-3">
             <h3>Trucks by Cuisine</h3>
           </div>
           {chartData.cuisineBreakdown.length > 0 ? (
@@ -1255,7 +1268,7 @@ const AnalyticsPage = ({ stats, chartData }) => {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="chart-empty">
+            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground text-center">
               <p>No food truck data yet.</p>
             </div>
           )}
@@ -1297,12 +1310,12 @@ const OrdersManagement = () => {
 
   return (
     <div className="orders-management">
-      <div className="page-header">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <h1>Orders Management</h1>
-        <span className="count-badge">{orders.length} orders</span>
+        <span className="inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">{orders.length} orders</span>
       </div>
 
-      <div className="table-card">
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm mb-6">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
             Loading orders...
@@ -1312,7 +1325,7 @@ const OrdersManagement = () => {
             No orders found. Create a test order in Settings → Developer Settings.
           </div>
         ) : (
-          <table className="data-table">
+          <table className="w-full text-sm">
             <thead>
               <tr>
                 <th>Order #</th>
@@ -1333,9 +1346,9 @@ const OrdersManagement = () => {
                     </code>
                   </td>
                   <td>
-                    <div className="user-info">
-                      <span className="user-name">{order.profiles?.name || 'Unknown'}</span>
-                      <span className="user-email" style={{ fontSize: '11px', color: '#64748b' }}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-sm font-semibold truncate">{order.profiles?.name || 'Unknown'}</span>
+                      <span className="text-xs text-muted-foreground truncate" style={{ fontSize: '11px', color: '#64748b' }}>
                         {order.profiles?.email}
                       </span>
                     </div>
@@ -1486,30 +1499,30 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
   };
 
   return (
-    <div className="settings-page">
-      <div className="page-header">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <h1>Settings</h1>
       </div>
 
-      <div className="settings-grid">
-        <div className="settings-card">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm mb-4">
           <h3>Admin Information</h3>
-          <div className="form-group">
+          <div className="space-y-2 mb-4">
             <label>Logged in as</label>
             <input type="text" value={adminEmail} disabled className="disabled" />
           </div>
-          <div className="form-group">
+          <div className="space-y-2 mb-4">
             <label>Admin Access</label>
-            <p className="form-info">
+            <p className="rounded-lg bg-muted/40 px-4 py-3 text-xs text-muted-foreground mb-3">
               Admin access is managed via the database. Set <code>role = 'admin'</code> in the <code>profiles</code> table to grant admin access.
             </p>
-            <span className="form-hint">Contact your database administrator to add or remove admins</span>
+            <span className="text-xs text-muted-foreground">Contact your database administrator to add or remove admins</span>
           </div>
         </div>
 
-        <div className="settings-card">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm mb-4">
           <h3>General Settings</h3>
-          <div className="form-group">
+          <div className="space-y-2 mb-4">
             <label>Site Name</label>
             <input
               type="text"
@@ -1517,14 +1530,14 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
               onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
             />
           </div>
-          <div className="form-group">
+          <div className="space-y-2 mb-4">
             <label>Site Description</label>
             <textarea
               value={settings.siteDescription}
               onChange={(e) => setSettings({ ...settings, siteDescription: e.target.value })}
             />
           </div>
-          <div className="form-group">
+          <div className="space-y-2 mb-4">
             <label>Contact Email</label>
             <input
               type="email"
@@ -1534,20 +1547,20 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
           </div>
         </div>
 
-        <div className="settings-card">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm mb-4">
           <h3>Business Settings</h3>
-          <div className="form-group">
+          <div className="space-y-2 mb-4">
             <label>Commission Rate (%)</label>
             <input
               type="number"
               value={settings.commissionRate}
               onChange={(e) => setSettings({ ...settings, commissionRate: parseFloat(e.target.value) || 0 })}
             />
-            <span className="form-hint">0% = No commission on pickup orders</span>
+            <span className="text-xs text-muted-foreground">0% = No commission on pickup orders</span>
           </div>
         </div>
 
-        <div className="settings-card">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm mb-4">
           <h3>Feature Toggles</h3>
           <div className="toggle-group">
             <label className="toggle-label">
@@ -1578,7 +1591,7 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
             {Icons.code}
             Developer Settings
           </h3>
-          <p className="form-hint" style={{ marginBottom: '16px' }}>
+          <p className="text-xs text-muted-foreground" style={{ marginBottom: '16px' }}>
             These settings are for local development and testing only.
           </p>
 
@@ -1592,10 +1605,10 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
               />
               <span className="toggle-switch"></span>
             </label>
-            <span className="form-hint">Allow users to write reviews without completing an order first</span>
+            <span className="text-xs text-muted-foreground">Allow users to write reviews without completing an order first</span>
           </div>
 
-          <div className="form-group" style={{ marginTop: '24px' }}>
+          <div className="space-y-2 mb-4" style={{ marginTop: '24px' }}>
             <label>Test User Management</label>
             <button
               className="btn-secondary"
@@ -1605,12 +1618,12 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
             >
               {creatingTestUser ? 'Creating...' : 'Create Test Customer'}
             </button>
-            <span className="form-hint">Creates a test customer. Confirm in Supabase Auth to enable login.</span>
+            <span className="text-xs text-muted-foreground">Creates a test customer. Confirm in Supabase Auth to enable login.</span>
           </div>
 
-          <div className="form-group" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+          <div className="space-y-2 mb-4" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
             <label>Create Test Order (Completed)</label>
-            <p className="form-hint" style={{ marginBottom: '12px' }}>
+            <p className="text-xs text-muted-foreground" style={{ marginBottom: '12px' }}>
               Create a completed order so the customer can write reviews
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1645,7 +1658,7 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
                 {creatingTestOrder ? 'Creating Order...' : 'Create Completed Order'}
               </button>
             </div>
-            <span className="form-hint" style={{ marginTop: '8px', display: 'block' }}>
+            <span className="text-xs text-muted-foreground" style={{ marginTop: '8px', display: 'block' }}>
               This creates an order with status "completed" including menu items from the selected truck
             </span>
           </div>
@@ -1863,15 +1876,15 @@ const AdminDashboard = () => {
   // Show loading only during INITIAL auth check (not on tab return)
   if (authLoading && !initialAuthDone) {
     return (
-      <div className="admin-login">
-        <div className="login-card">
-          <div className="login-header">
-            <div className="login-logo">
-              <span className="logo-icon">C</span>
-              <span className="logo-text">Cravvr Admin</span>
-            </div>
-            <p>Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-background to-rose-100/40 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl text-center space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-md shadow-primary/30">
+              C
+            </span>
+            <span className="text-xl font-bold tracking-tight">Cravvr Admin</span>
           </div>
+          <p className="text-sm text-muted-foreground">Loading…</p>
         </div>
       </div>
     );
@@ -1880,22 +1893,28 @@ const AdminDashboard = () => {
   // Show access denied if user is logged in but not admin (including when profile is null/missing)
   if (user && !isAdmin) {
     return (
-      <div className="admin-login">
-        <div className="login-card">
-          <div className="login-header">
-            <div className="login-logo">
-              <span className="logo-icon">C</span>
-              <span className="logo-text">Cravvr Admin</span>
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-background to-rose-100/40 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl space-y-4">
+          <div className="text-center space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-md shadow-primary/30">
+                C
+              </span>
+              <span className="text-xl font-bold tracking-tight">Cravvr Admin</span>
             </div>
-            <p>Access Denied</p>
+            <p className="text-sm text-muted-foreground">Access Denied</p>
           </div>
-          <div className="login-error">
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <span className="h-4 w-4 shrink-0 mt-0.5">{Icons.alertCircle}</span>
             {!profile
               ? 'Your admin profile is not set up. Please contact support to configure your account.'
-              : 'You do not have admin privileges. Please contact support if you believe this is an error.'
-            }
+              : 'You do not have admin privileges. Please contact support if you believe this is an error.'}
           </div>
-          <button className="login-btn" onClick={handleLogout}>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full h-11 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
+          >
             Sign Out & Try Again
           </button>
         </div>
@@ -1938,9 +1957,13 @@ const AdminDashboard = () => {
         // Truck management has moved to /admin/trucks (richer UI, audit log, soft delete).
         // This case is kept only as a defensive fallback if the navigate() above is bypassed.
         return (
-          <div className="admin-tab-content">
-            <p>Truck management has moved.</p>
-            <button className="btn-primary" onClick={() => navigate('/admin/trucks')}>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-3">
+            <p className="text-sm text-muted-foreground">Truck management has moved.</p>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              onClick={() => navigate('/admin/trucks')}
+            >
               Open truck manager
             </button>
           </div>
@@ -2000,7 +2023,7 @@ const AdminDashboard = () => {
           onNavigate={setCurrentPage}
         />
       }
-      className="admin-dashboard-content"
+      className="bg-muted/40 min-h-screen"
     >
       {renderPage()}
     </DashboardShell>
