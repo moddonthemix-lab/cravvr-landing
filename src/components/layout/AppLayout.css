@@ -276,61 +276,7 @@
   z-index: 100;
 }
 
-.mobile-nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 8px 12px;
-  border: none;
-  background: transparent;
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: var(--transition);
-  min-width: 56px;
-}
-
-.mobile-nav-item .nav-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-.mobile-nav-item .nav-label {
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.mobile-nav-item:hover,
-.mobile-nav-item.active {
-  color: var(--primary);
-}
-
-.mobile-nav-item.active .nav-icon svg {
-  color: var(--primary);
-}
-
 /* Bolt button (center, elevated) */
-.mobile-nav-item.bolt {
-  position: relative;
-  background: linear-gradient(135deg, #eab308, #f59e0b);
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-full);
-  margin-top: -20px;
-  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.4);
-}
-
-.mobile-nav-item.bolt .nav-icon svg {
-  color: white;
-  width: 28px;
-  height: 28px;
-}
-
-.mobile-nav-item.bolt:active {
-  transform: scale(0.95);
-}
 
 /* ================================
    RESPONSIVE BREAKPOINTS

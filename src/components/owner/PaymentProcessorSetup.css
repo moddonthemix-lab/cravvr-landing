@@ -73,30 +73,10 @@
   opacity: 0.6;
 }
 
-.processor-tile-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
-  background: var(--bg-alt, #f3f4f6);
-  color: var(--text, #0f172a);
-}
-
 .processor-tile.is-selected .processor-tile-icon {
   background: var(--primary, #e11d48);
   color: white;
 }
-
-.processor-tile-icon.brand-stripe { background: #635bff; color: white; }
-.processor-tile-icon.brand-square { background: #006aff; color: white; }
-.processor-tile-icon.brand-clover { background: #00ad6f; color: white; }
-.processor-tile-icon.brand-pickup { background: #f59e0b; color: white; }
 
 .processor-tile-body {
   flex: 1;
@@ -147,19 +127,6 @@
   text-transform: uppercase;
   background: var(--bg-alt, #f3f4f6);
   color: var(--text-muted, #6b7280);
-  border-radius: 4px;
-}
-
-.processor-tile-plus-tag {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 6px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: var(--primary, #e11d48);
-  color: white;
   border-radius: 4px;
 }
 

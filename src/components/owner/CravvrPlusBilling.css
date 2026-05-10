@@ -47,28 +47,6 @@
   color: var(--text-muted, #6b7280);
 }
 
-.cp-plan-badge {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border-radius: var(--radius-full, 999px);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.cp-plan-badge.is-free {
-  background: var(--bg-alt, #f3f4f6);
-  color: var(--text-muted, #6b7280);
-}
-
-.cp-plan-badge.is-plus {
-  background: var(--primary, #e11d48);
-  color: white;
-}
-
 .cp-trial-tag,
 .cp-past-due-tag {
   font-size: 0.65rem;

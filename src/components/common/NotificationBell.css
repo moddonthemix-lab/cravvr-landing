@@ -225,30 +225,6 @@
 }
 
 /* Notification Item */
-.notification-item {
-  display: flex;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.notification-item:hover {
-  background: var(--bg);
-}
-
-.notification-item:last-child {
-  border-bottom: none;
-}
-
-.notification-item.unread {
-  background: var(--primary-light);
-}
-
-.notification-item.unread:hover {
-  background: rgba(225, 29, 72, 0.08);
-}
 
 /* Notification Icon */
 .notification-icon {
@@ -261,11 +237,6 @@
   border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--primary);
-}
-
-.notification-item.unread .notification-icon {
-  background: var(--primary);
-  color: white;
 }
 
 .notification-icon svg {
@@ -318,10 +289,6 @@
   cursor: pointer;
   opacity: 0;
   transition: var(--transition);
-}
-
-.notification-item:hover .notification-delete {
-  opacity: 1;
 }
 
 .notification-delete:hover {
