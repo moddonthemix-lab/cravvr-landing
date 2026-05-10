@@ -91,9 +91,18 @@ const HomePage = ({ embedded = false }) => {
 
   const userName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Guest';
 
+  // When `embedded` is true (PageWrapper on desktop, TabContainer on mobile),
+  // the host owns the header, sidebar, and mobile bottom-nav. HomePage skips
+  // its own chrome to avoid stacking duplicate UI.
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-20 lg:pb-0">
+    <div
+      className={cn(
+        'flex flex-col bg-background',
+        embedded ? '' : 'min-h-screen pb-20 lg:pb-0'
+      )}
+    >
       {/* Header */}
+      {!embedded && (
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/85 backdrop-blur px-4 py-3 sm:px-6">
         <div
           className="cursor-pointer shrink-0"
@@ -146,8 +155,10 @@ const HomePage = ({ embedded = false }) => {
           </button>
         </div>
       </header>
+      )}
 
       {/* Mobile search */}
+      {!embedded && (
       <div className="md:hidden sticky top-[64px] z-30 border-b border-border bg-background/85 backdrop-blur px-4 py-2">
         <div className="relative w-full">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
@@ -162,9 +173,11 @@ const HomePage = ({ embedded = false }) => {
           />
         </div>
       </div>
+      )}
 
       <div className="flex flex-1 min-h-0">
         {/* Sidebar (desktop only) */}
+        {!embedded && (
         <aside className="hidden lg:flex lg:flex-col lg:w-60 lg:shrink-0 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:overflow-y-auto lg:border-r lg:border-border lg:bg-card">
           <nav className="flex flex-col gap-1 p-3">
             <button className={cn(sidebarItem, sidebarItemActive)} onClick={() => navigate('/')}>
@@ -235,6 +248,7 @@ const HomePage = ({ embedded = false }) => {
             )}
           </nav>
         </aside>
+        )}
 
         {/* Main */}
         <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-10 py-6">
