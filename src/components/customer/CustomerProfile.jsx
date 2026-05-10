@@ -40,7 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { DashboardSidebar, DashboardShell } from '@/components/ui/dashboard-sidebar';
+import { DashboardTabBar } from '@/components/ui/dashboard-sidebar';
 import { cn } from '@/lib/utils';
 import LoadingSplash from '../common/LoadingSplash';
 
@@ -2149,19 +2149,23 @@ const CustomerProfile = ({ onBack }) => {
 
   if (showDesktopShell) {
     return (
-      <div className="min-h-screen">
-        <DashboardShell
-          sidebar={
-            <DashboardSidebar
-              brand={sidebarBrand}
-              navItems={sidebarNavItems}
-              activeId={activeTab}
-              onNavigate={handleTabChange}
-            />
+      <div className="min-h-screen bg-muted/30">
+        <DashboardTabBar
+          navItems={sidebarNavItems}
+          activeId={activeTab}
+          onNavigate={handleTabChange}
+          header={
+            <div className="px-3 sm:px-6 pt-4 pb-2">
+              <h1 className="text-lg font-bold tracking-tight">My Account</h1>
+              <p className="text-xs text-muted-foreground truncate">
+                {profile?.email || user?.email}
+              </p>
+            </div>
           }
-        >
+        />
+        <main className="px-3 py-4 sm:px-6 lg:py-6">
           {renderTab()}
-        </DashboardShell>
+        </main>
         {modals}
       </div>
     );

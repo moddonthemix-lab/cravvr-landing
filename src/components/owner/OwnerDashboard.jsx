@@ -41,9 +41,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  DashboardSidebar,
-  DashboardMobileNav,
-  DashboardShell,
+  DashboardTabBar,
 } from '@/components/ui/dashboard-sidebar';
 
 // Code-split: Analytics pulls in Tremor + recharts (~300 KB gzipped). Loading
@@ -1852,44 +1850,42 @@ const OwnerDashboard = () => {
   );
 
   return (
-    <DashboardShell
-      sidebar={
-        <DashboardSidebar
-          brand={sidebarBrand}
-          navItems={navItems}
-          activeId={activeTab}
-          onNavigate={setActiveTab}
-        />
-      }
-      mobileNav={
-        <DashboardMobileNav
-          navItems={navItems}
-          activeId={activeTab}
-          onNavigate={setActiveTab}
-        />
-      }
-      className="owner-dashboard-content"
-    >
-      {error && (
-        <div className="mb-4">
-          <div
-            role="alert"
-            className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-          >
-            <span className="h-5 w-5 shrink-0 mt-0.5">{Icons.alertCircle}</span>
-            <p className="flex-1 leading-snug">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              aria-label="Dismiss error"
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-destructive/70 transition-colors hover:bg-destructive/15 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <span className="h-4 w-4">{Icons.x}</span>
-            </button>
+    <div className="min-h-screen bg-muted/30">
+      <DashboardTabBar
+        navItems={navItems}
+        activeId={activeTab}
+        onNavigate={setActiveTab}
+        header={
+          <div className="px-3 sm:px-6 pt-4 pb-2">
+            <h1 className="text-lg font-bold tracking-tight">Owner Dashboard</h1>
+            <p className="text-xs text-muted-foreground">
+              {profile?.business_name || profile?.name || 'Manage your trucks'}
+            </p>
           </div>
-        </div>
-      )}
-      {renderTab()}
-    </DashboardShell>
+        }
+      />
+      <main className="px-3 py-4 sm:px-6 lg:py-6">
+        {error && (
+          <div className="mb-4">
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
+              <span className="h-5 w-5 shrink-0 mt-0.5">{Icons.alertCircle}</span>
+              <p className="flex-1 leading-snug">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                aria-label="Dismiss error"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-destructive/70 transition-colors hover:bg-destructive/15 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <span className="h-4 w-4">{Icons.x}</span>
+              </button>
+            </div>
+          </div>
+        )}
+        {renderTab()}
+      </main>
+    </div>
   );
 };
 

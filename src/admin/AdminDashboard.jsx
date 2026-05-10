@@ -30,9 +30,7 @@ import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Icons } from '../components/common/Icons';
 import MarketingPage from '../components/admin/MarketingPage';
 import {
-  DashboardSidebar,
-  DashboardMobileNav,
-  DashboardShell,
+  DashboardTabBar,
 } from '@/components/ui/dashboard-sidebar';
 import './AdminDashboard.css';
 
@@ -2007,26 +2005,22 @@ const AdminDashboard = () => {
   );
 
   return (
-    <DashboardShell
-      sidebar={
-        <DashboardSidebar
-          brand={sidebarBrand}
-          navItems={sidebarNavItems}
-          activeId={currentPage}
-          onNavigate={setCurrentPage}
-        />
-      }
-      mobileNav={
-        <DashboardMobileNav
-          navItems={sidebarNavItems}
-          activeId={currentPage}
-          onNavigate={setCurrentPage}
-        />
-      }
-      className="bg-muted/40 min-h-screen"
-    >
-      {renderPage()}
-    </DashboardShell>
+    <div className="min-h-screen bg-muted/30">
+      <DashboardTabBar
+        navItems={sidebarNavItems}
+        activeId={currentPage}
+        onNavigate={setCurrentPage}
+        header={
+          <div className="px-3 sm:px-6 pt-4 pb-2">
+            <h1 className="text-lg font-bold tracking-tight">Admin Dashboard</h1>
+            <p className="text-xs text-muted-foreground">Cravvr internal tools</p>
+          </div>
+        }
+      />
+      <main className="px-3 py-4 sm:px-6 lg:py-6">
+        {renderPage()}
+      </main>
+    </div>
   );
 };
 

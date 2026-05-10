@@ -169,4 +169,58 @@ const DashboardShell = ({ sidebar, mobileNav, children, className }) => (
   </div>
 );
 
-export { DashboardSidebar, DashboardMobileNav, DashboardShell };
+/**
+ * DashboardTabBar — horizontal scroll pill nav, always visible on every
+ * viewport. Use this INSIDE a PageWrapper-wrapped surface (Owner / Admin /
+ * Customer dashboards) for per-section tab nav. Don't pair it with
+ * DashboardSidebar — the global app sidebar already lives in PageWrapper.
+ */
+const DashboardTabBar = ({ navItems = [], activeId, onNavigate, header, className }) => (
+  <div
+    className={cn(
+      'sticky top-[57px] z-20 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
+      className
+    )}
+  >
+    {header}
+    <nav className="flex overflow-x-auto gap-1.5 px-3 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6">
+      {navItems.map((item) => {
+        const isActive = item.id === activeId;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => {
+              if (item.disabled) return;
+              if (item.onClick) item.onClick();
+              else onNavigate?.(item.id);
+            }}
+            disabled={item.disabled}
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              isActive
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground',
+              item.disabled && 'opacity-50 cursor-not-allowed'
+            )}
+          >
+            <span className="h-3.5 w-3.5 flex items-center justify-center">{item.icon}</span>
+            <span>{item.label}</span>
+            {item.badge != null && (
+              <span
+                className={cn(
+                  'rounded-full px-1.5 py-px text-[10px] font-semibold tabular-nums',
+                  isActive ? 'bg-white/25 text-white' : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {item.badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </nav>
+  </div>
+);
+
+export { DashboardSidebar, DashboardMobileNav, DashboardShell, DashboardTabBar };

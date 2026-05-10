@@ -110,6 +110,30 @@ Route wrappers in `src/components/wrappers/index.jsx` (`OwnerDashboardWrapper`, 
 
 If you find yourself building an "app shell" or "sidebar" component, you're solving a problem that's already solved — extend `PageWrapper` instead.
 
+### Per-section tab nav
+
+Inside a dashboard (Owner / Admin / Customer profile), the role-specific tab nav (Overview / Trucks / Menu… etc) renders as a horizontal sticky pill row via `<DashboardTabBar />` from `@/components/ui/dashboard-sidebar`. **Do not** wrap the dashboard in `DashboardShell` + `DashboardSidebar` — that would render a second left sidebar inside `PageWrapper`'s sidebar.
+
+Pattern (used by OwnerDashboard / AdminDashboard / CustomerProfile):
+```jsx
+<div className="min-h-screen bg-muted/30">
+  <DashboardTabBar
+    navItems={navItems}
+    activeId={activeTab}
+    onNavigate={setActiveTab}
+    header={
+      <div className="px-3 sm:px-6 pt-4 pb-2">
+        <h1 className="text-lg font-bold tracking-tight">Section Title</h1>
+        <p className="text-xs text-muted-foreground">Subtitle</p>
+      </div>
+    }
+  />
+  <main className="px-3 py-4 sm:px-6 lg:py-6">{renderTab()}</main>
+</div>
+```
+
+`DashboardSidebar` and `DashboardShell` are still exported but reserved for future surfaces that genuinely need a second sidebar (none currently). Default to `DashboardTabBar`.
+
 ## Pages NOT to touch without asking
 
 - `src/components/social/SocialGraphics.css` — html2canvas pixel-perfect exports rely on this; Tailwind purge could silently break image generation.
