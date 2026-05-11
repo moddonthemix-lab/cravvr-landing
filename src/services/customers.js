@@ -13,16 +13,32 @@ export const ensureCustomerRow = async (userId) => {
 };
 
 /**
- * Update fields on the `customer_profiles` table (preferences, allergens,
- * dietary restrictions, etc.). The table keys off `user_id` referencing
- * auth.users — same UUID as profiles.id.
+ * Update customer-editable profile fields. Storage is split:
+ *   - `name`, `avatar_url` live on `profiles` (keyed by id)
+ *   - `phone`, `points` live on `customers` (keyed by id)
+ * Caller passes a flat object; we route each field to the right table.
  */
 export const updateCustomerProfile = async (userId, updates) => {
-  const { error } = await supabase
-    .from('customer_profiles')
-    .update(updates)
-    .eq('user_id', userId);
-  if (error) throw error;
+  const profileFields = {};
+  const customerFields = {};
+  if ('name' in updates) profileFields.name = updates.name;
+  if ('avatar_url' in updates) profileFields.avatar_url = updates.avatar_url;
+  if ('phone' in updates) customerFields.phone = updates.phone;
+
+  if (Object.keys(profileFields).length) {
+    const { error } = await supabase
+      .from('profiles')
+      .update(profileFields)
+      .eq('id', userId);
+    if (error) throw error;
+  }
+  if (Object.keys(customerFields).length) {
+    const { error } = await supabase
+      .from('customers')
+      .update(customerFields)
+      .eq('id', userId);
+    if (error) throw error;
+  }
 };
 
 /**
