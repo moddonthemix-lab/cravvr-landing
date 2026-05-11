@@ -9,8 +9,6 @@
  * pass its kebab-case name plus the props its component accepts.
  */
 
-import { supabase } from '../lib/supabase'
-
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SEND_EMAIL_FUNCTION = `${SUPABASE_URL}/functions/v1/resend-email`
 
@@ -23,13 +21,18 @@ const SEND_EMAIL_FUNCTION = `${SUPABASE_URL}/functions/v1/resend-email`
  */
 const sendEmail = async (to, template, data, subject) => {
   try {
-    const { data: { session } } = await supabase.auth.getSession()
+    // Auth: Clerk session token if signed in, anon key as fallback so the
+    // function (which has verify_jwt enabled by default) still accepts it
+    // for unauthenticated paths.
+    const token = (typeof window !== 'undefined'
+      && (await window.Clerk?.session?.getToken().catch(() => null)))
+      || import.meta.env.VITE_SUPABASE_ANON_KEY
 
     const response = await fetch(SEND_EMAIL_FUNCTION, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token || ''}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ to, template, data, subject }),
     })

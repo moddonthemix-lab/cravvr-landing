@@ -9,6 +9,21 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Hand the supabase client a function that returns the current Clerk session
+// token. Supabase's Third-Party Auth integration accepts the Clerk JWT as-is.
+// window.Clerk is populated by <ClerkProvider> at app boot; until then this
+// returns null and supabase falls back to the anon key (fine for public reads).
+async function clerkAccessToken() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return (await window.Clerk?.session?.getToken()) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  accessToken: clerkAccessToken,
+});
 
 export default supabase;

@@ -1,55 +1,38 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { useUser, useClerk } from '@clerk/clerk-react';
 import { supabase } from '../../lib/supabase';
 import { track as trackEvent, identify as identifyVisitor } from '../../services/analytics';
 
-// Create Auth Context
+// Same context shape as before — wraps Clerk + a Supabase profile fetch.
+// The signUp/signIn/resetPassword methods are gone (Clerk's UI handles those
+// flows); everything else preserves the previous API so the ~30 useAuth()
+// callers don't need to change.
 const AuthContext = createContext({});
 
-// Auth Provider Component
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const { user: clerkUser, isLoaded: clerkLoaded, isSignedIn } = useUser();
+  const clerk = useClerk();
+
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Auth modal state (centralized for entire app)
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login'); // 'login', 'signup', 'forgot'
-
-  // Admin impersonation state (View As feature)
+  // Admin impersonation ("View As") — purely client-side state. The actual
+  // JWT stays the admin's, so RLS continues to apply admin permissions.
   const [viewingAs, setViewingAs] = useState(null);
   const [originalProfile, setOriginalProfile] = useState(null);
 
-  // Dev settings (stored in localStorage)
   const [devSettings, setDevSettings] = useState(() => {
     const saved = localStorage.getItem('cravvr_dev_settings');
-    return saved ? JSON.parse(saved) : {
-      skipReviewOrderRequirement: false,
-    };
+    return saved ? JSON.parse(saved) : { skipReviewOrderRequirement: false };
   });
 
-  // Ref to prevent double profile fetch on page refresh
-  const initialLoadComplete = useRef(false);
-  // Track which user id we've already loaded a profile for, so tab-visibility
-  // re-emits of SIGNED_IN (and TOKEN_REFRESHED) don't trigger a redundant
-  // profile refetch that pins authLoading=true and blanks the dashboard.
+  // Track which user id we've already loaded a profile for so re-renders
+  // from token refresh don't re-fetch.
   const loadedUserIdRef = useRef(null);
 
-  // Open auth modal from anywhere in the app
-  const openAuth = (mode = 'login') => {
-    setAuthMode(mode);
-    setShowAuthModal(true);
-  };
-
-  // Close auth modal
-  const closeAuth = () => {
-    setShowAuthModal(false);
-  };
-
-  // Fetch user profile from database
   const fetchProfile = async (userId) => {
     try {
-      // First, fetch the basic profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -57,20 +40,13 @@ export const AuthProvider = ({ children }) => {
         .single();
 
       if (profileError) {
-        // If profile doesn't exist, that's okay - user just doesn't have a profile yet
-        if (profileError.code === 'PGRST116') {
-          return null;
-        }
+        if (profileError.code === 'PGRST116') return null; // no row yet (webhook may be in flight)
         setError(`Profile load failed: ${profileError.message}`);
-        console.error('Error fetching profile:', profileError);
         return null;
       }
-
-      // Clear any previous errors
       setError(null);
 
-      // Build the profile object with basic data
-      const profile = {
+      const built = {
         ...profileData,
         phone: '',
         points: 0,
@@ -79,276 +55,103 @@ export const AuthProvider = ({ children }) => {
         permissions: null,
       };
 
-      // Ensure a customers row exists for all users (needed for favorites, rewards, etc.)
-      await supabase
-        .from('customers')
-        .upsert({ id: userId }, { onConflict: 'id', ignoreDuplicates: true });
-
-      // Optionally fetch role-specific data based on role
       if (profileData.role === 'customer') {
-        const { data: customerData } = await supabase
+        const { data } = await supabase
           .from('customers')
           .select('phone, points, avatar_url')
           .eq('id', userId)
           .single();
-
-        if (customerData) {
-          profile.phone = customerData.phone || '';
-          profile.points = customerData.points || 0;
-          profile.avatar_url = customerData.avatar_url || profile.avatar_url;
+        if (data) {
+          built.phone = data.phone || '';
+          built.points = data.points || 0;
+          built.avatar_url = data.avatar_url || built.avatar_url;
         }
       } else if (profileData.role === 'owner') {
-        const { data: ownerData } = await supabase
+        const { data } = await supabase
           .from('owners')
           .select('subscription_type')
           .eq('id', userId)
           .single();
-
-        if (ownerData) {
-          profile.subscription_type = ownerData.subscription_type || '';
-        }
+        if (data) built.subscription_type = data.subscription_type || '';
       } else if (profileData.role === 'admin') {
-        const { data: adminData } = await supabase
+        const { data } = await supabase
           .from('admins')
           .select('permissions, last_login')
           .eq('id', userId)
           .single();
-
-        if (adminData) {
-          profile.permissions = adminData.permissions || null;
-        }
+        if (data) built.permissions = data.permissions || null;
       }
 
-      return profile;
+      return built;
     } catch (err) {
       setError(`Profile load failed: ${err.message}`);
-      console.error('Error fetching profile:', err);
       return null;
     }
   };
 
-  // Initialize auth state
+  // Load profile whenever the Clerk user changes.
   useEffect(() => {
-    // Get initial session
-    const initAuth = async () => {
+    if (!clerkLoaded) return;
+    if (!isSignedIn || !clerkUser) {
+      setProfile(null);
+      loadedUserIdRef.current = null;
+      return;
+    }
+    if (loadedUserIdRef.current === clerkUser.id) return;
+
+    let cancelled = false;
+    setProfileLoading(true);
+    (async () => {
+      const data = await fetchProfile(clerkUser.id);
+      if (cancelled) return;
+      setProfile(data);
+      loadedUserIdRef.current = clerkUser.id;
+      setProfileLoading(false);
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-          const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
-          loadedUserIdRef.current = session.user.id;
-        }
-        // Mark initial load as complete AFTER profile fetch
-        initialLoadComplete.current = true;
-        setLoading(false);
-      } catch (err) {
-        console.error('Auth init error:', err);
-        initialLoadComplete.current = true;
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    // Listen for auth changes (but skip initial session event to avoid double fetch)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        if (!initialLoadComplete.current) {
-          // Initial load in progress, skip to avoid double fetch
-          return;
-        }
-        // Tab-visibility re-emit: Supabase re-fires SIGNED_IN whenever the
-        // tab regains focus (and on every TOKEN_REFRESHED). If it's the same
-        // user we've already loaded, just keep the user reference fresh and
-        // bail — flipping loading=true here pins the page on a spinner if
-        // the follow-up fetchProfile races with the token refresh.
-        if (loadedUserIdRef.current === session.user.id) {
-          setUser(session.user);
-          return;
-        }
-        setLoading(true);
-        setUser(session.user);
-        const profileData = await fetchProfile(session.user.id);
-        setProfile(profileData);
-        loadedUserIdRef.current = session.user.id;
-        setLoading(false);
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        // Just refresh the user reference — no profile refetch, no spinner.
-        setUser(session.user);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setProfile(null);
-        loadedUserIdRef.current = null;
-        setError(null);
-      } else if (event === 'USER_UPDATED' && session?.user) {
-        setLoading(true);
-        setUser(session.user);
-        const profileData = await fetchProfile(session.user.id);
-        setProfile(profileData);
-        loadedUserIdRef.current = session.user.id;
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Sign up with email/password. `extra` carries optional demographic fields
-  // (age, gender, city, state) for everyone, plus `preferred_processor` for
-  // owners only. They're persisted to the profiles row right after the auth
-  // user is created — the consolidated user-creation trigger has already
-  // inserted the profile row by the time signUp() resolves.
-  const signUp = async ({ email, password, name, role = 'customer', extra = {} }) => {
-    setError(null);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-            role,
-            // Mirror into raw_user_meta_data so a future trigger could pick
-            // them up server-side; we still write to profiles below for the
-            // current trigger.
-            ...extra,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.user?.id) {
-        // Persist demographic fields. Service-role isn't available client-side,
-        // so this update only succeeds if the new user is auto-signed-in
-        // (default Supabase behavior unless email confirmation blocks it). If
-        // confirmation is required and there's no session yet, this no-ops
-        // silently — admin can re-run via /profile after confirmation.
-        const updates = {};
-        if (extra.age != null && extra.age !== '') updates.age = Number(extra.age);
-        if (extra.gender) updates.gender = extra.gender;
-        if (extra.city) updates.city = extra.city;
-        if (extra.state) updates.state = extra.state.toUpperCase();
-        if (role === 'owner' && extra.preferred_processor) {
-          updates.preferred_processor = extra.preferred_processor;
-        }
-        if (Object.keys(updates).length > 0) {
-          await supabase
-            .from('profiles')
-            .update(updates)
-            .eq('id', data.user.id);
-        }
-
-        // Phone lives on the customers row (every user gets one via the
-        // signup trigger). Update it here in the same auto-signed-in window
-        // the demographic update relies on.
-        if (extra.phone) {
-          await supabase
-            .from('customers')
-            .update({ phone: extra.phone })
-            .eq('id', data.user.id);
-        }
-
-        await identifyVisitor(data.user.id);
-        trackEvent('signup', { role, has_demographics: Object.keys(updates).length > 0 });
-      }
-
-      return { data, error: null };
-    } catch (err) {
-      setError(err.message);
-      return { data: null, error: err };
-    }
-  };
-
-  // Sign in with email/password
-  const signIn = async ({ email, password }) => {
-    setError(null);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data?.user?.id) {
-        // Update context state synchronously instead of waiting on the async
-        // onAuthStateChange listener — otherwise navigate() after login lands
-        // on the next route while user is still null and shows the
-        // unauthenticated view until the user refreshes.
-        setUser(data.user);
-        const profileData = await fetchProfile(data.user.id);
-        setProfile(profileData);
-        initialLoadComplete.current = true;
-        loadedUserIdRef.current = data.user.id;
-
-        await identifyVisitor(data.user.id);
+        await identifyVisitor(clerkUser.id);
         trackEvent('login');
+      } catch {
+        // analytics is best-effort
       }
+    })();
+    return () => { cancelled = true; };
+  }, [clerkLoaded, isSignedIn, clerkUser?.id]);
 
-      return { data, error: null };
-    } catch (err) {
-      setError(err.message);
-      return { data: null, error: err };
-    }
-  };
+  // Build a Supabase-shaped user object from Clerk's so existing callers
+  // that read user.id / user.email keep working unchanged.
+  const user = clerkUser
+    ? {
+        id: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
+        name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '),
+      }
+    : null;
 
-  // Sign out
   const signOut = async () => {
     setError(null);
-    setLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Supabase signOut error:', error);
-        throw error;
-      }
-      setUser(null);
+      await clerk.signOut();
       setProfile(null);
-      initialLoadComplete.current = false; // Reset for next login
       loadedUserIdRef.current = null;
-      setLoading(false);
-      return { error: null };
-    } catch (err) {
-      console.error('SignOut failed:', err);
-      setError(err.message);
-      setLoading(false);
-      throw err; // Re-throw so callers can catch
-    }
-  };
-
-  // Reset password
-  const resetPassword = async (email) => {
-    setError(null);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
       return { error: null };
     } catch (err) {
       setError(err.message);
-      return { error: err };
+      throw err;
     }
   };
 
-  // Update profile
   const updateProfile = async (updates) => {
     setError(null);
+    if (!clerkUser) return { error: new Error('Not signed in') };
     try {
       const { error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('id', user.id);
-
+        .eq('id', clerkUser.id);
       if (error) throw error;
-
-      // Refresh profile
-      const updatedProfile = await fetchProfile(user.id);
-      setProfile(updatedProfile);
-
+      const refreshed = await fetchProfile(clerkUser.id);
+      setProfile(refreshed);
       return { error: null };
     } catch (err) {
       setError(err.message);
@@ -356,47 +159,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Refresh profile data
   const refreshProfile = async () => {
-    if (user) {
-      const profile = await fetchProfile(user.id);
-      setProfile(profile);
-    }
+    if (!clerkUser) return;
+    const fresh = await fetchProfile(clerkUser.id);
+    setProfile(fresh);
   };
 
-  // Admin impersonation - View As feature
+  // Auth modal controls — delegate to Clerk's hosted modal.
+  // showAuthModal / authMode stay in the context so callers that read them
+  // don't break, but they're always false now.
+  const openAuth = (mode = 'login') => {
+    if (mode === 'signup') clerk.openSignUp();
+    else clerk.openSignIn(); // 'login' and 'forgot' both land here; Clerk's
+                             // SignIn flow surfaces "Forgot password?".
+  };
+  const closeAuth = () => {};
+
+  // ── Impersonation (View As) ────────────────────────────────────────────
   const startViewingAs = async (targetUser) => {
-    if (!profile || profile.role !== 'admin') {
-      console.error('Only admins can use View As');
-      return;
-    }
-
-    // Save original profile
+    if (!profile || profile.role !== 'admin') return;
     setOriginalProfile(profile);
-
-    // Fetch target user's profile
     const targetProfile = await fetchProfile(targetUser.id);
     if (targetProfile) {
-      setViewingAs({
-        ...targetProfile,
-        email: targetUser.email,
-      });
+      setViewingAs({ ...targetProfile, email: targetUser.email });
     }
   };
-
   const stopViewingAs = () => {
     setViewingAs(null);
     setOriginalProfile(null);
   };
 
-  // Update dev settings
-  const updateDevSettings = (newSettings) => {
-    const updated = { ...devSettings, ...newSettings };
-    setDevSettings(updated);
-    localStorage.setItem('cravvr_dev_settings', JSON.stringify(updated));
+  const updateDevSettings = (next) => {
+    const merged = { ...devSettings, ...next };
+    setDevSettings(merged);
+    localStorage.setItem('cravvr_dev_settings', JSON.stringify(merged));
   };
 
-  // Get the effective profile (impersonated or real)
   const effectiveProfile = viewingAs || profile;
   const effectiveUser = viewingAs ? { id: viewingAs.id, email: viewingAs.email } : user;
 
@@ -405,23 +203,15 @@ export const AuthProvider = ({ children }) => {
     profile: effectiveProfile,
     realUser: user,
     realProfile: profile,
-    loading,
+    loading: !clerkLoaded || profileLoading,
     error,
-    signUp,
-    signIn,
     signOut,
-    resetPassword,
     updateProfile,
     refreshProfile,
-    isAuthenticated: !!user,
+    isAuthenticated: !!clerkUser,
     isOwner: effectiveProfile?.role === 'owner',
     isCustomer: effectiveProfile?.role === 'customer',
-    isAdmin: profile?.role === 'admin', // Always check real profile for admin
-    /**
-     * Mirror of has_admin_permission() (migration 037). Returns true if the
-     * caller is an admin AND the permission is granted. Empty/null perms on
-     * an admin row → treat as superadmin (matches the SQL helper's backstop).
-     */
+    isAdmin: profile?.role === 'admin',
     hasAdminPermission: (perm) => {
       if (profile?.role !== 'admin') return false;
       const p = profile?.permissions;
@@ -434,29 +224,21 @@ export const AuthProvider = ({ children }) => {
       }
       return false;
     },
-    // Auth modal controls (centralized)
-    showAuthModal,
-    authMode,
+    showAuthModal: false,
+    authMode: 'login',
     openAuth,
     closeAuth,
-    // Admin impersonation (View As)
     viewingAs,
     startViewingAs,
     stopViewingAs,
     isViewingAs: !!viewingAs,
-    // Dev settings
     devSettings,
     updateDevSettings,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

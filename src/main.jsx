@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { ClerkProvider } from '@clerk/clerk-react';
 import { Toaster } from 'sonner';
 import App from './App.jsx';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -18,6 +19,11 @@ import './index.css';
 
 validateConfig();
 
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+if (!CLERK_PUBLISHABLE_KEY) {
+  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in .env.local');
+}
+
 import './styles/auth.css';
 import './styles/navigation.css';
 import './styles/animations.css';
@@ -29,25 +35,27 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ToastProvider>
         <ConfirmProvider>
           <BrowserRouter>
-            <AuthProvider>
-              <AnalyticsProvider>
-                <NotificationProvider>
-                  <TruckProvider>
-                    <FavoritesProvider>
-                      <CartProvider>
-                        <App />
-                        <Toaster
-                          position="top-right"
-                          richColors
-                          closeButton
-                          theme="light"
-                        />
-                      </CartProvider>
-                    </FavoritesProvider>
-                  </TruckProvider>
-                </NotificationProvider>
-              </AnalyticsProvider>
-            </AuthProvider>
+            <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+              <AuthProvider>
+                <AnalyticsProvider>
+                  <NotificationProvider>
+                    <TruckProvider>
+                      <FavoritesProvider>
+                        <CartProvider>
+                          <App />
+                          <Toaster
+                            position="top-right"
+                            richColors
+                            closeButton
+                            theme="light"
+                          />
+                        </CartProvider>
+                      </FavoritesProvider>
+                    </TruckProvider>
+                  </NotificationProvider>
+                </AnalyticsProvider>
+              </AuthProvider>
+            </ClerkProvider>
           </BrowserRouter>
         </ConfirmProvider>
       </ToastProvider>

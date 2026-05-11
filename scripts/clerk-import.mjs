@@ -1,0 +1,162 @@
+#!/usr/bin/env node
+// Import Supabase auth users into Clerk, preserving their bcrypt password
+// hashes so users can sign in with their existing email + password.
+//
+// Usage:
+//   1. Run scripts/sql/clerk-export-users.sql in Supabase SQL Editor.
+//   2. Download the result as JSON → save it as scripts/users-export.json.
+//   3. Run:  node --env-file=.env.local scripts/clerk-import.mjs
+//
+// Required env vars in .env.local:
+//   CLERK_SECRET_KEY=sk_test_...   (or sk_live_... for prod)
+//
+// Output:
+//   scripts/clerk-id-map.json       — { supabase_uuid: clerk_id, ... }
+//   scripts/clerk-id-map.sql        — UPDATE statements to apply post-migration
+//   scripts/clerk-import-errors.log — any users that failed (with reason)
+//
+// Re-run safe: skips users whose email is already in Clerk.
+
+import { readFile, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
+if (!CLERK_SECRET_KEY) {
+  console.error('Missing CLERK_SECRET_KEY in .env.local');
+  process.exit(2);
+}
+
+const EXPORT_PATH = resolve('scripts/users-export.json');
+const MAP_JSON_PATH = resolve('scripts/clerk-id-map.json');
+const MAP_SQL_PATH = resolve('scripts/clerk-id-map.sql');
+const ERROR_LOG_PATH = resolve('scripts/clerk-import-errors.log');
+
+if (!existsSync(EXPORT_PATH)) {
+  console.error(`Missing ${EXPORT_PATH}`);
+  console.error('Run scripts/sql/clerk-export-users.sql in Supabase first and save the JSON result there.');
+  process.exit(2);
+}
+
+const users = JSON.parse(await readFile(EXPORT_PATH, 'utf8'));
+console.log(`Loaded ${users.length} users from export.`);
+
+const mapping = {};
+const errors = [];
+
+async function clerk(path, init = {}) {
+  const res = await fetch(`https://api.clerk.com/v1${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${CLERK_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+      ...(init.headers || {}),
+    },
+  });
+  const text = await res.text();
+  let body;
+  try { body = JSON.parse(text); } catch { body = text; }
+  if (!res.ok) {
+    const err = new Error(`Clerk ${res.status}: ${typeof body === 'string' ? body : JSON.stringify(body)}`);
+    err.status = res.status;
+    err.body = body;
+    throw err;
+  }
+  return body;
+}
+
+async function findExistingByEmail(email) {
+  const list = await clerk(`/users?email_address=${encodeURIComponent(email)}&limit=1`);
+  return Array.isArray(list) && list.length ? list[0] : null;
+}
+
+async function importOne(u) {
+  // Idempotency: skip if already in Clerk.
+  const existing = await findExistingByEmail(u.email);
+  if (existing) {
+    mapping[u.supabase_uuid] = existing.id;
+    return { skipped: true };
+  }
+
+  // Stash app-level data on Clerk so the webhook can pick it up if/when
+  // Clerk fires a user.created event for re-imports. Role lives in
+  // public_metadata (server-trusted); demographic/role-specific data lives
+  // in unsafe_metadata (client-readable but fine for these fields).
+  const publicMetadata = {
+    role: u.role,
+    ...(u.subscription_type ? { subscription_type: u.subscription_type } : {}),
+    ...(u.admin_permissions ? { admin_permissions: u.admin_permissions } : {}),
+  };
+  const unsafeMetadata = {
+    ...(u.phone ? { phone: u.phone } : {}),
+    ...(u.points != null ? { points: u.points } : {}),
+    ...(u.avatar_url ? { avatar_url: u.avatar_url } : {}),
+    ...(u.metadata && typeof u.metadata === 'object' ? u.metadata : {}),
+  };
+
+  const body = {
+    external_id: u.supabase_uuid,
+    email_address: [u.email],
+    password_digest: u.password_digest || undefined,
+    password_hasher: u.password_digest ? 'bcrypt' : undefined,
+    skip_password_requirement: !u.password_digest,
+    skip_password_checks: true, // hash is pre-existing
+    first_name: u.name?.split(' ')[0] || undefined,
+    last_name: u.name?.split(' ').slice(1).join(' ') || undefined,
+    public_metadata: publicMetadata,
+    unsafe_metadata: unsafeMetadata,
+    created_at: u.created_at || undefined,
+  };
+
+  const created = await clerk('/users', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+  mapping[u.supabase_uuid] = created.id;
+  return { created: true };
+}
+
+let imported = 0, skipped = 0, failed = 0;
+for (const u of users) {
+  try {
+    const result = await importOne(u);
+    if (result.skipped) { skipped++; process.stdout.write('·'); }
+    else { imported++; process.stdout.write('✓'); }
+  } catch (err) {
+    failed++;
+    process.stdout.write('✗');
+    errors.push({ email: u.email, supabase_uuid: u.supabase_uuid, error: err.message });
+  }
+  // Gentle rate limiting — Clerk allows ~20 req/s for the import endpoint.
+  await new Promise((r) => setTimeout(r, 60));
+}
+process.stdout.write('\n');
+
+// Persist outputs.
+await writeFile(MAP_JSON_PATH, JSON.stringify(mapping, null, 2));
+
+const sqlLines = [
+  '-- Generated by scripts/clerk-import.mjs',
+  '-- Apply AFTER the Clerk schema migration (profiles.id is TEXT) but BEFORE',
+  '-- you turn on Clerk-only auth. Each line maps an old Supabase UUID to the',
+  '-- new Clerk user ID.',
+  '',
+  'BEGIN;',
+];
+for (const [supabaseUuid, clerkId] of Object.entries(mapping)) {
+  sqlLines.push(`UPDATE profiles SET id = '${clerkId}' WHERE id = '${supabaseUuid}';`);
+}
+sqlLines.push('COMMIT;', '');
+await writeFile(MAP_SQL_PATH, sqlLines.join('\n'));
+
+if (errors.length) {
+  await writeFile(
+    ERROR_LOG_PATH,
+    errors.map((e) => `${e.email}\t${e.supabase_uuid}\t${e.error}`).join('\n') + '\n'
+  );
+}
+
+console.log(`\nDone. imported=${imported} skipped=${skipped} failed=${failed}`);
+console.log(`Mapping  → ${MAP_JSON_PATH}`);
+console.log(`SQL      → ${MAP_SQL_PATH}`);
+if (errors.length) console.log(`Errors   → ${ERROR_LOG_PATH}`);

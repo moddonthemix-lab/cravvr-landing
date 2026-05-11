@@ -2,10 +2,8 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import CartDrawer from './components/cart/Cart';
 import ProtectedRoute, { RequireOwner, RequireAdmin } from './components/auth/ProtectedRoute';
-import AuthModal from './components/auth/AuthModal';
 import ViewAsBanner from './components/admin/ViewAsBanner';
 import LoadingSplash from './components/common/LoadingSplash';
-import { useAuth } from './components/auth/AuthContext';
 
 const LandingPage = lazy(() => import('./components/landing/LandingPage'));
 const TruckDetailPage = lazy(() => import('./components/truck/TruckDetailPage'));
@@ -18,8 +16,6 @@ const MapPage = lazy(() => import('./pages/MapPage'));
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'));
 const BoltPage = lazy(() => import('./pages/BoltPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
-const AuthConfirmPage = lazy(() => import('./pages/AuthConfirmPage'));
-const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const OrderTrackerPage = lazy(() => import('./pages/OrderTrackerPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const OwnerDashboardWrapper = lazy(() =>
@@ -80,13 +76,10 @@ const LandingPageWrapper = () => {
 };
 
 const App = () => {
-  const { showAuthModal, authMode, closeAuth } = useAuth();
-
   return (
     <>
       <ViewAsBanner />
       <CartDrawer />
-      <AuthModal isOpen={showAuthModal} onClose={closeAuth} initialMode={authMode} />
       <Suspense fallback={<LoadingSplash />}>
       <Routes>
         {/* Main app - responsive: TabContainer on mobile, HomePage on desktop */}
@@ -95,14 +88,9 @@ const App = () => {
         {/* Landing/Marketing page at /eat */}
         <Route path="/eat" element={<LandingPageWrapper />} />
 
-        {/* Standalone login page */}
-        <Route path="/login" element={<LoginPage />} />
-
-        {/* Email confirmation page */}
-        <Route path="/auth/confirm" element={<AuthConfirmPage />} />
-
-        {/* Password reset page */}
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Login/signup — Clerk's hosted UI. Catch-all under /login so Clerk's
+            internal routing (e.g. /login/verify, /login/factor-one) works. */}
+        <Route path="/login/*" element={<LoginPage />} />
 
         {/* Browse trucks - redirect to home */}
         <Route path="/browse" element={<Navigate to="/" replace />} />
