@@ -28,6 +28,7 @@ import {
 } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Icons } from '../components/common/Icons';
+import LoadingSplash from '../components/common/LoadingSplash';
 import MarketingPage from '../components/admin/MarketingPage';
 import {
   DashboardTabBar,
@@ -37,99 +38,14 @@ import './AdminDashboard.css';
 // Chart colors
 const CHART_COLORS = ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#fecdd3'];
 
-// Login Component using AuthContext
-const AdminLogin = ({ onLoginSuccess }) => {
-  const { signIn, isAdmin } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      // Sign in using AuthContext
-      const { data, error: authError } = await signIn({ email, password });
-
-      if (authError) throw authError;
-
-      // The signIn will update context, and isAdmin will be determined by profile.role
-      // We need to wait a moment for the profile to load, then check admin status
-      // onLoginSuccess will be called if user is admin (checked in parent component)
-
-    } catch (err) {
-      setError(err?.message || err || 'Invalid credentials');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-background to-rose-100/40 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl">
-        <div className="text-center space-y-2 mb-6">
-          <div className="flex items-center justify-center gap-2">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-md shadow-primary/30">
-              C
-            </span>
-            <span className="text-xl font-bold tracking-tight">Cravvr Admin</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Sign in to your admin account</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              <span className="h-4 w-4 shrink-0 mt-0.5">{Icons.alertCircle}</span>
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your admin email"
-              required
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-11 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? 'Signing in…' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="mt-6 pt-5 border-t border-border">
-          <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <span className="h-3.5 w-3.5">{Icons.shield}</span>
-            <span>Admin access only. Contact support if you need access.</span>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+// AdminLogin shim — Clerk owns the actual sign-in flow now. RequireAdmin
+// upstream of this dashboard redirects unauthenticated users to home and
+// opens Clerk's modal via openAuth(). This fallback is reached only if the
+// guard is bypassed; we just kick the user back through the same path.
+const AdminLogin = () => {
+  const { openAuth } = useAuth();
+  React.useEffect(() => { openAuth('login'); }, [openAuth]);
+  return <LoadingSplash size="full" tagline="REDIRECTING" />;
 };
 
 // Dashboard Overview Component with REAL data
@@ -531,14 +447,23 @@ const WaitlistManagement = () => {
   return (
     <div className="waitlist-management">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
-        <h1>Waitlist Management</h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Waitlist Management</h1>
+          <p className="text-sm text-muted-foreground">Review and convert pending signups.</p>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button className="btn-secondary" onClick={handleExportCSV}>
-            {Icons.download}
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <span className="h-4 w-4">{Icons.download}</span>
             Export CSV
           </button>
-          <button className="btn-primary" onClick={() => setShowImportModal(true)}>
-            {Icons.upload}
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <span className="h-4 w-4">{Icons.upload}</span>
             Import CSV
           </button>
         </div>
@@ -579,21 +504,32 @@ const WaitlistManagement = () => {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative w-full sm:max-w-md">
-          {Icons.search}
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+            {Icons.search}
+          </span>
           <input
-            type="text"
+            type="search"
             placeholder="Search by name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-10 w-full rounded-full border border-input bg-muted/50 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="h-10 rounded-full border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
             <option value="all">All Types</option>
             <option value="lover">Food Lovers</option>
             <option value="truck">Truck Owners</option>
           </select>
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="h-10 rounded-full border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="invited">Invited</option>
@@ -800,30 +736,10 @@ const UsersManagement = ({ onViewAs }) => {
     setInviteSuccess('');
 
     try {
-      // Use Supabase Auth Admin API to invite user
-      // Note: This requires service_role key for production
-      // For now, we'll use the magic link invite approach
-      const { data, error } = await supabase.auth.signInWithOtp({
-        email: inviteEmail,
-        options: {
-          data: {
-            name: inviteName,
-            role: inviteRole,
-          },
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
-
-      if (error) throw error;
-
-      setInviteSuccess(`Invitation sent to ${inviteEmail}! They will receive an email to set up their account.`);
-      setInviteEmail('');
-      setInviteName('');
-
-      // Refresh users list after a short delay
-      setTimeout(() => {
-        fetchUsers();
-      }, 2000);
+      // Invitations now live in Clerk — use Clerk Dashboard → Users → Invite.
+      // Wiring a Clerk-Backend-API-backed invite flow here would need a new
+      // edge function. Stubbed until that's built.
+      throw new Error('User invitations have moved. Invite via Clerk Dashboard → Users → Invite, then set role in Supabase profiles.role.');
 
     } catch (err) {
       console.error('Error inviting user:', err);
@@ -891,9 +807,15 @@ const UsersManagement = ({ onViewAs }) => {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
-        <h1>Users Management</h1>
-        <button className="btn-primary" onClick={() => setShowInviteModal(true)}>
-          {Icons.mail}
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Users Management</h1>
+          <p className="text-sm text-muted-foreground">Manage user accounts, roles, and invitations.</p>
+        </div>
+        <button
+          onClick={() => setShowInviteModal(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <span className="h-4 w-4">{Icons.mail}</span>
           Invite User
         </button>
       </div>
@@ -901,16 +823,23 @@ const UsersManagement = ({ onViewAs }) => {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative w-full sm:max-w-md">
-          {Icons.search}
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+            {Icons.search}
+          </span>
           <input
-            type="text"
+            type="search"
             placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-10 w-full rounded-full border border-input bg-muted/50 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value)}
+            className="h-10 rounded-full border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
             <option value="all">All Roles</option>
             <option value="customer">Customers</option>
             <option value="owner">Owners</option>
@@ -1425,22 +1354,11 @@ const SettingsPage = ({ adminEmail, devSettings, onUpdateDevSettings }) => {
   const handleCreateTestCustomer = async () => {
     setCreatingTestUser(true);
     try {
-      // Create a test customer via Supabase
-      const testEmail = `test.customer.${Date.now()}@cravvr.local`;
-      const { error } = await supabase.auth.signUp({
-        email: testEmail,
-        password: 'TestCustomer123!',
-        options: {
-          data: {
-            name: 'Test Customer',
-            role: 'customer',
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      showToast(`Test customer created!\nEmail: ${testEmail}\n\nNote: Confirm user in Supabase Auth → Users to enable login`, 'success');
+      // Test users now live in Clerk. Create one via Clerk Dashboard →
+      // Users → Create (or the API). The webhook will sync a customers row
+      // automatically. Wiring server-side creation here would need a new
+      // edge function calling Clerk's Backend API.
+      throw new Error('Test user creation has moved. Add a user via Clerk Dashboard → Users → Create.');
     } catch (err) {
       console.error('Error creating test customer:', err);
       showToast('Error creating test customer: ' + err.message, 'error');
