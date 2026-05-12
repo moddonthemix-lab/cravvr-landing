@@ -169,7 +169,7 @@ const Checkout = ({ onBack, onOrderComplete }) => {
       setError('Please sign in to place an order');
       return;
     }
-    if (!user.email_confirmed_at && !user.confirmed_at) {
+    if (!user.emailVerified) {
       setError('Please confirm your email before placing an order. Check your inbox for a verification link.');
       return;
     }

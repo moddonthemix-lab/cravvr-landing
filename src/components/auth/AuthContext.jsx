@@ -121,6 +121,8 @@ export const AuthProvider = ({ children }) => {
         id: clerkUser.id,
         email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
         name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '),
+        emailVerified:
+          clerkUser.primaryEmailAddress?.verification?.status === 'verified',
       }
     : null;
 
