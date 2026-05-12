@@ -5,6 +5,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@13.0.0?target=deno';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireClerkUser } from '../_shared/clerk-auth.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' });
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -18,12 +19,9 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify the user
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-    if (authError || !user) throw new Error('Unauthorized');
+    // Verify the user via Clerk JWT (platform verify_jwt is off for this fn —
+    // Supabase's gate doesn't honor Third-Party Auth, so we verify ourselves).
+    const userId = await requireClerkUser(req);
 
     const { truck_id, return_url, refresh_url } = await req.json();
     if (!truck_id) throw new Error('truck_id is required');
@@ -33,7 +31,7 @@ serve(async (req) => {
       .from('food_trucks')
       .select('id, name, stripe_account_id')
       .eq('id', truck_id)
-      .eq('owner_id', user.id)
+      .eq('owner_id', userId)
       .single();
 
     if (truckError || !truck) throw new Error('Truck not found or not owned by user');
@@ -44,7 +42,7 @@ serve(async (req) => {
     if (!accountId) {
       const account = await stripe.accounts.create({
         type: 'express',
-        metadata: { truck_id, owner_id: user.id },
+        metadata: { truck_id, owner_id: userId },
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },

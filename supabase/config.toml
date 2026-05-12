@@ -14,3 +14,14 @@ verify_jwt = false
 # Supabase JWT on the redirect; we validate via signed `state` parameter.
 [functions.square-oauth-callback]
 verify_jwt = false
+
+# Clerk webhook is signed by Svix/Clerk, not by a Supabase JWT.
+[functions.clerk-webhook]
+verify_jwt = false
+
+# Functions called from a Clerk-authenticated browser. Supabase's edge
+# function JWT gate doesn't honor Third-Party Auth (only PostgREST does),
+# so Clerk JWTs fail the gate with 401. These functions verify the Clerk
+# JWT themselves via _shared/clerk-auth.ts.
+[functions.stripe-connect-onboard]
+verify_jwt = false
