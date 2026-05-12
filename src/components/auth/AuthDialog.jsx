@@ -69,7 +69,7 @@ const AuthDialog = ({ open, mode = 'login', onClose }) => {
           ) : (
             <SignIn
               routing="virtual"
-              signUpUrl="/login?mode=signup"
+              signUpUrl="/sign-up"
             />
           )}
         </div>

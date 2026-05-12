@@ -38,7 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <ClerkProvider
               publishableKey={CLERK_PUBLISHABLE_KEY}
               signInUrl="/login"
-              signUpUrl="/login?mode=signup"
+              signUpUrl="/sign-up"
               signInFallbackRedirectUrl="/"
               signUpFallbackRedirectUrl="/"
               appearance={{

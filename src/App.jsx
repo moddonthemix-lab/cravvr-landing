@@ -18,6 +18,7 @@ const MapPage = lazy(() => import('./pages/MapPage'));
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'));
 const BoltPage = lazy(() => import('./pages/BoltPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignUpPage = lazy(() => import('./pages/SignUpPage'));
 const OrderTrackerPage = lazy(() => import('./pages/OrderTrackerPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const OwnerDashboardWrapper = lazy(() =>
@@ -93,9 +94,11 @@ const App = () => {
         {/* Landing/Marketing page at /eat */}
         <Route path="/eat" element={<LandingPageWrapper />} />
 
-        {/* Login/signup — Clerk's hosted UI. Catch-all under /login so Clerk's
-            internal routing (e.g. /login/verify, /login/factor-one) works. */}
+        {/* Sign in — /login. Sign up — /sign-up. Clerk requires separate
+            paths for SignIn vs SignUp so each can own its verification
+            sub-routes (/login/factor-one, /sign-up/verify-email-address). */}
         <Route path="/login/*" element={<LoginPage />} />
+        <Route path="/sign-up/*" element={<SignUpPage />} />
 
         {/* Browse trucks - redirect to home */}
         <Route path="/browse" element={<Navigate to="/" replace />} />
