@@ -35,7 +35,25 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ToastProvider>
         <ConfirmProvider>
           <BrowserRouter>
-            <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+            <ClerkProvider
+              publishableKey={CLERK_PUBLISHABLE_KEY}
+              signInUrl="/login"
+              signUpUrl="/login?mode=signup"
+              signInFallbackRedirectUrl="/"
+              signUpFallbackRedirectUrl="/"
+              appearance={{
+                variables: {
+                  colorPrimary: '#e11d48',
+                  borderRadius: '0.5rem',
+                  fontFamily: 'inherit',
+                },
+                elements: {
+                  card: 'shadow-none border-none',
+                  formButtonPrimary:
+                    'bg-primary hover:bg-primary/90 text-primary-foreground',
+                },
+              }}
+            >
               <AuthProvider>
                 <AnalyticsProvider>
                   <NotificationProvider>

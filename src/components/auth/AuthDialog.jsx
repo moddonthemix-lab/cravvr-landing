@@ -65,13 +65,11 @@ const AuthDialog = ({ open, mode = 'login', onClose }) => {
               routing="virtual"
               signInUrl="/login"
               unsafeMetadata={{ role }}
-              appearance={{ elements: { card: 'shadow-none border-none' } }}
             />
           ) : (
             <SignIn
               routing="virtual"
               signUpUrl="/login?mode=signup"
-              appearance={{ elements: { card: 'shadow-none border-none' } }}
             />
           )}
         </div>
