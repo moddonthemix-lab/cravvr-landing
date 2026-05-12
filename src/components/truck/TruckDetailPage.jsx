@@ -401,12 +401,14 @@ const TruckDetailPage = () => {
             </div>
           </div>
 
-          {/* Hero */}
-          <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted sm:aspect-[21/9] lg:aspect-[5/2]">
+          {/* Hero — no overflow-hidden so the avatar (which uses -bottom-10
+              to hang into the body) renders fully. object-cover on the img
+              itself keeps the cover photo cropped to the aspect frame. */}
+          <div className="relative aspect-[16/9] w-full bg-muted sm:aspect-[21/9] lg:aspect-[5/2]">
             <img
               src={truck.coverImage || truck.image}
               alt={truck.name}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               onError={(e) => {
                 if (e.target.src !== truck.image) {
                   e.target.src = truck.image;
