@@ -2,10 +2,8 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import CartDrawer from './components/cart/Cart';
 import ProtectedRoute, { RequireOwner, RequireAdmin } from './components/auth/ProtectedRoute';
-import AuthDialog from './components/auth/AuthDialog';
 import ViewAsBanner from './components/admin/ViewAsBanner';
 import LoadingSplash from './components/common/LoadingSplash';
-import { useAuth } from './components/auth/AuthContext';
 
 const LandingPage = lazy(() => import('./components/landing/LandingPage'));
 const TruckDetailPage = lazy(() => import('./components/truck/TruckDetailPage'));
@@ -79,13 +77,10 @@ const LandingPageWrapper = () => {
 };
 
 const App = () => {
-  const { showAuthModal, authMode, closeAuth } = useAuth();
-
   return (
     <>
       <ViewAsBanner />
       <CartDrawer />
-      <AuthDialog open={showAuthModal} mode={authMode} onClose={closeAuth} />
       <Suspense fallback={<LoadingSplash />}>
       <Routes>
         {/* Main app - responsive: TabContainer on mobile, HomePage on desktop */}

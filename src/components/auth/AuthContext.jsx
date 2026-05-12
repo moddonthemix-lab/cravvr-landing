@@ -1,29 +1,25 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { supabase } from '../../lib/supabase';
 import { track as trackEvent, identify as identifyVisitor } from '../../services/analytics';
 
-// Same context shape as before — wraps Clerk + a Supabase profile fetch.
-// The signUp/signIn/resetPassword methods are gone (Clerk's UI handles those
-// flows); everything else preserves the previous API so the ~30 useAuth()
-// callers don't need to change.
+// Auth state for the app. Wraps Clerk for identity + supabase for profile
+// data. No modal — sign-in/sign-up live on dedicated routes (/login, /sign-up)
+// and openAuth() just navigates to the right one.
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
   const { user: clerkUser, isLoaded: clerkLoaded, isSignedIn } = useUser();
   const clerk = useClerk();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // In-app auth dialog (Clerk's <SignIn>/<SignUp> embedded in our own modal
-  // so we can add the role toggle above signup).
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
-
-  // Admin impersonation ("View As") — purely client-side state. The actual
-  // JWT stays the admin's, so RLS continues to apply admin permissions.
+  // Impersonation ("View As") — admin-only, purely client-side.
   const [viewingAs, setViewingAs] = useState(null);
   const [originalProfile, setOriginalProfile] = useState(null);
 
@@ -32,8 +28,6 @@ export const AuthProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : { skipReviewOrderRequirement: false };
   });
 
-  // Track which user id we've already loaded a profile for so re-renders
-  // from token refresh don't re-fetch.
   const loadedUserIdRef = useRef(null);
 
   const fetchProfile = async (userId) => {
@@ -45,7 +39,7 @@ export const AuthProvider = ({ children }) => {
         .single();
 
       if (profileError) {
-        if (profileError.code === 'PGRST116') return null; // no row yet (webhook may be in flight)
+        if (profileError.code === 'PGRST116') return null;
         setError(`Profile load failed: ${profileError.message}`);
         return null;
       }
@@ -94,7 +88,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Load profile whenever the Clerk user changes.
   useEffect(() => {
     if (!clerkLoaded) return;
     if (!isSignedIn || !clerkUser) {
@@ -117,14 +110,12 @@ export const AuthProvider = ({ children }) => {
         await identifyVisitor(clerkUser.id);
         trackEvent('login');
       } catch {
-        // analytics is best-effort
+        /* analytics best-effort */
       }
     })();
     return () => { cancelled = true; };
   }, [clerkLoaded, isSignedIn, clerkUser?.id]);
 
-  // Build a Supabase-shaped user object from Clerk's so existing callers
-  // that read user.id / user.email keep working unchanged.
   const user = clerkUser
     ? {
         id: clerkUser.id,
@@ -170,15 +161,16 @@ export const AuthProvider = ({ children }) => {
     setProfile(fresh);
   };
 
-  // Auth modal controls — open our own <AuthDialog/> which embeds Clerk's
-  // <SignIn>/<SignUp> components and adds the role toggle on signup.
+  // openAuth navigates to the dedicated page. No modal. The "from" state
+  // lets LoginPage/SignUpPage send the user back where they started after
+  // they finish authenticating.
   const openAuth = (mode = 'login') => {
-    setAuthMode(mode === 'signup' ? 'signup' : 'login');
-    setShowAuthModal(true);
+    const target = mode === 'signup' ? '/sign-up' : '/login';
+    if (location.pathname.startsWith(target)) return; // already there
+    navigate(target, { state: { from: location } });
   };
-  const closeAuth = () => setShowAuthModal(false);
+  const closeAuth = () => {};
 
-  // ── Impersonation (View As) ────────────────────────────────────────────
   const startViewingAs = async (targetUser) => {
     if (!profile || profile.role !== 'admin') return;
     setOriginalProfile(profile);
@@ -227,8 +219,10 @@ export const AuthProvider = ({ children }) => {
       }
       return false;
     },
-    showAuthModal,
-    authMode,
+    // Kept for back-compat with any caller that still reads these. With the
+    // modal gone the values are inert — openAuth navigates instead.
+    showAuthModal: false,
+    authMode: 'login',
     openAuth,
     closeAuth,
     viewingAs,
