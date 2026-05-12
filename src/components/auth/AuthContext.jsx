@@ -17,6 +17,11 @@ export const AuthProvider = ({ children }) => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // In-app auth dialog (Clerk's <SignIn>/<SignUp> embedded in our own modal
+  // so we can add the role toggle above signup).
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+
   // Admin impersonation ("View As") — purely client-side state. The actual
   // JWT stays the admin's, so RLS continues to apply admin permissions.
   const [viewingAs, setViewingAs] = useState(null);
@@ -165,15 +170,13 @@ export const AuthProvider = ({ children }) => {
     setProfile(fresh);
   };
 
-  // Auth modal controls — delegate to Clerk's hosted modal.
-  // showAuthModal / authMode stay in the context so callers that read them
-  // don't break, but they're always false now.
+  // Auth modal controls — open our own <AuthDialog/> which embeds Clerk's
+  // <SignIn>/<SignUp> components and adds the role toggle on signup.
   const openAuth = (mode = 'login') => {
-    if (mode === 'signup') clerk.openSignUp();
-    else clerk.openSignIn(); // 'login' and 'forgot' both land here; Clerk's
-                             // SignIn flow surfaces "Forgot password?".
+    setAuthMode(mode === 'signup' ? 'signup' : 'login');
+    setShowAuthModal(true);
   };
-  const closeAuth = () => {};
+  const closeAuth = () => setShowAuthModal(false);
 
   // ── Impersonation (View As) ────────────────────────────────────────────
   const startViewingAs = async (targetUser) => {
@@ -224,8 +227,8 @@ export const AuthProvider = ({ children }) => {
       }
       return false;
     },
-    showAuthModal: false,
-    authMode: 'login',
+    showAuthModal,
+    authMode,
     openAuth,
     closeAuth,
     viewingAs,
