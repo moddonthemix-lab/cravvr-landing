@@ -55,13 +55,15 @@ export const fetchCustomerOrders = async (customerId) => {
  * Fetch orders for a truck (owner view)
  */
 export const fetchTruckOrders = async (truckId, status = null) => {
+  // orders.customer_id is FK to profiles(id) after the Clerk migration.
+  // Embed customers via its FK on profiles.id to pick up phone.
   let query = supabase
     .from('orders')
     .select(`
       *,
-      customers!customer_id(
-        phone,
-        profiles(name)
+      profiles!customer_id(
+        name,
+        customers(phone)
       )
     `)
     .eq('truck_id', truckId)
@@ -232,7 +234,7 @@ export const fetchOwnerOrders = async (truckIds, { limit = 500 } = {}) => {
     .select(`
       *,
       order_items(count),
-      customers!customer_id(profiles(name))
+      profiles!customer_id(name)
     `)
     .in('truck_id', truckIds)
     .order('created_at', { ascending: false })
@@ -240,7 +242,7 @@ export const fetchOwnerOrders = async (truckIds, { limit = 500 } = {}) => {
   if (error) throw error;
   return (data || []).map((order) => ({
     ...order,
-    customer_name: order.customers?.profiles?.name || 'Customer',
+    customer_name: order.profiles?.name || 'Customer',
     item_count: order.order_items?.[0]?.count || 0,
   }));
 };
@@ -255,7 +257,7 @@ export const fetchOwnerOrderById = async (orderId) => {
     .select(`
       *,
       order_items(count),
-      customers!customer_id(profiles(name))
+      profiles!customer_id(name)
     `)
     .eq('id', orderId)
     .single();
@@ -263,7 +265,7 @@ export const fetchOwnerOrderById = async (orderId) => {
   if (!data) return null;
   return {
     ...data,
-    customer_name: data.customers?.profiles?.name || 'Customer',
+    customer_name: data.profiles?.name || 'Customer',
     item_count: data.order_items?.[0]?.count || 0,
   };
 };
@@ -279,9 +281,9 @@ export const fetchOrderForOwner = async (orderId) => {
     .from('orders')
     .select(`
       *,
-      customers!customer_id(
-        phone,
-        profiles(name)
+      profiles!customer_id(
+        name,
+        customers(phone)
       )
     `)
     .eq('id', orderId)
@@ -290,8 +292,8 @@ export const fetchOrderForOwner = async (orderId) => {
   if (!data) return null;
   return {
     ...data,
-    customer_name: data.customers?.profiles?.name || 'Customer',
-    customer_phone: data.customers?.phone || null,
+    customer_name: data.profiles?.name || 'Customer',
+    customer_phone: data.profiles?.customers?.phone || null,
   };
 };
 

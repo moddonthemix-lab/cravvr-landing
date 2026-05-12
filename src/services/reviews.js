@@ -13,8 +13,10 @@ export const transformReview = (review) => ({
   comment: review.comment,
   createdAt: review.created_at,
   updatedAt: review.updated_at,
-  customerName: review.customers?.profiles?.name || 'Anonymous',
-  customerAvatar: review.customers?.avatar_url,
+  // reviews.customer_id is FK to profiles(id) after the Clerk migration;
+  // we then embed customers (which itself FKs to profiles.id) for avatar.
+  customerName: review.profiles?.name || 'Anonymous',
+  customerAvatar: review.profiles?.customers?.avatar_url,
   _raw: review,
 });
 
@@ -26,9 +28,9 @@ export const fetchTruckReviews = async (truckId, { limit } = {}) => {
     .from('reviews')
     .select(`
       *,
-      customers!customer_id(
-        avatar_url,
-        profiles(name)
+      profiles!customer_id(
+        name,
+        customers(avatar_url)
       )
     `)
     .eq('truck_id', truckId)
