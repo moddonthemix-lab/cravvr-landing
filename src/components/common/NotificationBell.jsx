@@ -4,7 +4,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../auth/AuthContext';
 import { Icons } from './Icons';
 import { formatRelativeTime } from '../../utils/formatters';
-import './NotificationBell.css';
+import { cn } from '@/lib/utils';
 
 const NotificationBell = () => {
   const navigate = useNavigate();
@@ -24,35 +24,28 @@ const NotificationBell = () => {
   const panelRef = useRef(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Close on outside click (desktop only)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!isMobile && panelRef.current && !panelRef.current.contains(event.target)) {
         closePanel();
       }
     };
-
     if (isOpen && !isMobile) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen, closePanel, isMobile]);
 
-  // Handle notification click
   const handleNotificationClick = (notification) => {
     markAsRead(notification.id);
-
-    // Navigate based on notification type
     switch (notification.type) {
       case 'order_status_update':
       case 'order_confirmed':
@@ -75,16 +68,12 @@ const NotificationBell = () => {
         navigate('/admin?tab=dashboard');
         break;
       case 'system_alert': {
-        // Owner-side notifications inserted by admin RPCs (suspend, delete,
-        // restore, transfer, received). Route to the owner dashboard with
-        // the relevant truck preselected when truck_id is present.
         const truckId = notification.data?.truck_id;
         if (truckId) navigate(`/owner?truckId=${truckId}`);
         else navigate('/owner');
         break;
       }
       case 'flagged_content': {
-        // Owner-side notification when a review on their truck was hidden.
         const truckId = notification.data?.truck_id;
         if (truckId) navigate(`/owner?truckId=${truckId}&tab=trucks`);
         else navigate('/owner');
@@ -93,11 +82,9 @@ const NotificationBell = () => {
       default:
         break;
     }
-
     closePanel();
   };
 
-  // Get icon for notification type
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'order_status_update':
@@ -128,16 +115,17 @@ const NotificationBell = () => {
   if (!user) return null;
 
   return (
-    <div className="notification-bell-container" ref={panelRef}>
+    <div className="relative" ref={panelRef}>
       <button
-        className="notification-bell-btn"
+        type="button"
         onClick={togglePanel}
         aria-label="Notifications"
         aria-expanded={isOpen}
+        className="relative flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
       >
-        {Icons.bell}
+        <span className="h-5 w-5">{Icons.bell}</span>
         {unreadCount > 0 && (
-          <span className="notification-badge">
+          <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -145,78 +133,129 @@ const NotificationBell = () => {
 
       {isOpen && (
         <>
-          {/* Mobile overlay */}
           {isMobile && (
-            <div className="notification-overlay" onClick={closePanel} />
+            <div
+              className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+              onClick={closePanel}
+            />
           )}
 
-          <div className={`notification-panel ${isMobile ? 'mobile' : ''}`}>
-            <div className="notification-panel-header">
-              <h3>Notifications</h3>
-              <div className="notification-header-actions">
+          <div
+            className={cn(
+              'z-50 flex flex-col overflow-hidden border border-border bg-card shadow-lg',
+              isMobile
+                ? 'fixed inset-x-0 bottom-0 max-h-[80vh] rounded-t-xl animate-in slide-in-from-bottom duration-200'
+                : 'absolute right-0 top-[calc(100%+8px)] w-[360px] max-h-[480px] rounded-xl'
+            )}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+              <h3 className="text-base font-semibold leading-none">Notifications</h3>
+              <div className="flex items-center gap-1">
                 {unreadCount > 0 && (
                   <button
-                    className="mark-all-read-btn"
+                    type="button"
                     onClick={markAllAsRead}
+                    className="rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
                   >
                     Mark all read
                   </button>
                 )}
                 {isMobile && (
-                  <button className="close-panel-btn" onClick={closePanel}>
-                    {Icons.x}
+                  <button
+                    type="button"
+                    onClick={closePanel}
+                    aria-label="Close"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <span className="h-4 w-4">{Icons.x}</span>
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="notification-list">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               {loading ? (
-                <div className="notification-loading">
-                  {Icons.loader}
-                  <span>Loading...</span>
+                <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-sm text-muted-foreground">
+                  <span className="h-5 w-5 animate-spin">{Icons.loader}</span>
+                  <span>Loading…</span>
                 </div>
               ) : notifications.length === 0 ? (
-                <div className="notification-empty">
-                  <span className="empty-icon">{Icons.bell}</span>
-                  <p>No notifications yet</p>
-                  <span className="empty-hint">We'll let you know when something happens</span>
+                <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <span className="h-6 w-6">{Icons.bell}</span>
+                  </span>
+                  <p className="text-sm font-medium">No notifications yet</p>
+                  <span className="mt-1 text-xs text-muted-foreground">
+                    We'll let you know when something happens
+                  </span>
                 </div>
               ) : (
-                notifications.slice(0, 10).map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="notification-icon">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="notification-content">
-                      <p className="notification-title">{notification.title}</p>
-                      <p className="notification-message">{notification.message}</p>
-                      <span className="notification-time">
-                        {formatRelativeTime(notification.createdAt)}
-                      </span>
-                    </div>
-                    <button
-                      className="notification-delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                      aria-label="Delete notification"
-                    >
-                      {Icons.x}
-                    </button>
-                  </div>
-                ))
+                <ul className="divide-y divide-border">
+                  {notifications.slice(0, 10).map((notification) => (
+                    <li key={notification.id}>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleNotificationClick(notification)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleNotificationClick(notification);
+                          }
+                        }}
+                        className={cn(
+                          'group relative flex items-start gap-3 px-4 py-3 transition-colors cursor-pointer hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none',
+                          !notification.isRead && 'bg-primary/[0.04]'
+                        )}
+                      >
+                        {!notification.isRead && (
+                          <span
+                            aria-hidden
+                            className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-primary"
+                          />
+                        )}
+                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                          <span className="h-4 w-4">{getNotificationIcon(notification.type)}</span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-snug text-foreground truncate">
+                            {notification.title}
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted-foreground leading-snug line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <span className="mt-1 block text-[11px] text-muted-foreground/80">
+                            {formatRelativeTime(notification.createdAt)}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Delete notification"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(notification.id);
+                          }}
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-opacity hover:bg-muted hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                        >
+                          <span className="h-4 w-4">{Icons.x}</span>
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
 
             {notifications.length > 10 && (
-              <div className="notification-panel-footer">
-                <button onClick={() => { navigate('/notifications'); closePanel(); }}>
+              <div className="border-t border-border p-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/notifications');
+                    closePanel();
+                  }}
+                  className="w-full rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
                   View all notifications
                 </button>
               </div>
