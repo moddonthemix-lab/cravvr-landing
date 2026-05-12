@@ -139,7 +139,11 @@ const Checkout = ({ onBack, onOrderComplete }) => {
       subtotal,
       tax,
       tip: calculateTip(),
-      total: finalTotal,
+      // orders.total is the truck's revenue portion (subtotal + tax + tip).
+      // The Cravvr fee is NOT included here — payment edge functions add
+      // CRAVVR_FEE_CENTS on top when computing what the customer actually
+      // gets charged, and the fee routes to Cravvr via application_fee_amount.
+      total: total + calculateTip(),
       notes,
       paymentStatus: paymentMethod === 'online' ? 'pending' : 'unpaid',
       paymentProcessor: paymentMethod === 'online' ? truckProcessor : 'pickup',
