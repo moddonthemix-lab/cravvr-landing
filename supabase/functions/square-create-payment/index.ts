@@ -12,6 +12,11 @@ import { requireClerkUser } from '../_shared/clerk-auth.ts';
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Flat Cravvr service fee — Square's app_fee_money carves this off the
+// merchant payment and routes it to the connected app developer's Square
+// account on settlement. Same end-state as Stripe's application_fee_amount.
+const CRAVVR_FEE_CENTS = 100; // $1.00
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) });
 
@@ -38,9 +43,9 @@ serve(async (req) => {
     if (order.payment_status === 'paid' || order.payment_status === 'refunded') {
       throw new Error(`Order is already ${order.payment_status}`);
     }
-    const expected_cents = Math.round(Number(order.total) * 100);
+    const expected_cents = Math.round(Number(order.total) * 100) + CRAVVR_FEE_CENTS;
     if (expected_cents !== amount_cents) {
-      throw new Error('amount_cents does not match order total');
+      throw new Error('amount_cents does not match order total + Cravvr fee');
     }
 
     // Look up truck's Square credentials (service role bypasses RLS so we can
@@ -61,6 +66,7 @@ serve(async (req) => {
       source_id,
       idempotency_key: idempotency_key || crypto.randomUUID(),
       amount_money: { amount: amount_cents, currency: 'USD' },
+      app_fee_money: { amount: CRAVVR_FEE_CENTS, currency: 'USD' },
       location_id: truck.square_location_id,
       reference_id: order_id,
       note: `Cravvr order ${order_id}`,
@@ -95,7 +101,7 @@ serve(async (req) => {
       truck_id,
       customer_id: userId,
       amount: amount_cents,
-      platform_fee: 0,
+      platform_fee: CRAVVR_FEE_CENTS,
       currency: 'usd',
       status: dbStatus === 'succeeded' ? 'succeeded' : dbStatus === 'processing' ? 'processing' : 'failed',
       processor: 'square',

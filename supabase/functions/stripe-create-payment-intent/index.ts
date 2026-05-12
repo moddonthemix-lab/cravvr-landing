@@ -11,7 +11,10 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '202
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const PLATFORM_FEE_PERCENT = 5; // 5% platform fee
+// Flat Cravvr service fee charged on top of the order total. The customer
+// pays this in addition to what the truck quotes; truck receives exactly
+// order.total via Connect destination charge, Cravvr nets CRAVVR_FEE_CENTS.
+const CRAVVR_FEE_CENTS = 100; // $1.00
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -45,10 +48,10 @@ serve(async (req) => {
     if (order.payment_status === 'paid' || order.payment_status === 'refunded') {
       throw new Error(`Order is already ${order.payment_status}`);
     }
-    // Amount comes from the client; refuse if it doesn't match the server-side total.
-    const expected_cents = Math.round(Number(order.total) * 100);
+    // Amount comes from the client; must equal order.total + Cravvr fee.
+    const expected_cents = Math.round(Number(order.total) * 100) + CRAVVR_FEE_CENTS;
     if (expected_cents !== amount_cents) {
-      throw new Error('amount_cents does not match order total');
+      throw new Error('amount_cents does not match order total + Cravvr fee');
     }
 
     // Get truck's Stripe account
@@ -63,13 +66,13 @@ serve(async (req) => {
       throw new Error('This truck has not set up online payments yet');
     }
 
-    const platformFee = Math.round(amount_cents * PLATFORM_FEE_PERCENT / 100);
-
-    // Create PaymentIntent with Connect
+    // Create PaymentIntent with Connect. Customer pays amount_cents (which
+    // already includes the $1 Cravvr fee); transfer_data routes order.total
+    // to the truck; application_fee_amount carves the $1 to Cravvr.
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount_cents,
       currency: 'usd',
-      application_fee_amount: platformFee,
+      application_fee_amount: CRAVVR_FEE_CENTS,
       transfer_data: {
         destination: truck.stripe_account_id,
       },
@@ -87,7 +90,7 @@ serve(async (req) => {
       customer_id: userId,
       stripe_payment_intent_id: paymentIntent.id,
       amount: amount_cents,
-      platform_fee: platformFee,
+      platform_fee: CRAVVR_FEE_CENTS,
       status: 'processing',
     });
 

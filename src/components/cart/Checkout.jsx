@@ -59,12 +59,18 @@ const Checkout = ({ onBack, onOrderComplete }) => {
 
   const tipOptions = [0, 15, 18, 20, 25];
 
+  // Flat Cravvr service fee charged on top of every paid order. Routed to
+  // Cravvr's Stripe / Square account server-side via application_fee_amount
+  // (Stripe) or app_fee_money (Square). The truck still receives exactly the
+  // cart total — this is purely a customer-paid fee on top.
+  const CRAVVR_FEE = 1.00;
+
   const calculateTip = () => {
     if (customTip) return parseFloat(customTip) || 0;
     return subtotal * (tip / 100);
   };
 
-  const finalTotal = total + calculateTip();
+  const finalTotal = total + calculateTip() + CRAVVR_FEE;
 
   useEffect(() => {
     if (!currentTruckId) return;
@@ -596,6 +602,10 @@ const Checkout = ({ onBack, onOrderComplete }) => {
               <span className="tabular-nums">${calculateTip().toFixed(2)}</span>
             </div>
           )}
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span title="Goes to Cravvr — never a cut of your truck's sales.">Cravvr fee</span>
+            <span className="tabular-nums">${CRAVVR_FEE.toFixed(2)}</span>
+          </div>
           <div className="flex items-center justify-between text-base font-bold pt-2 border-t border-border">
             <span>Total</span>
             <span className="tabular-nums">${finalTotal.toFixed(2)}</span>

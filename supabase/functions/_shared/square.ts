@@ -116,6 +116,65 @@ export async function exchangeOAuthCode(code: string, env: SquareEnvironment, re
   };
 }
 
+// One-shot Square Catalog fetch — used during OAuth callback to populate a
+// truck's menu from their existing Square POS catalog. Returns every priced
+// ITEM the merchant has, plus a lookup of IMAGE objects so we can resolve
+// image_ids → URLs in a single paginated walk. Items without prices (gift
+// cards, "custom amount") are filtered out by the caller.
+export interface SquareCatalogItem {
+  id: string;
+  is_deleted?: boolean;
+  item_data?: {
+    name?: string;
+    description?: string;
+    image_ids?: string[];
+    variations?: Array<{
+      item_variation_data?: {
+        price_money?: { amount?: number; currency?: string };
+      };
+    }>;
+  };
+}
+
+export interface SquareCatalogImage {
+  id: string;
+  image_data?: { url?: string };
+}
+
+export async function fetchCatalogItems(
+  accessToken: string,
+  env: SquareEnvironment,
+): Promise<{ items: SquareCatalogItem[]; imagesById: Record<string, SquareCatalogImage> }> {
+  const items: SquareCatalogItem[] = [];
+  const imagesById: Record<string, SquareCatalogImage> = {};
+
+  let cursor: string | undefined;
+  do {
+    const url = new URL(`${squareBaseUrl(env)}/v2/catalog/list`);
+    url.searchParams.set('types', 'ITEM,IMAGE');
+    if (cursor) url.searchParams.set('cursor', cursor);
+
+    const resp = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Square-Version': '2024-12-18',
+      },
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error(`Square Catalog list failed: ${resp.status} ${txt}`);
+    }
+    const data = await resp.json();
+    for (const obj of data.objects || []) {
+      if (obj.type === 'ITEM') items.push(obj);
+      else if (obj.type === 'IMAGE') imagesById[obj.id] = obj;
+    }
+    cursor = data.cursor;
+  } while (cursor);
+
+  return { items, imagesById };
+}
+
 // Pick the merchant's default location to receive payments
 export async function fetchPrimaryLocation(accessToken: string, env: SquareEnvironment): Promise<string | null> {
   const resp = await fetch(`${squareBaseUrl(env)}/v2/locations`, {

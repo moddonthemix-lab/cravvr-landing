@@ -7,6 +7,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
   exchangeOAuthCode,
+  fetchCatalogItems,
   fetchPrimaryLocation,
   getSquareEnv,
   verifyOAuthState,
@@ -80,6 +81,38 @@ serve(async (req) => {
     if (updateError) {
       console.error('Square: failed to persist tokens', updateError);
       return returnTo('error', 'persist_failed');
+    }
+
+    // One-shot Square Catalog import — pull the merchant's existing menu so
+    // the truck lands on /owner with their items, prices, and photos already
+    // populated. Failures here never block the redirect; trucks can re-run.
+    try {
+      const { items, imagesById } = await fetchCatalogItems(tokens.access_token, env);
+      const rows = items
+        .filter(it => it.item_data?.variations?.[0]?.item_variation_data?.price_money?.amount != null)
+        .map(it => {
+          const v0 = it.item_data!.variations![0].item_variation_data!;
+          const imageId = it.item_data!.image_ids?.[0];
+          const imageUrl = imageId ? imagesById[imageId]?.image_data?.url ?? null : null;
+          return {
+            truck_id: payload.truck_id,
+            name: it.item_data!.name ?? 'Untitled',
+            description: it.item_data!.description ?? '',
+            price: Number(v0.price_money!.amount!) / 100,
+            image_url: imageUrl,
+            emoji: '🍴',
+            is_available: !it.is_deleted,
+            square_catalog_object_id: it.id,
+          };
+        });
+      if (rows.length) {
+        const { error: importError } = await supabase
+          .from('menu_items')
+          .upsert(rows, { onConflict: 'truck_id,square_catalog_object_id' });
+        if (importError) console.error('Square catalog import upsert error:', importError);
+      }
+    } catch (err) {
+      console.error('Square catalog import failed:', err);
     }
 
     return returnTo('success');
