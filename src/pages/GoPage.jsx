@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icons } from '../components/common/Icons';
-import { supabase } from '../lib/supabase';
+import { getSupabaseBearer } from '../lib/supabase';
 import { useAuth } from '../components/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,14 +52,14 @@ const GoPage = () => {
     setBusy(true);
     setError('');
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const bearer = await getSupabaseBearer();
       const r = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cravvr-checkout-session`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
+            'Authorization': `Bearer ${bearer}`,
           },
           body: JSON.stringify({ plan_code: 'plus' }),
         },

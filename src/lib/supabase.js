@@ -22,6 +22,20 @@ async function clerkAccessToken() {
   }
 }
 
+/**
+ * Returns the bearer token to use when calling Supabase Edge Functions —
+ * Clerk's session JWT if signed in, anon key as fallback for unauthenticated
+ * callers. Use this anywhere you'd have previously called
+ * `(await supabase.auth.getSession()).data.session.access_token`.
+ *
+ * Note: `supabase.auth.getSession()` throws once `accessToken` is configured
+ * on the client (Supabase JS guard), so callers must use this helper.
+ */
+export async function getSupabaseBearer() {
+  const token = await clerkAccessToken();
+  return token ?? supabaseAnonKey;
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   accessToken: clerkAccessToken,
 });

@@ -6,7 +6,7 @@
  * returns a Payments instance scoped to a (applicationId, locationId) pair.
  */
 
-import { supabase } from './supabase';
+import { getSupabaseBearer } from './supabase';
 
 let sdkPromise = null;
 
@@ -49,14 +49,14 @@ export const initSquarePayments = async ({ applicationId, locationId, environmen
  * callStripeFunction so callers can swap based on truck.payment_processor.
  */
 export const callSquareFunction = async (functionName, body) => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const bearer = await getSupabaseBearer();
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`,
+        'Authorization': `Bearer ${bearer}`,
       },
       body: JSON.stringify(body),
     },

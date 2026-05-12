@@ -3,7 +3,7 @@
  * The publishable key should be set as an environment variable
  */
 
-import { supabase } from './supabase';
+import { getSupabaseBearer } from './supabase';
 
 let stripePromise = null;
 
@@ -39,7 +39,7 @@ export const getStripe = async () => {
  * Call a Supabase Edge Function for Stripe operations
  */
 export const callStripeFunction = async (functionName, body) => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const bearer = await getSupabaseBearer();
 
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
@@ -47,7 +47,7 @@ export const callStripeFunction = async (functionName, body) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`,
+        'Authorization': `Bearer ${bearer}`,
       },
       body: JSON.stringify(body),
     }

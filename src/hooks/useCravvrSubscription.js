@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { getSupabaseBearer } from '../lib/supabase';
 import { useAuth } from '../components/auth/AuthContext';
 import {
   fetchOwnerSubscription,
@@ -45,14 +45,14 @@ export function useCravvrSubscription() {
   useEffect(() => { load(); }, [load]);
 
   const callFn = async (name, body = {}) => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const bearer = await getSupabaseBearer();
     const r = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${bearer}`,
         },
         body: JSON.stringify(body),
       },
