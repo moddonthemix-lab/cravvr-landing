@@ -5,6 +5,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@13.0.0?target=deno';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireClerkUser } from '../_shared/clerk-auth.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' });
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -20,11 +21,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-    if (authError || !user) throw new Error('Unauthorized');
+    const userId = await requireClerkUser(req);
 
     const { order_id, truck_id, amount_cents } = await req.json();
     if (!order_id || !truck_id || !amount_cents) {
@@ -43,7 +40,7 @@ serve(async (req) => {
       .eq('id', order_id)
       .single();
     if (orderError || !order) throw new Error('Order not found');
-    if (order.customer_id !== user.id) throw new Error('Unauthorized: not your order');
+    if (order.customer_id !== userId) throw new Error('Unauthorized: not your order');
     if (order.truck_id !== truck_id) throw new Error('truck_id does not match order');
     if (order.payment_status === 'paid' || order.payment_status === 'refunded') {
       throw new Error(`Order is already ${order.payment_status}`);
@@ -79,7 +76,7 @@ serve(async (req) => {
       metadata: {
         order_id,
         truck_id,
-        customer_id: user.id,
+        customer_id: userId,
       },
     });
 
@@ -87,7 +84,7 @@ serve(async (req) => {
     await supabase.from('payments').insert({
       order_id,
       truck_id,
-      customer_id: user.id,
+      customer_id: userId,
       stripe_payment_intent_id: paymentIntent.id,
       amount: amount_cents,
       platform_fee: platformFee,

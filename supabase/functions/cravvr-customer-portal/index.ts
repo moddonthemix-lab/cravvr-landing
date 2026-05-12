@@ -7,6 +7,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@13.0.0?target=deno';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireClerkUser } from '../_shared/clerk-auth.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' });
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -19,17 +20,12 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Unauthorized');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', ''),
-    );
-    if (authError || !user) throw new Error('Unauthorized');
+    const userId = await requireClerkUser(req);
 
     const { data: sub } = await supabase
       .from('cravvr_subscriptions')
       .select('stripe_customer_id')
-      .eq('owner_id', user.id)
+      .eq('owner_id', userId)
       .maybeSingle();
     if (!sub?.stripe_customer_id) {
       throw new Error('No Stripe customer record — start a subscription first');

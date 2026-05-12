@@ -10,6 +10,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@13.0.0?target=deno';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireClerkUser } from '../_shared/clerk-auth.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' });
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -23,12 +24,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Unauthorized');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', ''),
-    );
-    if (authError || !user) throw new Error('Unauthorized');
+    const userId = await requireClerkUser(req);
 
     const { plan_code = 'plus' } = await req.json().catch(() => ({}));
 
@@ -48,12 +44,12 @@ serve(async (req) => {
     const { data: profile } = await supabase
       .from('profiles')
       .select('id, email, name')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
     const { data: existing } = await supabase
       .from('cravvr_subscriptions')
       .select('stripe_customer_id, plan_code, status')
-      .eq('owner_id', user.id)
+      .eq('owner_id', userId)
       .maybeSingle();
 
     if (existing?.plan_code === plan_code &&
@@ -65,16 +61,16 @@ serve(async (req) => {
     let customerId = existing?.stripe_customer_id;
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: profile?.email || user.email,
+        email: profile?.email ?? undefined,
         name: profile?.name || undefined,
-        metadata: { cravvr_owner_id: user.id },
+        metadata: { cravvr_owner_id: userId },
       });
       customerId = customer.id;
       // Persist the customer id immediately so we don't double-create
       await supabase
         .from('cravvr_subscriptions')
         .upsert(
-          { owner_id: user.id, plan_code: existing?.plan_code || 'free', status: existing?.status || 'active', stripe_customer_id: customerId },
+          { owner_id: userId, plan_code: existing?.plan_code || 'free', status: existing?.status || 'active', stripe_customer_id: customerId },
           { onConflict: 'owner_id' },
         );
     }
@@ -87,7 +83,7 @@ serve(async (req) => {
       success_url: `${APP_URL}/owner?cravvr_plus=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${APP_URL}/owner?cravvr_plus=cancelled`,
       allow_promotion_codes: true,
-      metadata: { cravvr_owner_id: user.id, plan_code },
+      metadata: { cravvr_owner_id: userId, plan_code },
     });
 
     return new Response(

@@ -7,6 +7,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { squareBaseUrl, type SquareEnvironment } from '../_shared/square.ts';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireClerkUser } from '../_shared/clerk-auth.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -17,12 +18,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Unauthorized');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', ''),
-    );
-    if (authError || !user) throw new Error('Unauthorized');
+    const userId = await requireClerkUser(req);
 
     const { order_id, reason } = await req.json();
     if (!order_id) throw new Error('order_id is required');
@@ -43,7 +39,7 @@ serve(async (req) => {
       .eq('id', payment.truck_id)
       .single();
     if (!truck) throw new Error('Truck not found');
-    if (truck.owner_id !== user.id) {
+    if (truck.owner_id !== userId) {
       throw new Error('Unauthorized: not the truck owner');
     }
     if (!truck.square_access_token) throw new Error('Square access token missing on truck');

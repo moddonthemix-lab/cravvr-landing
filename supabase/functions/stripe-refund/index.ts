@@ -5,6 +5,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@13.0.0?target=deno';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireClerkUser } from '../_shared/clerk-auth.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' });
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -18,11 +19,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-    if (authError || !user) throw new Error('Unauthorized');
+    const userId = await requireClerkUser(req);
 
     const { order_id, reason } = await req.json();
     if (!order_id) throw new Error('order_id is required');
@@ -46,7 +43,7 @@ serve(async (req) => {
       .eq('id', payment.truck_id)
       .single();
 
-    if (truck?.owner_id !== user.id) {
+    if (truck?.owner_id !== userId) {
       throw new Error('Unauthorized: not the truck owner');
     }
 

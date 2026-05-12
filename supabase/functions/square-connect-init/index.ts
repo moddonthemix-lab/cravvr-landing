@@ -12,6 +12,7 @@ import {
   squareBaseUrl,
 } from '../_shared/square.ts';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireClerkUser } from '../_shared/clerk-auth.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -31,12 +32,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Unauthorized');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', ''),
-    );
-    if (authError || !user) throw new Error('Unauthorized');
+    const userId = await requireClerkUser(req);
 
     const { truck_id } = await req.json();
     if (!truck_id) throw new Error('truck_id is required');
@@ -46,14 +42,14 @@ serve(async (req) => {
       .from('food_trucks')
       .select('id, name')
       .eq('id', truck_id)
-      .eq('owner_id', user.id)
+      .eq('owner_id', userId)
       .single();
     if (truckError || !truck) throw new Error('Truck not found or not owned by user');
 
     const env = getSquareEnv();
     const state = await signOAuthState({
       truck_id,
-      user_id: user.id,
+      user_id: userId,
       exp: Math.floor(Date.now() / 1000) + 60 * 15, // 15 min
     });
 

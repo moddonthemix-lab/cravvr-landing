@@ -25,3 +25,24 @@ verify_jwt = false
 # JWT themselves via _shared/clerk-auth.ts.
 [functions.stripe-connect-onboard]
 verify_jwt = false
+
+[functions.stripe-create-payment-intent]
+verify_jwt = false
+
+[functions.stripe-refund]
+verify_jwt = false
+
+[functions.square-connect-init]
+verify_jwt = false
+
+[functions.square-create-payment]
+verify_jwt = false
+
+[functions.square-refund]
+verify_jwt = false
+
+[functions.cravvr-checkout-session]
+verify_jwt = false
+
+[functions.cravvr-customer-portal]
+verify_jwt = false

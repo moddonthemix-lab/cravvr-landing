@@ -7,6 +7,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { squareBaseUrl, type SquareEnvironment } from '../_shared/square.ts';
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireClerkUser } from '../_shared/clerk-auth.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -17,12 +18,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Unauthorized');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', ''),
-    );
-    if (authError || !user) throw new Error('Unauthorized');
+    const userId = await requireClerkUser(req);
 
     const { order_id, truck_id, amount_cents, source_id, verification_token, idempotency_key } = await req.json();
     if (!order_id || !truck_id || !amount_cents || !source_id) {
@@ -37,7 +33,7 @@ serve(async (req) => {
       .eq('id', order_id)
       .single();
     if (orderError || !order) throw new Error('Order not found');
-    if (order.customer_id !== user.id) throw new Error('Unauthorized: not your order');
+    if (order.customer_id !== userId) throw new Error('Unauthorized: not your order');
     if (order.truck_id !== truck_id) throw new Error('truck_id does not match order');
     if (order.payment_status === 'paid' || order.payment_status === 'refunded') {
       throw new Error(`Order is already ${order.payment_status}`);
@@ -97,7 +93,7 @@ serve(async (req) => {
     await supabase.from('payments').insert({
       order_id,
       truck_id,
-      customer_id: user.id,
+      customer_id: userId,
       amount: amount_cents,
       platform_fee: 0,
       currency: 'usd',
