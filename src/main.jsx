@@ -62,7 +62,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                         <CartProvider>
                           <App />
                           <Toaster
-                            position="top-right"
+                            position="top-left"
                             richColors
                             closeButton
                             theme="light"
