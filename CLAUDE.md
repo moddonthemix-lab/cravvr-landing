@@ -137,5 +137,4 @@ Pattern (used by OwnerDashboard / AdminDashboard / CustomerProfile):
 ## Pages NOT to touch without asking
 
 - `src/components/social/SocialGraphics.css` — html2canvas pixel-perfect exports rely on this; Tailwind purge could silently break image generation.
-- `src/styles/leaflet.css` — overrides Leaflet's runtime DOM; React/Tailwind can't reach those elements.
 - The `:root` CSS variables block at the top of `src/index.css` — every shadcn class resolves through them.

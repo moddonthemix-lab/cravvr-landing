@@ -817,48 +817,19 @@ button {
 /* Regular Truck Cards Grid */
 
 /* ===================================
-   Leaflet Map Styles
+   MapLibre GL Popup Overrides
    =================================== */
 
-/* Location Prompt */
-
-@keyframes pulse-gentle {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.maplibregl-popup-content {
+  padding: 0;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
-/* Loading State */
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.maplibregl-popup-tip {
+  display: none;
 }
-
-/* Ensure leaflet container fills wrapper */
-
-/* Fix for leaflet tile layer */
-
-/* Custom Leaflet Markers */
-
-/* User Location Marker */
-
-@keyframes pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(0.5);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(2);
-    opacity: 0;
-  }
-}
-
-/* Map Popup Styles */
-
-/* Map Controls */
-
-/* Map Legend */
-
-/* Map List Overlay */
 
 /* ===================================
    Discover View - Image Cards

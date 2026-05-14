@@ -1,32 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useRef } from 'react';
+import { Map, Marker, Popup } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { Icons } from '../common/Icons';
 import { useTrucks } from '../../contexts/TruckContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import '../../styles/leaflet.css';
 
-// Map controller to handle view updates
-const MapController = ({ center }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
-  }, [map]);
-
-  useEffect(() => {
-    if (center) {
-      map.setView(center, 14);
-    }
-  }, [center, map]);
-
-  return null;
-};
+const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
+const MAP_STYLE = MAPTILER_KEY
+  ? `https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`
+  : 'https://demotiles.maplibre.org/style.json';
 
 // Generate truck positions around center using spiral pattern
 const getTruckPositions = (center, count) => {
@@ -50,6 +34,37 @@ const getTruckPositions = (center, count) => {
 
   return positions;
 };
+
+// ============================================
+// MARKER COMPONENTS
+// ============================================
+
+const TruckMarker = ({ truck }) => (
+  <div
+    className={cn(
+      'relative h-[50px] w-[50px] overflow-hidden rounded-full border-[3px] bg-white shadow-lg transition-transform hover:scale-110 cursor-pointer',
+      truck.featured
+        ? 'border-warning'
+        : truck.isOpen
+          ? 'border-primary'
+          : 'border-muted-foreground/40 grayscale'
+    )}
+  >
+    <img src={truck.image} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+    {truck.featured && (
+      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-warning text-[10px] leading-none text-warning-foreground shadow">
+        ★
+      </span>
+    )}
+  </div>
+);
+
+const UserLocationDot = () => (
+  <div className="relative flex h-6 w-6 items-center justify-center">
+    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/50" />
+    <span className="relative inline-flex h-4 w-4 rounded-full bg-primary border-2 border-white shadow" />
+  </div>
+);
 
 // ============================================
 // SUB-COMPONENTS
@@ -225,8 +240,10 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
   const [locationStatus, setLocationStatus] = useState('prompt');
   const [isLargeDesktop, setIsLargeDesktop] = useState(window.innerWidth >= 1200);
   const [geocodedTrucks, setGeocodedTrucks] = useState({});
+  const [activeTruck, setActiveTruck] = useState(null);
   const { loadNearbyTrucks } = useTrucks();
   const [spatialTrucks, setSpatialTrucks] = useState(null);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setIsLargeDesktop(window.innerWidth >= 1200);
@@ -258,13 +275,6 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
     if (trucks.length > 0) geocodeMissing();
   }, [trucks]);
 
-  const getTruckPosition = (truck, index) => {
-    if (truck.lat && truck.lng) return [truck.lat, truck.lng];
-    const geo = geocodedTrucks[truck.id];
-    if (geo) return [geo.lat, geo.lng];
-    return truckPositions[index] || mapCenter;
-  };
-
   useEffect(() => {
     if (userLocation && loadNearbyTrucks) {
       loadNearbyTrucks(userLocation[0], userLocation[1], 15).then(result => {
@@ -278,6 +288,19 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
   const defaultCenter = [45.5152, -122.6784];
   const mapCenter = userLocation || defaultCenter;
   const truckPositions = getTruckPositions(mapCenter, displayTrucks.length);
+
+  const getTruckPosition = (truck, index) => {
+    if (truck.lat && truck.lng) return [truck.lat, truck.lng];
+    const geo = geocodedTrucks[truck.id];
+    if (geo) return [geo.lat, geo.lng];
+    return truckPositions[index] || mapCenter;
+  };
+
+  useEffect(() => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.flyTo({ center: [userLocation[1], userLocation[0]], zoom: 14, duration: 1200 });
+    }
+  }, [userLocation]);
 
   const requestLocation = () => {
     setLocationStatus('loading');
@@ -297,36 +320,6 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
 
   const skipLocation = () => setLocationStatus('denied');
 
-  const createTruckIcon = (truck) => L.divIcon({
-    className: 'custom-truck-marker',
-    html: `
-      <div class="leaflet-marker-content ${truck.featured ? 'featured' : ''} ${truck.isOpen ? 'open' : 'closed'}">
-        <img src="${truck.image}" alt="${truck.name}" class="marker-img" />
-        ${truck.featured ? '<span class="marker-star">★</span>' : ''}
-      </div>
-    `,
-    iconSize: [50, 50],
-    iconAnchor: [25, 50],
-    popupAnchor: [0, -50],
-  });
-
-  const userLocationIcon = L.divIcon({
-    className: 'user-location-marker',
-    html: `
-      <div class="user-marker-pulse"></div>
-      <div class="user-marker-dot"></div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  });
-
-  const handlePopupClick = (truck, event) => {
-    if (event.type === 'click' || event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onTruckClick(truck);
-    }
-  };
-
   // Show location prompt or loading state
   if (locationStatus === 'prompt' || locationStatus === 'loading') {
     return (
@@ -339,6 +332,11 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
       </div>
     );
   }
+
+  const activeTruckIndex = activeTruck ? displayTrucks.findIndex(t => t.id === activeTruck.id) : -1;
+  const activeTruckPos = activeTruck && activeTruckIndex >= 0
+    ? getTruckPosition(activeTruck, activeTruckIndex)
+    : null;
 
   return (
     <div
@@ -372,86 +370,102 @@ const MapView = ({ trucks, loading, onTruckClick, favorites, toggleFavorite }) =
 
       {/* Map Container */}
       <div className="relative flex-1 xl:col-start-1 xl:row-start-2">
-        <MapContainer
-          center={mapCenter}
-          zoom={14}
-          style={{ height: '100%', width: '100%' }}
-          zoomControl={false}
-          scrollWheelZoom={true}
+        <Map
+          ref={mapRef}
+          initialViewState={{ longitude: mapCenter[1], latitude: mapCenter[0], zoom: 14 }}
+          style={{ width: '100%', height: '100%' }}
+          mapStyle={MAP_STYLE}
+          attributionControl={{ compact: true }}
         >
-          <MapController center={mapCenter} />
-          <TileLayer
-            attribution='&copy; OpenStreetMap'
-            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-            maxZoom={19}
-          />
-
           {userLocation && (
-            <Marker position={userLocation} icon={userLocationIcon}>
-              <Popup>
-                <span>You are here</span>
-              </Popup>
+            <Marker longitude={userLocation[1]} latitude={userLocation[0]} anchor="center">
+              <UserLocationDot />
             </Marker>
           )}
 
-          {displayTrucks.map((truck, index) => (
-            <Marker
-              key={truck.id}
-              position={getTruckPosition(truck, index)}
-              icon={createTruckIcon(truck)}
+          {displayTrucks.map((truck, index) => {
+            const [lat, lng] = getTruckPosition(truck, index);
+            return (
+              <Marker
+                key={truck.id}
+                longitude={lng}
+                latitude={lat}
+                anchor="bottom"
+                onClick={(e) => {
+                  e.originalEvent.stopPropagation();
+                  setActiveTruck(truck);
+                }}
+              >
+                <TruckMarker truck={truck} />
+              </Marker>
+            );
+          })}
+
+          {activeTruck && activeTruckPos && (
+            <Popup
+              longitude={activeTruckPos[1]}
+              latitude={activeTruckPos[0]}
+              anchor="bottom"
+              offset={56}
+              onClose={() => setActiveTruck(null)}
+              closeButton={false}
+              maxWidth="320px"
             >
-              <Popup>
-                <div
-                  onClick={(e) => handlePopupClick(truck, e)}
-                  onKeyDown={(e) => handlePopupClick(truck, e)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`View details for ${truck.name}`}
-                  className="cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-lg"
-                >
-                  <div className="relative h-24 sm:h-32 overflow-hidden">
-                    <img
-                      src={truck.image}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-full w-full object-cover"
-                    />
-                    {truck.featured && (
-                      <span className="absolute top-2 left-2 rounded-md bg-warning px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-warning-foreground">
-                        Featured
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-3 sm:p-4 space-y-2">
-                    <div>
-                      <h4 className="font-bold text-sm sm:text-base leading-tight">{truck.name}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {truck.cuisine} • {truck.priceRange}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold">
-                        <span className="h-3.5 w-3.5 text-warning">{Icons.star}</span>
-                        {truck.rating}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{truck.distance}</span>
-                    </div>
-                    <span
-                      className={cn(
-                        'inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
-                        truck.isOpen
-                          ? 'bg-positive/15 text-positive'
-                          : 'bg-destructive/10 text-destructive'
-                      )}
-                    >
-                      {truck.isOpen ? 'Open Now' : 'Closed'}
+              <div
+                onClick={() => onTruckClick(activeTruck)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onTruckClick(activeTruck);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`View details for ${activeTruck.name}`}
+                className="cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-lg w-[260px]"
+              >
+                <div className="relative h-24 sm:h-32 overflow-hidden">
+                  <img
+                    src={activeTruck.image}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-full w-full object-cover"
+                  />
+                  {activeTruck.featured && (
+                    <span className="absolute top-2 left-2 rounded-md bg-warning px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-warning-foreground">
+                      Featured
                     </span>
-                  </div>
+                  )}
                 </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+                <div className="p-3 sm:p-4 space-y-2">
+                  <div>
+                    <h4 className="font-bold text-sm sm:text-base leading-tight">{activeTruck.name}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {activeTruck.cuisine} • {activeTruck.priceRange}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold">
+                      <span className="h-3.5 w-3.5 text-warning">{Icons.star}</span>
+                      {activeTruck.rating}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{activeTruck.distance}</span>
+                  </div>
+                  <span
+                    className={cn(
+                      'inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
+                      activeTruck.isOpen
+                        ? 'bg-positive/15 text-positive'
+                        : 'bg-destructive/10 text-destructive'
+                    )}
+                  >
+                    {activeTruck.isOpen ? 'Open Now' : 'Closed'}
+                  </span>
+                </div>
+              </div>
+            </Popup>
+          )}
+        </Map>
 
         {/* Map Legend */}
         <div
