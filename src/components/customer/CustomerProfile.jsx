@@ -375,66 +375,100 @@ const OrdersTab = ({ onBack, orders, loading, onReview, onTrack, onReorder }) =>
 };
 
 // Favorites Tab
-const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite, onViewMenu }) => (
+const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite, onViewMenu, onExplore }) => (
   <div className="min-h-screen">
     <ProfileHeader onBack={onBack} title="Favorites" />
 
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
-      <p className="text-sm text-muted-foreground mb-5">Your saved food trucks</p>
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Your saved trucks</h2>
+          <p className="text-sm text-muted-foreground">
+            {loading
+              ? 'Loading your favorites…'
+              : favorites.length === 0
+                ? 'Tap the heart on any truck to save it here.'
+                : `${favorites.length} truck${favorites.length === 1 ? '' : 's'} you love — quick access for next time.`}
+          </p>
+        </div>
+        {!loading && favorites.length > 0 && (
+          <Button variant="outline" size="sm" onClick={onExplore}>
+            <span className="h-4 w-4 mr-1.5">{Icons.search}</span>
+            Find more trucks
+          </Button>
+        )}
+      </div>
 
       {loading ? (
-        <Card>
-          <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-            <span className="h-4 w-4 animate-spin">{Icons.loader}</span>
-            Loading favorites…
-          </CardContent>
-        </Card>
+        <LoadingSplash size="inline" tagline="LOADING FAVORITES" />
       ) : favorites.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
-              <span className="h-5 w-5">{Icons.heart}</span>
+          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+              <span className="h-6 w-6">{Icons.heart}</span>
             </div>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              No favorites yet. Explore food trucks and add your favorites!
+            <h3 className="text-base font-semibold mb-1">No favorites yet</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mb-5">
+              Discover food trucks nearby and tap the heart to save them for quick reorders and updates.
             </p>
+            <Button onClick={onExplore}>
+              <span className="h-4 w-4 mr-1.5">{Icons.search}</span>
+              Explore trucks
+            </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {favorites.map(truck => (
-            <Card key={truck.id} className="overflow-hidden flex flex-col">
-              <div className="relative aspect-[16/9] bg-muted">
+            <Card key={truck.id} className="relative overflow-hidden flex flex-col group transition-shadow hover:shadow-md">
+              <button
+                type="button"
+                onClick={() => onViewMenu(truck.id)}
+                className="relative aspect-[16/9] bg-muted block w-full text-left"
+                aria-label={`View ${truck.name} menu`}
+              >
                 <img
                   src={
                     truck.image_url ||
-                    'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=200&q=80'
+                    'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80'
                   }
                   alt={truck.name}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
-                <button
-                  onClick={() => onRemoveFavorite(truck.id)}
-                  aria-label="Remove from favorites"
-                  className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-primary shadow-sm backdrop-blur transition-colors hover:bg-white"
-                >
-                  {Icons.heartFilled}
-                </button>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 <Badge
                   variant={truck.is_open ? 'positive' : 'secondary'}
-                  className="absolute top-2 left-2 shadow-sm"
+                  className="absolute top-2.5 left-2.5 shadow-sm"
                 >
-                  {truck.is_open ? 'Open' : 'Closed'}
+                  <span className={cn(
+                    'mr-1 inline-block h-1.5 w-1.5 rounded-full',
+                    truck.is_open ? 'bg-emerald-500' : 'bg-muted-foreground'
+                  )} />
+                  {truck.is_open ? 'Open now' : 'Closed'}
                 </Badge>
-              </div>
-              <CardContent className="flex flex-col gap-2 p-4 flex-1">
-                <div>
-                  <h4 className="font-semibold text-sm leading-tight truncate">{truck.name}</h4>
-                  <span className="text-xs text-muted-foreground">{truck.cuisine}</span>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onRemoveFavorite(truck.id); }}
+                aria-label="Remove from favorites"
+                className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-primary shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-destructive"
+              >
+                <span className="h-4 w-4">{Icons.heartFilled}</span>
+              </button>
+              <CardContent className="flex flex-col gap-3 p-4 flex-1">
+                <div className="min-w-0">
+                  <h4 className="font-semibold text-base leading-tight truncate">{truck.name}</h4>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{truck.cuisine || 'Food truck'}</p>
                 </div>
-                <div className="flex items-center gap-1 text-sm">
-                  <span className="text-warning">{Icons.star}</span>
-                  <span className="font-medium">{truck.average_rating || 'N/A'}</span>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-3.5 w-3.5 text-warning">{Icons.star}</span>
+                    <span className="font-medium text-foreground tabular-nums">
+                      {truck.average_rating ? Number(truck.average_rating).toFixed(1) : 'New'}
+                    </span>
+                  </span>
+                  {truck.review_count > 0 && (
+                    <span>{truck.review_count} review{truck.review_count === 1 ? '' : 's'}</span>
+                  )}
                 </div>
                 <Button
                   variant="outline"
@@ -442,7 +476,7 @@ const FavoritesTab = ({ onBack, favorites, loading, onRemoveFavorite, onViewMenu
                   className="mt-auto"
                   onClick={() => onViewMenu(truck.id)}
                 >
-                  View Menu
+                  View menu
                 </Button>
               </CardContent>
             </Card>
@@ -2044,6 +2078,7 @@ const CustomerProfile = ({ onBack }) => {
             loading={loadingFavorites}
             onRemoveFavorite={handleRemoveFavorite}
             onViewMenu={(truckId) => navigate(`/truck/${truckId}`)}
+            onExplore={() => navigate('/discover')}
           />
         );
       case 'rewards':
