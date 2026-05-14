@@ -153,7 +153,16 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
   }
 
   return (
-    <div className="flex flex-col min-h-screen px-4 sm:px-6 pb-6 max-w-7xl mx-auto w-full">
+    <div className="relative flex flex-col min-h-screen px-4 sm:px-6 pb-6 w-full">
+      <div
+        aria-hidden
+        className="hidden lg:block absolute inset-0 -z-10 opacity-70"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 15% 20%, rgba(225, 29, 72, 0.08) 0px, transparent 50%), radial-gradient(circle at 85% 80%, rgba(225, 29, 72, 0.06) 0px, transparent 45%)',
+        }}
+      />
+      <div className="relative flex flex-col flex-1 max-w-7xl mx-auto w-full">
       {/* Header */}
       <div className="pt-5 pb-3 flex items-start justify-between gap-3">
         <div>
@@ -236,8 +245,11 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
         <div className="grid lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] lg:gap-10 lg:items-start flex-1">
           {/* Card column */}
           <div className="flex flex-col items-center justify-start">
-            <div className="relative h-[560px] w-full max-w-sm mx-auto">
-              {filteredTrucks.map((truck, index) => (
+            <div className="relative w-full max-w-sm mx-auto aspect-[5/7] max-h-[calc(100dvh-22rem)] lg:max-h-[640px] lg:aspect-[5/7]">
+              {filteredTrucks.map((truck, index) => {
+                const stackOffset = index < currentIndex ? currentIndex - index : 0;
+                const isStacked = stackOffset > 0;
+                return (
                 <TinderCard
                   ref={childRefs[index]}
                   key={truck.id}
@@ -249,15 +261,18 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
                   swipeThreshold={100}
                 >
                   <div
-                    className="absolute inset-0 overflow-hidden rounded-3xl bg-card shadow-xl ring-1 ring-black/10 flex flex-col"
+                    className="absolute inset-0 overflow-hidden rounded-3xl bg-card shadow-xl ring-1 ring-black/5 flex flex-col"
                     style={{
                       zIndex: filteredTrucks.length - index,
-                      transform:
-                        index < currentIndex
-                          ? `scale(${1 - (currentIndex - index) * 0.04}) translateY(${(currentIndex - index) * 10}px)`
-                          : 'none',
+                      transform: isStacked
+                        ? `translate3d(0, ${stackOffset * 12}px, 0) scale(${1 - stackOffset * 0.035})`
+                        : 'translate3d(0, 0, 0)',
                       transformOrigin: 'center top',
                       opacity: index < currentIndex - 2 ? 0 : 1,
+                      willChange: 'transform',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                      WebkitFontSmoothing: 'antialiased',
                     }}
                   >
                     {/* Image */}
@@ -373,7 +388,8 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
                     </div>
                   </div>
                 </TinderCard>
-              ))}
+                );
+              })}
 
               {currentIndex < 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 py-12 gap-3 rounded-3xl bg-card ring-1 ring-border">
@@ -641,6 +657,7 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
           </aside>
         </div>
       )}
+      </div>
     </div>
   );
 };
