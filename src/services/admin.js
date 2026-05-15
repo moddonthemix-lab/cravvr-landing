@@ -7,6 +7,45 @@ import { supabase } from '../lib/supabase';
  * admin component tree.
  */
 
+// ---- Playbook state -------------------------------------------------------
+
+/** Fetch all playbook state rows as a map keyed by item_key. */
+export const fetchPlaybookState = async () => {
+  const { data, error } = await supabase
+    .from('playbook_state')
+    .select('item_key, done, done_at, done_by_user_id, notes, updated_at');
+  if (error) throw error;
+  const map = {};
+  for (const row of data || []) map[row.item_key] = row;
+  return map;
+};
+
+/** Toggle an item done/undone. Returns the upserted row. */
+export const setPlaybookItem = async (item_key, done, notes = null) => {
+  const { data, error } = await supabase
+    .from('playbook_state')
+    .upsert(
+      { item_key, done, ...(notes != null ? { notes } : {}) },
+      { onConflict: 'item_key' }
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+/** Update notes on a playbook item without changing done state. */
+export const setPlaybookNotes = async (item_key, notes) => {
+  const { data, error } = await supabase
+    .from('playbook_state')
+    .upsert({ item_key, notes }, { onConflict: 'item_key' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+
 export const adminCreateTruck = async (ownerId, patch, reason = null) => {
   const { data, error } = await supabase.rpc('admin_create_truck', {
     p_owner_id: ownerId,

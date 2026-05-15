@@ -30,6 +30,7 @@ import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Icons } from '../components/common/Icons';
 import LoadingSplash from '../components/common/LoadingSplash';
 import MarketingPage from '../components/admin/MarketingPage';
+import PlaybookPage from '../components/admin/PlaybookPage';
 import {
   DashboardTabBar,
 } from '@/components/ui/dashboard-sidebar';
@@ -1852,6 +1853,7 @@ const AdminDashboard = () => {
     { id: 'analytics', label: 'Analytics', icon: Icons.trendingUp },
     { id: 'marketing', label: 'Marketing', icon: Icons.megaphone },
     { id: 'growth', label: 'Growth', icon: Icons.target },
+    { id: 'playbook', label: 'Playbook', icon: Icons.checkCircle },
     { id: 'settings', label: 'Settings', icon: Icons.settings },
   ];
 
@@ -1890,6 +1892,8 @@ const AdminDashboard = () => {
         return <AnalyticsPage stats={stats} chartData={chartData} />;
       case 'marketing':
         return <MarketingPage />;
+      case 'playbook':
+        return <PlaybookPage />;
       case 'settings':
         return <SettingsPage adminEmail={user?.email} devSettings={devSettings} onUpdateDevSettings={updateDevSettings} />;
       default:
