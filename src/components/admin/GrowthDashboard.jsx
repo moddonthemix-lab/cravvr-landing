@@ -72,9 +72,12 @@ const GrowthDashboard = () => {
     }
   };
 
-  // Top-line metrics — trailing 30 days.
+  // Top-line metrics — trailing 30 days. Revenue uses `paid_revenue` from
+  // daily_channel_performance so rejected/cancelled/unpaid orders never
+  // inflate the dashboard. Orders and new_customers counts stay all-orders
+  // for now (signal of activity), but money math is paid-only.
   const summary = useMemo(() => {
-    const revenue = daily.reduce((sum, d) => sum + Number(d.revenue || 0), 0);
+    const revenue = daily.reduce((sum, d) => sum + Number(d.paid_revenue || 0), 0);
     const orders = daily.reduce((sum, d) => sum + Number(d.orders || 0), 0);
     const newCustomers = daily.reduce((sum, d) => sum + Number(d.new_customers || 0), 0);
     const spend = adSpend.reduce((sum, d) => sum + Number(d.spend_cents || 0), 0) / 100;
@@ -83,12 +86,12 @@ const GrowthDashboard = () => {
     return { revenue, orders, newCustomers, spend, mer, blendedCac };
   }, [daily, adSpend]);
 
-  // Daily revenue chart data.
+  // Daily revenue chart data — paid only.
   const dailyChart = useMemo(() => {
     const byDay = new Map();
     for (const d of daily) {
       const key = format(new Date(d.day), 'MMM d');
-      byDay.set(key, (byDay.get(key) || 0) + Number(d.revenue || 0));
+      byDay.set(key, (byDay.get(key) || 0) + Number(d.paid_revenue || 0));
     }
     return Array.from(byDay.entries()).map(([day, revenue]) => ({ day, revenue }));
   }, [daily]);
