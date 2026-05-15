@@ -1,7 +1,247 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
 
 const SITE = (typeof window !== 'undefined' && window.location?.origin) || 'https://cravvr.com';
+
+// ---------------------------------------------------------------------------
+// Recent activity — daily + weekly operating telemetry
+// ---------------------------------------------------------------------------
+
+const sourceLabel = (s) => s || 'direct / untagged';
+
+const RecentActivity = () => {
+  const [yesterday, setYesterday] = useState([]);
+  const [weekSources, setWeekSources] = useState([]);
+  const [weekFunnel, setWeekFunnel] = useState([]);
+  const [weekSignups, setWeekSignups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const now = new Date();
+      const ydStart = new Date(now); ydStart.setDate(now.getDate() - 1); ydStart.setHours(0, 0, 0, 0);
+      const ydEnd = new Date(now); ydEnd.setDate(now.getDate() - 1); ydEnd.setHours(23, 59, 59, 999);
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // 1. Yesterday's visitors by source
+      const ydRes = await supabase
+        .from('visitors')
+        .select('first_utm_source')
+        .gte('first_seen_at', ydStart.toISOString())
+        .lte('first_seen_at', ydEnd.toISOString());
+      if (ydRes.error) throw ydRes.error;
+      const ydBySource = new Map();
+      for (const v of ydRes.data || []) {
+        const k = v.first_utm_source;
+        ydBySource.set(k, (ydBySource.get(k) || 0) + 1);
+      }
+      setYesterday(
+        Array.from(ydBySource.entries())
+          .map(([source, count]) => ({ source, count }))
+          .sort((a, b) => b.count - a.count)
+      );
+
+      // 2. This week's visitors by source + campaign + signups
+      const wkRes = await supabase
+        .from('visitors')
+        .select('first_utm_source, first_utm_campaign, user_id')
+        .gte('first_seen_at', weekAgo.toISOString());
+      if (wkRes.error) throw wkRes.error;
+      const wkBySource = new Map();
+      for (const v of wkRes.data || []) {
+        const key = `${v.first_utm_source ?? ''}::${v.first_utm_campaign ?? ''}`;
+        const cur = wkBySource.get(key) || {
+          source: v.first_utm_source,
+          campaign: v.first_utm_campaign,
+          visitors: 0,
+          signups: 0,
+        };
+        cur.visitors += 1;
+        if (v.user_id) cur.signups += 1;
+        wkBySource.set(key, cur);
+      }
+      setWeekSources(Array.from(wkBySource.values()).sort((a, b) => b.visitors - a.visitors));
+
+      // 3. This week's funnel (events table)
+      const evRes = await supabase
+        .from('analytics_events')
+        .select('event_name, visitor_id')
+        .gte('occurred_at', weekAgo.toISOString());
+      if (evRes.error) throw evRes.error;
+      const funnel = new Map();
+      for (const e of evRes.data || []) {
+        const cur = funnel.get(e.event_name) || new Set();
+        cur.add(e.visitor_id);
+        funnel.set(e.event_name, cur);
+      }
+      const FUNNEL_ORDER = [
+        'page_view', 'view_truck', 'add_to_cart', 'begin_checkout',
+        'order_created', 'purchase', 'signup', 'login',
+      ];
+      setWeekFunnel(
+        FUNNEL_ORDER
+          .filter((n) => funnel.has(n))
+          .map((n) => ({ event_name: n, unique_visitors: funnel.get(n).size }))
+          .concat(
+            Array.from(funnel.entries())
+              .filter(([n]) => !FUNNEL_ORDER.includes(n))
+              .map(([n, set]) => ({ event_name: n, unique_visitors: set.size }))
+          )
+      );
+
+      // 4. Signups this week (visitor rows with user_id set)
+      const sgRes = await supabase
+        .from('visitors')
+        .select('first_utm_source, first_utm_campaign, user_id, first_seen_at')
+        .gte('first_seen_at', weekAgo.toISOString())
+        .not('user_id', 'is', null)
+        .order('first_seen_at', { ascending: false })
+        .limit(50);
+      if (sgRes.error) throw sgRes.error;
+      setWeekSignups(sgRes.data || []);
+
+      setLastRefreshed(new Date());
+    } catch (e) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const ydTotal = yesterday.reduce((s, r) => s + r.count, 0);
+  const wkTotal = weekSources.reduce((s, r) => s + r.visitors, 0);
+  const wkSignupTotal = weekSources.reduce((s, r) => s + r.signups, 0);
+
+  return (
+    <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <h2 style={{ margin: 0, fontSize: 18 }}>Recent activity</h2>
+        <button
+          onClick={load}
+          disabled={loading}
+          style={{
+            background: 'white', color: '#374151', border: '1px solid #e5e7eb',
+            borderRadius: 6, padding: '6px 12px', fontSize: 13, fontWeight: 600,
+            cursor: loading ? 'wait' : 'pointer',
+          }}
+        >
+          {loading ? 'Loading…' : 'Refresh'}
+        </button>
+      </div>
+      <p style={{ margin: '0 0 16px', fontSize: 13, color: '#6b7280' }}>
+        Your daily 5-minute check. Yesterday's traffic + this week's sources, funnel, and signups.
+        {lastRefreshed ? <> · <span className="muted">last updated {lastRefreshed.toLocaleTimeString()}</span></> : null}
+      </p>
+
+      {error && (
+        <div style={{ background: '#fee2e2', color: '#991b1b', padding: 10, borderRadius: 6, fontSize: 13, marginBottom: 12 }}>
+          {error}
+        </div>
+      )}
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: 16,
+      }}>
+        {/* Yesterday */}
+        <ReportCard
+          title={`Yesterday — ${ydTotal} visitor${ydTotal === 1 ? '' : 's'}`}
+          empty={yesterday.length === 0 ? 'No visitors yesterday.' : null}
+        >
+          {yesterday.map((r) => (
+            <ReportRow key={r.source || 'direct'} label={sourceLabel(r.source)} value={r.count} />
+          ))}
+        </ReportCard>
+
+        {/* This week, by source */}
+        <ReportCard
+          title={`Last 7 days — ${wkTotal} visitor${wkTotal === 1 ? '' : 's'}, ${wkSignupTotal} signup${wkSignupTotal === 1 ? '' : 's'}`}
+          empty={weekSources.length === 0 ? 'No traffic this week yet.' : null}
+        >
+          {weekSources.map((r) => (
+            <ReportRow
+              key={`${r.source}::${r.campaign}`}
+              label={sourceLabel(r.source)}
+              sublabel={r.campaign || '—'}
+              value={`${r.visitors}v / ${r.signups}s`}
+            />
+          ))}
+        </ReportCard>
+
+        {/* Funnel */}
+        <ReportCard
+          title="Funnel (last 7 days)"
+          empty={weekFunnel.length === 0 ? 'No events this week yet.' : null}
+        >
+          {weekFunnel.map((r) => (
+            <ReportRow key={r.event_name} label={r.event_name} value={r.unique_visitors} />
+          ))}
+        </ReportCard>
+      </div>
+
+      {/* Recent signups feed */}
+      {weekSignups.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: 14, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Recent signups
+          </h3>
+          <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, fontSize: 13 }}>
+            {weekSignups.slice(0, 8).map((s) => (
+              <div
+                key={s.user_id + s.first_seen_at}
+                style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #e5e7eb' }}
+              >
+                <span style={{ color: '#374151', fontWeight: 600 }}>
+                  {sourceLabel(s.first_utm_source)}
+                  {s.first_utm_campaign ? <span style={{ color: '#6b7280', fontWeight: 400 }}> · {s.first_utm_campaign}</span> : null}
+                </span>
+                <span style={{ color: '#6b7280' }}>
+                  {new Date(s.first_seen_at).toLocaleString()}
+                </span>
+              </div>
+            ))}
+            {weekSignups.length > 8 && (
+              <div style={{ color: '#6b7280', textAlign: 'center', paddingTop: 6 }}>
+                + {weekSignups.length - 8} more
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ReportCard = ({ title, children, empty }) => (
+  <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 14 }}>
+    <h3 style={{ margin: '0 0 8px', fontSize: 13, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      {title}
+    </h3>
+    {empty ? (
+      <div style={{ color: '#9ca3af', fontSize: 13, padding: '8px 0' }}>{empty}</div>
+    ) : (
+      <div style={{ display: 'flex', flexDirection: 'column' }}>{children}</div>
+    )}
+  </div>
+);
+
+const ReportRow = ({ label, sublabel, value }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '4px 0', borderBottom: '1px solid #e5e7eb' }}>
+    <span style={{ fontSize: 13, color: '#374151' }}>
+      {label}
+      {sublabel ? <div style={{ fontSize: 11, color: '#9ca3af' }}>{sublabel}</div> : null}
+    </span>
+    <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{value}</span>
+  </div>
+);
 
 // ---------------------------------------------------------------------------
 // UTM Builder
@@ -266,10 +506,12 @@ const MarketingPage = () => {
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: 28 }}>Marketing</h1>
         <p style={{ margin: '4px 0 0', color: '#6b7280' }}>
-          UTM links for every channel. Build custom ones, or copy presets — everything tagged here flows into{' '}
-          <a href="/admin/growth" style={{ color: '#e11d48' }}>/admin/growth</a> for cohort analysis.
+          Recent activity, UTM links, and channel reference. Everything tagged here flows into{' '}
+          <a href="/admin/growth" style={{ color: '#e11d48' }}>/admin/growth</a> for cohort analysis once revenue is live.
         </p>
       </div>
+
+      <RecentActivity />
 
       <Builder />
 
