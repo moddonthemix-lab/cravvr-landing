@@ -1,0 +1,266 @@
+CRAVVR — MONTH 1 AI-DRIVEN ACQUISITION PLAN ($100 TEST)
+=========================================================
+
+Strategy context: trucks first. This $100 is a TRUCK-OPERATOR
+acquisition test, not consumer. Consumer spend turns on in Month 2
+once supply is seeded. Everything below is built so every dollar
+produces a tracked, attributable data point you can feed back into
+AI tools.
+
+
+-----------------------------------------------------------
+1. GOAL & SUCCESS METRICS
+-----------------------------------------------------------
+
+Primary goal:
+  5–10 truck operator leads → 3–5 onboarded trucks in one
+  beachhead city.
+
+Hard KPIs:
+  - CPL (cost per lead, form-fill): target < $15
+  - CPA (cost per onboarded truck):  target < $35
+  - Landing page conversion rate:    target > 8%
+  - Email open rate on nurture:      > 45%
+
+If CPL > $25 by day 10, kill the creative and regenerate (see §6).
+
+
+-----------------------------------------------------------
+2. TRACKING STACK — SET UP DAY 1 (BEFORE ANY SPEND)
+-----------------------------------------------------------
+
+This is the part most founders skip and then can't debug later.
+Do this in order:
+
+a. Analytics & attribution
+   - GA4 with enhanced measurement + a custom event
+     `truck_lead_submit` (params: city, truck_type, source,
+     creative_id)
+   - Meta Pixel + Conversions API (CAPI) via Meta's free
+     Zapier/Stape connector — iOS 14+ killed pixel-only
+     attribution; CAPI recovers ~30% of lost conversions
+   - TikTok Pixel + Events API if you test TikTok
+   - UTM convention, locked:
+       utm_source / utm_medium / utm_campaign /
+       utm_content (creative_id) / utm_term (audience)
+     Build a Google Sheet UTM generator — never hand-type.
+
+b. Page / session tracking
+   - PostHog (free tier) OR Microsoft Clarity (free, unlimited)
+     for session replays + heatmaps on the operator landing
+     page. Clarity is the fastest install (one snippet, 5 min).
+   - Tag every CTA button with a data attribute:
+       data-cta="apply-top", data-cta="apply-sticky", etc.
+     → fires GA4 event `cta_click`.
+
+c. Click tracking inside emails
+   - All Klaviyo links auto-UTM'd via account-level UTM
+     settings (Klaviyo → Settings → UTM Tracking → enable,
+     set defaults)
+   - Add ?klaviyo_id={{ person.id }} to inbound links so you
+     can match email recipients to landing page sessions in
+     PostHog/Clarity.
+
+d. Form → CRM
+   - Landing page form posts to Supabase `leads` table
+     (you're already on Supabase) AND fires:
+       * Meta CAPI `Lead` event with hashed email
+       * Klaviyo `Submitted Truck Application` event
+       * Slack webhook to a #new-leads channel so you can text
+         them within 5 minutes
+
+   NOTE: Lead response time < 5 min has ~9× higher conversion
+   than > 30 min. This is the single biggest lever you have.
+
+
+-----------------------------------------------------------
+3. THE LANDING PAGE (BUILD THIS BEFORE THE ADS)
+-----------------------------------------------------------
+
+URL: cravvr.com/for-trucks
+
+Structure:
+  1. Hero: "Get 30+ new customers this month. Zero upfront
+     cost." + city name dynamically inserted from URL param
+     (?city=austin → "...in Austin")
+  2. 3-stat social proof row (use real numbers, even small ones
+     — "12 trucks already on Cravvr in Austin")
+  3. 60-second explainer (Loom is fine for v1)
+  4. Form: name, truck name, phone, cuisine type,
+     "when can we chat?" (5 fields max)
+  5. Sticky CTA on mobile
+  6. FAQ (use <MarketingFAQ> from existing components)
+
+AI assist:
+  - Use Claude to generate 3 hero copy variants per cuisine type
+    (taco, BBQ, dessert, etc.) — dynamic insertion via URL
+    param means one page serves many ad sets.
+  - Use Clarity's Copilot (built-in) after week 1 to ask
+    "where are users dropping off?" in plain English.
+
+
+-----------------------------------------------------------
+4. THE $100 AD SPEND — ALLOCATION
+-----------------------------------------------------------
+
+  CHANNEL                          SPEND   WHY
+  -------------------------------- ------  -------------------------
+  Meta (IG + FB) Lead Ads          $60     Best B2B-local targeting
+                                           at this budget. Lead form
+                                           prefill = lower friction.
+  Meta Traffic → Landing Page      $25     Builds retargeting pool +
+                                           enables Clarity replays
+  Google Search (exact match)      $15     Captures intent: "food
+                                           truck pos system [city]"
+                                           etc.
+
+Skip for Month 1:
+  TikTok (creative-heavy, hard to test at $100)
+  LinkedIn (too expensive per click for SMB owners)
+  YouTube (no remarketing pool yet)
+
+Targeting (Meta):
+  - Geo: 15-mile radius around beachhead city downtown
+  - Detailed: Interests = "Food truck", "Mobile catering",
+    "Restaurant owner", "Small business owner"
+    Behaviors = "Small business owners"
+  - Age 25–55, all genders
+  - EXCLUDE: existing customers (upload Supabase truck owners
+    list as a custom audience)
+
+Targeting (Google):
+  - Exact + phrase match only at this budget
+  - Negative-match: "jobs", "for sale", "rental"
+
+
+-----------------------------------------------------------
+5. CREATIVE — GENERATIVE AI WORKFLOW
+-----------------------------------------------------------
+
+Static ad images (5 variants, ~30 min total):
+  1. Midjourney / DALL·E 3 / Ideogram:
+     "warm cinematic photo of a food truck owner on phone
+     smiling, customer line in background, golden hour, shot
+     on 35mm" — generate 20, pick 5.
+  2. Canva (with Magic Resize): drop into 1:1, 4:5, 9:16
+     → 15 final assets.
+  3. Overlay text generated by Claude. Framework:
+       hook (3 words) → promise (1 line) → CTA.
+     Generate 10 hooks, A/B test in the ad set.
+
+Video ad (1 variant):
+  - Record yourself (founder) on iPhone, 30 sec, talking to
+    camera: "Hey, I'm [name], I built Cravvr because…"
+  - Run through Descript (free tier) — auto captions, remove
+    ums, export 9:16 + 1:1.
+  - Founder videos consistently beat polished agency videos
+    at this stage. Don't overproduce.
+
+Ad copy (Meta lead ad):
+  Generate 3 variants with Claude using this prompt frame:
+
+    "Write 3 Meta lead ad primary text variants (≤125 chars)
+    targeting independent food truck owners in [city]. Tone:
+    peer-to-peer, not corporate. Lead with a specific outcome
+    (e.g., 'book 20 more orders this weekend'). End with soft
+    CTA. Output as JSON array."
+
+  A/B all 3 → kill the worst after 48 hrs.
+
+
+-----------------------------------------------------------
+6. KLAVIYO FLOWS (SET UP WEEK 1, FIRES WEEK 2+)
+-----------------------------------------------------------
+
+Klaviyo for B2B operator nurture is unusual but works great
+at this scale because the list is small and messages are
+personal.
+
+FLOW A: Lead → onboarded truck
+  Trigger: `Submitted Truck Application` event
+    t+0 min : text from founder (manual or Twilio)
+    t+5 min : email "Got your application — here's what
+              happens next" (plain text, from founder@,
+              no template)
+    t+1 day : email "3 trucks we onboarded this month +
+              their first-week numbers" — use Klaviyo's
+              AI subject line generator + Brand Voice
+              (trained on 5 of your best past emails)
+    t+3 days: email "Quick question" (one-line email,
+              asks what's blocking them — highest reply
+              rate format)
+    t+7 days: break-up email
+
+FLOW B: Onboarded truck → first booking
+  Trigger: `Truck Activated` event
+    t+0     : welcome + checklist (use Klaviyo's AI image
+              generator for custom illustration)
+    t+2 days: "Here's how to get your first 10 customers"
+              (link to playbook)
+    t+7 days: NPS-style "how's it going?"
+
+AI features to turn on in Klaviyo NOW:
+  - Subject line assistant — generates + predicts open rate
+  - SMS assistant — drafts compliant SMS copy (needed in
+    Month 2 for consumers)
+  - Predictive analytics — needs ~500 profiles to activate;
+    won't help Month 1 but turn on now so it starts learning
+  - Brand voice — train it this week so all future
+    generations match
+
+
+-----------------------------------------------------------
+7. DAILY / WEEKLY CADENCE
+-----------------------------------------------------------
+
+Daily (10 min):
+  - Check Meta Ads Manager: CPL, frequency (kill any ad
+    > 2.5 frequency in week 1)
+  - Check Slack #new-leads → respond within 5 min
+  - Check Clarity for rage clicks or dead clicks on
+    landing page
+
+Weekly review (30 min, Sundays):
+  - Pull GA4 → Looker Studio dashboard (one-time setup,
+    use the GA4 template)
+  - Which utm_content (creative_id) won? Pause bottom 50%,
+    duplicate top 25% with new variants generated by
+    Claude/Midjourney.
+  - Watch 5 Clarity session replays of users who DIDN'T
+    convert. Patterns → landing page edits next morning.
+
+
+-----------------------------------------------------------
+8. WEEK-BY-WEEK
+-----------------------------------------------------------
+
+  WEEK   FOCUS                                          SPEND
+  ----   --------------------------------------------   -----
+  1      Build landing page, install tracking,          $0
+         generate creative, set up Klaviyo flows.
+         Zero ad spend.
+  2      Launch Meta + Google. Daily monitoring.        $40
+  3      Kill losers, scale winners. First Klaviyo      $40
+         nurture emails sending.
+  4      Final push + analysis. Document CPL/CPA →      $20
+         decide Month 2 budget.
+
+
+-----------------------------------------------------------
+9. WHAT THIS SETS UP FOR MONTH 2
+-----------------------------------------------------------
+
+By end of Month 1 you'll have:
+  - A retargeting pool (everyone who hit the landing page)
+    — pixel-warm, ready for consumer launch
+  - ~50–150 Klaviyo profiles with engagement data →
+    Predictive Analytics starts working
+  - 3–5 winning creative variants with real CPL data → AI
+    tools (Meta Advantage+, Google PMax) actually have
+    signal to optimize against
+  - A Clarity heatmap library showing exactly which page
+    elements convert
+
+Then Month 2 is when you flip on consumer ads in the same
+city — and the truck supply you built makes that spend
+efficient instead of wasted.

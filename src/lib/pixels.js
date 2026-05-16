@@ -17,6 +17,17 @@ export function loadPixels() {
   loadMetaPixel(import.meta.env.VITE_META_PIXEL_ID);
   loadGA4(import.meta.env.VITE_GA4_MEASUREMENT_ID);
   loadTikTokPixel(import.meta.env.VITE_TIKTOK_PIXEL_ID);
+  loadClarity(import.meta.env.VITE_CLARITY_PROJECT_ID);
+}
+
+async function loadClarity(projectId) {
+  if (!projectId) return;
+  try {
+    const { default: Clarity } = await import('@microsoft/clarity');
+    Clarity.init(projectId);
+  } catch (err) {
+    console.warn('Clarity init failed', err);
+  }
 }
 
 function loadMetaPixel(pixelId) {

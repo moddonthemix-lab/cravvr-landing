@@ -46,6 +46,7 @@ const AdminTruckSettingsTab = lazy(() => import('./admin/trucks/tabs/SettingsTab
 const AdminTruckAuditTab = lazy(() => import('./admin/trucks/tabs/AuditTab'));
 const AdminTruckDangerZone = lazy(() => import('./admin/trucks/tabs/DangerZone'));
 const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
+const ForTrucksPage = lazy(() => import('./pages/ForTrucksPage'));
 
 // Wrapper for LandingPage with navigate
 const LandingPageWrapper = () => {
@@ -202,6 +203,10 @@ const App = () => {
         {/* Legacy /plus URLs → Enterprise (where the heavy marketing design moved) */}
         <Route path="/plus" element={<Navigate to="/enterprise" replace />} />
         <Route path="/CravvrPlus" element={<Navigate to="/enterprise" replace />} />
+
+        {/* Truck operator acquisition — city-specific landing pages */}
+        <Route path="/for-trucks" element={<Navigate to="/for-trucks/portland" replace />} />
+        <Route path="/for-trucks/:city" element={<ForTrucksPage />} />
 
         {/* Fallback to home */}
         <Route path="*" element={<ResponsiveApp />} />
