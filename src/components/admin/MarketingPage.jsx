@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Icons } from '../common/Icons';
+import MarketingInsights from './MarketingInsights';
 
 const SITE = (typeof window !== 'undefined' && window.location?.origin) || 'https://cravvr.com';
 
@@ -510,6 +511,8 @@ const MarketingPage = () => {
           <a href="/admin/growth" style={{ color: '#e11d48' }}>/admin/growth</a> for cohort analysis once revenue is live.
         </p>
       </div>
+
+      <MarketingInsights />
 
       <RecentActivity />
 
