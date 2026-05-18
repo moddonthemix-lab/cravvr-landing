@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import LoadingSplash from '../common/LoadingSplash';
+import TruckImage from '../common/TruckImage';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -405,17 +406,11 @@ const TruckDetailPage = () => {
               to hang into the body) renders fully. object-cover on the img
               itself keeps the cover photo cropped to the aspect frame. */}
           <div className="relative aspect-[16/9] w-full bg-muted sm:aspect-[21/9] lg:aspect-[5/2]">
-            <img
+            <TruckImage
               src={truck.coverImage || truck.image}
+              name={truck.name}
               alt={truck.name}
-              className="absolute inset-0 h-full w-full object-cover"
-              onError={(e) => {
-                if (e.target.src !== truck.image) {
-                  e.target.src = truck.image;
-                } else {
-                  e.target.src = 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=1200&q=80';
-                }
-              }}
+              className="absolute inset-0"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             {truck.featured && (
@@ -430,11 +425,10 @@ const TruckDetailPage = () => {
               </div>
             )}
             <div className="absolute -bottom-10 left-6 h-20 w-20 overflow-hidden rounded-2xl border-4 border-background bg-background shadow-lg sm:h-24 sm:w-24">
-              <img
+              <TruckImage
                 src={truck.logoUrl || truck.image}
+                name={truck.name}
                 alt={`${truck.name} logo`}
-                className="h-full w-full object-cover"
-                onError={(e) => { e.target.src = truck.image; }}
               />
             </div>
           </div>
@@ -461,9 +455,15 @@ const TruckDetailPage = () => {
               <p className="text-sm text-muted-foreground">
                 {truck.cuisine || 'Food Truck'} • {truck.priceRange || '$$'}
               </p>
-              <p className="text-sm leading-relaxed text-foreground/80">
-                {truck.description || 'Delicious food made fresh daily. Visit us to discover our amazing menu!'}
-              </p>
+              {truck.description ? (
+                <p className="text-sm leading-relaxed text-foreground/80">
+                  {truck.description}
+                </p>
+              ) : (
+                <p className="text-sm italic leading-relaxed text-muted-foreground">
+                  This truck hasn't added a description yet.
+                </p>
+              )}
             </div>
 
             {/* Not accepting banner */}

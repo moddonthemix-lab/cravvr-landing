@@ -5,6 +5,7 @@ import { Icons } from '../common/Icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import TruckImage from '../common/TruckImage';
 
 const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruckClick }) => {
   const [openNowOnly, setOpenNowOnly] = useState(false);
@@ -277,11 +278,10 @@ const DiscoverView = ({ trucks = [], loading, favorites, toggleFavorite, onTruck
                   >
                     {/* Image */}
                     <div className="relative h-[60%] overflow-hidden bg-muted shrink-0">
-                      <img
+                      <TruckImage
                         src={truck.image}
-                        alt={truck.name}
-                        draggable={false}
-                        className="h-full w-full object-cover select-none"
+                        name={truck.name}
+                        imgClassName="select-none"
                       />
                       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
 

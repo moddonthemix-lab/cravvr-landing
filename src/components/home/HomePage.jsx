@@ -9,6 +9,7 @@ import useUserLocation from '../../hooks/useUserLocation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import TruckImage from '../common/TruckImage';
 
 const categories = [
   { id: 'all', name: 'All', emoji: '🍽️' },
@@ -505,10 +506,10 @@ const TruckCard = ({ truck, isFavorite, onFavorite, onClick }) => (
     className="group cursor-pointer"
   >
     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted ring-1 ring-black/5 shadow-sm transition-shadow group-hover:shadow-md">
-      <img
+      <TruckImage
         src={truck.image}
-        alt={truck.name}
-        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        name={truck.name}
+        imgClassName="transition-transform duration-300 group-hover:scale-[1.03]"
       />
       <button
         type="button"

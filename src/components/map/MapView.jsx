@@ -6,6 +6,7 @@ import { useTrucks } from '../../contexts/TruckContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import TruckImage from '../common/TruckImage';
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const MAP_STYLE = MAPTILER_KEY
@@ -50,7 +51,7 @@ const TruckMarker = ({ truck }) => (
           : 'border-muted-foreground/40 grayscale'
     )}
   >
-    <img src={truck.image} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+    <TruckImage src={truck.image} name={truck.name} alt="" />
     {truck.featured && (
       <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-warning text-[10px] leading-none text-warning-foreground shadow">
         ★
@@ -78,7 +79,7 @@ const TruckListCard = ({ truck, onClick }) => (
     className="group flex w-full gap-3.5 rounded-2xl border border-border/60 bg-card p-3 text-left transition-all hover:border-border hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
   >
     <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl bg-muted">
-      <img src={truck.image} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+      <TruckImage src={truck.image} name={truck.name} alt="" />
       {truck.featured && (
         <span className="absolute top-1 left-1 rounded-md bg-warning/95 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-warning-foreground">
           Featured
