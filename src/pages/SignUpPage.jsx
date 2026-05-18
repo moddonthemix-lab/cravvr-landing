@@ -15,17 +15,23 @@ const SignUpPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, isOwner, loading } = useAuth();
 
-  const from = location.state?.from?.pathname || '/';
+  const explicitFrom = location.state?.from?.pathname;
+  const from = explicitFrom || '/';
   const fromTab = location.state?.from?.search || '';
 
   const initialRole = searchParams.get('as') === 'owner' ? 'owner' : 'customer';
   const [role, setRole] = useState(initialRole);
 
   useEffect(() => {
-    if (user) navigate(from + fromTab, { replace: true });
-  }, [user, navigate, from, fromTab]);
+    if (!user || loading) return;
+    if (!explicitFrom && (isOwner || role === 'owner')) {
+      navigate('/owner', { replace: true });
+    } else {
+      navigate(from + fromTab, { replace: true });
+    }
+  }, [user, loading, isOwner, role, navigate, from, fromTab, explicitFrom]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
@@ -70,7 +76,7 @@ const SignUpPage = () => {
         routing="path"
         path="/sign-up"
         signInUrl="/login"
-        forceRedirectUrl={from + fromTab}
+        forceRedirectUrl={`/post-auth?next=${encodeURIComponent(from + fromTab)}`}
         unsafeMetadata={{ role }}
       />
     </div>

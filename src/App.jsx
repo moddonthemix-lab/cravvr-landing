@@ -46,6 +46,7 @@ const AdminTruckSettingsTab = lazy(() => import('./admin/trucks/tabs/SettingsTab
 const AdminTruckAuditTab = lazy(() => import('./admin/trucks/tabs/AuditTab'));
 const AdminTruckDangerZone = lazy(() => import('./admin/trucks/tabs/DangerZone'));
 const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
+const PostAuthRedirect = lazy(() => import('./pages/PostAuthRedirect'));
 const ForTrucksPage = lazy(() => import('./pages/ForTrucksPage'));
 
 // Wrapper for LandingPage with navigate
@@ -95,6 +96,7 @@ const App = () => {
             sub-routes (/login/factor-one, /sign-up/verify-email-address). */}
         <Route path="/login/*" element={<LoginPage />} />
         <Route path="/sign-up/*" element={<SignUpPage />} />
+        <Route path="/post-auth" element={<PostAuthRedirect />} />
 
         {/* Browse trucks - redirect to home */}
         <Route path="/browse" element={<Navigate to="/" replace />} />

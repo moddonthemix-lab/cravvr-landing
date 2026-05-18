@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { supabase } from '../../lib/supabase';
 import {
@@ -34,6 +34,7 @@ import PaymentsDashboard from './PaymentsDashboard';
 import CravvrPlusBilling from './CravvrPlusBilling';
 import { useCravvrSubscription } from '../../hooks/useCravvrSubscription';
 import TruckEditDialog from './TruckEditDialog';
+import OwnerOnboardingWizard from './OwnerOnboardingWizard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -91,7 +92,7 @@ const TONE_CHIP = {
 };
 
 // Overview Tab
-const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
+const OverviewTab = ({ setActiveTab, trucks, orders, stats, onStartOnboarding }) => {
   const recentOrders = orders.slice(0, 3);
 
   return (
@@ -208,9 +209,15 @@ const OverviewTab = ({ setActiveTab, trucks, orders, stats }) => {
         </CardHeader>
         <CardContent>
           {trucks.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">
-              No trucks yet. Add your first truck to get started!
-            </p>
+            <div className="flex flex-col items-start gap-3 py-4">
+              <p className="text-sm text-muted-foreground">
+                No trucks yet. Walk through a quick setup to get yours live.
+              </p>
+              <Button onClick={onStartOnboarding} className="gap-2">
+                <span className="h-4 w-4 shrink-0">{Icons.plus}</span>
+                Set up your truck
+              </Button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {trucks.map(truck => (
@@ -1525,6 +1532,14 @@ const OwnerDashboard = () => {
   // Error state
   const [error, setError] = useState(null);
 
+  // First-truck onboarding wizard. Auto-opens once per dashboard mount when
+  // the owner has no trucks, OR has a truck that's still missing the basics
+  // (image / payment processor). Once-per-mount via the ref so closing the
+  // wizard doesn't immediately re-open it.
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingTruck, setOnboardingTruck] = useState(null);
+  const onboardingTriggeredRef = useRef(false);
+
   // Fetch trucks for this owner. Routes through services/trucks.js so the
   // 1+3N query pattern is collapsed into 3 total queries (truck list +
   // ratings + orders) and aggregated client-side.
@@ -1592,6 +1607,33 @@ const OwnerDashboard = () => {
       fetchTrucks();
     }
   }, [user?.id, fetchTrucks]);
+
+  // A truck is "incomplete" if it's missing an image or hasn't picked a
+  // payment processor. Those are the two things owners commonly skip and
+  // that block them from actually doing business.
+  const incompleteTruck = useMemo(
+    () => trucks.find((t) => !t.image_url || !t.payment_processor) || null,
+    [trucks]
+  );
+
+  useEffect(() => {
+    if (loadingTrucks || !user?.id) return;
+    if (onboardingTriggeredRef.current) return;
+    if (trucks.length === 0) {
+      onboardingTriggeredRef.current = true;
+      setOnboardingTruck(null);
+      setShowOnboarding(true);
+    } else if (incompleteTruck) {
+      onboardingTriggeredRef.current = true;
+      setOnboardingTruck(incompleteTruck);
+      setShowOnboarding(true);
+    }
+  }, [loadingTrucks, trucks.length, incompleteTruck, user?.id]);
+
+  const openOnboarding = () => {
+    setOnboardingTruck(incompleteTruck);
+    setShowOnboarding(true);
+  };
 
   // Fetch orders when trucks are loaded
   useEffect(() => {
@@ -1753,6 +1795,7 @@ const OwnerDashboard = () => {
             trucks={trucks}
             orders={orders}
             stats={calculateStats()}
+            onStartOnboarding={openOnboarding}
           />
         );
       case 'trucks':
@@ -1819,6 +1862,7 @@ const OwnerDashboard = () => {
             trucks={trucks}
             orders={orders}
             stats={calculateStats()}
+            onStartOnboarding={openOnboarding}
           />
         );
     }
@@ -1885,6 +1929,14 @@ const OwnerDashboard = () => {
         )}
         {renderTab()}
       </main>
+      <OwnerOnboardingWizard
+        open={showOnboarding}
+        onOpenChange={setShowOnboarding}
+        ownerId={user?.id}
+        existingTruck={onboardingTruck}
+        onTruckCreated={() => { fetchTrucks(); }}
+        onTruckUpdated={() => { fetchTrucks(); }}
+      />
     </div>
   );
 };

@@ -39,8 +39,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               publishableKey={CLERK_PUBLISHABLE_KEY}
               signInUrl="/login"
               signUpUrl="/sign-up"
-              signInFallbackRedirectUrl="/"
-              signUpFallbackRedirectUrl="/"
+              signInFallbackRedirectUrl="/post-auth"
+              signUpFallbackRedirectUrl="/post-auth"
               appearance={{
                 variables: {
                   colorPrimary: '#e11d48',
