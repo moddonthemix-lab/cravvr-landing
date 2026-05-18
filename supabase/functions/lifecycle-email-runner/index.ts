@@ -1,7 +1,9 @@
 // supabase/functions/lifecycle-email-runner/index.ts
 // Edge Function: behavioral lifecycle email runner.
 //
-// Called by pg_cron with { flow: 'abandoned_cart' | 'first_reorder' | 'win_back' }.
+// Called by pg_cron with { flow: 'abandoned_cart' | 'first_reorder' }.
+// win_back moved to Klaviyo Flow D — disable any pg_cron job that still
+// posts { flow: 'win_back' } here (it will now throw "Unknown flow").
 // For each flow:
 //   1. Run the SQL that identifies who should receive the email RIGHT NOW.
 //   2. Skip anyone who has email_marketing_opt_out = true.
@@ -26,7 +28,7 @@ const siteUrl = Deno.env.get('SITE_URL') || 'https://cravvr.com';
 const TEMPLATES = {
   abandoned_cart: 'abandoned-cart',
   first_reorder: 'first-reorder-nudge',
-  win_back: 'win-back',
+  // win_back: moved to Klaviyo Flow D ("Lapsed Customers - 60 day" segment)
 } as const;
 
 type Flow = keyof typeof TEMPLATES;
@@ -187,76 +189,6 @@ async function findFirstReorderCandidates(supabase: any): Promise<Candidate[]> {
   });
 }
 
-async function findWinBackCandidates(supabase: any): Promise<Candidate[]> {
-  // Last order was 30+ days ago, customer has 2+ lifetime orders, and they
-  // haven't been win-backed for THIS lapse already (trigger_key = year-week
-  // of last order, so each lapse only triggers once per week-of-last-order).
-  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-  // Aggregate per customer: last order date + total orders.
-  const { data: orders, error } = await supabase
-    .from('orders')
-    .select('customer_id, created_at')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  if (!orders?.length) return [];
-
-  const stats = new Map<string, { last: string; count: number }>();
-  for (const o of orders) {
-    const cur = stats.get(o.customer_id);
-    if (!cur) {
-      stats.set(o.customer_id, { last: o.created_at, count: 1 });
-    } else {
-      cur.count += 1;
-    }
-  }
-
-  const lapsed = Array.from(stats.entries())
-    .filter(([_, s]) => s.count >= 2 && new Date(s.last) < new Date(cutoff))
-    .map(([customer_id, s]) => ({ customer_id, last: s.last, count: s.count }));
-
-  if (!lapsed.length) return [];
-
-  const ids = lapsed.map((l) => l.customer_id);
-  const { data: customers } = await supabase
-    .from('customers')
-    .select('id, unsubscribe_token, email_marketing_opt_out')
-    .in('id', ids);
-  const customerById = new Map((customers ?? []).map((c: any) => [c.id, c]));
-
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, email, name')
-    .in('id', ids);
-  const profileById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
-
-  const yearWeek = (iso: string) => {
-    const d = new Date(iso);
-    // ISO year-week, good enough for "lapse from this week"
-    const onejan = new Date(d.getFullYear(), 0, 1);
-    const week = Math.ceil(((d.getTime() - onejan.getTime()) / 86400000 + onejan.getDay() + 1) / 7);
-    return `${d.getFullYear()}-W${week}`;
-  };
-
-  return lapsed.flatMap((l) => {
-    const customer = customerById.get(l.customer_id);
-    const profile = profileById.get(l.customer_id);
-    if (!customer || customer.email_marketing_opt_out || !profile?.email) return [];
-    return [{
-      customer_id: l.customer_id,
-      email: profile.email,
-      name: profile.name ?? null,
-      unsubscribe_token: customer.unsubscribe_token,
-      trigger_key: yearWeek(l.last),
-      template_data: {
-        name: profile.name || 'there',
-        last_order_at: l.last,
-        return_link: siteUrl,
-      },
-    }];
-  });
-}
-
 async function sendOne(
   supabase: any,
   flow: Flow,
@@ -334,15 +266,14 @@ serve(async (req) => {
 
   try {
     const { flow } = await req.json() as { flow: Flow };
-    if (!['abandoned_cart', 'first_reorder', 'win_back'].includes(flow)) {
+    if (!['abandoned_cart', 'first_reorder'].includes(flow)) {
       throw new Error(`Unknown flow: ${flow}`);
     }
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const finder =
       flow === 'abandoned_cart' ? findAbandonedCartCandidates :
-      flow === 'first_reorder' ? findFirstReorderCandidates :
-      findWinBackCandidates;
+      findFirstReorderCandidates;
 
     const candidates = await finder(supabase);
     const template = TEMPLATES[flow];
