@@ -25,7 +25,7 @@ Account → Settings → Domains and Hosting → `cravvr.com` shows **Authentica
 
 ### 2. Sender profile created
 Account → Settings → Email → Sender Profiles
-- For operator flows (A, B): `Nolan from Cravvr <nolan@cravvr.com>`
+- For operator flows (A, B): `Modd from Cravvr <nolan@cravvr.com>`
 - For eater flows (C, D): `Cravvr <hello@cravvr.com>` (more brand-y)
 
 ### 3. Account-level UTM tracking
@@ -72,7 +72,7 @@ Now AI-generated future content matches founder voice.
 | 4 | 4 days | `UMimZR` | `Should I close your spot?` |
 
 ## Sender
-**Nolan from Cravvr** — operator flows lean founder-voice for reply rate.
+**Modd from Cravvr** — operator flows lean founder-voice for reply rate.
 
 ---
 
@@ -103,7 +103,7 @@ Fires when a truck owner finishes onboarding. Drives them to first 10 orders.
 | 5 | 14 days | `WHsHBz` | `Two things our top trucks do differently` |
 
 ## Sender
-**Nolan from Cravvr** — same as Flow A.
+**Modd from Cravvr** — same as Flow A.
 
 ## Wiring needed (deferred — request when ready)
 Fire `Truck Activated` to Klaviyo when:
@@ -116,8 +116,8 @@ Event payload required:
   "metric": "Truck Activated",
   "profile": { "email": "...", "phone_number": "+1..." },
   "properties": {
-    "truck_name": "Taco Xpress",
-    "truck_slug": "taco-xpress",
+    "truck_name": "Mumbo Gumbo",
+    "truck_slug": "mumbo-gumbo",
     "city": "Portland, OR",
     "cuisine": "Mexican"
   }
@@ -311,8 +311,8 @@ Ask me to wire any of these when you're ready — each is 30–60 min of code.
 
 | Flow | Sender name | Sender email |
 |---|---|---|
-| A | Nolan from Cravvr | nolan@cravvr.com |
-| B | Nolan from Cravvr | nolan@cravvr.com |
+| A | Modd from Cravvr | nolan@cravvr.com |
+| B | Modd from Cravvr | nolan@cravvr.com |
 | C | Cravvr | hello@cravvr.com |
 | D | Cravvr | hello@cravvr.com |
 

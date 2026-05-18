@@ -61,7 +61,7 @@ For **each email below**, drag an **Email** action onto the canvas, then:
 1. Click the email block → **Edit Email**
 2. **Template**: choose from the template ID listed
 3. **Subject** + **Preview text**: paste from the table below
-4. **Sender name**: `Nolan from Cravvr` (or your name)
+4. **Sender name**: `Modd from Cravvr` (or your name)
 5. **Sender email**: your founder email (e.g. `nolan@cravvr.com`)
 6. **Reply-to email**: same as sender
 7. **Smart Sending**: leave ON (Klaviyo's default 16hr cooldown)
@@ -94,7 +94,7 @@ Klaviyo → **Account → Settings → Domains and Hosting**
 ### 2. Set up a dedicated sender profile
 Klaviyo → **Account → Settings → Email → Sender Profiles**
 - Create a profile with:
-  - From name: `Nolan from Cravvr`
+  - From name: `Modd from Cravvr`
   - From email: `nolan@cravvr.com` (or whatever you control)
   - Company address: your physical address (CAN-SPAM required — can be a P.O. box)
 

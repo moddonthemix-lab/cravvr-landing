@@ -24,7 +24,7 @@ delays, and sender differ.
 1. Same Settings area → **Email → Sender Profiles**
 2. Top right → **Create Sender Profile**
 3. Fill exactly:
-   - **From Name**: `Nolan from Cravvr`
+   - **From Name**: `Modd from Cravvr`
    - **From Email**: `nolan@cravvr.com` (or your actual founder email on cravvr.com)
    - **Reply-To Email**: (leave blank — defaults to From)
    - **Company Name**: `Cravvr`
@@ -148,7 +148,7 @@ Back on the canvas. Below the Trigger block, you'll see a faint **+** circle. Cl
     ```
     Here's what happens in the next 24 hours.
     ```
-14. **From label** (sender profile dropdown): pick **Nolan from Cravvr**
+14. **From label** (sender profile dropdown): pick **Modd from Cravvr**
 15. **From email**: auto-fills to `nolan@cravvr.com`
 16. **Reply-to email**: leave blank
 17. **Smart Sending**: toggle ON (default)
@@ -182,7 +182,7 @@ Back on the canvas. Below the Trigger block, you'll see a faint **+** circle. Cl
    ```
    A short story about why being early matters.
    ```
-7. **Sender**: Nolan from Cravvr
+7. **Sender**: Modd from Cravvr
 8. **Use Saved Template** → `Flow A · Email 2 · Social proof (+1 day)`
 9. **Save**
 
@@ -199,7 +199,7 @@ Back on the canvas. Below the Trigger block, you'll see a faint **+** circle. Cl
    ```
    What's holding you back?
    ```
-6. **Sender**: Nolan from Cravvr
+6. **Sender**: Modd from Cravvr
 7. **Use Saved Template** → `Flow A · Email 3 · Quick question (+4 days)`
 8. **Save**
 
@@ -216,7 +216,7 @@ Back on the canvas. Below the Trigger block, you'll see a faint **+** circle. Cl
    ```
    I'll save it for someone else if you're not ready.
    ```
-6. **Sender**: Nolan from Cravvr
+6. **Sender**: Modd from Cravvr
 7. **Use Saved Template** → `Flow A · Email 4 · Break-up (+8 days)`
 8. **Save**
 
@@ -311,7 +311,7 @@ Same UI pattern as Flow A. Only deltas listed below.
 | 4 | 7 days | `UV2Q76` Flow B · Email 4 · Week 1 check-in | `Week 1: how'd it go?` | `Rate the experience so far.` |
 | 5 | 14 days | `WHsHBz` Flow B · Email 5 · Top truck moves | `Two things our top trucks do differently` | `Patterns from your highest earners.` |
 
-**Sender for all 5**: `Nolan from Cravvr`
+**Sender for all 5**: `Modd from Cravvr`
 
 ### 2.5 Set Live
 Same as 1.6. **It will not fire** until I wire the `Truck Activated` event.
@@ -373,7 +373,7 @@ To add filter #2:
 | 3 | 3 days | `XSRyvr` Flow C · Email 3 · First order nudge | `Ready to order? Three reasons why.` | `Why Cravvr is different.` |
 | 4 | 7 days | `VtqCnj` Flow C · Email 4 · Favorites prompt | `Favorite a few trucks — get the inside track` | `Get notified when your truck rolls by.` |
 
-**Sender for all 4**: `Cravvr` (not Nolan — brand voice, not founder voice)
+**Sender for all 4**: `Cravvr` (not Modd — brand voice, not founder voice)
 
 ### 3.5 Set Live
 Same as 1.6.

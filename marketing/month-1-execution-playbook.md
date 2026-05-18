@@ -194,13 +194,13 @@ IDs, you assemble in the Klaviyo flow editor.
 - Export 9:16 (Reels/Stories) AND 1:1 (Feed) versions
 
 ## Portland — 30 sec
-> "Hey, I'm Nolan — I started Cravvr because Portland has some of the best food trucks in the country, but nobody can find them when they're hungry. We just launched in Portland and I'm onboarding the first 25 trucks personally. No setup fee, zero commission on pickup, and you're on the map by tomorrow. If you've got a truck in Portland, hit the link and I'll text you back today."
+> "Hey, I'm Modd — I started Cravvr because Portland has some of the best food trucks in the country, but nobody can find them when they're hungry. We just launched in Portland and I'm onboarding the first 25 trucks personally. No setup fee, zero commission on pickup, and you're on the map by tomorrow. If you've got a truck in Portland, hit the link and I'll text you back today."
 
 ## St. Pete — 30 sec
-> "Hey, I'm Nolan — I started Cravvr right here in St. Pete because I was tired of driving past amazing trucks I didn't know existed. We're onboarding the first 25 trucks in St. Pete personally — no setup fee, zero commission on pickup, real customers ordering from your truck within a day. If you run a truck in St. Pete, hit the link, I'll text you back today."
+> "Hey, I'm Modd — I started Cravvr right here in St. Pete because I was tired of driving past amazing trucks I didn't know existed. We're onboarding the first 25 trucks in St. Pete personally — no setup fee, zero commission on pickup, real customers ordering from your truck within a day. If you run a truck in St. Pete, hit the link, I'll text you back today."
 
 ## Tampa — 30 sec
-> "Hey, I'm Nolan — Cravvr is launching in Tampa this month and I'm onboarding the first 25 trucks personally. No setup fee, zero commission on pickup orders, and you're on the map for every hungry local in Tampa by tomorrow. If you run a truck in Tampa, hit the link and I'll text you back today."
+> "Hey, I'm Modd — Cravvr is launching in Tampa this month and I'm onboarding the first 25 trucks personally. No setup fee, zero commission on pickup orders, and you're on the map for every hungry local in Tampa by tomorrow. If you run a truck in Tampa, hit the link and I'll text you back today."
 
 **On-screen text (Descript caption layer):**
 - 0:00–0:05 — "Cravvr — for [CITY] food trucks"
