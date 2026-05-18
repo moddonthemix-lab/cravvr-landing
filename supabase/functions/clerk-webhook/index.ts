@@ -25,6 +25,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Webhook } from 'https://esm.sh/svix@1.42.0';
 import { corsHeaders } from '../_shared/cors.ts';
+import { subscribeNewEater } from '../_shared/klaviyo.ts';
 
 const CLERK_WEBHOOK_SECRET = Deno.env.get('CLERK_WEBHOOK_SECRET')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -182,6 +183,19 @@ serve(async (req) => {
   try {
     switch (event.type) {
       case 'user.created':
+        await upsertUser(supabase, event.data);
+        // Fire-and-forget: subscribe new customers to Klaviyo Eaters list
+        // (triggers Flow C — Eater Welcome). Owners/admins skipped.
+        if (pickRole(event.data) === 'customer') {
+          subscribeNewEater({
+            email: primaryEmail(event.data),
+            phone: (event.data.unsafe_metadata?.phone as string | undefined) ?? null,
+            first_name: event.data.first_name,
+            last_name: event.data.last_name,
+            external_id: event.data.id,
+          }).catch((e) => console.warn('klaviyo subscribeNewEater failed:', e));
+        }
+        break;
       case 'user.updated':
         await upsertUser(supabase, event.data);
         break;

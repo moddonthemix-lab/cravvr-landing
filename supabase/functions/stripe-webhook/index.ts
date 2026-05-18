@@ -3,6 +3,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { firePlacedOrder } from '../_shared/klaviyo.ts';
 import Stripe from 'https://esm.sh/stripe@13.0.0?target=deno';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' });
@@ -72,6 +73,10 @@ serve(async (req) => {
               event_id: `purchase:${pi.metadata.order_id}`,
             }),
           }).catch((e) => console.warn('analytics-server-event dispatch failed:', e));
+
+          // Fire Klaviyo Placed Order (exits Flow C, gates Flow D win-back).
+          firePlacedOrder(supabase, pi.metadata.order_id)
+            .catch((e) => console.warn('klaviyo Placed Order failed:', e));
         }
         break;
       }

@@ -18,11 +18,11 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { corsHeaders } from '../_shared/cors.ts';
+import { upsertProfile, subscribeToList, fireEvent } from '../_shared/klaviyo.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SLACK_WEBHOOK = Deno.env.get('SLACK_LEADS_WEBHOOK_URL') || '';
-const KLAVIYO_KEY = Deno.env.get('KLAVIYO_API_KEY') || '';
 const KLAVIYO_LIST_ID = Deno.env.get('KLAVIYO_LEADS_LIST_ID') || '';
 
 const CITY_LABELS: Record<string, string> = {
@@ -169,102 +169,44 @@ async function postSlack(lead: any) {
 }
 
 async function pushKlaviyo(lead: any) {
-  if (!KLAVIYO_KEY) return;
   const cityLabel = CITY_LABELS[lead.city] || lead.city;
+  const firstName = lead.name?.split(' ')[0];
+  const lastName = lead.name?.split(' ').slice(1).join(' ') || undefined;
 
-  // 1. Upsert profile
-  const profileRes = await fetch('https://a.klaviyo.com/api/profiles/', {
-    method: 'POST',
-    headers: klaviyoHeaders(),
-    body: JSON.stringify({
-      data: {
-        type: 'profile',
-        attributes: {
-          email: lead.email || undefined,
-          phone_number: normalizePhone(lead.phone),
-          first_name: lead.name?.split(' ')[0],
-          last_name: lead.name?.split(' ').slice(1).join(' ') || undefined,
-          properties: {
-            lead_type: 'truck_operator',
-            truck_name: lead.truck_name,
-            cuisine: lead.cuisine,
-            city: cityLabel,
-            utm_source: lead.utm_source,
-            utm_campaign: lead.utm_campaign,
-          },
-        },
-      },
-    }),
+  const profileId = await upsertProfile({
+    email: lead.email || undefined,
+    phone: lead.phone,
+    first_name: firstName,
+    last_name: lastName,
+    properties: {
+      lead_type: 'truck_operator',
+      truck_name: lead.truck_name,
+      cuisine: lead.cuisine,
+      city: cityLabel,
+      utm_source: lead.utm_source,
+      utm_campaign: lead.utm_campaign,
+    },
   });
 
-  let profileId: string | null = null;
-  if (profileRes.ok || profileRes.status === 409) {
-    const profileJson = await profileRes.json().catch(() => null);
-    profileId = profileJson?.data?.id || null;
-    // 409 conflict returns the existing profile id in the errors array
-    if (!profileId && profileJson?.errors?.[0]?.meta?.duplicate_profile_id) {
-      profileId = profileJson.errors[0].meta.duplicate_profile_id;
-    }
-  } else {
-    console.error('Klaviyo profile upsert failed', profileRes.status, await profileRes.text());
-  }
-
-  // 2. Fire `Submitted Truck Application` event (triggers nurture flow)
-  await fetch('https://a.klaviyo.com/api/events/', {
-    method: 'POST',
-    headers: klaviyoHeaders(),
-    body: JSON.stringify({
-      data: {
-        type: 'event',
-        attributes: {
-          properties: {
-            truck_name: lead.truck_name,
-            cuisine: lead.cuisine,
-            city: cityLabel,
-            best_time: lead.best_time,
-            utm_source: lead.utm_source,
-            utm_campaign: lead.utm_campaign,
-            utm_content: lead.utm_content,
-            lead_id: lead.id,
-          },
-          metric: { data: { type: 'metric', attributes: { name: 'Submitted Truck Application' } } },
-          profile: {
-            data: {
-              type: 'profile',
-              attributes: {
-                email: lead.email || undefined,
-                phone_number: normalizePhone(lead.phone),
-              },
-            },
-          },
-        },
-      },
-    }),
+  await fireEvent({
+    metric: 'Submitted Truck Application',
+    email: lead.email || undefined,
+    phone: lead.phone,
+    first_name: firstName,
+    unique_id: `lead:${lead.id}`,
+    properties: {
+      truck_name: lead.truck_name,
+      cuisine: lead.cuisine,
+      city: cityLabel,
+      best_time: lead.best_time,
+      utm_source: lead.utm_source,
+      utm_campaign: lead.utm_campaign,
+      utm_content: lead.utm_content,
+      lead_id: lead.id,
+    },
   });
 
-  // 3. Subscribe to list (optional)
   if (KLAVIYO_LIST_ID && profileId) {
-    await fetch(`https://a.klaviyo.com/api/lists/${KLAVIYO_LIST_ID}/relationships/profiles/`, {
-      method: 'POST',
-      headers: klaviyoHeaders(),
-      body: JSON.stringify({ data: [{ type: 'profile', id: profileId }] }),
-    });
+    await subscribeToList(profileId, KLAVIYO_LIST_ID);
   }
-}
-
-function klaviyoHeaders() {
-  return {
-    'Authorization': `Klaviyo-API-Key ${KLAVIYO_KEY}`,
-    'Content-Type': 'application/json',
-    'revision': '2024-10-15',
-  };
-}
-
-function normalizePhone(p: string): string | undefined {
-  if (!p) return undefined;
-  const digits = p.replace(/\D/g, '');
-  if (!digits) return undefined;
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
-  return `+${digits}`;
 }
