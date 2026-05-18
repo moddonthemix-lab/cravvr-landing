@@ -328,8 +328,14 @@ export const updateAdminUserProfile = async (userId, { name, role, phone }) => {
 };
 
 export const deleteAdminUser = async (userId) => {
-  const { error } = await supabase.from('profiles').delete().eq('id', userId);
-  if (error) throw error;
+  const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+    body: { user_id: userId },
+  });
+  if (error) {
+    const detail = data?.error || error.message || 'delete failed';
+    throw new Error(detail);
+  }
+  return data;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
