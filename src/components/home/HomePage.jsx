@@ -109,7 +109,7 @@ const HomePage = ({ embedded = false }) => {
           className="cursor-pointer shrink-0"
           onClick={() => navigate('/')}
         >
-          <img src="/logo/cravvr-logo.png" alt="Cravrr" className="h-9 w-auto" />
+          <img src="/logo/cravvr-logo.png" alt="Cravvr" className="h-9 w-auto" />
         </div>
 
         <div className="hidden md:flex flex-1 max-w-xl mx-auto">
@@ -404,7 +404,7 @@ const HomePage = ({ embedded = false }) => {
       {!embedded && (
         <footer className="hidden lg:block border-t border-border bg-card/40">
           <div className="mx-auto max-w-6xl flex flex-col items-center gap-4 px-6 py-8 sm:flex-row sm:justify-between">
-            <img src="/logo/cravrr-logo-transparent.png" alt="Cravrr" className="h-8 w-auto" />
+            <img src="/logo/cravrr-logo-transparent.png" alt="Cravvr" className="h-8 w-auto" />
             <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <a href="/eat" className="hover:text-foreground transition-colors">About</a>
               <a href="/eat#features" className="hover:text-foreground transition-colors">Features</a>

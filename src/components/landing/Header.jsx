@@ -48,7 +48,7 @@ const Header = ({ mobileMenuOpen, setMobileMenuOpen, setCurrentView }) => {
           className="flex items-center gap-2.5 font-bold text-foreground"
           onClick={(e) => { e.preventDefault(); setCurrentView('landing'); }}
         >
-          <img src="/logo/cravvr-logo.png" alt="Cravrr" className="h-10 w-auto" />
+          <img src="/logo/cravvr-logo.png" alt="Cravvr" className="h-10 w-auto" />
         </a>
 
         <nav className="hidden md:flex items-center gap-9">

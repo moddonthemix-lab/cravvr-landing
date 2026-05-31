@@ -19,8 +19,8 @@ const categories = [
 
 const faqs = [
   {
-    q: 'How is Cravrr different from other food apps?',
-    a: 'Cravrr focuses exclusively on food trucks with 0% commission on pickup orders. We provide direct connections between trucks and their followers, not algorithms.',
+    q: 'How is Cravvr different from other food apps?',
+    a: 'Cravvr focuses exclusively on food trucks with 0% commission on pickup orders. We provide direct connections between trucks and their followers, not algorithms.',
   },
   {
     q: 'Do I need a POS system?',
@@ -31,7 +31,7 @@ const faqs = [
     a: 'Our map-first app shows your real-time location. Followers get push notifications when you\'re nearby or open for business.',
   },
   {
-    q: 'When will Cravrr launch?',
+    q: 'When will Cravvr launch?',
     a: 'We\'re currently in early access in select cities. Join the waitlist to be among the first to try it in your area.',
   },
 ];
@@ -230,7 +230,7 @@ const Footer = () => (
     <div className="mx-auto max-w-6xl grid gap-10 px-5 py-12 md:grid-cols-[2fr_3fr]">
       <div className="space-y-4 max-w-sm">
         <a href="/" className="inline-block">
-          <img src="/logo/cravrr-logo-transparent.png" alt="Cravrr" className="h-9 w-auto" />
+          <img src="/logo/cravrr-logo-transparent.png" alt="Cravvr" className="h-9 w-auto" />
         </a>
         <p className="text-sm text-muted-foreground leading-relaxed">
           The map-first food truck platform that connects hungry eaters with amazing local trucks.
@@ -276,7 +276,7 @@ const Footer = () => (
     </div>
     <div className="border-t border-border">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-1 px-5 py-5 text-xs text-muted-foreground sm:flex-row sm:justify-between">
-        <p>© 2025 Cravrr. All rights reserved.</p>
+        <p>© 2025 Cravvr. All rights reserved.</p>
         <p>Made with ❤️ for food trucks everywhere</p>
       </div>
     </div>
@@ -399,7 +399,7 @@ const LandingPage = ({ setCurrentView }) => {
                 first.
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
-                Cravrr gives eaters a beautiful map-first experience and gives trucks the
+                Cravvr gives eaters a beautiful map-first experience and gives trucks the
                 direct, low-fee revenue channel they deserve.
               </p>
               <div className="flex flex-wrap items-center gap-3">
@@ -689,7 +689,7 @@ const LandingPage = ({ setCurrentView }) => {
                     </span>
                     <h3 className="text-2xl font-bold">You're on the list!</h3>
                     <p className="text-sm text-muted-foreground max-w-sm">
-                      Thanks for joining! We'll notify you when Cravrr launches in your area.
+                      Thanks for joining! We'll notify you when Cravvr launches in your area.
                     </p>
                     <Button variant="outline" onClick={() => setWaitlistSuccess(false)}>
                       Add another email

@@ -1,5 +1,5 @@
 /**
- * Shared formatting utilities for the Cravrr app
+ * Shared formatting utilities for the Cravvr app
  */
 
 /**

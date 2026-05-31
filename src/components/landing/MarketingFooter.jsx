@@ -23,7 +23,7 @@ const MarketingFooter = ({
     <div className="mx-auto max-w-6xl grid gap-10 px-5 py-12 md:grid-cols-[2fr_3fr]">
       <div className="space-y-4 max-w-sm">
         <Link to="/" className="inline-block">
-          <img src="/logo/cravrr-logo-transparent.png" alt="Cravrr" className="h-9 w-auto" />
+          <img src="/logo/cravrr-logo-transparent.png" alt="Cravvr" className="h-9 w-auto" />
         </Link>
         <p className="text-sm text-muted-foreground leading-relaxed">{blurb}</p>
         <div className="flex items-center gap-3">

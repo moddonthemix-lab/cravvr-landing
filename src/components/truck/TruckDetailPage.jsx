@@ -216,7 +216,7 @@ const TruckDetailPage = () => {
   const handleShare = async () => {
     const shareData = {
       title: truck.name,
-      text: `Check out ${truck.name} on Cravrr!`,
+      text: `Check out ${truck.name} on Cravvr!`,
       url: window.location.href,
     };
 
@@ -312,7 +312,7 @@ const TruckDetailPage = () => {
           className="flex h-16 items-center px-5 border-b border-border cursor-pointer"
           onClick={() => navigate('/')}
         >
-          <img src="/logo/cravvr-logo.png" alt="Cravrr" className="h-9 w-auto" />
+          <img src="/logo/cravvr-logo.png" alt="Cravvr" className="h-9 w-auto" />
         </div>
 
         <nav className="flex flex-col gap-1 p-3">

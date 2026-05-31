@@ -1,5 +1,5 @@
 /**
- * Centralized data transformers for the Cravrr app
+ * Centralized data transformers for the Cravvr app
  *
  * Transforms raw Supabase data into consistent app-friendly formats.
  * Re-exports transformers from services for convenience.

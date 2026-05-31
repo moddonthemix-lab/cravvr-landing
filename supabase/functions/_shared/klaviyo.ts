@@ -94,13 +94,20 @@ export async function upsertProfile(attrs: ProfileAttrs): Promise<string | null>
 
 /** Subscribe a profile id to a list. */
 export async function subscribeToList(profileId: string, listId: string): Promise<void> {
-  if (!enabled() || !profileId || !listId) return;
+  if (!enabled()) return;
+  if (!profileId || !listId) {
+    console.warn(`[klaviyo] subscribeToList skipped — missing ${!profileId ? 'profileId' : 'listId'} (check KLAVIYO_*_LIST_ID secrets)`);
+    return;
+  }
   try {
-    await fetch(`${BASE}/lists/${listId}/relationships/profiles/`, {
+    const res = await fetch(`${BASE}/lists/${listId}/relationships/profiles/`, {
       method: 'POST',
       headers: headers(),
       body: JSON.stringify({ data: [{ type: 'profile', id: profileId }] }),
     });
+    if (!res.ok && res.status !== 202 && res.status !== 204) {
+      console.error(`[klaviyo] subscribeToList(${listId}) failed`, res.status, await res.text().catch(() => ''));
+    }
   } catch (err) {
     console.error('[klaviyo] subscribeToList error', err);
   }
