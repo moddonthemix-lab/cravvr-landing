@@ -249,7 +249,7 @@ const ReportRow = ({ label, sublabel, value }) => (
 // ---------------------------------------------------------------------------
 
 const SOURCE_PRESETS = [
-  'instagram', 'tiktok', 'facebook', 'twitter', 'linkedin', 'youtube',
+  'meta', 'instagram', 'tiktok', 'facebook', 'twitter', 'linkedin', 'youtube',
   'reddit', 'pinterest', 'google', 'email', 'sms', 'discord',
   'flyer', 'event', 'sticker', 'card', 'press', 'podcast', 'influencer',
   'partner', 'referral',
@@ -372,7 +372,27 @@ const buildUrl = (source, medium, campaign, extra = '') => {
   return `${SITE}/?${params.toString()}`;
 };
 
+// Path-aware variant — for links that land somewhere other than `/`
+// (e.g. the truck-operator lead funnel at /for-trucks/:city).
+const buildPathUrl = (path, source, medium, campaign, extra = '') => {
+  const params = new URLSearchParams({ utm_source: source, utm_medium: medium, utm_campaign: campaign });
+  if (extra) extra.split('&').forEach((p) => { const [k, v] = p.split('='); if (k && v) params.set(k, v); });
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${SITE}${cleanPath}?${params.toString()}`;
+};
+
 const SECTIONS = [
+  {
+    title: 'Truck-operator lead ads (Meta) — /for-trucks',
+    rows: [
+      ['Tampa — Reel A · urgency',   buildPathUrl('/for-trucks/tampa', 'meta', 'paid_social', 'tampa_trucks_launch', 'utm_content=reel_urgency')],
+      ['Tampa — Reel B · revenue',   buildPathUrl('/for-trucks/tampa', 'meta', 'paid_social', 'tampa_trucks_launch', 'utm_content=reel_revenue')],
+      ['Tampa — Reel C · fomo',      buildPathUrl('/for-trucks/tampa', 'meta', 'paid_social', 'tampa_trucks_launch', 'utm_content=reel_fomo')],
+      ['St. Pete — Reel A · urgency', buildPathUrl('/for-trucks/st-pete', 'meta', 'paid_social', 'stpete_trucks_launch', 'utm_content=reel_urgency')],
+      ['St. Pete — Reel B · revenue', buildPathUrl('/for-trucks/st-pete', 'meta', 'paid_social', 'stpete_trucks_launch', 'utm_content=reel_revenue')],
+      ['St. Pete — Reel C · fomo',    buildPathUrl('/for-trucks/st-pete', 'meta', 'paid_social', 'stpete_trucks_launch', 'utm_content=reel_fomo')],
+    ],
+  },
   {
     title: 'Social bios — the must-haves',
     rows: [
