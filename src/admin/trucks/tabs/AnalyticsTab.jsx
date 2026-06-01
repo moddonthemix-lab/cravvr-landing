@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { fetchAdminTruckAnalytics } from '../../../services/admin';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import LoadingSplash from '../../../components/common/LoadingSplash';
 import { cn } from '@/lib/utils';
 
@@ -102,13 +103,14 @@ const AnalyticsTab = () => {
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-bold tracking-tight">Analytics</h2>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          {RANGES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-        </select>
+        <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {RANGES.map(r => <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -129,8 +131,10 @@ const AnalyticsTab = () => {
           </div>
 
           <Card>
-            <CardContent className="p-5 space-y-3">
-              <h3 className="text-base font-bold">Daily revenue</h3>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Daily revenue</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
               <div className="flex h-32 items-end gap-1">
                 {dailyRevenue.map(([day, v]) => (
                   <div

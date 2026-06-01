@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { supabase } from '../../lib/supabase';
@@ -1666,7 +1665,7 @@ const EditProfileModal = ({ isOpen, onClose, profile, onSave }) => {
 // Change Password Modal
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const { showToast } = useToast();
-  const { user: clerkUser } = useUser();
+  const { updatePassword, user } = useAuth();
   const [formData, setFormData] = useState({
     newPassword: '',
     confirmPassword: '',
@@ -1690,18 +1689,14 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       return;
     }
 
-    if (!clerkUser) {
+    if (!user) {
       setError('Not signed in.');
       return;
     }
 
     setSaving(true);
     try {
-      // Clerk owns identity now. updatePassword hits Clerk's API directly.
-      await clerkUser.updatePassword({
-        newPassword: formData.newPassword,
-        signOutOfOtherSessions: true,
-      });
+      await updatePassword({ newPassword: formData.newPassword, signOutOfOtherSessions: true });
 
       setSuccess('Password updated successfully!');
       showToast('Password updated successfully!', 'success');

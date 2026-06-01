@@ -15,6 +15,7 @@ import { useToast } from '../../../contexts/ToastContext';
 import { useConfirm } from '../../../contexts/ConfirmContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import LoadingSplash from '../../../components/common/LoadingSplash';
 import { cn } from '@/lib/utils';
 
@@ -191,23 +192,11 @@ const MenuTab = () => {
                       ${parseFloat(item.price || 0).toFixed(2)}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={item.is_available !== false}
-                        onClick={() => toggleAvailable(item)}
-                        className={cn(
-                          'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors',
-                          item.is_available !== false ? 'bg-positive' : 'bg-muted'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                            item.is_available !== false ? 'translate-x-[18px]' : 'translate-x-0.5'
-                          )}
-                        />
-                      </button>
+                      <Switch
+                        checked={item.is_available !== false}
+                        onCheckedChange={() => toggleAvailable(item)}
+                        aria-label="Available"
+                      />
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <Button

@@ -7,7 +7,7 @@ import { track as trackEvent, identify as identifyVisitor } from '../../services
 // Auth state for the app. Wraps Clerk for identity + supabase for profile
 // data. No modal — sign-in/sign-up live on dedicated routes (/login, /sign-up)
 // and openAuth() just navigates to the right one.
-const AuthContext = createContext({});
+export const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
   const { user: clerkUser, isLoaded: clerkLoaded, isSignedIn } = useUser();
@@ -192,6 +192,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('cravvr_dev_settings', JSON.stringify(merged));
   };
 
+  const updatePassword = async ({ newPassword, signOutOfOtherSessions = true }) => {
+    if (!clerkUser) throw new Error('Not signed in.');
+    await clerkUser.updatePassword({ newPassword, signOutOfOtherSessions });
+  };
+
   const effectiveProfile = viewingAs || profile;
   const effectiveUser = viewingAs ? { id: viewingAs.id, email: viewingAs.email } : user;
 
@@ -204,6 +209,7 @@ export const AuthProvider = ({ children }) => {
     error,
     signOut,
     updateProfile,
+    updatePassword,
     refreshProfile,
     isAuthenticated: !!clerkUser,
     isOwner: effectiveProfile?.role === 'owner',

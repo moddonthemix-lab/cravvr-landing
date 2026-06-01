@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Icons } from '../components/common/Icons';
 import { joinWaitlist } from '../services/waitlist';
 import { useInView } from '../hooks/useInView';
-import MarketingHeader from '../components/landing/MarketingHeader';
+import SiteHeader from '../components/landing/SiteHeader';
 import MarketingFooter from '../components/landing/MarketingFooter';
 import BrowserMockup from '../components/landing/BrowserMockup';
 import MarketingFAQ from '../components/landing/MarketingFAQ';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 const features = [
@@ -161,15 +163,14 @@ const EnterprisePage = () => {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
-      <MarketingHeader
+      <SiteHeader
         navLinks={[
           { href: '#features', label: 'Capabilities' },
           { href: '#pricing', label: 'Pricing' },
           { href: '#faq', label: 'FAQ' },
           { to: '/go', label: 'Cravvr Go' },
         ]}
-        ctaLabel="Talk to sales"
-        ctaHref="#contact"
+        cta={{ label: 'Talk to sales', href: '#contact' }}
       />
 
       <main id="main">
@@ -390,20 +391,28 @@ const EnterprisePage = () => {
                       </div>
                     )}
                     <div className="grid sm:grid-cols-2 gap-3">
-                      <input type="text" id="ent-name" placeholder="Your name" required value={name}
-                        onChange={(e) => setName(e.target.value)} disabled={submitting}
-                        className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60" />
-                      <input type="email" id="ent-email" placeholder="Work email" required value={email}
-                        onChange={(e) => setEmail(e.target.value)} disabled={submitting}
-                        className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60" />
+                      <div className="space-y-1">
+                        <Label htmlFor="ent-name" className="sr-only">Your name</Label>
+                        <Input id="ent-name" type="text" placeholder="Your name" required
+                          value={name} onChange={(e) => setName(e.target.value)} disabled={submitting} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="ent-email" className="sr-only">Work email</Label>
+                        <Input id="ent-email" type="email" placeholder="Work email" required
+                          value={email} onChange={(e) => setEmail(e.target.value)} disabled={submitting} />
+                      </div>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-3">
-                      <input type="text" id="ent-company" placeholder="Company / brand" required value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)} disabled={submitting}
-                        className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60" />
-                      <input type="text" id="ent-fleet" placeholder="Fleet size (e.g. 8 trucks)" required value={fleetSize}
-                        onChange={(e) => setFleetSize(e.target.value)} disabled={submitting}
-                        className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60" />
+                      <div className="space-y-1">
+                        <Label htmlFor="ent-company" className="sr-only">Company / brand</Label>
+                        <Input id="ent-company" type="text" placeholder="Company / brand" required
+                          value={companyName} onChange={(e) => setCompanyName(e.target.value)} disabled={submitting} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="ent-fleet" className="sr-only">Fleet size</Label>
+                        <Input id="ent-fleet" type="text" placeholder="Fleet size (e.g. 8 trucks)" required
+                          value={fleetSize} onChange={(e) => setFleetSize(e.target.value)} disabled={submitting} />
+                      </div>
                     </div>
                     <Button type="submit" size="lg" disabled={submitting} className="w-full gap-2">
                       {submitting ? (

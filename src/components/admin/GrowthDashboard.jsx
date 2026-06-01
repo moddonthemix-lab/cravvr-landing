@@ -3,21 +3,34 @@ import { supabase } from '../../lib/supabase';
 import { refreshCohortPerformance, upsertAdSpend } from '../../services/admin';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Legend,
 } from 'recharts';
 import { format, subDays } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Icons } from '../common/Icons';
+import AdminNavBar from './AdminNavBar';
 
-const formatCents = (cents) => {
-  if (cents == null) return '—';
-  return `$${(cents / 100).toFixed(2)}`;
+const CHART_TOOLTIP = {
+  contentStyle: {
+    background: 'white',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '12px',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.07)',
+  },
 };
+
+const formatCents = (cents) => (cents == null ? '—' : `$${(cents / 100).toFixed(2)}`);
 const formatRatio = (n) => (n == null ? '—' : `${Number(n).toFixed(2)}x`);
 
-const ratioBadgeColor = (r) => {
-  if (r == null) return '#9ca3af';
-  if (r >= 3) return '#16a34a';
-  if (r >= 1) return '#eab308';
-  return '#dc2626';
+const ratioBadgeVariant = (r) => {
+  if (r == null) return 'secondary';
+  if (r >= 3) return 'positive';
+  if (r >= 1) return 'warning';
+  return 'destructive';
 };
 
 const GrowthDashboard = () => {
@@ -31,21 +44,9 @@ const GrowthDashboard = () => {
     setError('');
     try {
       const [cohortRes, dailyRes, spendRes] = await Promise.all([
-        supabase
-          .from('cohort_performance_v')
-          .select('*')
-          .order('cohort_week', { ascending: false })
-          .limit(200),
-        supabase
-          .from('daily_channel_performance')
-          .select('*')
-          .gte('day', format(subDays(new Date(), 30), 'yyyy-MM-dd'))
-          .order('day', { ascending: true }),
-        supabase
-          .from('ad_spend')
-          .select('*')
-          .gte('day', format(subDays(new Date(), 30), 'yyyy-MM-dd'))
-          .order('day', { ascending: true }),
+        supabase.from('cohort_performance_v').select('*').order('cohort_week', { ascending: false }).limit(200),
+        supabase.from('daily_channel_performance').select('*').gte('day', format(subDays(new Date(), 30), 'yyyy-MM-dd')).order('day', { ascending: true }),
+        supabase.from('ad_spend').select('*').gte('day', format(subDays(new Date(), 30), 'yyyy-MM-dd')).order('day', { ascending: true }),
       ]);
       if (cohortRes.error) throw cohortRes.error;
       if (dailyRes.error) throw dailyRes.error;
@@ -72,10 +73,6 @@ const GrowthDashboard = () => {
     }
   };
 
-  // Top-line metrics — trailing 30 days. Revenue uses `paid_revenue` from
-  // daily_channel_performance so rejected/cancelled/unpaid orders never
-  // inflate the dashboard. Orders and new_customers counts stay all-orders
-  // for now (signal of activity), but money math is paid-only.
   const summary = useMemo(() => {
     const revenue = daily.reduce((sum, d) => sum + Number(d.paid_revenue || 0), 0);
     const orders = daily.reduce((sum, d) => sum + Number(d.orders || 0), 0);
@@ -86,7 +83,6 @@ const GrowthDashboard = () => {
     return { revenue, orders, newCustomers, spend, mer, blendedCac };
   }, [daily, adSpend]);
 
-  // Daily revenue chart data — paid only.
   const dailyChart = useMemo(() => {
     const byDay = new Map();
     for (const d of daily) {
@@ -96,14 +92,10 @@ const GrowthDashboard = () => {
     return Array.from(byDay.entries()).map(([day, revenue]) => ({ day, revenue }));
   }, [daily]);
 
-  // Channel leaderboard: aggregate cohorts across weeks.
   const channelLeaderboard = useMemo(() => {
     const bySource = new Map();
     for (const c of cohorts) {
-      const cur = bySource.get(c.source) || {
-        source: c.source, new_customers: 0, spend_cents: 0,
-        revenue_d30_cents: 0, revenue_d90_cents: 0,
-      };
+      const cur = bySource.get(c.source) || { source: c.source, new_customers: 0, spend_cents: 0, revenue_d30_cents: 0, revenue_d90_cents: 0 };
       cur.new_customers += Number(c.new_customers || 0);
       cur.spend_cents += Number(c.spend_cents || 0);
       cur.revenue_d30_cents += Number(c.revenue_d30_cents || 0);
@@ -120,30 +112,36 @@ const GrowthDashboard = () => {
       .sort((a, b) => (b.ltv_cac_d30 ?? -1) - (a.ltv_cac_d30 ?? -1));
   }, [cohorts]);
 
+  const summaryCards = [
+    { label: 'Revenue (30d)', value: `$${summary.revenue.toFixed(2)}` },
+    { label: 'Ad spend (30d)', value: `$${summary.spend.toFixed(2)}` },
+    { label: 'Blended MER', value: summary.mer ? formatRatio(summary.mer) : '—' },
+    { label: 'Blended CAC', value: summary.blendedCac ? `$${summary.blendedCac.toFixed(2)}` : '—' },
+    { label: 'New customers (30d)', value: String(summary.newCustomers) },
+    { label: 'Orders (30d)', value: String(summary.orders) },
+  ];
+
   return (
-    <div style={{ padding: 24, maxWidth: 1280, margin: '0 auto', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+    <>
+      <AdminNavBar activeId="growth" />
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 style={{ margin: 0, fontSize: 28 }}>Growth</h1>
-          <p style={{ margin: '4px 0 0', color: '#6b7280' }}>
+          <h1 className="text-2xl font-bold tracking-tight">Growth</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Per-channel CAC, LTV and cohort performance. Refreshes nightly.
           </p>
         </div>
-        <button
-          onClick={triggerRefresh}
-          disabled={refreshing}
-          style={{
-            background: '#e11d48', color: 'white', border: 'none',
-            padding: '10px 16px', borderRadius: 8, fontWeight: 600,
-            cursor: refreshing ? 'wait' : 'pointer',
-          }}
-        >
+        <Button onClick={triggerRefresh} disabled={refreshing} size="sm" className="gap-2 shrink-0">
+          <span className="h-4 w-4">{Icons.refresh}</span>
           {refreshing ? 'Refreshing…' : 'Recompute now'}
-        </button>
+        </Button>
       </div>
 
       {error && (
-        <div style={{ background: '#fee2e2', color: '#991b1b', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <span className="h-4 w-4 shrink-0">{Icons.alertCircle}</span>
           {error}
         </div>
       )}
@@ -151,115 +149,131 @@ const GrowthDashboard = () => {
       <AdSpendForm onSaved={load} />
 
       {/* Top-line cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <Card label="Revenue (30d)" value={`$${summary.revenue.toFixed(2)}`} />
-        <Card label="Ad spend (30d)" value={`$${summary.spend.toFixed(2)}`} />
-        <Card label="Blended MER" value={summary.mer ? formatRatio(summary.mer) : '—'} />
-        <Card label="Blended CAC" value={summary.blendedCac ? `$${summary.blendedCac.toFixed(2)}` : '—'} />
-        <Card label="New customers (30d)" value={String(summary.newCustomers)} />
-        <Card label="Orders (30d)" value={String(summary.orders)} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
+        {summaryCards.map((s) => (
+          <Card key={s.label}>
+            <CardContent className="p-4 space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground truncate">{s.label}</p>
+              <p className="text-2xl font-bold tabular-nums tracking-tight">{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Daily revenue */}
-      <Section title="Daily revenue (30d)">
-        <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={dailyChart}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="day" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </Section>
+      {/* Daily revenue chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Daily revenue (30d)</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={dailyChart}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} />
+              <YAxis stroke="#94a3b8" fontSize={11} />
+              <Tooltip {...CHART_TOOLTIP} />
+              <Line type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={2} dot={false} name="Revenue ($)" />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Channel leaderboard */}
-      <Section title="Channel leaderboard (all-time)">
-        {channelLeaderboard.length === 0 ? (
-          <Empty>No channel data yet — once visitors arrive with UTMs and convert, they'll appear here.</Empty>
-        ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>
-                <Th>Source</Th>
-                <Th align="right">New customers</Th>
-                <Th align="right">Spend</Th>
-                <Th align="right">CAC</Th>
-                <Th align="right">LTV (d30)</Th>
-                <Th align="right">LTV:CAC (d30)</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {channelLeaderboard.map((c) => (
-                <tr key={c.source} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                  <Td><strong>{c.source}</strong></Td>
-                  <Td align="right">{c.new_customers}</Td>
-                  <Td align="right">{formatCents(c.spend_cents)}</Td>
-                  <Td align="right">{formatCents(c.cac_cents)}</Td>
-                  <Td align="right">{formatCents(c.ltv_d30_cents)}</Td>
-                  <Td align="right">
-                    <span style={{
-                      background: ratioBadgeColor(c.ltv_cac_d30),
-                      color: 'white', padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 600,
-                    }}>
-                      {formatRatio(c.ltv_cac_d30)}
-                    </span>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Section>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Channel leaderboard (all-time)</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {channelLeaderboard.length === 0 ? (
+            <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+              No channel data yet — once visitors arrive with UTMs and convert, they'll appear here.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <th className="px-4 py-3">Source</th>
+                    <th className="px-4 py-3 text-right">New customers</th>
+                    <th className="px-4 py-3 text-right">Spend</th>
+                    <th className="px-4 py-3 text-right">CAC</th>
+                    <th className="px-4 py-3 text-right">LTV (d30)</th>
+                    <th className="px-4 py-3 text-right">LTV:CAC (d30)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {channelLeaderboard.map((c) => (
+                    <tr key={c.source} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-medium">{c.source}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{c.new_customers}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatCents(c.spend_cents)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatCents(c.cac_cents)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatCents(c.ltv_d30_cents)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <Badge variant={ratioBadgeVariant(c.ltv_cac_d30)}>{formatRatio(c.ltv_cac_d30)}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Cohort table */}
-      <Section title="Cohorts (week × channel)">
-        {cohorts.length === 0 ? (
-          <Empty>No cohort rows yet. Click "Recompute now" once you have orders, or wait for the nightly job at 03:00 UTC.</Empty>
-        ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>
-                <Th>Cohort week</Th>
-                <Th>Source</Th>
-                <Th>Campaign</Th>
-                <Th align="right">New cust.</Th>
-                <Th align="right">CAC</Th>
-                <Th align="right">LTV d7</Th>
-                <Th align="right">LTV d30</Th>
-                <Th align="right">LTV d90</Th>
-                <Th align="right">LTV:CAC d30</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {cohorts.map((c) => (
-                <tr
-                  key={`${c.cohort_week}-${c.source}-${c.medium}-${c.campaign}`}
-                  style={{ borderBottom: '1px solid #f3f4f6' }}
-                >
-                  <Td>{format(new Date(c.cohort_week), 'MMM d, yyyy')}</Td>
-                  <Td>{c.source}</Td>
-                  <Td>{c.campaign || '—'}</Td>
-                  <Td align="right">{c.new_customers}</Td>
-                  <Td align="right">{formatCents(c.cac_cents)}</Td>
-                  <Td align="right">{formatCents(c.ltv_d7_cents)}</Td>
-                  <Td align="right">{formatCents(c.ltv_d30_cents)}</Td>
-                  <Td align="right">{formatCents(c.ltv_d90_cents)}</Td>
-                  <Td align="right">
-                    <span style={{
-                      background: ratioBadgeColor(c.ltv_cac_d30),
-                      color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 11, fontWeight: 600,
-                    }}>
-                      {formatRatio(c.ltv_cac_d30)}
-                    </span>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Section>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Cohorts (week × channel)</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {cohorts.length === 0 ? (
+            <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+              No cohort rows yet. Click "Recompute now" once you have orders, or wait for the nightly job at 03:00 UTC.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <th className="px-4 py-3">Cohort week</th>
+                    <th className="px-4 py-3">Source</th>
+                    <th className="px-4 py-3">Campaign</th>
+                    <th className="px-4 py-3 text-right">New cust.</th>
+                    <th className="px-4 py-3 text-right">CAC</th>
+                    <th className="px-4 py-3 text-right">LTV d7</th>
+                    <th className="px-4 py-3 text-right">LTV d30</th>
+                    <th className="px-4 py-3 text-right">LTV d90</th>
+                    <th className="px-4 py-3 text-right">LTV:CAC d30</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {cohorts.map((c) => (
+                    <tr
+                      key={`${c.cohort_week}-${c.source}-${c.medium}-${c.campaign}`}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="px-4 py-3 tabular-nums">{format(new Date(c.cohort_week), 'MMM d, yyyy')}</td>
+                      <td className="px-4 py-3">{c.source}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.campaign || '—'}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{c.new_customers}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatCents(c.cac_cents)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatCents(c.ltv_d7_cents)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatCents(c.ltv_d30_cents)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatCents(c.ltv_d90_cents)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <Badge variant={ratioBadgeVariant(c.ltv_cac_d30)}>{formatRatio(c.ltv_cac_d30)}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
+    </>
   );
 };
 
@@ -298,7 +312,6 @@ const AdSpendForm = ({ onSaved }) => {
         notes: notes.trim() || null,
       };
       await upsertAdSpend(row);
-      // Recompute cohort/CAC so the leaderboard reflects the new spend.
       await refreshCohortPerformance();
       setMsg(`Saved $${dollars.toFixed(2)} for ${row.source} on ${day}.`);
       reset();
@@ -310,137 +323,82 @@ const AdSpendForm = ({ onSaved }) => {
     }
   };
 
-  const inputStyle = {
-    width: '100%', padding: '8px 10px', borderRadius: 6,
-    border: '1px solid #e5e7eb', fontSize: 14, fontFamily: 'inherit',
-  };
-  const labelStyle = {
-    display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280',
-    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6,
-  };
-
   return (
-    <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20, marginBottom: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 18 }}>Record ad spend</h2>
-          <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 13 }}>
-            Add what you spent on a channel for a given day. Without spend rows, CAC and LTV:CAC stay at $0/—.
-          </p>
+    <Card>
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold">Record ad spend</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Add what you spent on a channel for a given day. Without spend rows, CAC and LTV:CAC stay at $0/—.
+            </p>
+          </div>
+          <Button
+            variant={open ? 'outline' : 'default'}
+            size="sm"
+            onClick={() => setOpen((v) => !v)}
+            className="shrink-0"
+          >
+            {open ? 'Close' : 'Add spend'}
+          </Button>
         </div>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          style={{
-            background: open ? '#f3f4f6' : '#e11d48', color: open ? '#374151' : 'white',
-            border: 'none', borderRadius: 6, padding: '8px 14px',
-            fontWeight: 600, cursor: 'pointer',
-          }}
-        >
-          {open ? 'Close' : 'Add spend'}
-        </button>
-      </div>
 
-      {open && (
-        <form onSubmit={submit} style={{ marginTop: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
-            <div>
-              <label style={labelStyle}>Day *</label>
-              <input type="date" style={inputStyle} value={day} onChange={(e) => setDay(e.target.value)} required />
+        {open && (
+          <form onSubmit={submit} className="space-y-4 pt-2 border-t border-border">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label>Day *</Label>
+                <Input type="date" value={day} onChange={(e) => setDay(e.target.value)} required />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Source *</Label>
+                <Input value={source} onChange={(e) => setSource(e.target.value)} placeholder="instagram" required />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Medium</Label>
+                <Input value={medium} onChange={(e) => setMedium(e.target.value)} placeholder="paid_social" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Campaign</Label>
+                <Input value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="may_2026" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Amount (USD) *</Label>
+                <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="25.00" required />
+              </div>
+              <div className="space-y-1.5 sm:col-span-3">
+                <Label>Notes</Label>
+                <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" />
+              </div>
             </div>
-            <div>
-              <label style={labelStyle}>Source *</label>
-              <input style={inputStyle} value={source} onChange={(e) => setSource(e.target.value)} placeholder="instagram" required />
-            </div>
-            <div>
-              <label style={labelStyle}>Medium</label>
-              <input style={inputStyle} value={medium} onChange={(e) => setMedium(e.target.value)} placeholder="paid_social" />
-            </div>
-            <div>
-              <label style={labelStyle}>Campaign</label>
-              <input style={inputStyle} value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="may_2026" />
-            </div>
-            <div>
-              <label style={labelStyle}>Amount (USD) *</label>
-              <input
-                type="number" min="0" step="0.01" style={inputStyle}
-                value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="25.00" required
-              />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Notes</label>
-              <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" />
-            </div>
-          </div>
 
-          {err && (
-            <div style={{ background: '#fee2e2', color: '#991b1b', padding: 10, borderRadius: 6, marginTop: 12, fontSize: 13 }}>
-              {err}
-            </div>
-          )}
-          {msg && (
-            <div style={{ background: '#dcfce7', color: '#166534', padding: 10, borderRadius: 6, marginTop: 12, fontSize: 13 }}>
-              {msg}
-            </div>
-          )}
+            {err && (
+              <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {err}
+              </div>
+            )}
+            {msg && (
+              <div className="flex items-center gap-2 rounded-lg border border-positive/30 bg-positive/10 px-4 py-3 text-sm text-positive">
+                {msg}
+              </div>
+            )}
 
-          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-            <button
-              type="submit"
-              disabled={saving}
-              style={{
-                background: '#e11d48', color: 'white', border: 'none',
-                padding: '10px 16px', borderRadius: 8, fontWeight: 600,
-                cursor: saving ? 'wait' : 'pointer',
-              }}
-            >
-              {saving ? 'Saving…' : 'Save spend'}
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              disabled={saving}
-              style={{
-                background: 'white', color: '#374151', border: '1px solid #e5e7eb',
-                padding: '10px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Clear
-            </button>
-          </div>
-
-          <p style={{ margin: '12px 0 0', fontSize: 12, color: '#6b7280' }}>
-            Re-saving the same day + source + medium + campaign overwrites the existing row.
-          </p>
-        </form>
-      )}
-    </div>
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" disabled={saving}>
+                {saving ? 'Saving…' : 'Save spend'}
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={reset} disabled={saving}>
+                Clear
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Re-saving the same day + source + medium + campaign overwrites the existing row.
+            </p>
+          </form>
+        )}
+      </CardContent>
+    </Card>
   );
 };
-
-const Card = ({ label, value }) => (
-  <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
-    <div style={{ fontSize: 12, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
-    <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{value}</div>
-  </div>
-);
-
-const Section = ({ title, children }) => (
-  <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: 20, marginBottom: 24 }}>
-    <h2 style={{ margin: '0 0 16px', fontSize: 18 }}>{title}</h2>
-    {children}
-  </div>
-);
-
-const Th = ({ children, align }) => (
-  <th style={{ padding: '8px 12px', fontSize: 12, color: '#6b7280', fontWeight: 600, textAlign: align || 'left' }}>
-    {children}
-  </th>
-);
-const Td = ({ children, align }) => (
-  <td style={{ padding: '10px 12px', textAlign: align || 'left' }}>{children}</td>
-);
-const Empty = ({ children }) => (
-  <div style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>{children}</div>
-);
 
 export default GrowthDashboard;

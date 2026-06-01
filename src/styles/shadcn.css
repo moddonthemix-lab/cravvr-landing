@@ -4,23 +4,23 @@
 
 @layer base {
   :root {
-    /* shadcn theme tokens — HSL values without hsl() wrapper.
-       Namespaced with --shadcn-* on three vars (--primary, --card, --border)
-       that previously collided with hex vars in index.css. The collision
-       caused Tailwind classes like bg-primary to resolve to hsl(#e11d48),
-       invalid CSS that silently fell through. */
+    /* Tailwind/shadcn theme tokens — HSL components consumed via hsl(var(--tw-*)).
+       Three vars use --tw-* prefix (--tw-primary, --tw-card, --tw-border) to
+       avoid collision with legacy hex vars of the same name in index.css.
+       index.css --primary/#e11d48 is for direct CSS use (gradients, auth.css, etc).
+       Tailwind utility classes (bg-primary, border-border) resolve through here. */
     --background: 0 0% 100%;
     --foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
-    --shadcn-card: 0 0% 100%;
+    --tw-card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
-    --shadcn-border: 214.3 31.8% 91.4%;
+    --tw-border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --shadcn-primary: 346.8 77.2% 49.8%;        /* rose-600, matches Cravvr brand */
-    --shadcn-primary-foreground: 355.7 100% 97.3%;
+    --tw-primary: 346.8 77.2% 49.8%;            /* rose-600, matches Cravvr brand */
+    --tw-primary-foreground: 355.7 100% 97.3%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --accent: 210 40% 96.1%;
@@ -38,5 +38,23 @@
     --warning-foreground: 48 100% 96%;
     --info: 217 91% 60%;                 /* blue-500: neutral info */
     --info-foreground: 214 100% 97%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222.2 47.4% 11.2%;
+    --sidebar-primary: 346.8 77.2% 49.8%;
+    --sidebar-primary-foreground: 355.7 100% 97.3%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 346.8 77.2% 49.8%;
+  }
+  .dark {
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }

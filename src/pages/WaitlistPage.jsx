@@ -3,6 +3,7 @@ import { joinWaitlist } from '../services/waitlist';
 import { Icons } from '../components/common/Icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 const cuisineOptions = [
@@ -18,8 +19,6 @@ const cuisineOptions = [
   { id: 'other', label: 'Other', emoji: '🍽️' },
 ];
 
-const inputClass =
-  'h-12 w-full rounded-xl border border-input bg-background px-4 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
 
 const StepShell = ({ children }) => (
   <div className="flex flex-col items-center text-center space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -254,14 +253,14 @@ const WaitlistPage = () => {
                   title="What's your email?"
                   subtitle="We'll only use this to notify you when we launch"
                 />
-                <input
+                <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="you@example.com"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && canProceed() && nextStep()}
-                  className={inputClass}
+                  className="w-full"
                 />
                 <Button size="lg" onClick={nextStep} disabled={!canProceed()} className="w-full gap-2">
                   Continue
@@ -274,14 +273,14 @@ const WaitlistPage = () => {
             {step === 2 && (
               <StepShell>
                 <StepHeader icon="👋" title="What's your name?" subtitle="So we know what to call you" />
-                <input
+                <Input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Your name"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && canProceed() && nextStep()}
-                  className={inputClass}
+                  className="w-full"
                 />
                 <Button size="lg" onClick={nextStep} disabled={!canProceed()} className="w-full gap-2">
                   Continue
@@ -327,13 +326,13 @@ const WaitlistPage = () => {
                   or enter manually
                   <span className="h-px flex-1 bg-border" />
                 </div>
-                <input
+                <Input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="City, State"
                   onKeyDown={(e) => e.key === 'Enter' && canProceed() && nextStep()}
-                  className={inputClass}
+                  className="w-full"
                 />
                 <Button size="lg" onClick={nextStep} disabled={!canProceed()} className="w-full gap-2">
                   Continue
@@ -394,14 +393,14 @@ const WaitlistPage = () => {
                   title="What's your food truck called?"
                   subtitle="The name hungry customers will be searching for"
                 />
-                <input
+                <Input
                   type="text"
                   value={formData.truckName}
                   onChange={(e) => setFormData(prev => ({ ...prev, truckName: e.target.value }))}
                   placeholder="Truck name"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && canProceed() && nextStep()}
-                  className={inputClass}
+                  className="w-full"
                 />
                 <Button size="lg" onClick={nextStep} disabled={!canProceed()} className="w-full gap-2">
                   Continue

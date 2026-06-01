@@ -8,6 +8,7 @@ import AdminBadgePanel from './components/AdminBadgePanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import LoadingSplash from '../../components/common/LoadingSplash';
+import AdminNavBar from '../../components/admin/AdminNavBar';
 import { cn } from '@/lib/utils';
 
 const SUBTABS = [
@@ -70,6 +71,8 @@ const AdminTruckDetailPage = () => {
   };
 
   return (
+    <>
+      <AdminNavBar activeId="trucks" />
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -155,6 +158,7 @@ const AdminTruckDetailPage = () => {
         </section>
       </div>
     </div>
+    </>
   );
 };
 

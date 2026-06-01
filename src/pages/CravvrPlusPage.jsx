@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Icons } from '../components/common/Icons';
 import { joinWaitlist } from '../services/waitlist';
 import { useInView } from '../hooks/useInView';
-import MarketingHeader from '../components/landing/MarketingHeader';
+import SiteHeader from '../components/landing/SiteHeader';
 import MarketingFooter from '../components/landing/MarketingFooter';
 import BrowserMockup from '../components/landing/BrowserMockup';
 import MarketingFAQ from '../components/landing/MarketingFAQ';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 const features = [
@@ -130,15 +132,14 @@ const CravvrPlusPage = () => {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
-      <MarketingHeader
+      <SiteHeader
         navLinks={[
           { href: '#features', label: 'Features' },
           { href: '#pricing', label: 'Pricing' },
           { href: '#faq', label: 'FAQ' },
           { to: '/eat', label: 'For Food Lovers' },
         ]}
-        ctaLabel="Get Started"
-        ctaHref="#contact"
+        cta={{ label: 'Get Started', href: '#contact' }}
       />
 
       <main id="main">
@@ -352,16 +353,22 @@ const CravvrPlusPage = () => {
                       </div>
                     )}
                     <div className="grid sm:grid-cols-2 gap-3">
-                      <input type="text" placeholder="Your name" required value={name}
-                        onChange={(e) => setName(e.target.value)} disabled={submitting}
-                        className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60" />
-                      <input type="email" placeholder="Email address" required value={email}
-                        onChange={(e) => setEmail(e.target.value)} disabled={submitting}
-                        className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60" />
+                      <div className="space-y-1">
+                        <Label htmlFor="plus-name" className="sr-only">Your name</Label>
+                        <Input id="plus-name" type="text" placeholder="Your name" required
+                          value={name} onChange={(e) => setName(e.target.value)} disabled={submitting} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="plus-email" className="sr-only">Email address</Label>
+                        <Input id="plus-email" type="email" placeholder="Email address" required
+                          value={email} onChange={(e) => setEmail(e.target.value)} disabled={submitting} />
+                      </div>
                     </div>
-                    <input type="text" placeholder="Food truck name" required value={truckName}
-                      onChange={(e) => setTruckName(e.target.value)} disabled={submitting}
-                      className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60" />
+                    <div className="space-y-1">
+                      <Label htmlFor="plus-truck" className="sr-only">Food truck name</Label>
+                      <Input id="plus-truck" type="text" placeholder="Food truck name" required
+                        value={truckName} onChange={(e) => setTruckName(e.target.value)} disabled={submitting} />
+                    </div>
                     <Button type="submit" size="lg" disabled={submitting} className="w-full gap-2">
                       {submitting ? (
                         <>

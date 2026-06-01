@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Icons } from '../components/common/Icons';
-import MarketingHeader from '../components/landing/MarketingHeader';
+import SiteHeader from '../components/landing/SiteHeader';
 import MarketingFooter from '../components/landing/MarketingFooter';
 import MarketingFAQ from '../components/landing/MarketingFAQ';
 import { cn } from '@/lib/utils';
@@ -123,6 +124,7 @@ const ForTrucksPage = () => {
   });
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const setVal = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
 
   const isValid = useMemo(
     () => form.name.trim().length >= 2 && form.phone.replace(/\D/g, '').length >= 10,
@@ -170,10 +172,9 @@ const ForTrucksPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <MarketingHeader
+      <SiteHeader
         navLinks={navLinks}
-        ctaLabel="Apply now"
-        ctaHref="#apply"
+        cta={{ label: 'Apply now', href: '#apply' }}
       />
 
       {/* Hero */}
@@ -229,15 +230,16 @@ const ForTrucksPage = () => {
                         <Input id="truckName" value={form.truckName} onChange={set('truckName')} />
                       </Field>
                       <Field label="Cuisine" htmlFor="cuisine">
-                        <select
-                          id="cuisine"
-                          value={form.cuisine}
-                          onChange={set('cuisine')}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                          <option value="">Select…</option>
-                          {CUISINES.map((c) => <option key={c} value={c.toLowerCase()}>{c}</option>)}
-                        </select>
+                        <Select value={form.cuisine} onValueChange={setVal('cuisine')}>
+                          <SelectTrigger id="cuisine">
+                            <SelectValue placeholder="Select…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CUISINES.map((c) => (
+                              <SelectItem key={c} value={c.toLowerCase()}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </Field>
                     </div>
                     <Field label="Phone *" htmlFor="phone">
@@ -247,15 +249,16 @@ const ForTrucksPage = () => {
                       <Input id="email" type="email" value={form.email} onChange={set('email')} autoComplete="email" />
                     </Field>
                     <Field label="Best time to reach you" htmlFor="bestTime">
-                      <select
-                        id="bestTime"
-                        value={form.bestTime}
-                        onChange={set('bestTime')}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      >
-                        <option value="">Anytime</option>
-                        {BEST_TIMES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-                      </select>
+                      <Select value={form.bestTime} onValueChange={setVal('bestTime')}>
+                        <SelectTrigger id="bestTime">
+                          <SelectValue placeholder="Anytime" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BEST_TIMES.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </Field>
                     {error && (
                       <div className="rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 text-sm text-destructive">

@@ -4,9 +4,12 @@ import 'react-device-frameset/styles/marvel-devices.min.css';
 import { useInView } from '../../hooks/useInView';
 import { joinWaitlist } from '../../services/waitlist';
 import { Icons } from '../common/Icons';
-import Header from './Header';
+import SiteHeader from './SiteHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 
 const categories = [
@@ -190,40 +193,6 @@ const PhoneMockup = () => (
   </div>
 );
 
-const FAQItem = ({ faq, isOpen, onClick }) => (
-  <div
-    className={cn(
-      'overflow-hidden rounded-xl border border-border bg-card transition-colors',
-      isOpen && 'border-primary/40 shadow-sm'
-    )}
-  >
-    <button
-      onClick={onClick}
-      aria-expanded={isOpen}
-      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
-    >
-      <span className="font-semibold text-base">{faq.q}</span>
-      <span
-        className={cn(
-          'h-5 w-5 shrink-0 text-muted-foreground transition-transform',
-          isOpen && 'rotate-180 text-primary'
-        )}
-      >
-        {Icons.chevronDown}
-      </span>
-    </button>
-    <div
-      className={cn(
-        'grid transition-[grid-template-rows] duration-300',
-        isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-      )}
-    >
-      <div className="overflow-hidden">
-        <p className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
-      </div>
-    </div>
-  </div>
-);
 
 const Footer = () => (
   <footer className="border-t border-border bg-card/40">
@@ -321,10 +290,15 @@ const FeatureCard = ({ feature, delay }) => {
   );
 };
 
+const NAV_LINKS = [
+  { href: '#features', label: 'Features' },
+  { href: '#how-it-works', label: 'How it Works' },
+  { href: '#pricing', label: 'Pricing' },
+  { href: '#faq', label: 'FAQ' },
+];
+
 const LandingPage = ({ setCurrentView }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [waitlistType, setWaitlistType] = useState('lover');
-  const [openFaq, setOpenFaq] = useState(0);
   const [heroRef, heroInView] = useInView();
 
   const [waitlistName, setWaitlistName] = useState('');
@@ -367,10 +341,12 @@ const LandingPage = ({ setCurrentView }) => {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
-      <Header
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        setCurrentView={setCurrentView}
+      <SiteHeader
+        navLinks={NAV_LINKS}
+        cta={{ label: 'Order Now', onClick: () => setCurrentView('home') }}
+        showAuth
+        onLogoClick={() => setCurrentView('landing')}
+        onNavigate={(dest) => setCurrentView(dest)}
       />
 
       <main id="main">
@@ -656,16 +632,22 @@ const LandingPage = ({ setCurrentView }) => {
               title="Your questions,"
               gradientText="answered"
             />
-            <div className="mt-10 space-y-3">
+            <Accordion type="single" collapsible defaultValue="faq-0" className="mt-10 space-y-3">
               {faqs.map((f, i) => (
-                <FAQItem
+                <AccordionItem
                   key={f.q}
-                  faq={f}
-                  isOpen={openFaq === i}
-                  onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
-                />
+                  value={`faq-${i}`}
+                  className="overflow-hidden rounded-xl border border-border bg-card px-5 data-[state=open]:border-primary/40 data-[state=open]:shadow-sm"
+                >
+                  <AccordionTrigger className="py-4 text-base font-semibold hover:no-underline">
+                    {f.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-5 pt-0">
+                    {f.a}
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           </div>
         </section>
 
@@ -730,26 +712,30 @@ const LandingPage = ({ setCurrentView }) => {
                         </div>
                       )}
                       <div className="grid sm:grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          id="waitlist-name"
-                          placeholder="Your name"
-                          required
-                          value={waitlistName}
-                          onChange={(e) => setWaitlistName(e.target.value)}
-                          disabled={waitlistSubmitting}
-                          className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60"
-                        />
-                        <input
-                          type="email"
-                          id="waitlist-email"
-                          placeholder="Email address"
-                          required
-                          value={waitlistEmail}
-                          onChange={(e) => setWaitlistEmail(e.target.value)}
-                          disabled={waitlistSubmitting}
-                          className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60"
-                        />
+                        <div className="space-y-1">
+                          <Label htmlFor="waitlist-name" className="sr-only">Your name</Label>
+                          <Input
+                            id="waitlist-name"
+                            type="text"
+                            placeholder="Your name"
+                            required
+                            value={waitlistName}
+                            onChange={(e) => setWaitlistName(e.target.value)}
+                            disabled={waitlistSubmitting}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="waitlist-email" className="sr-only">Email address</Label>
+                          <Input
+                            id="waitlist-email"
+                            type="email"
+                            placeholder="Email address"
+                            required
+                            value={waitlistEmail}
+                            onChange={(e) => setWaitlistEmail(e.target.value)}
+                            disabled={waitlistSubmitting}
+                          />
+                        </div>
                       </div>
                       <Button
                         type="submit"

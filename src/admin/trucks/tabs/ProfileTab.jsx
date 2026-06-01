@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 const PRICE_RANGES = ['$', '$$', '$$$', '$$$$'];
 const SLUG_RE = /^[a-z0-9-]+$/;
@@ -129,14 +130,14 @@ const ProfileTab = () => {
         </div>
         <div className="space-y-2">
           <Label htmlFor="profile-price-range">Price range</Label>
-          <select
-            id="profile-price-range"
-            value={form.price_range}
-            onChange={(e) => setForm({ ...form, price_range: e.target.value })}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            {PRICE_RANGES.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
+          <Select value={form.price_range} onValueChange={(v) => setForm({ ...form, price_range: v })}>
+            <SelectTrigger id="profile-price-range">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PRICE_RANGES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -181,7 +181,9 @@ const App = () => {
         {/* Growth dashboard (CAC/LTV cohorts) - admin only */}
         <Route path="/admin/growth" element={
           <RequireAdmin>
-            <GrowthDashboard />
+            <AdminAreaWrapper>
+              <GrowthDashboard />
+            </AdminAreaWrapper>
           </RequireAdmin>
         } />
 

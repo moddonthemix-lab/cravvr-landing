@@ -1,25 +1,293 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { ChevronsUpDown, LogOut, User, Settings, Truck, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { Icons } from '../common/Icons';
 import NotificationBell from '../common/NotificationBell';
 import useUserLocation from '../../hooks/useUserLocation';
-import MobileNavDrawer from './MobileNavDrawer';
 import { cn } from '@/lib/utils';
 
-// Shared customer-facing app chrome: header (logo + search + city + bell + cart),
-// desktop left sidebar (Home/Map/Discover/Bolt + Favorites/Orders + Account/role
-// nav), and mobile bottom nav. Used to wrap Home, Map, Discover, and Bolt so all
-// four routes share identical chrome.
-//
-// Visual language matches the previous HomePage chrome (Tailwind + rose primary)
-// so the user sees no UI drift when switching between these routes.
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 
-const sidebarItem =
-  'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground';
-const sidebarItemActive =
-  'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary';
+// ── helpers ────────────────────────────────────────────────────────────────
+
+const getInitials = (name, email) => {
+  if (name) return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  if (email) return email[0].toUpperCase();
+  return 'U';
+};
+
+// ── Nav sections ───────────────────────────────────────────────────────────
+
+const NAV_MAIN = [
+  { label: 'Home',     icon: Icons.home,     path: '/'         },
+  { label: 'Map',      icon: Icons.map,      path: '/map'      },
+  { label: 'Discover', icon: Icons.compass,  path: '/discover' },
+  { label: 'Bolt',     icon: Icons.bolt,     path: '/bolt'     },
+];
+
+const NAV_LIBRARY = [
+  { label: 'Favorites', icon: Icons.heart,   path: '/profile?tab=favorites' },
+  { label: 'Orders',    icon: Icons.orders,  path: '/profile?tab=orders'   },
+];
+
+// ── AppSidebar ──────────────────────────────────────────────────────────────
+
+const AppSidebar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, profile, isOwner, isAdmin, openAuth, signOut } = useAuth();
+
+  const isActive = (path) => {
+    const base = path.split('?')[0];
+    if (base === '/') return location.pathname === '/';
+    return location.pathname.startsWith(base);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      navigate('/', { replace: true });
+      await signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
+  };
+
+  const displayName = profile?.name || user?.email?.split('@')[0] || 'Guest';
+  const displayEmail = user?.email || '';
+  const initials = getInitials(profile?.name, user?.email);
+
+  return (
+    <Sidebar collapsible="icon">
+      {/* Logo */}
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              className="cursor-pointer hover:bg-transparent active:bg-transparent"
+              onClick={() => navigate('/')}
+            >
+              <img
+                src="/logo/cravvr-logo.png"
+                alt="Cravvr"
+                className="h-10 w-auto object-contain"
+              />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        {/* Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {NAV_MAIN.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton
+                    tooltip={item.label}
+                    isActive={isActive(item.path)}
+                    onClick={() => navigate(item.path)}
+                  >
+                    <span className="h-4 w-4 shrink-0">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Library — authenticated only */}
+        {user && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Library</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAV_LIBRARY.map((item) => (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      tooltip={item.label}
+                      isActive={isActive(item.path)}
+                      onClick={() => navigate(item.path)}
+                    >
+                      <span className="h-4 w-4 shrink-0">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Role-specific — owner / admin */}
+        {user && (isOwner || isAdmin) && (
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              {isAdmin ? 'Admin' : 'My Business'}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {isOwner && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      tooltip="My Trucks"
+                      isActive={isActive('/owner')}
+                      onClick={() => navigate('/owner')}
+                    >
+                      <Truck className="h-4 w-4 shrink-0" />
+                      <span>My Trucks</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {isAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      tooltip="Admin Dashboard"
+                      isActive={isActive('/admin')}
+                      onClick={() => navigate('/admin')}
+                    >
+                      <ShieldCheck className="h-4 w-4 shrink-0" />
+                      <span>Admin</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+      </SidebarContent>
+
+      {/* User avatar footer */}
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton
+                    size="lg"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  >
+                    <Avatar className="h-8 w-8 rounded-lg shrink-0">
+                      <AvatarImage src={profile?.avatar_url} alt={displayName} />
+                      <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                      <span className="truncate font-semibold">{displayName}</span>
+                      <span className="truncate text-xs text-muted-foreground">{displayEmail}</span>
+                    </div>
+                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                  side="bottom"
+                  align="end"
+                  sideOffset={4}
+                >
+                  <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                      <Avatar className="h-8 w-8 rounded-lg shrink-0">
+                        <AvatarImage src={profile?.avatar_url} alt={displayName} />
+                        <AvatarFallback className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                        <span className="truncate font-semibold">{displayName}</span>
+                        <span className="truncate text-xs text-muted-foreground">{displayEmail}</span>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <User className="mr-2 h-4 w-4" />
+                      Account
+                    </DropdownMenuItem>
+                    {isOwner && (
+                      <DropdownMenuItem onClick={() => navigate('/owner')}>
+                        <Truck className="mr-2 h-4 w-4" />
+                        My Trucks
+                      </DropdownMenuItem>
+                    )}
+                    {isAdmin && (
+                      <DropdownMenuItem onClick={() => navigate('/admin')}>
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        Admin Dashboard
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <SidebarMenuButton
+                size="lg"
+                onClick={() => openAuth('login')}
+                className="text-primary hover:text-primary"
+              >
+                <Avatar className="h-8 w-8 rounded-lg shrink-0">
+                  <AvatarFallback className="rounded-lg bg-muted text-muted-foreground text-xs">
+                    ?
+                  </AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Sign In</span>
+                  <span className="truncate text-xs text-muted-foreground">Get started free</span>
+                </div>
+              </SidebarMenuButton>
+            )}
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
+  );
+};
+
+// ── Bottom nav item (mobile) ───────────────────────────────────────────────
 
 const BottomNavItem = ({ icon, label, active, onClick, badge }) => (
   <button
@@ -40,239 +308,84 @@ const BottomNavItem = ({ icon, label, active, onClick, badge }) => (
   </button>
 );
 
+// ── PageWrapper ────────────────────────────────────────────────────────────
+
 const PageWrapper = ({ children, activeNav }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut, openAuth, isOwner, isAdmin } = useAuth();
+  const { user, openAuth } = useAuth();
   const { itemCount, openCart } = useCart();
   const { city: rawCity } = useUserLocation();
   const userCity = typeof rawCity === 'string' ? rawCity : (rawCity?.city || 'Your Location');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const isActive = (path) => {
     if (activeNav) return activeNav === path;
-    return location.pathname === path;
-  };
-
-  const handleSignOut = async () => {
-    try {
-      navigate('/', { replace: true });
-      await signOut();
-    } catch (err) {
-      console.error('Sign out failed:', err);
-    }
-  };
-
-  const onSearchSubmit = (e) => {
-    e.preventDefault();
-    if (location.pathname !== '/') navigate('/');
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-20 lg:pb-0">
-      {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/85 backdrop-blur px-4 py-3 sm:px-6">
-        <button
-          type="button"
-          aria-label="Open menu"
-          onClick={() => setMobileNavOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted lg:hidden"
-        >
-          <span className="h-5 w-5">{Icons.menu}</span>
-        </button>
-        <div
-          className="cursor-pointer shrink-0"
-          onClick={() => navigate('/')}
-        >
-          <img src="/logo/cravvr-logo.png" alt="Cravvr" className="h-9 w-auto" />
-        </div>
+    <SidebarProvider>
+      <AppSidebar />
 
-        <form onSubmit={onSearchSubmit} className="hidden md:flex flex-1 max-w-xl mx-auto">
-          <div className="relative w-full">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
-              {Icons.search}
-            </span>
-            <input
-              type="search"
-              placeholder="Search food trucks, cuisines…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onClick={() => location.pathname !== '/' && navigate('/')}
-              className="h-10 w-full rounded-full border border-input bg-muted/50 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
-          </div>
-        </form>
+      <SidebarInset className="pb-20 lg:pb-0">
+        {/* Header */}
+        <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-border bg-background/85 backdrop-blur px-3 py-2.5 sm:px-4 min-w-0">
+          <SidebarTrigger className="-ml-1 h-9 w-9" />
+          <Separator orientation="vertical" className="h-5 mx-1" />
 
-        <div className="flex items-center gap-2 ml-auto">
-          <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs">
-            <span className="h-3.5 w-3.5 text-primary">{Icons.mapPin}</span>
-            <span className="font-medium truncate max-w-[10rem]">{userCity}</span>
-          </div>
-
-          <NotificationBell />
-
-          <button
-            type="button"
-            onClick={openCart}
-            aria-label="Open cart"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+          <form
+            onSubmit={(e) => { e.preventDefault(); if (location.pathname !== '/') navigate('/'); }}
+            className="hidden md:flex flex-1 min-w-0 max-w-xl"
           >
-            <span className="h-5 w-5">{Icons.shoppingBag}</span>
-            {itemCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground tabular-nums">
-                {itemCount}
+            <div className="relative w-full">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+                {Icons.search}
               </span>
-            )}
-          </button>
-        </div>
-      </header>
+              <input
+                type="search"
+                placeholder="Search food trucks, cuisines…"
+                onClick={() => location.pathname !== '/' && navigate('/')}
+                className="h-9 w-full rounded-full border border-input bg-muted/50 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              />
+            </div>
+          </form>
 
-      <div className="flex flex-1 min-h-0">
-        {/* Sidebar (desktop only) */}
-        <aside className="hidden lg:flex lg:flex-col lg:w-60 lg:shrink-0 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:overflow-y-auto lg:border-r lg:border-border lg:bg-card">
-          <nav className="flex flex-col gap-1 p-3">
+          <div className="flex items-center gap-1.5 ml-auto shrink-0">
+            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs">
+              <span className="h-3.5 w-3.5 text-primary">{Icons.mapPin}</span>
+              <span className="font-medium truncate max-w-[10rem]">{userCity}</span>
+            </div>
+
+            <NotificationBell />
+
             <button
-              className={cn(sidebarItem, isActive('/') && sidebarItemActive)}
-              onClick={() => navigate('/')}
+              type="button"
+              onClick={openCart}
+              aria-label="Open cart"
+              className="relative flex h-9 w-9 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted"
             >
-              <span className="h-5 w-5 shrink-0">{Icons.home}</span>
-              <span>Home</span>
+              <span className="h-5 w-5">{Icons.shoppingBag}</span>
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground tabular-nums">
+                  {itemCount}
+                </span>
+              )}
             </button>
-            <button
-              className={cn(sidebarItem, isActive('/map') && sidebarItemActive)}
-              onClick={() => navigate('/map')}
-            >
-              <span className="h-5 w-5 shrink-0">{Icons.map}</span>
-              <span>Map</span>
-            </button>
-            <button
-              className={cn(sidebarItem, isActive('/discover') && sidebarItemActive)}
-              onClick={() => navigate('/discover')}
-            >
-              <span className="h-5 w-5 shrink-0">{Icons.compass}</span>
-              <span>Discover</span>
-            </button>
-            <button
-              className={cn(sidebarItem, isActive('/bolt') && sidebarItemActive)}
-              onClick={() => navigate('/bolt')}
-            >
-              <span className="h-5 w-5 shrink-0">{Icons.bolt}</span>
-              <span>Bolt</span>
-            </button>
-          </nav>
+          </div>
+        </header>
 
-          <div className="mx-3 my-2 border-t border-border" />
+        <main className="flex-1">{children}</main>
+      </SidebarInset>
 
-          <nav className="flex flex-col gap-1 p-3">
-            <button
-              className={cn(sidebarItem, isActive('/favorites') && sidebarItemActive)}
-              onClick={() => navigate('/profile?tab=favorites')}
-            >
-              <span className="h-5 w-5 shrink-0">{Icons.heart}</span>
-              <span>Favorites</span>
-            </button>
-            <button
-              className={cn(sidebarItem, isActive('/orders') && sidebarItemActive)}
-              onClick={() => navigate('/profile?tab=orders')}
-            >
-              <span className="h-5 w-5 shrink-0">{Icons.orders}</span>
-              <span>Orders</span>
-            </button>
-          </nav>
-
-          <div className="mx-3 my-2 border-t border-border" />
-
-          <nav className="flex flex-col gap-1 p-3">
-            {user ? (
-              <>
-                <button
-                  className={cn(sidebarItem, isActive('/profile') && sidebarItemActive)}
-                  onClick={() => navigate('/profile')}
-                >
-                  <span className="h-5 w-5 shrink-0">{Icons.user}</span>
-                  <span>Account</span>
-                </button>
-                {isOwner && (
-                  <button
-                    className={cn(sidebarItem, isActive('/owner') && sidebarItemActive)}
-                    onClick={() => navigate('/owner')}
-                  >
-                    <span className="h-5 w-5 shrink-0">{Icons.truck}</span>
-                    <span>My Trucks</span>
-                  </button>
-                )}
-                {isAdmin && (
-                  <button
-                    className={cn(sidebarItem, isActive('/admin') && sidebarItemActive)}
-                    onClick={() => navigate('/admin')}
-                  >
-                    <span className="h-5 w-5 shrink-0">{Icons.settings}</span>
-                    <span>Admin</span>
-                  </button>
-                )}
-                <button
-                  className={cn(
-                    sidebarItem,
-                    'text-destructive hover:bg-destructive/10 hover:text-destructive'
-                  )}
-                  onClick={handleSignOut}
-                >
-                  <span className="h-5 w-5 shrink-0">{Icons.logOut}</span>
-                  <span>Sign Out</span>
-                </button>
-              </>
-            ) : (
-              <button
-                className={cn(sidebarItem, 'text-primary')}
-                onClick={() => openAuth('login')}
-              >
-                <span className="h-5 w-5 shrink-0">{Icons.user}</span>
-                <span>Sign In</span>
-              </button>
-            )}
-          </nav>
-        </aside>
-
-        {/* Main */}
-        <main className="flex-1 min-w-0">{children}</main>
-      </div>
-
-      <MobileNavDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-
-      {/* Mobile Bottom Nav */}
+      {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="grid grid-cols-6 items-center">
-          <BottomNavItem
-            icon={Icons.home}
-            label="Home"
-            active={isActive('/')}
-            onClick={() => navigate('/')}
-          />
-          <BottomNavItem
-            icon={Icons.map}
-            label="Map"
-            active={isActive('/map')}
-            onClick={() => navigate('/map')}
-          />
-          <BottomNavItem
-            icon={Icons.compass}
-            label="Discover"
-            active={isActive('/discover')}
-            onClick={() => navigate('/discover')}
-          />
-          <BottomNavItem
-            icon={Icons.bolt}
-            label="Bolt"
-            active={isActive('/bolt')}
-            onClick={() => navigate('/bolt')}
-          />
-          <BottomNavItem
-            icon={Icons.shoppingBag}
-            label="Cart"
-            badge={itemCount}
-            onClick={openCart}
-          />
+          <BottomNavItem icon={Icons.home}        label="Home"    active={isActive('/')}          onClick={() => navigate('/')} />
+          <BottomNavItem icon={Icons.map}         label="Map"     active={isActive('/map')}        onClick={() => navigate('/map')} />
+          <BottomNavItem icon={Icons.compass}     label="Discover" active={isActive('/discover')} onClick={() => navigate('/discover')} />
+          <BottomNavItem icon={Icons.bolt}        label="Bolt"    active={isActive('/bolt')}       onClick={() => navigate('/bolt')} />
+          <BottomNavItem icon={Icons.shoppingBag} label="Cart"    badge={itemCount}               onClick={openCart} />
           <BottomNavItem
             icon={Icons.user}
             label={user ? 'Account' : 'Sign In'}
@@ -281,7 +394,7 @@ const PageWrapper = ({ children, activeNav }) => {
           />
         </div>
       </nav>
-    </div>
+    </SidebarProvider>
   );
 };
 
