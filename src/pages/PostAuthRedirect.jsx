@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthContext';
+import { track } from '../services/analytics';
 import LoadingSplash from '../components/common/LoadingSplash';
 
 // Bouncer landed on immediately after Clerk sign-in/sign-up completes.
@@ -15,8 +16,20 @@ export default function PostAuthRedirect() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { user, profile, loading, isOwner, isAdmin } = useAuth();
+  const signupFired = useRef(false);
 
   const next = params.get('next') || '/';
+  // SignUpPage appends `?signup=<role>` to its forceRedirectUrl — present only
+  // after a completed registration (sign-in uses LoginPage's own redirect).
+  const signupRole = params.get('signup');
+
+  // Fire CompleteRegistration once on a brand-new registration, pinned to a
+  // deterministic event_id so it dedupes against the clerk-webhook CAPI hit.
+  useEffect(() => {
+    if (!signupRole || !user?.id || signupFired.current) return;
+    signupFired.current = true;
+    track('signup', { role: signupRole }, { eventId: `signup:${user.id}` });
+  }, [signupRole, user?.id]);
 
   useEffect(() => {
     if (loading) return;

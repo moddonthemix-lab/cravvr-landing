@@ -106,13 +106,20 @@ async function postJson(url, body) {
 
 // ---- pixel mirroring -------------------------------------------------------
 
+// Keys are the internal event_name strings we actually call track() with, so
+// the DB event_name stays meaningful (the admin funnel + marketing-insights
+// reference these) AND the event reaches the pixels. Both the "ideal" name and
+// the name fired in code are mapped, since some surfaces fire the verbose name.
 const PIXEL_EVENT_MAP = {
   page_view: { fb: 'PageView', ga: 'page_view', tt: 'Pageview' },
   view_truck: { fb: 'ViewContent', ga: 'view_item', tt: 'ViewContent' },
+  truck_viewed: { fb: 'ViewContent', ga: 'view_item', tt: 'ViewContent' },
   add_to_cart: { fb: 'AddToCart', ga: 'add_to_cart', tt: 'AddToCart' },
   begin_checkout: { fb: 'InitiateCheckout', ga: 'begin_checkout', tt: 'InitiateCheckout' },
   signup: { fb: 'CompleteRegistration', ga: 'sign_up', tt: 'CompleteRegistration' },
   purchase: { fb: 'Purchase', ga: 'purchase', tt: 'CompletePayment' },
+  order_created: { fb: 'Purchase', ga: 'purchase', tt: 'CompletePayment' },
+  waitlist_lead: { fb: 'Lead', ga: 'generate_lead', tt: 'SubmitForm' },
 };
 
 function mirrorToPixels(eventName, properties, eventId) {
@@ -199,10 +206,14 @@ export async function identify(userId) {
   }
 }
 
-export function track(eventName, properties = {}) {
+// `options.eventId` lets a caller pin a deterministic event_id so the browser
+// pixel hit dedupes against a server-side CAPI event fired for the same
+// conversion (e.g. `purchase:${orderId}`, `signup:${userId}`). When omitted we
+// mint a random uuid as before.
+export function track(eventName, properties = {}, options = {}) {
   if (typeof window === 'undefined' || !visitorId || !sessionId) return;
 
-  const eventId = uuid();
+  const eventId = options.eventId || uuid();
   const lastUtm = readLastUtm();
 
   const event = {

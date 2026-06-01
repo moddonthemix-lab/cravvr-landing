@@ -76,7 +76,7 @@ const SignUpPage = () => {
         routing="path"
         path="/sign-up"
         signInUrl="/login"
-        forceRedirectUrl={`/post-auth?next=${encodeURIComponent(from + fromTab)}`}
+        forceRedirectUrl={`/post-auth?next=${encodeURIComponent(from + fromTab)}&signup=${role}`}
         unsafeMetadata={{ role }}
       />
     </div>
