@@ -330,7 +330,7 @@ const PageWrapper = ({ children, activeNav }) => {
 
       <SidebarInset className="pb-20 lg:pb-0">
         {/* Header */}
-        <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-border bg-background/85 backdrop-blur px-3 py-2.5 sm:px-4 min-w-0">
+        <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-border bg-background px-3 py-2.5 sm:px-4 min-w-0">
           <SidebarTrigger className="-ml-1 h-9 w-9" />
           <Separator orientation="vertical" className="h-5 mx-1" />
 

@@ -214,12 +214,12 @@ const LocationPrompt = ({ status, onEnable, onSkip }) => {
                   Enable location to see nearby food trucks on the map.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 w-full pt-2">
-                <Button size="lg" onClick={onEnable} className="flex-1 gap-2">
-                  <span className="h-4 w-4">{Icons.mapPin}</span>
+              <div className="flex flex-col gap-3 w-full pt-2">
+                <Button size="lg" onClick={onEnable} className="w-full h-14 text-base gap-2">
+                  <span className="h-5 w-5">{Icons.mapPin}</span>
                   Enable Location
                 </Button>
-                <Button size="lg" variant="outline" onClick={onSkip} className="flex-1">
+                <Button size="lg" variant="outline" onClick={onSkip} className="w-full h-14 text-base">
                   Use Portland, OR
                 </Button>
               </div>
