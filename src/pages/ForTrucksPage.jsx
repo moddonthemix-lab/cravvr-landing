@@ -125,8 +125,10 @@ const ForTrucksPage = () => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const isValid = useMemo(
-    () => form.name.trim().length >= 2 && form.phone.replace(/\D/g, '').length >= 10,
-    [form.name, form.phone],
+    () => form.name.trim().length >= 2
+      && form.phone.replace(/\D/g, '').length >= 10
+      && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()),
+    [form.name, form.phone, form.email],
   );
 
   useEffect(() => {
@@ -158,7 +160,7 @@ const ForTrucksPage = () => {
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setError(res.error === 'missing_required_fields'
-        ? 'Please fill in your name and phone.'
+        ? 'Please fill in your name, phone, and a valid email.'
         : 'Something went wrong. Please try again in a moment.');
     }
   };
@@ -243,8 +245,8 @@ const ForTrucksPage = () => {
                     <Field label="Phone *" htmlFor="phone">
                       <Input id="phone" type="tel" value={form.phone} onChange={set('phone')} autoComplete="tel" placeholder="(555) 555-5555" />
                     </Field>
-                    <Field label="Email (optional)" htmlFor="email">
-                      <Input id="email" type="email" value={form.email} onChange={set('email')} autoComplete="email" />
+                    <Field label="Email *" htmlFor="email">
+                      <Input id="email" type="email" value={form.email} onChange={set('email')} autoComplete="email" placeholder="you@truck.com" />
                     </Field>
                     <Field label="Best time to reach you" htmlFor="bestTime">
                       <select
