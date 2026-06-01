@@ -75,7 +75,7 @@ serve(async (req) => {
   }
 
   // Minimal validation — the landing page already enforces UI rules.
-  if (!body.name || !body.phone || !body.city) {
+  if (!body.name || !body.phone || !body.city || !body.email) {
     return json({ error: 'missing_required_fields' }, 400, cors);
   }
   if (!CITY_LABELS[body.city]) {
