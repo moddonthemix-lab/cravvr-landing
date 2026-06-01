@@ -25,6 +25,23 @@ function getStoredUtms() {
  * Also fires `truck_lead_submit` through our analytics layer, which mirrors
  * to Meta Pixel (`Lead`), GA4 (`generate_lead`), and TikTok.
  */
+function readCookie(name) {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.split('=')[1]) : null;
+}
+
+function genEventId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export async function submitTruckLead(input) {
   const liveUtms = readUTMs();
   const stored = getStoredUtms();
@@ -32,6 +49,10 @@ export async function submitTruckLead(input) {
   const clickId = stored?.click_id || liveUtms.fbclid || liveUtms.gclid || liveUtms.ttclid || null;
   const clickPlatform = stored?.click_platform
     || (liveUtms.fbclid ? 'meta' : liveUtms.gclid ? 'google' : liveUtms.ttclid ? 'tiktok' : null);
+
+  // One shared event_id for the browser Pixel `Lead` AND the server CAPI `Lead`
+  // (fired in the truck-lead edge fn) so Meta deduplicates the pair.
+  const eventId = genEventId();
 
   const payload = {
     name: input.name,
@@ -53,6 +74,13 @@ export async function submitTruckLead(input) {
     referrer: typeof document !== 'undefined' ? document.referrer : null,
     landing_url: typeof window !== 'undefined' ? window.location.href : null,
     visitor_id: getVisitorId(),
+
+    // Server-side CAPI match signals.
+    event_id: eventId,
+    fbc: readCookie('_fbc'),
+    fbp: readCookie('_fbp'),
+    event_source_url: typeof window !== 'undefined' ? window.location.href : null,
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
   };
 
   let resJson = null;
@@ -82,9 +110,15 @@ export async function submitTruckLead(input) {
       truck_name: input.truckName,
       lead_id: resJson?.id,
     });
-    // Explicit Meta Lead event for CAPI/standard event matching
+    // Explicit Meta Lead event for CAPI/standard event matching. The eventID
+    // matches the server CAPI Lead (truck-lead edge fn) so Meta dedupes.
     if (typeof window !== 'undefined' && window.fbq) {
-      window.fbq('track', 'Lead', { content_category: 'truck_operator', city: input.city });
+      window.fbq(
+        'track',
+        'Lead',
+        { content_category: 'truck_operator', city: input.city },
+        { eventID: eventId }
+      );
     }
     if (resJson?.id) {
       clarityIdentify(`lead:${resJson.id}`, undefined, undefined, input.truckName || input.name);

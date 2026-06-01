@@ -19,6 +19,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { corsHeaders } from '../_shared/cors.ts';
 import { upsertProfile, subscribeToList, fireEvent } from '../_shared/klaviyo.ts';
+import { sendMetaCapiEvent, clientIpFromHeaders } from '../_shared/meta-capi.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -50,6 +51,12 @@ interface LeadPayload {
   referrer?: string;
   landing_url?: string;
   visitor_id?: string;
+  // Meta CAPI match signals (the browser fires Lead with the same event_id).
+  event_id?: string;
+  fbc?: string;
+  fbp?: string;
+  event_source_url?: string;
+  user_agent?: string;
 }
 
 serve(async (req) => {
@@ -109,10 +116,38 @@ serve(async (req) => {
     return json({ error: 'insert_failed', detail: insertError.message }, 500, cors);
   }
 
+  // Server-side signals for Meta CAPI (authoritative — from the request).
+  const clientIp = clientIpFromHeaders(req);
+  const userAgent = req.headers.get('user-agent') || body.user_agent || null;
+  const [firstName, ...rest] = (inserted.name || '').split(' ');
+  if (!body.event_id) {
+    console.warn('truck-lead: no event_id from client — CAPI Lead will not dedupe with the browser Pixel');
+  }
+
   // Fire side effects in parallel — don't await success/failure for the response.
   Promise.allSettled([
     postSlack(inserted),
     pushKlaviyo(inserted),
+    sendMetaCapiEvent({
+      eventName: 'Lead',
+      // Reuse the browser's event_id so Meta dedupes the Pixel + CAPI pair.
+      eventId: body.event_id ?? crypto.randomUUID(),
+      eventSourceUrl: body.event_source_url ?? inserted.landing_url ?? null,
+      userData: {
+        email: inserted.email,
+        phone: inserted.phone,
+        firstName,
+        lastName: rest.join(' ') || null,
+        city: CITY_LABELS[inserted.city] ?? inserted.city,
+        fbclid: inserted.click_platform === 'meta' ? inserted.click_id : null,
+        fbcCookie: body.fbc ?? null,
+        fbpCookie: body.fbp ?? null,
+        clientIp,
+        userAgent,
+        externalId: inserted.visitor_id ?? null,
+      },
+      customData: { content_category: 'truck_operator', value: 50, currency: 'USD' },
+    }),
   ]).then((results) => {
     results.forEach((r, i) => {
       if (r.status === 'rejected') {

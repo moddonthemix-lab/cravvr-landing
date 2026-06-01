@@ -22,12 +22,11 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { sendMetaCapiEvent } from '../_shared/meta-capi.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const META_PIXEL_ID = Deno.env.get('META_CAPI_PIXEL_ID');
-const META_TOKEN = Deno.env.get('META_CAPI_ACCESS_TOKEN');
 const GA4_ID = Deno.env.get('VITE_GA4_MEASUREMENT_ID') || Deno.env.get('GA4_MEASUREMENT_ID');
 const GA4_API_SECRET = Deno.env.get('GOOGLE_MEASUREMENT_PROTOCOL_API_SECRET');
 const TIKTOK_TOKEN = Deno.env.get('TIKTOK_EVENTS_API_TOKEN');
@@ -45,30 +44,6 @@ interface ServerEventPayload {
 async function sha256(input: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input.trim().toLowerCase()));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function dispatchMeta(eventId: string, value: number, currency: string, email?: string | null) {
-  if (!META_PIXEL_ID || !META_TOKEN) return;
-  try {
-    const userData: Record<string, unknown> = {};
-    if (email) userData.em = [await sha256(email)];
-
-    const res = await fetch(`https://graph.facebook.com/v18.0/${META_PIXEL_ID}/events?access_token=${META_TOKEN}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: [{
-          event_name: 'Purchase',
-          event_time: Math.floor(Date.now() / 1000),
-          event_id: eventId,
-          action_source: 'website',
-          user_data: userData,
-          custom_data: { value: value / 100, currency },
-        }],
-      }),
-    });
-    if (!res.ok) console.warn('Meta CAPI non-2xx:', await res.text());
-  } catch (e) { console.warn('Meta CAPI error:', e); }
 }
 
 async function dispatchGA4(eventId: string, value: number, currency: string, clientId: string) {
@@ -201,8 +176,21 @@ serve(async (req) => {
     }
 
     // 4. Fan out to ad platforms.
+    const metaFbclid =
+      visitor?.last_click_platform === 'meta' ? visitor?.last_click_id
+        : visitor?.first_click_platform === 'meta' ? visitor?.first_click_id
+        : null;
     await Promise.allSettled([
-      dispatchMeta(eventId, valueCents, currency, email),
+      sendMetaCapiEvent({
+        eventName: 'Purchase',
+        eventId,
+        userData: {
+          email,
+          fbclid: metaFbclid,
+          externalId: visitor?.id ?? order.customer_id,
+        },
+        customData: { value: valueCents / 100, currency },
+      }),
       dispatchGA4(eventId, valueCents, currency, visitor?.id || order.customer_id),
       dispatchTikTok(eventId, valueCents, currency, email),
     ]);

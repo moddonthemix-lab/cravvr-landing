@@ -165,6 +165,11 @@ const Checkout = ({ onBack, onOrderComplete }) => {
       currency: 'USD',
       item_count: items.reduce((s, i) => s + i.quantity, 0),
       payment_method: paymentMethod,
+    }, {
+      // Match the server-side Purchase event_id (stripe-webhook →
+      // analytics-server-event uses `purchase:${order_id}`) so Meta/GA4/TikTok
+      // dedupe the browser hit against the authoritative server conversion.
+      eventId: `purchase:${orderData.id}`,
     });
   };
 

@@ -26,6 +26,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Webhook } from 'https://esm.sh/svix@1.42.0';
 import { corsHeaders } from '../_shared/cors.ts';
 import { subscribeNewEater } from '../_shared/klaviyo.ts';
+import { sendMetaCapiEvent } from '../_shared/meta-capi.ts';
 
 const CLERK_WEBHOOK_SECRET = Deno.env.get('CLERK_WEBHOOK_SECRET')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -182,11 +183,12 @@ serve(async (req) => {
 
   try {
     switch (event.type) {
-      case 'user.created':
+      case 'user.created': {
         await upsertUser(supabase, event.data);
+        const createdRole = pickRole(event.data);
         // Fire-and-forget: subscribe new customers to Klaviyo Eaters list
         // (triggers Flow C — Eater Welcome). Owners/admins skipped.
-        if (pickRole(event.data) === 'customer') {
+        if (createdRole === 'customer') {
           subscribeNewEater({
             email: primaryEmail(event.data),
             phone: (event.data.unsafe_metadata?.phone as string | undefined) ?? null,
@@ -195,7 +197,26 @@ serve(async (req) => {
             external_id: event.data.id,
           }).catch((e) => console.warn('klaviyo subscribeNewEater failed:', e));
         }
+        // Server-side CompleteRegistration. event_id `signup:${id}` matches the
+        // browser Pixel hit (PostAuthRedirect) so Meta dedupes. Admins are not
+        // created via the public sign-up flow, so skip them.
+        if (createdRole !== 'admin') {
+          sendMetaCapiEvent({
+            eventName: 'CompleteRegistration',
+            eventId: `signup:${event.data.id}`,
+            actionSource: 'website',
+            userData: {
+              email: primaryEmail(event.data),
+              phone: (event.data.unsafe_metadata?.phone as string | undefined) ?? null,
+              firstName: event.data.first_name,
+              lastName: event.data.last_name,
+              externalId: event.data.id,
+            },
+            customData: { role: createdRole },
+          }).catch((e) => console.warn('Meta CAPI CompleteRegistration failed:', e));
+        }
         break;
+      }
       case 'user.updated':
         await upsertUser(supabase, event.data);
         break;
