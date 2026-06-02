@@ -19,6 +19,11 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { corsHeaders } from '../_shared/cors.ts';
 import { upsertProfile, subscribeToList, fireEvent } from '../_shared/klaviyo.ts';
+import { dispatchServerConversion } from '../_shared/capi.ts';
+
+// Server-assigned value for a truck-operator lead — kept in sync with the
+// browser-side Lead pixel value in src/services/truckLead.js.
+const LEAD_VALUE = 50;
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -113,6 +118,7 @@ serve(async (req) => {
   Promise.allSettled([
     postSlack(inserted),
     pushKlaviyo(inserted),
+    sendLeadConversion(inserted),
   ]).then((results) => {
     results.forEach((r, i) => {
       if (r.status === 'rejected') {
@@ -165,6 +171,32 @@ async function postSlack(lead: any) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, blocks }),
+  });
+}
+
+// Server-side Lead conversion to Meta CAPI + TikTok Events API. Deduped with
+// the browser pixel via the shared `lead:<id>` event_id (see truckLead.js).
+// GA4 is left to the browser (gtag generate_lead) to avoid double counting.
+async function sendLeadConversion(lead: any) {
+  const t = lead.created_at ? Date.parse(lead.created_at) : Date.now();
+  await dispatchServerConversion({
+    eventName: 'Lead',
+    eventId: `lead:${lead.id}`,
+    value: LEAD_VALUE,
+    currency: 'USD',
+    email: lead.email || undefined,
+    phone: lead.phone || undefined,
+    clickId: lead.click_id || undefined,
+    clickPlatform: lead.click_platform || undefined,
+    eventSourceUrl: lead.landing_url || undefined,
+    eventTimeMs: Number.isNaN(t) ? Date.now() : t,
+    ga4ClientId: lead.visitor_id || undefined,
+    customData: {
+      content_category: 'truck_operator',
+      city: CITY_LABELS[lead.city] || lead.city,
+      lead_id: lead.id,
+    },
+    platforms: { ga4: false },
   });
 }
 

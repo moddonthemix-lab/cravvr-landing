@@ -22,16 +22,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { dispatchServerConversion } from '../_shared/capi.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-const META_PIXEL_ID = Deno.env.get('META_CAPI_PIXEL_ID');
-const META_TOKEN = Deno.env.get('META_CAPI_ACCESS_TOKEN');
-const GA4_ID = Deno.env.get('VITE_GA4_MEASUREMENT_ID') || Deno.env.get('GA4_MEASUREMENT_ID');
-const GA4_API_SECRET = Deno.env.get('GOOGLE_MEASUREMENT_PROTOCOL_API_SECRET');
-const TIKTOK_TOKEN = Deno.env.get('TIKTOK_EVENTS_API_TOKEN');
-const TIKTOK_PIXEL_CODE = Deno.env.get('TIKTOK_PIXEL_CODE');
 
 interface ServerEventPayload {
   event_name: 'purchase' | string;
@@ -40,78 +34,6 @@ interface ServerEventPayload {
   currency?: string;
   // Optional: deterministic event_id; if omitted we derive from order_id.
   event_id?: string;
-}
-
-async function sha256(input: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input.trim().toLowerCase()));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function dispatchMeta(eventId: string, value: number, currency: string, email?: string | null) {
-  if (!META_PIXEL_ID || !META_TOKEN) return;
-  try {
-    const userData: Record<string, unknown> = {};
-    if (email) userData.em = [await sha256(email)];
-
-    const res = await fetch(`https://graph.facebook.com/v18.0/${META_PIXEL_ID}/events?access_token=${META_TOKEN}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: [{
-          event_name: 'Purchase',
-          event_time: Math.floor(Date.now() / 1000),
-          event_id: eventId,
-          action_source: 'website',
-          user_data: userData,
-          custom_data: { value: value / 100, currency },
-        }],
-      }),
-    });
-    if (!res.ok) console.warn('Meta CAPI non-2xx:', await res.text());
-  } catch (e) { console.warn('Meta CAPI error:', e); }
-}
-
-async function dispatchGA4(eventId: string, value: number, currency: string, clientId: string) {
-  if (!GA4_ID || !GA4_API_SECRET) return;
-  try {
-    const res = await fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${GA4_ID}&api_secret=${GA4_API_SECRET}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: clientId,
-        events: [{
-          name: 'purchase',
-          params: { value: value / 100, currency, transaction_id: eventId },
-        }],
-      }),
-    });
-    if (!res.ok) console.warn('GA4 MP non-2xx:', await res.text());
-  } catch (e) { console.warn('GA4 MP error:', e); }
-}
-
-async function dispatchTikTok(eventId: string, value: number, currency: string, email?: string | null) {
-  if (!TIKTOK_TOKEN || !TIKTOK_PIXEL_CODE) return;
-  try {
-    const userInfo: Record<string, unknown> = {};
-    if (email) userInfo.email = await sha256(email);
-
-    const res = await fetch('https://business-api.tiktok.com/open_api/v1.3/event/track/', {
-      method: 'POST',
-      headers: {
-        'Access-Token': TIKTOK_TOKEN,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        pixel_code: TIKTOK_PIXEL_CODE,
-        event: 'CompletePayment',
-        event_id: eventId,
-        timestamp: new Date().toISOString(),
-        context: { user: userInfo },
-        properties: { value: value / 100, currency },
-      }),
-    });
-    if (!res.ok) console.warn('TikTok Events non-2xx:', await res.text());
-  } catch (e) { console.warn('TikTok Events error:', e); }
 }
 
 serve(async (req) => {
@@ -200,12 +122,16 @@ serve(async (req) => {
       }, { onConflict: 'event_id', ignoreDuplicates: true });
     }
 
-    // 4. Fan out to ad platforms.
-    await Promise.allSettled([
-      dispatchMeta(eventId, valueCents, currency, email),
-      dispatchGA4(eventId, valueCents, currency, visitor?.id || order.customer_id),
-      dispatchTikTok(eventId, valueCents, currency, email),
-    ]);
+    // 4. Fan out to ad platforms (Meta CAPI / GA4 MP / TikTok Events API),
+    //    deduped against the browser pixel via the shared event_id.
+    await dispatchServerConversion({
+      eventName: 'Purchase',
+      eventId,
+      value: valueCents / 100,
+      currency,
+      email,
+      ga4ClientId: visitor?.id || order.customer_id,
+    });
 
     return new Response(
       JSON.stringify({ ok: true, event_id: eventId }),

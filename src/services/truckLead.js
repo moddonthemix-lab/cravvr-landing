@@ -74,27 +74,66 @@ export async function submitTruckLead(input) {
     return { ok: false, error: 'network_error', detail: String(err) };
   }
 
-  // Mirror to pixels / GA4 via existing analytics layer
+  // Lead value mirrors the server-side LEAD_VALUE in supabase/functions/truck-lead.
+  const LEAD_VALUE = 50;
+  // Shared dedup id — must match the server CAPI event_id (`lead:<id>`).
+  const leadEventId = resJson?.id ? `lead:${resJson.id}` : undefined;
+  const metaPixelId = import.meta.env.VITE_META_PIXEL_ID;
+
+  // Mirror to pixels / GA4. The browser hits dedupe with the server-side
+  // Meta CAPI + TikTok Events API conversions via leadEventId.
   try {
+    // First-party analytics row (also powers our own attribution tables).
     track('truck_lead_submit', {
       city: input.city,
       cuisine: input.cuisine,
       truck_name: input.truckName,
       lead_id: resJson?.id,
     });
-    // Explicit Meta Lead event for CAPI/standard event matching
+
+    // Meta: set advanced-matching identifiers, then fire Lead with dedup id.
     if (typeof window !== 'undefined' && window.fbq) {
-      window.fbq('track', 'Lead', { content_category: 'truck_operator', city: input.city });
+      if (metaPixelId && (input.email || input.phone)) {
+        window.fbq('init', metaPixelId, {
+          em: input.email || undefined,
+          ph: input.phone ? input.phone.replace(/\D/g, '') : undefined,
+        });
+      }
+      window.fbq(
+        'track',
+        'Lead',
+        { content_category: 'truck_operator', city: input.city, value: LEAD_VALUE, currency: 'USD' },
+        leadEventId ? { eventID: leadEventId } : undefined,
+      );
     }
-    if (resJson?.id) {
-      clarityIdentify(`lead:${resJson.id}`, undefined, undefined, input.truckName || input.name);
+
+    // TikTok: SubmitForm is the standard lead-form event. identify() lets the
+    // pixel attach hashed PII for matching.
+    if (typeof window !== 'undefined' && window.ttq?.track) {
+      if (input.email || input.phone) {
+        try {
+          window.ttq.identify({ email: input.email || undefined, phone_number: input.phone || undefined });
+        } catch { /* ttq may not be fully loaded */ }
+      }
+      window.ttq.track(
+        'SubmitForm',
+        { content_type: 'lead', description: input.city, value: LEAD_VALUE, currency: 'USD' },
+        leadEventId ? { event_id: leadEventId } : undefined,
+      );
     }
+
+    // GA4: generate_lead (browser only — server GA4 is skipped for leads to
+    // avoid double counting, since GA4 can't dedupe non-purchase events).
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'generate_lead', {
         currency: 'USD',
-        value: 50,
+        value: LEAD_VALUE,
         city: input.city,
       });
+    }
+
+    if (resJson?.id) {
+      clarityIdentify(`lead:${resJson.id}`, undefined, undefined, input.truckName || input.name);
     }
   } catch (err) {
     console.warn('lead pixel mirror failed', err);

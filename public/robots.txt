@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Private / authenticated app surfaces — no SEO value, keep out of the index
+Disallow: /admin
+Disallow: /checkout
+Disallow: /profile
+Disallow: /orders
+Disallow: /favorites
+Disallow: /post-auth
+Disallow: /login
+Disallow: /sign-up
+
+Sitemap: https://www.cravvr.com/sitemap.xml
